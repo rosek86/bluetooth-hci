@@ -4,7 +4,7 @@ import Debug from "debug";
 
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
-import { HciOgf, HciInformationParametersOcf, HciControlAndBasebandCommandsOcf } from './HciOgfOcf'
+import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands } from './HciOgfOcf'
 
 const debug = Debug('nble-hci');
 
@@ -62,7 +62,7 @@ export default class Hci extends EventEmitter {
     return this.send({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
-        ocf: HciControlAndBasebandCommandsOcf.Reset,
+        ocf: HciOcfControlAndBasebandCommands.Reset,
       }),
     });
   }

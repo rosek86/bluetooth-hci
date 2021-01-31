@@ -1,10 +1,22 @@
 export enum HciOgf {
-  ControlAndBasebandCommands  = 0x03,
-  InformationParameters       = 0x04,
-  StatusParameters            = 0x05,
+  LinkControlCommands                   = 0x01,
+  LinkPolicyCommands                    = 0x02,
+  ControlAndBasebandCommands            = 0x03,
+  InformationParameters                 = 0x04,
+  StatusParameters                      = 0x05,
+  TestingCommands                       = 0x06,
+  LeControllerCommands                  = 0x08,
 }
 
-export enum HciControlAndBasebandCommandsOcf {
+export enum HciOcfLinkControlCommands {
+  // TODO
+}
+
+export enum HicOcfLinkPolicyCommands {
+  // TODO
+}
+
+export enum HciOcfControlAndBasebandCommands {
   SetEventMask                          = 0x0001,
   Reset                                 = 0x0003,
   SetEventFilter                        = 0x0005,
@@ -107,17 +119,17 @@ export enum HciControlAndBasebandCommandsOcf {
   ConfigureDataPath                     = 0x0083,
 }
 
-export enum HciInformationParametersOcf {
-  ReadLocalVersionInformation         = 0x0001,
-  ReadLocalSupportedCommands          = 0x0002,
-  ReadLocalSupportedFeatures          = 0x0003,
-  ReadLocalExtendedFeatures           = 0x0004,
-  ReadBufferSize                      = 0x0005,
-  ReadBdAddr                          = 0x0009,
-  ReadDataBlockSize                   = 0x000A,
-  ReadLocalSupportedCodecsV1          = 0x000B,
-  ReadLocalSupportedCodecsV2          = 0x000D,
-  ReadLocalSimplePairingOptions       = 0x000C,
-  ReadLocalSupportedCodecCapabilities = 0x000E,
-  ReadLocalSupportedControllerDelay   = 0x000F,
+export enum HciOcfInformationParameters {
+  ReadLocalVersionInformation           = 0x0001,
+  ReadLocalSupportedCommands            = 0x0002,
+  ReadLocalSupportedFeatures            = 0x0003,
+  ReadLocalExtendedFeatures             = 0x0004,
+  ReadBufferSize                        = 0x0005,
+  ReadBdAddr                            = 0x0009,
+  ReadDataBlockSize                     = 0x000A,
+  ReadLocalSupportedCodecsV1            = 0x000B,
+  ReadLocalSupportedCodecsV2            = 0x000D,
+  ReadLocalSimplePairingOptions         = 0x000C,
+  ReadLocalSupportedCodecCapabilities   = 0x000E,
+  ReadLocalSupportedControllerDelay     = 0x000F,
 }
