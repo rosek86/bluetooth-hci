@@ -1,7 +1,10 @@
+
 import { EventEmitter } from "events";
 import Debug from "debug";
 
 import HciError from './HciError';
+import { HciErrorCode } from './HciError';
+import { HciOgf, HciInformationParametersOcf, HciControlAndBasebandCommandsOcf } from './HciOgfOcf'
 
 const debug = Debug('nble-hci');
 
@@ -57,8 +60,15 @@ export default class Hci extends EventEmitter {
 
   public async reset(): Promise<void> {
     return this.send({
-      opcode: HciOpcode.build({ ogf: 0x03, ocf: 0x03 }),
+      opcode: HciOpcode.build({
+        ogf: HciOgf.ControlAndBasebandCommands,
+        ocf: HciControlAndBasebandCommandsOcf.Reset,
+      }),
     });
+  }
+
+  public async readLocalSupportedFeatures(): Promise<void> {
+    // 0000   03 10 00                                         ...
   }
 
   private async send(cmd: HciCommand): Promise<void> {
@@ -79,16 +89,19 @@ export default class Hci extends EventEmitter {
         if (this.cmdOpcode !== evt.opcode) {
           return;
         }
-        if (evt.status === 0) {
+        if (evt.status === HciErrorCode.Success) {
           complete();
         } else {
-          const error = new Error(`Test ${HciError.codeToString(evt.status)} ${evt.returnParameters}`);
-          complete(error);
+          complete(this.makeHciError(evt.status));
         }
       };
       this.cmdOpcode = cmd.opcode;
       this.sendRaw(this.buildBuffer(cmd));
     });
+  }
+
+  private makeHciError(code: number): HciError {
+    return new HciError(code);
   }
 
   private buildBuffer(cmd: HciCommand): Buffer {

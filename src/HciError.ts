@@ -1,5 +1,5 @@
 // HCI Command Errors  [Ver5.2 | Vol1, Part F, 1.3]
-enum HciErrorCode {
+export enum HciErrorCode {
   Success                     = 0x00, // Success
   UnknownCommand              = 0x01, // Unknown HCI Command
   UnknownConnectionId         = 0x02, // Unknown Connection Identifier
