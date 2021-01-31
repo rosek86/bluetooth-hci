@@ -9,9 +9,9 @@ let sendEvent: ((_: Buffer) => void) | null = null;
       setEventHandler: (handler) => sendEvent = handler,
     });
 
+    setImmediate(() => sendEvent!(Buffer.from('0e0401030c00', 'hex')));
     await hci.reset();
   } catch (err) {
     console.log(err);
   }
 })();
-
