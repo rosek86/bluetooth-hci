@@ -27,7 +27,7 @@ interface HciEvtCmdComplete {
   numHciPackets: number;
   opcode: number;
   status: number;
-  returnParameters: number[];
+  returnParameters: Buffer;
 }
 
 class HciOpcode {
@@ -59,7 +59,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async reset(): Promise<void> {
-    return this.send({
+    await this.send({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.Reset,
@@ -67,19 +67,25 @@ export default class Hci extends EventEmitter {
     });
   }
 
-  public async readLocalSupportedFeatures(): Promise<void> {
-    // 0000   03 10 00                                         ...
+  public async readLocalSupportedFeatures(): Promise<BigInt> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.InformationParameters,
+        ocf: HciOcfInformationParameters.ReadLocalSupportedFeatures,
+      }),
+    });
+    return result.returnParameters.readBigUInt64LE(0); // TODO: parse LMP features
   }
 
-  private async send(cmd: HciCommand): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+  private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {
+    return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
         return reject(new Error(`Command in progress.`));
       }
-      const complete = (err?: Error) => {
+      const complete = (err?: Error, evt?: HciEvtCmdComplete) => {
         clearTimeout(timeoutId);
         this.onCmdComplete = null;
-        err ? reject(err) : resolve();
+        err ? reject(err) : resolve(evt!);
       };
       const timeoutId = setTimeout(() => {
         complete(new Error(`Command timeout.`));
@@ -90,7 +96,7 @@ export default class Hci extends EventEmitter {
           return;
         }
         if (evt.status === HciErrorCode.Success) {
-          complete();
+          complete(undefined, evt);
         } else {
           complete(this.makeHciError(evt.status));
         }
@@ -142,7 +148,7 @@ export default class Hci extends EventEmitter {
             numHciPackets: payload[0],
             opcode: payload.readUInt16LE(1),
             status: payload[3],
-            returnParameters: [...payload.slice(4)],
+            returnParameters: payload.slice(4),
           });
         }
         break;
