@@ -4,7 +4,7 @@ import Debug from "debug";
 
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
-import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands } from './HciOgfOcf'
+import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
 
 const debug = Debug('nble-hci');
 
@@ -75,6 +75,50 @@ export default class Hci extends EventEmitter {
       }),
     });
     return result.returnParameters.readBigUInt64LE(0); // TODO: parse LMP features
+  }
+
+  public async readLocalVersionInformation(): Promise<Buffer> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.InformationParameters,
+        ocf: HciOcfInformationParameters.ReadLocalVersionInformation,
+      }),
+    });
+    return result.returnParameters; // TODO: parse version information
+  }
+
+  public async readBdAddr(): Promise<number> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.InformationParameters,
+        ocf: HciOcfInformationParameters.ReadBdAddr,
+      }),
+    });
+    return result.returnParameters.readUIntLE(0, 6);
+  }
+
+  public async leReadBufferSize() {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadBufferSizeV1,
+      }),
+    });
+    return {
+      LeAclDataPacketLength: result.returnParameters.readUInt16LE(0),
+      TotalNumLeAclDataPackets: result.returnParameters.readUInt8(2),
+    };
+  }
+
+  public async leReadSupportedFeatures(): Promise<BigInt> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadLocalSupportedFeatures,
+      }),
+    });
+    // TODO: parse bitmask
+    return result.returnParameters.readBigUInt64LE(0);
   }
 
   private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {
