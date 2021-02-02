@@ -5,6 +5,7 @@ import Debug from "debug";
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
 import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
+import { LeState, LeSupportedStates } from './HciLe';
 
 const debug = Debug('nble-hci');
 
@@ -41,7 +42,6 @@ class HciOpcode {
     return { ogf, ocf };
   }
 }
-
 
 export default class Hci extends EventEmitter {
   private sendRaw: (data: Buffer) => void;
@@ -97,6 +97,7 @@ export default class Hci extends EventEmitter {
     return result.returnParameters.readUIntLE(0, 6);
   }
 
+  // TODO annotate return param
   public async leReadBufferSize() {
     const result = await this.send({
       opcode: HciOpcode.build({
@@ -119,6 +120,28 @@ export default class Hci extends EventEmitter {
     });
     // TODO: parse bitmask
     return result.returnParameters.readBigUInt64LE(0);
+  }
+
+  public async leReadSupportedStates(): Promise<LeSupportedStates> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadSupportedStates,
+      }),
+    });
+    const bitmask = result.returnParameters.readBigUInt64LE(0);
+    return LeSupportedStates.fromBitmask(bitmask);
+  }
+
+  public async readLocalSupportedCommands(): Promise<Buffer> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.InformationParameters,
+        ocf: HciOcfInformationParameters.ReadLocalSupportedCommands,
+      }),
+    });
+    // TODO: parse bitmask
+    return result.returnParameters;
   }
 
   private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {

@@ -27,6 +27,20 @@ let sendEvent: ((_: Buffer) => void) | null = null;
     setImmediate(() => sendEvent!(Buffer.from('0e0c01032000f559000000007b11', 'hex')));
     console.log(await hci.leReadSupportedFeatures());
 
+    setImmediate(() => sendEvent!(Buffer.from('0e0c011c2000ff590000ff007b11', 'hex')));
+    console.log((await hci.leReadSupportedStates()).toString());
+
+    setImmediate(() => sendEvent!(
+      Buffer.from(
+        '0e44010210002000800000c000000000' +
+        'e40000002822000000000000040000f7' +
+        'ffff7f00000030c079feffe380040000' +
+        '00000000000000000000000000000000' +
+        '000000000000', 'hex'
+      )
+    ));
+    console.log(await hci.readLocalSupportedCommands());
+
   } catch (err) {
     console.log(err);
   }
