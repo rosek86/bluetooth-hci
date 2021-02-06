@@ -41,6 +41,29 @@ let sendEvent: ((_: Buffer) => void) | null = null;
     ));
     console.log(await hci.readLocalSupportedCommands());
 
+    setImmediate(() => sendEvent!(Buffer.from('0e0401010c00', 'hex')));
+    await hci.setEventMask();
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401012000', 'hex')));
+    await hci.leSetEventMask();
+
+    setImmediate(() => sendEvent!(Buffer.from('0e05010f200008', 'hex')));
+    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401102000', 'hex')));
+    await hci.leClearWhiteList();
+
+    setImmediate(() => sendEvent!(Buffer.from('0e05012a200008', 'hex')));
+    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401292000', 'hex')));
+    await hci.leClearResolvingList();
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0c012f2000fb00900afb00900a', 'hex')));
+    const maxDataLength = await hci.leReadMaximumDataLength();
+    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
+
+    console.log('done');
   } catch (err) {
     console.log(err);
   }

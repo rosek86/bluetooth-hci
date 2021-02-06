@@ -5,7 +5,7 @@ import Debug from "debug";
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
 import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
-import { LeState, LeSupportedStates } from './HciLe';
+import { LeSupportedStates } from './HciLe';
 
 const debug = Debug('nble-hci');
 
@@ -43,6 +43,10 @@ class HciOpcode {
   }
 }
 
+enum HciParserError {
+  InvalidPayloadSize,
+}
+
 export default class Hci extends EventEmitter {
   private sendRaw: (data: Buffer) => void;
   private cmdTimeout: number;
@@ -74,6 +78,9 @@ export default class Hci extends EventEmitter {
         ocf: HciOcfInformationParameters.ReadLocalSupportedFeatures,
       }),
     });
+    if (result.returnParameters.length < (64/8)) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
     return result.returnParameters.readBigUInt64LE(0); // TODO: parse LMP features
   }
 
@@ -94,6 +101,9 @@ export default class Hci extends EventEmitter {
         ocf: HciOcfInformationParameters.ReadBdAddr,
       }),
     });
+    if (result.returnParameters.length < 6) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
     return result.returnParameters.readUIntLE(0, 6);
   }
 
@@ -105,6 +115,9 @@ export default class Hci extends EventEmitter {
         ocf: HciOcfLeControllerCommands.ReadBufferSizeV1,
       }),
     });
+    if (result.returnParameters.length < 3) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
     return {
       LeAclDataPacketLength: result.returnParameters.readUInt16LE(0),
       TotalNumLeAclDataPackets: result.returnParameters.readUInt8(2),
@@ -118,6 +131,9 @@ export default class Hci extends EventEmitter {
         ocf: HciOcfLeControllerCommands.ReadLocalSupportedFeatures,
       }),
     });
+    if (result.returnParameters.length < (64/8)) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
     // TODO: parse bitmask
     return result.returnParameters.readBigUInt64LE(0);
   }
@@ -129,6 +145,9 @@ export default class Hci extends EventEmitter {
         ocf: HciOcfLeControllerCommands.ReadSupportedStates,
       }),
     });
+    if (result.returnParameters.length < (64/8)) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
     const bitmask = result.returnParameters.readBigUInt64LE(0);
     return LeSupportedStates.fromBitmask(bitmask);
   }
@@ -142,6 +161,96 @@ export default class Hci extends EventEmitter {
     });
     // TODO: parse bitmask
     return result.returnParameters;
+  }
+
+  public async setEventMask(): Promise<void> {
+    // TODO pass event mask as argument
+    const mask = Buffer.from('90e8040200800020', 'hex');
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.ControlAndBasebandCommands,
+        ocf: HciOcfControlAndBasebandCommands.SetEventMask,
+      }),
+      params: mask
+    });
+  }
+
+  public async leSetEventMask(): Promise<void> {
+    // TODO pass event mask as argument
+    const mask = Buffer.from('5f1e0a0000000000', 'hex');
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetEventMask,
+      }),
+      params: mask,
+    });
+  }
+
+  public async leReadWhiteListSize(): Promise<number> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadWhiteListSize,
+      }),
+    });
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt8(0);
+  }
+
+  public async leClearWhiteList(): Promise<void> {
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ClearWhiteList,
+      }),
+    });
+  }
+
+  public async leReadResolvingListSize(): Promise<number> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadResolvingListSize,
+      }),
+    });
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt8(0);
+  }
+
+  public async leClearResolvingList(): Promise<void> {
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ClearResolvingList,
+      }),
+    });
+  }
+
+  public async leReadMaximumDataLength(): Promise<{
+    supportedMaxTxOctets: number, supportedMaxTxTime: number,
+    supportedMaxRxOctets: number, supportedMaxRxTime: number,
+  }> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadMaximumDataLength,
+      }),
+    });
+    if (result.returnParameters.length < 8) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const params = result.returnParameters;
+    return {
+      supportedMaxTxOctets: params.readUInt16LE(0),
+      supportedMaxTxTime:   params.readUInt16LE(2),
+      supportedMaxRxOctets: params.readUInt16LE(4),
+      supportedMaxRxTime:   params.readUInt16LE(6),
+    };
   }
 
   private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {
@@ -175,6 +284,13 @@ export default class Hci extends EventEmitter {
 
   private makeHciError(code: number): HciError {
     return new HciError(code);
+  }
+
+  private makeError(code: HciParserError): Error {
+    if (code === HciParserError.InvalidPayloadSize) {
+      return new Error(`Cannot parse payload, invalid size`);
+    }
+    return new Error(`Unexpected error`);
   }
 
   private buildBuffer(cmd: HciCommand): Buffer {
