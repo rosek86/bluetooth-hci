@@ -156,3 +156,17 @@ export enum LeSecondaryAdvertisingPhy {
   Phy2M    = 0x02, // Secondary advertisement PHY is LE 2M
   PhyCoded = 0x03, // Secondary advertisement PHY is LE Coded
 }
+
+export enum LeAdvertisingDataOperation {
+  fragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  fragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  fragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+  complete              = 0x03, // Complete extended advertising data
+  unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
+}
+
+export enum LeScanResponseDataOperation {
+  fragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  fragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  fragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+}

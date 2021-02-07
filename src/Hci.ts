@@ -5,7 +5,11 @@ import Debug from "debug";
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
 import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
-import { LeAdvertisingChannelMap, LeAdvertisingEventProperties, LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeSupportedStates } from './HciLe';
+import {
+  LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
+  LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
+  LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation
+} from './HciLe';
 
 const debug = Debug('nble-hci');
 
@@ -45,6 +49,8 @@ class HciOpcode {
 
 enum HciParserError {
   InvalidPayloadSize,
+  Busy,
+  Timeout,
 }
 
 export default class Hci extends EventEmitter {
@@ -403,6 +409,70 @@ export default class Hci extends EventEmitter {
     return selectedTxPower;
   }
 
+  public async leSetAdvertisingSetRandomAddress(params: {
+    advertisingHandle: number,
+    advertisingRandomAddress: number,
+  }): Promise<void> {
+    let o = 0, s = 0;
+    const payload = Buffer.alloc(7);
+    s = 1; payload.writeUIntLE(params.advertisingHandle,        o, s); o += s;
+    s = 6; payload.writeUIntLE(params.advertisingRandomAddress, o, s); o += s;
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetExtendedAdvertisingData(params: {
+    advertisingHandle: number,
+    operation: LeAdvertisingDataOperation,
+    fragment: boolean,
+    data: Buffer,
+  }): Promise<void> {
+    let o = 0, s = 0;
+    const payload = Buffer.alloc(4 + params.data.length);
+    s = 1; payload.writeUIntLE(params.advertisingHandle,  o, s); o += s;
+    s = 1; payload.writeUIntLE(params.operation,          o, s); o += s;
+    s = 1; payload.writeUIntLE(params.fragment ? 0 : 1,   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
+    params.data.copy(payload, o);
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetExtendedAdvertisingData,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetExtendedScanResponseData(params: {
+    advertisingHandle: number,
+    operation: LeScanResponseDataOperation,
+    fragment: boolean,
+    data: Buffer,
+  }): Promise<void> {
+    let o = 0, s = 0;
+    const payload = Buffer.alloc(4 + params.data.length);
+    s = 1; payload.writeUIntLE(params.advertisingHandle,  o, s); o += s;
+    s = 1; payload.writeUIntLE(params.operation,          o, s); o += s;
+    s = 1; payload.writeUIntLE(params.fragment ? 0 : 1,   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
+    params.data.copy(payload, o);
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetExtendedScanResponseData,
+      }),
+      params: payload,
+    });
+  }
+
   private buildBitfield(bits: number[]): number {
     let bitfield = 0;
     for (const bit of bits) {
@@ -414,16 +484,16 @@ export default class Hci extends EventEmitter {
   private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {
     return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
-        return reject(new Error(`Command in progress.`));
+        return reject(this.makeError(HciParserError.Busy));
       }
       const complete = (err?: Error, evt?: HciEvtCmdComplete) => {
         clearTimeout(timeoutId);
         this.onCmdComplete = null;
         err ? reject(err) : resolve(evt!);
       };
-      const timeoutId = setTimeout(() => {
-        complete(new Error(`Command timeout.`));
-      }, this.cmdTimeout);
+      const timeoutId = setTimeout(
+        () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
+      );
       this.onCmdComplete = (evt: HciEvtCmdComplete) => {
         console.log(JSON.stringify(evt, null, 2), HciOpcode.expand(evt.opcode));
         if (this.cmdOpcode !== evt.opcode) {
@@ -447,6 +517,12 @@ export default class Hci extends EventEmitter {
   private makeError(code: HciParserError): Error {
     if (code === HciParserError.InvalidPayloadSize) {
       return new Error(`Cannot parse payload, invalid size`);
+    }
+    if (code === HciParserError.Busy) {
+      return new Error(`Busy, command in progress.`)
+    }
+    if (code === HciParserError.Timeout) {
+      return new Error(`Command timeout`);
     }
     return new Error(`Unexpected error`);
   }
