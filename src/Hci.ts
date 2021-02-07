@@ -280,6 +280,26 @@ export default class Hci extends EventEmitter {
     };
   }
 
+  public async leReadPhy(connectionHandle: number): Promise<{
+    connectionHandle: number,
+    txPhy: LePhy,
+    rxPhy: LePhy,
+  }> {
+    const payload = Buffer.alloc(2);
+    payload.writeUInt16LE(connectionHandle, 0);
+    const ocf = HciOcfLeControllerCommands.ReadPhy;
+    const result = await this.sendLeCommand(ocf, payload);
+    if (result.returnParameters.length < 4) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const params = result.returnParameters;
+    return {
+      connectionHandle: params.readUInt16LE(0),
+      txPhy:            params.readUInt8(2),
+      rxPhy:            params.readUInt8(3),
+    };
+  }
+
   public async leSetDefaultPhy(params: {
     txPhys?: LePhy, rxPhys?: LePhy,
   }): Promise<void> {

@@ -277,7 +277,7 @@ export enum HciOcfLeControllerCommands {
   SetAddressResolutionEnable                          = 0x002D, // LE Set Address Resolution Enable
   SetResolvablePrivateAddressTimeout                  = 0x002E, // LE Set Resolvable Private Address Timeout
   ReadMaximumDataLength                               = 0x002F, // * LE Read Maximum Data Length
-  ReadPhy                                             = 0x0030, // LE Read PHY
+  ReadPhy                                             = 0x0030, // * LE Read PHY
   SetDefaultPhy                                       = 0x0031, // * LE Set Default PHY
   SetPhy                                              = 0x0032, // LE Set PHY
   SetAdvertisingSetRandomAddress                      = 0x0035, // * LE Set Advertising Set Random Address
