@@ -115,12 +115,8 @@ export default class Hci extends EventEmitter {
 
   // TODO annotate return param
   public async leReadBufferSize() {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadBufferSizeV1,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 3) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -131,12 +127,8 @@ export default class Hci extends EventEmitter {
   }
 
   public async leReadSupportedFeatures(): Promise<BigInt> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadLocalSupportedFeatures,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < (64/8)) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -145,12 +137,8 @@ export default class Hci extends EventEmitter {
   }
 
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadSupportedStates,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < (64/8)) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -196,22 +184,13 @@ export default class Hci extends EventEmitter {
   public async leSetEventMask(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('5f1e0a0000000000', 'hex');
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetEventMask,
-      }),
-      params: mask,
-    });
+    const ocf = HciOcfLeControllerCommands.SetEventMask;
+    await this.sendLeCommand(ocf, mask);
   }
 
   public async leReadWhiteListSize(): Promise<number> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadWhiteListSize,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 1) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -219,21 +198,12 @@ export default class Hci extends EventEmitter {
   }
 
   public async leClearWhiteList(): Promise<void> {
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ClearWhiteList,
-      }),
-    });
+    await this.sendLeCommand(HciOcfLeControllerCommands.ClearWhiteList);
   }
 
   public async leReadResolvingListSize(): Promise<number> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadResolvingListSize,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 1) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -241,24 +211,15 @@ export default class Hci extends EventEmitter {
   }
 
   public async leClearResolvingList(): Promise<void> {
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ClearResolvingList,
-      }),
-    });
+    await this.sendLeCommand(HciOcfLeControllerCommands.ClearResolvingList);
   }
 
   public async leReadMaximumDataLength(): Promise<{
     supportedMaxTxOctets: number, supportedMaxTxTime: number,
     supportedMaxRxOctets: number, supportedMaxRxTime: number,
   }> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadMaximumDataLength,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadMaximumDataLength;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 8) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -274,12 +235,8 @@ export default class Hci extends EventEmitter {
   public async leReadSuggestedDefaultDataLength(): Promise<{
     suggestedMaxTxOctets: number, suggestedMaxTxTime: number,
   }> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 4) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -291,12 +248,8 @@ export default class Hci extends EventEmitter {
   }
 
   public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets,
-      }),
-    });
+    const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
+    const result = await this.sendLeCommand(ocf);
     if (result.returnParameters.length < 1) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -310,13 +263,8 @@ export default class Hci extends EventEmitter {
     const payload = Buffer.alloc(4);
     payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
     payload.writeUInt16LE(params.suggestedMaxTxTime, 2);
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetDefaultPhy(params: {
@@ -341,13 +289,8 @@ export default class Hci extends EventEmitter {
     payload.writeUInt8(txPhys,  1);
     payload.writeUInt8(rxPhys,  2);
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetDefaultPhy,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetDefaultPhy;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetExtendedAdvertisingParameters(params: {
@@ -393,13 +336,8 @@ export default class Hci extends EventEmitter {
     s = 1; payload.writeUIntLE(params.advertisingSid,                o, s); o += s;
     s = 1; payload.writeUIntLE(scanRequestNotificationEnable,        o, s); o += s;
 
-    const result = await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetExtendedAdvertisingParameters,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
+    const result = await this.sendLeCommand(ocf, payload);
 
     if (result.returnParameters.length < 1) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
@@ -418,13 +356,8 @@ export default class Hci extends EventEmitter {
     s = 1; payload.writeUIntLE(params.advertisingHandle,        o, s); o += s;
     s = 6; payload.writeUIntLE(params.advertisingRandomAddress, o, s); o += s;
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetExtendedAdvertisingData(params: {
@@ -441,13 +374,8 @@ export default class Hci extends EventEmitter {
     s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
     params.data.copy(payload, o);
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetExtendedAdvertisingData,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingData;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetExtendedScanResponseData(params: {
@@ -464,26 +392,16 @@ export default class Hci extends EventEmitter {
     s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
     params.data.copy(payload, o);
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetExtendedScanResponseData,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetExtendedScanResponseData;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetRandomAddress(randomAddress: number): Promise<void> {
     const payload = Buffer.alloc(6);
     payload.writeUIntLE(randomAddress, 0, 6);
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetRandomAddress,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetRandomAddress;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetExtendedScanParameters(params: {
@@ -539,36 +457,41 @@ export default class Hci extends EventEmitter {
       s = 2; payload.writeUIntLE(window, o, s); o += s;
     }
 
-    await this.send({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetExtendedScanParameters,
-      }),
-      params: payload,
-    });
+    const ocf = HciOcfLeControllerCommands.SetExtendedScanParameters;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetExtendedScanEnable(params: {
     enable: boolean,
     filterDuplicates: LeScanFilterDuplicates,
-    duration?: number,
-    period?: number,
+    durationMs?: number,
+    periodSec?: number,
   }): Promise<void> {
+    const duration = Math.round((params.durationMs ?? 0) / 10);
+    const period = Math.round((params.periodSec ?? 0) / 1.28);
+
     const payload = Buffer.alloc(1+1+2+2);
 
     let o = 0, s = 0;
     s = 1; payload.writeUIntLE(params.enable ? 1 : 0,   o, s); o += s;
     s = 1; payload.writeUIntLE(params.filterDuplicates, o, s); o += s;
-    s = 2; payload.writeUIntLE(params.duration ?? 0,    o, s); o += s;
-    s = 2; payload.writeUIntLE(params.period   ?? 0,    o, s); o += s;
+    s = 2; payload.writeUIntLE(duration,                o, s); o += s;
+    s = 2; payload.writeUIntLE(period,                  o, s); o += s;
 
-    await this.send({
+    const ocf = HciOcfLeControllerCommands.SetExtendedScanEnable;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  private async sendLeCommand(ocf: HciOcfLeControllerCommands, payload?: Buffer): Promise<HciEvtCmdComplete> {
+    const cmd: HciCommand = {
       opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands,
-        ocf: HciOcfLeControllerCommands.SetExtendedScanEnable,
+        ogf: HciOgf.LeControllerCommands, ocf,
       }),
-      params: payload,
-    });
+    };
+    if (payload) {
+      cmd.params = payload;
+    }
+    return await this.send(cmd);
   }
 
   private msToHciValue(ms: number): number {
