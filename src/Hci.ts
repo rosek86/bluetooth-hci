@@ -113,39 +113,6 @@ export default class Hci extends EventEmitter {
     return result.returnParameters.readUIntLE(0, 6);
   }
 
-  // TODO annotate return param
-  public async leReadBufferSize() {
-    const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
-    const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < 3) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    return {
-      LeAclDataPacketLength: result.returnParameters.readUInt16LE(0),
-      TotalNumLeAclDataPackets: result.returnParameters.readUInt8(2),
-    };
-  }
-
-  public async leReadSupportedFeatures(): Promise<BigInt> {
-    const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
-    const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < (64/8)) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    // TODO: parse bitmask
-    return result.returnParameters.readBigUInt64LE(0);
-  }
-
-  public async leReadSupportedStates(): Promise<LeSupportedStates> {
-    const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
-    const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < (64/8)) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    const bitmask = result.returnParameters.readBigUInt64LE(0);
-    return LeSupportedStates.fromBitmask(bitmask);
-  }
-
   public async readLocalSupportedCommands(): Promise<Buffer> {
     const result = await this.send({
       opcode: HciOpcode.build({
@@ -188,6 +155,51 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf, mask);
   }
 
+  public async leReadBufferSize() {
+    const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
+    const result = await this.sendLeCommand(ocf);
+    const returnParameters = result.returnParameters;
+    if (returnParameters.length < 3) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      leAclDataPacketLength:    returnParameters.readUInt16LE(0),
+      totalNumLeAclDataPackets: returnParameters.readUInt8(2),
+    };
+  }
+
+  public async leReadBufferSizeV2() {
+    const ocf = HciOcfLeControllerCommands.ReadBufferSizeV2;
+    const result = await this.sendLeCommand(ocf);
+    const returnParameters = result.returnParameters;
+    if (returnParameters.length < 6) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      leAclDataPacketLength:    returnParameters.readUInt16LE(0),
+      totalNumLeAclDataPackets: returnParameters.readUInt8(2),
+      isoDataPacketLength:      returnParameters.readUInt16LE(3),
+      totalNumIsoDataPackets:   returnParameters.readUInt8(5),
+    };
+  }
+
+  public async leReadSupportedFeatures(): Promise<BigInt> {
+    const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
+    const result = await this.sendLeCommand(ocf);
+    if (result.returnParameters.length < (64/8)) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    // TODO: parse bitmask
+    return result.returnParameters.readBigUInt64LE(0);
+  }
+
+  public async leSetRandomAddress(randomAddress: number): Promise<void> {
+    const payload = Buffer.alloc(6);
+    payload.writeUIntLE(randomAddress, 0, 6);
+    const ocf = HciOcfLeControllerCommands.SetRandomAddress;
+    await this.sendLeCommand(ocf, payload);
+  }
+
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
     const result = await this.sendLeCommand(ocf);
@@ -201,6 +213,46 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(HciOcfLeControllerCommands.ClearWhiteList);
   }
 
+  public async leReadSupportedStates(): Promise<LeSupportedStates> {
+    const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
+    const result = await this.sendLeCommand(ocf);
+    if (result.returnParameters.length < (64/8)) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const bitmask = result.returnParameters.readBigUInt64LE(0);
+    return LeSupportedStates.fromBitmask(bitmask);
+  }
+
+  public async leReadSuggestedDefaultDataLength(): Promise<{
+    suggestedMaxTxOctets: number, suggestedMaxTxTime: number,
+  }> {
+    const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
+    const result = await this.sendLeCommand(ocf);
+    if (result.returnParameters.length < 4) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const params = result.returnParameters;
+    return {
+      suggestedMaxTxOctets: params.readUInt16LE(0),
+      suggestedMaxTxTime:   params.readUInt16LE(2)
+    };
+  }
+
+  public async leWriteSuggestedDefaultDataLength(params: {
+    suggestedMaxTxOctets: number,
+    suggestedMaxTxTime: number,
+  }): Promise<void> {
+    const payload = Buffer.alloc(4);
+    payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
+    payload.writeUInt16LE(params.suggestedMaxTxTime, 2);
+    const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leClearResolvingList(): Promise<void> {
+    await this.sendLeCommand(HciOcfLeControllerCommands.ClearResolvingList);
+  }
+
   public async leReadResolvingListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
     const result = await this.sendLeCommand(ocf);
@@ -208,10 +260,6 @@ export default class Hci extends EventEmitter {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
     return result.returnParameters.readUInt8(0);
-  }
-
-  public async leClearResolvingList(): Promise<void> {
-    await this.sendLeCommand(HciOcfLeControllerCommands.ClearResolvingList);
   }
 
   public async leReadMaximumDataLength(): Promise<{
@@ -230,41 +278,6 @@ export default class Hci extends EventEmitter {
       supportedMaxRxOctets: params.readUInt16LE(4),
       supportedMaxRxTime:   params.readUInt16LE(6),
     };
-  }
-
-  public async leReadSuggestedDefaultDataLength(): Promise<{
-    suggestedMaxTxOctets: number, suggestedMaxTxTime: number,
-  }> {
-    const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
-    const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < 4) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    const params = result.returnParameters;
-    return {
-      suggestedMaxTxOctets: params.readUInt16LE(0),
-      suggestedMaxTxTime:   params.readUInt16LE(2)
-    };
-  }
-
-  public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
-    const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
-    const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    return result.returnParameters.readUInt8(0);
-  }
-
-  public async leWriteSuggestedDefaultDataLength(params: {
-    suggestedMaxTxOctets: number,
-    suggestedMaxTxTime: number,
-  }): Promise<void> {
-    const payload = Buffer.alloc(4);
-    payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
-    payload.writeUInt16LE(params.suggestedMaxTxTime, 2);
-    const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
-    await this.sendLeCommand(ocf, payload);
   }
 
   public async leSetDefaultPhy(params: {
@@ -290,6 +303,19 @@ export default class Hci extends EventEmitter {
     payload.writeUInt8(rxPhys,  2);
 
     const ocf = HciOcfLeControllerCommands.SetDefaultPhy;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leSetAdvertisingSetRandomAddress(params: {
+    advertisingHandle: number,
+    advertisingRandomAddress: number,
+  }): Promise<void> {
+    let o = 0, s = 0;
+    const payload = Buffer.alloc(7);
+    s = 1; payload.writeUIntLE(params.advertisingHandle,        o, s); o += s;
+    s = 6; payload.writeUIntLE(params.advertisingRandomAddress, o, s); o += s;
+
+    const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
     await this.sendLeCommand(ocf, payload);
   }
 
@@ -347,19 +373,6 @@ export default class Hci extends EventEmitter {
     return selectedTxPower;
   }
 
-  public async leSetAdvertisingSetRandomAddress(params: {
-    advertisingHandle: number,
-    advertisingRandomAddress: number,
-  }): Promise<void> {
-    let o = 0, s = 0;
-    const payload = Buffer.alloc(7);
-    s = 1; payload.writeUIntLE(params.advertisingHandle,        o, s); o += s;
-    s = 6; payload.writeUIntLE(params.advertisingRandomAddress, o, s); o += s;
-
-    const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
-    await this.sendLeCommand(ocf, payload);
-  }
-
   public async leSetExtendedAdvertisingData(params: {
     advertisingHandle: number,
     operation: LeAdvertisingDataOperation,
@@ -396,12 +409,13 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf, payload);
   }
 
-  public async leSetRandomAddress(randomAddress: number): Promise<void> {
-    const payload = Buffer.alloc(6);
-    payload.writeUIntLE(randomAddress, 0, 6);
-
-    const ocf = HciOcfLeControllerCommands.SetRandomAddress;
-    await this.sendLeCommand(ocf, payload);
+  public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
+    const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
+    const result = await this.sendLeCommand(ocf);
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt8(0);
   }
 
   public async leSetExtendedScanParameters(params: {
@@ -483,15 +497,12 @@ export default class Hci extends EventEmitter {
   }
 
   private async sendLeCommand(ocf: HciOcfLeControllerCommands, payload?: Buffer): Promise<HciEvtCmdComplete> {
-    const cmd: HciCommand = {
+    return await this.send({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
-    };
-    if (payload) {
-      cmd.params = payload;
-    }
-    return await this.send(cmd);
+      params: payload,
+    });
   }
 
   private msToHciValue(ms: number): number {

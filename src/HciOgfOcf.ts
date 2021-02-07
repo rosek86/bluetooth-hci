@@ -226,7 +226,7 @@ export enum HciOcfTestingCommands {
 export enum HciOcfLeControllerCommands {
   SetEventMask                                        = 0x0001, // * LE Set Event Mask
   ReadBufferSizeV1                                    = 0x0002, // * LE Read Buffer Size
-  ReadBufferSizeV2                                    = 0x0060, // LE Read Buffer Size
+  ReadBufferSizeV2                                    = 0x0060, // * LE Read Buffer Size
   ReadLocalSupportedFeatures                          = 0x0003, // * LE Read Local Supported Features
   SetRandomAddress                                    = 0x0005, // * LE Set Random Address
   SetAdvertisingParameters                            = 0x0006, // LE Set Advertising Parameters
@@ -293,7 +293,7 @@ export enum HciOcfLeControllerCommands {
   SetPeriodicAdvertisingData                          = 0x003F, // LE Set Periodic Advertising Data
   SetPeriodicAdvertisingEnable                        = 0x0040, // LE Set Periodic Advertising Enable
   SetExtendedScanParameters                           = 0x0041, // * LE Set Extended Scan Parameters
-  SetExtendedScanEnable                               = 0x0042, // LE Set Extended Scan Enable
+  SetExtendedScanEnable                               = 0x0042, // * LE Set Extended Scan Enable
   ExtendedCreateConnection                            = 0x0043, // LE Extended Create Connection
   PeriodicAdvertisingCreateSync                       = 0x0044, // LE Periodic Advertising Create Sync
   PeriodicAdvertisingCreateSyncCancel                 = 0x0045, // LE Periodic Advertising Create Sync Cancel
