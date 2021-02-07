@@ -152,7 +152,7 @@ export default class HciError extends Error implements NodeJS.ErrnoException {
   public syscall?: string;
   public stack?: string;
 
-  constructor(errno: number, path?: string) {
+  constructor(errno: HciErrorCode, path?: string) {
     super()
 
     this.name = this.constructor.name;
@@ -168,7 +168,7 @@ export default class HciError extends Error implements NodeJS.ErrnoException {
     this.message = `Error: ${this.code}: ${this.path ? `, '${this.path}'` : ''}`;
   }
 
-  public static codeToString(code: number): string {
+  public static codeToString(code: HciErrorCode): string {
     const error = HciErrorCodeToString[code];
 
     if (error === undefined) {

@@ -8,7 +8,7 @@ import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, 
 import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation
+  LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, ScanningFilterPolicy, LeScanningPhy, LeScanType, LeScanFilterDuplicates
 } from './HciLe';
 
 const debug = Debug('nble-hci');
@@ -473,6 +473,111 @@ export default class Hci extends EventEmitter {
     });
   }
 
+  public async leSetRandomAddress(randomAddress: number): Promise<void> {
+    const payload = Buffer.alloc(6);
+    payload.writeUIntLE(randomAddress, 0, 6);
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetRandomAddress,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetExtendedScanParameters(params: {
+    ownAddressType: LeOwnAddressType,
+    scanningFilterPolicy: ScanningFilterPolicy,
+    scanningPhy: {
+      Phy1M?:    { type: LeScanType, intervalMs: number, windowMs: number },
+      PhyCoded?: { type: LeScanType, intervalMs: number, windowMs: number },
+    },
+  }): Promise<void> {
+    const phys = { count: 0, bitmask: 0 };
+
+    if (params.scanningPhy.Phy1M) {
+      phys.count++;
+      phys.bitmask |= 1 << LeScanningPhy.Phy1M;
+    }
+    if (params.scanningPhy.PhyCoded) {
+      phys.count++;
+      phys.bitmask |= 1 << LeScanningPhy.PhyCoded;
+    }
+
+    if (phys.count === 0) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.alloc(3 + phys.count * (1+2+2));
+
+    let o = 0, s = 0;
+    s = 1; payload.writeUIntLE(params.ownAddressType,       o, s); o += s;
+    s = 1; payload.writeUIntLE(params.scanningFilterPolicy, o, s); o += s;
+    s = 1; payload.writeUIntLE(phys.bitmask,                o, s); o += s;
+
+    if (params.scanningPhy.Phy1M) {
+      s = 1; payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, s); o += s;
+    }
+    if (params.scanningPhy.PhyCoded) {
+      s = 1; payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, s); o += s;
+    }
+    if (params.scanningPhy.Phy1M) {
+      const interval = this.msToHciValue(params.scanningPhy.Phy1M.intervalMs);
+      s = 2; payload.writeUIntLE(interval, o, s); o += s;
+    }
+    if (params.scanningPhy.PhyCoded) {
+      const interval = this.msToHciValue(params.scanningPhy.PhyCoded.intervalMs);
+      s = 2; payload.writeUIntLE(interval, o, s); o += s;
+    }
+    if (params.scanningPhy.Phy1M) {
+      const window = this.msToHciValue(params.scanningPhy.Phy1M.windowMs);
+      s = 2; payload.writeUIntLE(window, o, s); o += s;
+    }
+    if (params.scanningPhy.PhyCoded) {
+      const window = this.msToHciValue(params.scanningPhy.PhyCoded.windowMs);
+      s = 2; payload.writeUIntLE(window, o, s); o += s;
+    }
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetExtendedScanParameters,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetExtendedScanEnable(params: {
+    enable: boolean,
+    filterDuplicates: LeScanFilterDuplicates,
+    duration?: number,
+    period?: number,
+  }): Promise<void> {
+    const payload = Buffer.alloc(1+1+2+2);
+
+    let o = 0, s = 0;
+    s = 1; payload.writeUIntLE(params.enable ? 1 : 0,   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.filterDuplicates, o, s); o += s;
+    s = 2; payload.writeUIntLE(params.duration ?? 0,    o, s); o += s;
+    s = 2; payload.writeUIntLE(params.period   ?? 0,    o, s); o += s;
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetExtendedScanEnable,
+      }),
+      params: payload,
+    });
+  }
+
+  private msToHciValue(ms: number): number {
+    return Math.round(ms / 0.625);
+  }
+  private hciValueToMs(val: number): number {
+    return val * 0.625;
+  }
+
   private buildBitfield(bits: number[]): number {
     let bitfield = 0;
     for (const bit of bits) {
@@ -510,7 +615,7 @@ export default class Hci extends EventEmitter {
     });
   }
 
-  private makeHciError(code: number): HciError {
+  private makeHciError(code: HciErrorCode): HciError {
     return new HciError(code);
   }
 

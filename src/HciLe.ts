@@ -158,15 +158,58 @@ export enum LeSecondaryAdvertisingPhy {
 }
 
 export enum LeAdvertisingDataOperation {
-  fragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  fragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  fragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
-  complete              = 0x03, // Complete extended advertising data
-  unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
+  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+  Complete              = 0x03, // Complete extended advertising data
+  Unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
 }
 
 export enum LeScanResponseDataOperation {
-  fragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  fragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  fragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+}
+
+export enum ScanningFilterPolicy {
+  // Accept all advertising and scan response PDUs except directed advertising
+  // PDUs not addressed to this device
+  All = 0x00,
+
+  // Accept only advertising and scan response PDUs from devices where
+  // the advertiser’s address is in the White List. Directed advertising PDUs
+  // which are not addressed to this device shall be ignored.
+  FromWhiteList = 0x01,
+
+  // Accept all advertising and scan response PDUs except directed advertising
+  // PDUs where the identity address corresponding to TargetA does
+  // not address this device.
+  // Note: Directed advertising PDUs where the TargetA is a resolvable private
+  // address that cannot be resolved are also accepted.
+  AllExceptDirectedAdvertisingPackets = 0x02,
+
+  // Accept all advertising and scan response PDUs except:
+  // • advertising and scan response PDUs where the advertiser’s identity
+  // address is not in the White List; and
+  // • directed advertising PDUs where the identity address corresponding
+  // to TargetA does not address this device.
+  // Note: Directed advertising PDUs where TargetA is a resolvable private
+  // address that cannot be resolved are also accepted.
+  AllExceptPacketFromWhiteListAndDirectedAdvertising = 0x03,
+}
+
+export enum LeScanningPhy {
+  Phy1M    = 0x00, // Scan advertisements on the LE 1M PHY
+  PhyCoded = 0x02, // Scan advertisements on the LE Coded PHY
+}
+
+export enum LeScanType {
+  Passive = 0x00, // Passive Scanning. No scan request PDUs shall be sent.
+  Active  = 0x01, // Active Scanning. Scan request PDUs may be sent.
+}
+
+export enum LeScanFilterDuplicates {
+  Disabled = 0x00, // Duplicate filtering disabled
+  Enabled  = 0x01, // Duplicate filtering enabled
+  Reset    = 0x02, // Duplicate filtering enabled, reset for each scan period
 }

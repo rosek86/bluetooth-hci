@@ -80,8 +80,8 @@ export enum HicOcfLinkPolicyCommands {
 }
 
 export enum HciOcfControlAndBasebandCommands {
-  SetEventMask                                        = 0x0001,
-  Reset                                               = 0x0003,
+  SetEventMask                                        = 0x0001, // *
+  Reset                                               = 0x0003, // *
   SetEventFilter                                      = 0x0005,
   Flush                                               = 0x0008,
   ReadPinType                                         = 0x0009,
@@ -147,7 +147,7 @@ export enum HciOcfControlAndBasebandCommands {
   EnhancedFlush                                       = 0x005F,
   ReadLogicalLinkAcceptTimeout                        = 0x0061,
   WriteLogicalLinkAcceptTimeout                       = 0x0062,
-  SetEventMaskPage2                                   = 0x0063,
+  SetEventMaskPage2                                   = 0x0063, // *
   ReadLocationData                                    = 0x0064,
   WriteLocationData                                   = 0x0065,
   ReadFlowControlMode                                 = 0x0066,
@@ -183,12 +183,12 @@ export enum HciOcfControlAndBasebandCommands {
 }
 
 export enum HciOcfInformationParameters {
-  ReadLocalVersionInformation                         = 0x0001,
-  ReadLocalSupportedCommands                          = 0x0002,
-  ReadLocalSupportedFeatures                          = 0x0003,
+  ReadLocalVersionInformation                         = 0x0001, // *
+  ReadLocalSupportedCommands                          = 0x0002, // *
+  ReadLocalSupportedFeatures                          = 0x0003, // *
   ReadLocalExtendedFeatures                           = 0x0004,
   ReadBufferSize                                      = 0x0005,
-  ReadBdAddr                                          = 0x0009,
+  ReadBdAddr                                          = 0x0009, // *
   ReadDataBlockSize                                   = 0x000A,
   ReadLocalSupportedCodecsV1                          = 0x000B,
   ReadLocalSupportedCodecsV2                          = 0x000D,
@@ -224,11 +224,11 @@ export enum HciOcfTestingCommands {
 }
 
 export enum HciOcfLeControllerCommands {
-  SetEventMask                                        = 0x0001, // LE Set Event Mask
-  ReadBufferSizeV1                                    = 0x0002, // LE Read Buffer Size
+  SetEventMask                                        = 0x0001, // * LE Set Event Mask
+  ReadBufferSizeV1                                    = 0x0002, // * LE Read Buffer Size
   ReadBufferSizeV2                                    = 0x0060, // LE Read Buffer Size
-  ReadLocalSupportedFeatures                          = 0x0003, // LE Read Local Supported Features
-  SetRandomAddress                                    = 0x0005, // LE Set Random Address
+  ReadLocalSupportedFeatures                          = 0x0003, // * LE Read Local Supported Features
+  SetRandomAddress                                    = 0x0005, // * LE Set Random Address
   SetAdvertisingParameters                            = 0x0006, // LE Set Advertising Parameters
   ReadAdvertisingPhysicalChannelTxPower               = 0x0007, // LE Read Advertising Physical Channel Tx Power
   SetAdvertisingData                                  = 0x0008, // LE Set Advertising Data
@@ -238,8 +238,8 @@ export enum HciOcfLeControllerCommands {
   SetScanEnable                                       = 0x000C, // LE Set Scan Enable
   CreateConnection                                    = 0x000D, // LE Create Connection
   CreateConnectionCancel                              = 0x000E, // LE Create Connection Cancel
-  ReadWhiteListSize                                   = 0x000F, // LE Read White List Size
-  ClearWhiteList                                      = 0x0010, // LE Clear White List
+  ReadWhiteListSize                                   = 0x000F, // * LE Read White List Size
+  ClearWhiteList                                      = 0x0010, // * LE Clear White List
   AddDeviceToWhiteList                                = 0x0011, // LE Add Device To White List
   RemoveDeviceFromWhiteList                           = 0x0012, // LE Remove Device From White List
   ConnectionUpdate                                    = 0x0013, // LE Connection Update
@@ -251,7 +251,7 @@ export enum HciOcfLeControllerCommands {
   EnableEncryption                                    = 0x0019, // LE Enable Encryption
   LongTermKeyRequestReply                             = 0x001A, // LE Long Term Key Request Reply
   LongTermKeyRequestNegativeReply                     = 0x001B, // LE Long Term Key Request Negative Reply
-  ReadSupportedStates                                 = 0x001C, // LE Read Supported States
+  ReadSupportedStates                                 = 0x001C, // * LE Read Supported States
   ReceiverTestV1                                      = 0x001D, // LE Receiver Test
   ReceiverTestV2                                      = 0x0033, // LE Receiver Test
   ReceiverTestV3                                      = 0x004F, // LE Receiver Test
@@ -263,36 +263,36 @@ export enum HciOcfLeControllerCommands {
   RemoteConnectionParameterRequestReply               = 0x0020, // LE Remote Connection Parameter Request Reply
   RemoteConnectionParameterRequestNegativeReply       = 0x0021, // LE Remote Connection Parameter Request Negative Reply
   SetDataLength                                       = 0x0022, // LE Set Data Length
-  ReadSuggestedDefaultDataLength                      = 0x0023, // LE Read Suggested Default Data Length
-  WriteSuggestedDefaultDataLength                     = 0x0024, // LE Write Suggested Default Data Length
+  ReadSuggestedDefaultDataLength                      = 0x0023, // * LE Read Suggested Default Data Length
+  WriteSuggestedDefaultDataLength                     = 0x0024, // * LE Write Suggested Default Data Length
   ReadLocalP256PublicKey                              = 0x0025, // LE Read Local P-256 Public Key
   GenerateDhKeyV1                                     = 0x0026, // LE Generate DHKey
   GenerateDhKeyV2                                     = 0x005E, // LE Generate DHKey
   AddDeviceToResolvingList                            = 0x0027, // LE Add Device To Resolving List
   RemoveDeviceFromResolvingList                       = 0x0028, // LE Remove Device From Resolving List
-  ClearResolvingList                                  = 0x0029, // LE Clear Resolving List
-  ReadResolvingListSize                               = 0x002A, // LE Read Resolving List Size
+  ClearResolvingList                                  = 0x0029, // * LE Clear Resolving List
+  ReadResolvingListSize                               = 0x002A, // * LE Read Resolving List Size
   ReadPeerResolvableAddress                           = 0x002B, // LE Read Peer Resolvable Address
   ReadLocalResolvableAddress                          = 0x002C, // LE Read Local Resolvable Address
   SetAddressResolutionEnable                          = 0x002D, // LE Set Address Resolution Enable
   SetResolvablePrivateAddressTimeout                  = 0x002E, // LE Set Resolvable Private Address Timeout
-  ReadMaximumDataLength                               = 0x002F, // LE Read Maximum Data Length
+  ReadMaximumDataLength                               = 0x002F, // * LE Read Maximum Data Length
   ReadPhy                                             = 0x0030, // LE Read PHY
-  SetDefaultPhy                                       = 0x0031, // LE Set Default PHY
+  SetDefaultPhy                                       = 0x0031, // * LE Set Default PHY
   SetPhy                                              = 0x0032, // LE Set PHY
-  SetAdvertisingSetRandomAddress                      = 0x0035, // LE Set Advertising Set Random Address
-  SetExtendedAdvertisingParameters                    = 0x0036, // LE Set Extended Advertising Parameters
-  SetExtendedAdvertisingData                          = 0x0037, // LE Set Extended Advertising Data
-  SetExtendedScanResponseData                         = 0x0038, // LE Set Extended Scan Response Data
+  SetAdvertisingSetRandomAddress                      = 0x0035, // * LE Set Advertising Set Random Address
+  SetExtendedAdvertisingParameters                    = 0x0036, // * LE Set Extended Advertising Parameters
+  SetExtendedAdvertisingData                          = 0x0037, // * LE Set Extended Advertising Data
+  SetExtendedScanResponseData                         = 0x0038, // * LE Set Extended Scan Response Data
   SetExtendedAdvertisingEnable                        = 0x0039, // LE Set Extended Advertising Enable
   ReadMaximumAdvertisingDataLength                    = 0x003A, // LE Read Maximum Advertising Data Length
-  ReadNumberOfSupportedAdvertisingSets                = 0x003B, // LE Read Number of Supported Advertising Sets
+  ReadNumberOfSupportedAdvertisingSets                = 0x003B, // * LE Read Number of Supported Advertising Sets
   RemoveAdvertisingSet                                = 0x003C, // LE Remove Advertising Set
   ClearAdvertisingSets                                = 0x003D, // LE Clear Advertising Sets
   SetPeriodicAdvertisingParameters                    = 0x003E, // LE Set Periodic Advertising Parameters
   SetPeriodicAdvertisingData                          = 0x003F, // LE Set Periodic Advertising Data
   SetPeriodicAdvertisingEnable                        = 0x0040, // LE Set Periodic Advertising Enable
-  SetExtendedScanParameters                           = 0x0041, // LE Set Extended Scan Parameters
+  SetExtendedScanParameters                           = 0x0041, // * LE Set Extended Scan Parameters
   SetExtendedScanEnable                               = 0x0042, // LE Set Extended Scan Enable
   ExtendedCreateConnection                            = 0x0043, // LE Extended Create Connection
   PeriodicAdvertisingCreateSync                       = 0x0044, // LE Periodic Advertising Create Sync

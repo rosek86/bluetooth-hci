@@ -1,5 +1,10 @@
 import Hci from './Hci';
-import { LeAdvertisingChannelMap, LeAdvertisingEventProperties, LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy } from './HciLe';
+import {
+  LeAdvertisingChannelMap, LeAdvertisingEventProperties,
+  LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy,
+  LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, ScanningFilterPolicy,
+  LeScanType,
+  LeScanFilterDuplicates } from './HciLe';
 
 let sendEvent: ((_: Buffer) => void) | null = null;
 let txBuffer: Buffer | null = null;
@@ -128,8 +133,30 @@ function checkRequest(req: string): boolean {
     });
     console.log(`Compare: ${checkRequest('35200700a9d386c32914')}`);
 
-    // 3820230003010d0c087261737062657272797000000000000000000000000000000000000000
-    // 0e0401382012
+    prepareResult('0e0401052000');
+    await hci.leSetRandomAddress(0x153c7f2c4b82);
+    console.log(`Compare: ${checkRequest('052006824b2c7f3c15')}`);
+
+    prepareResult('0e0401412000');
+    await hci.leSetExtendedScanParameters({
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      scanningFilterPolicy: ScanningFilterPolicy.All,
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 11.25,
+          windowMs: 11.25
+        }
+      }
+    });
+    console.log(`Compare: ${checkRequest('4120080100010112001200')}`);
+
+    prepareResult('0e0401422000');
+    await hci.leSetExtendedScanEnable({
+      enable: true,
+      filterDuplicates: LeScanFilterDuplicates.Enabled,
+    });
+    console.log(`Compare: ${checkRequest('422006010100000000')}`);
 
     console.log('done');
   } catch (err) {
