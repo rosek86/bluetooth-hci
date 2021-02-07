@@ -5,7 +5,7 @@ import Debug from "debug";
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
 import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
-import { LeSupportedStates } from './HciLe';
+import { LeAdvertisingChannelMap, LeAdvertisingEventProperties, LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeSupportedStates } from './HciLe';
 
 const debug = Debug('nble-hci');
 
@@ -175,6 +175,18 @@ export default class Hci extends EventEmitter {
     });
   }
 
+  public async setEventMaskPage2(): Promise<void> {
+    // TODO pass event mask as argument
+    const mask = Buffer.from('0000800000000000', 'hex');
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.ControlAndBasebandCommands,
+        ocf: HciOcfControlAndBasebandCommands.SetEventMaskPage2,
+      }),
+      params: mask
+    });
+  }
+
   public async leSetEventMask(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('5f1e0a0000000000', 'hex');
@@ -251,6 +263,152 @@ export default class Hci extends EventEmitter {
       supportedMaxRxOctets: params.readUInt16LE(4),
       supportedMaxRxTime:   params.readUInt16LE(6),
     };
+  }
+
+  public async leReadSuggestedDefaultDataLength(): Promise<{
+    suggestedMaxTxOctets: number, suggestedMaxTxTime: number,
+  }> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength,
+      }),
+    });
+    if (result.returnParameters.length < 4) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const params = result.returnParameters;
+    return {
+      suggestedMaxTxOctets: params.readUInt16LE(0),
+      suggestedMaxTxTime:   params.readUInt16LE(2)
+    };
+  }
+
+  public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets,
+      }),
+    });
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt8(0);
+  }
+
+  public async leWriteSuggestedDefaultDataLength(params: {
+    suggestedMaxTxOctets: number,
+    suggestedMaxTxTime: number,
+  }): Promise<void> {
+    const payload = Buffer.alloc(4);
+    payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
+    payload.writeUInt16LE(params.suggestedMaxTxTime, 2);
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetDefaultPhy(params: {
+    txPhys?: LePhy, rxPhys?: LePhy,
+  }): Promise<void> {
+    let allPhys = 0, txPhys = 0, rxPhys = 0;
+
+    // Is there ps reference for tx/rx phy?
+    if (params.txPhys === undefined) {
+      allPhys |= (1 << 0);
+    } else {
+      txPhys = 1 << params.txPhys;
+    }
+    if (params.rxPhys === undefined) {
+      allPhys |= (1 << 1);
+    } else {
+      rxPhys = 1 << params.rxPhys;
+    }
+
+    const payload = Buffer.alloc(3);
+    payload.writeUInt8(allPhys, 0);
+    payload.writeUInt8(txPhys,  1);
+    payload.writeUInt8(rxPhys,  2);
+
+    await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetDefaultPhy,
+      }),
+      params: payload,
+    });
+  }
+
+  public async leSetExtendedAdvertisingParameters(params: {
+    advertisingHandle: number,
+    advertisingEventProperties: LeAdvertisingEventProperties[],
+    primaryAdvertisingIntervalMinMs: number,
+    primaryAdvertisingIntervalMaxMs: number,
+    primaryAdvertisingChannelMap: LeAdvertisingChannelMap[],
+    ownAddressType: LeOwnAddressType,
+    peerAddressType: LePeerAddressType,
+    peerAddress: number,
+    advertisingFilterPolicy: LeAdvertisingFilterPolicy,
+    advertisingTxPower?: number,
+    primaryAdvertisingPhy: LePrimaryAdvertisingPhy,
+    secondaryAdvertisingMaxSkip: number,
+    secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy,
+    advertisingSid: number,
+    scanRequestNotificationEnable: boolean,
+  }): Promise<number> {
+
+    const advertisingEventProperties    = this.buildBitfield(params.advertisingEventProperties);
+    const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
+    const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
+    const primaryAdvertisingChannelMap  = this.buildBitfield(params.primaryAdvertisingChannelMap);
+    const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
+    const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
+
+    let o = 0, s = 0;
+    const payload = Buffer.alloc(25);
+    s = 1; payload.writeUIntLE(params.advertisingHandle,             o, s); o += s;
+    s = 2; payload.writeUIntLE(advertisingEventProperties,           o, s); o += s;
+    s = 3; payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, s); o += s;
+    s = 3; payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, s); o += s;
+    s = 1; payload.writeUIntLE(primaryAdvertisingChannelMap,         o, s); o += s;
+    s = 1; payload.writeUIntLE(params.ownAddressType,                o, s); o += s;
+    s = 1; payload.writeUIntLE(params.peerAddressType,               o, s); o += s;
+    s = 6; payload.writeUIntLE(params.peerAddress,                   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.advertisingFilterPolicy,       o, s); o += s;
+    s = 1; payload.writeIntLE (advertisingTxPower,                   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.primaryAdvertisingPhy,         o, s); o += s;
+    s = 1; payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, s); o += s;
+    s = 1; payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, s); o += s;
+    s = 1; payload.writeUIntLE(params.advertisingSid,                o, s); o += s;
+    s = 1; payload.writeUIntLE(scanRequestNotificationEnable,        o, s); o += s;
+
+    const result = await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands,
+        ocf: HciOcfLeControllerCommands.SetExtendedAdvertisingParameters,
+      }),
+      params: payload,
+    });
+
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+
+    const selectedTxPower = result.returnParameters.readInt8(0);
+    return selectedTxPower;
+  }
+
+  private buildBitfield(bits: number[]): number {
+    let bitfield = 0;
+    for (const bit of bits) {
+      bitfield |= 1 << bit;
+    }
+    return bitfield;
   }
 
   private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {

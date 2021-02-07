@@ -217,7 +217,7 @@ export enum HciOcfTestingCommands {
   WriteLoopbackMode                                   = 0x0002, // Write Loopback Mode
   EnableDeviceUnderTestMode                           = 0x0003, // Enable Device Under Test Mode
   WriteSimplePairingDebugMode                         = 0x0004, // Write Simple Pairing Debug Mode
-  EnableśAmpReceiverReports                           = 0x0007, // Enable AMP Receiver Reports
+  EnableAmpReceiverReports                            = 0x0007, // Enable AMP Receiver Reports
   AmpTestEnd                                          = 0x0008, // AMP Test End
   AmpTest                                             = 0x0009, // AMP Test
   WriteSecureConnectionsTestMode                      = 0x000A, // Write Secure Connections Test Mode

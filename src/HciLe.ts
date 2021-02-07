@@ -94,3 +94,65 @@ export class LeSupportedStates {
     return strStates;
   }
 }
+
+export enum LePhy {
+  Phy1M    = 0,
+  Phy2M    = 1,
+  PhyCoded = 2,
+}
+
+export enum LeAdvertisingEventProperties {
+  Connectable                      = 0, // Connectable advertising
+  Scannable                        = 1, // Scannable advertising
+  Directed                         = 2, // Directed advertising
+  HighDutyCycleDirectedConnectable = 3, // High Duty Cycle Directed Connectable advertising 
+                                        // (≤ 3.75 ms Advertising Interval)
+  UseLegacyPDUs                    = 4, // Use legacy advertising PDUs
+  AnonymousAdvertising             = 5, // Omit advertiser's address from all PDUs ("anonymous advertising")
+  IncludeTxPower                   = 6, // Include TxPower in the extended header of at least one advertising PDU
+}
+
+export enum LeAdvertisingChannelMap {
+  Channel37 = 0, // Channel 37 shall be used
+  Channel38 = 1, // Channel 38 shall be used
+  Channel39 = 2, // Channel 39 shall be used
+}
+
+export enum LeOwnAddressType {
+  PublicDeviceAddress,          // Public Device Address
+  RandomDeviceAddress,          // Random Device Address
+  UsePublicAddressIfNoMatching, // Controller generates the Resolvable Private Address based on the local
+                                // IRK from the resolving list. If the resolving list contains no matching
+                                // entry, use the public address.
+  UseRandomAddressIfNoMatching, // Controller generates the Resolvable Private Address based on the local
+                                // IRK from the resolving list. If the resolving list contains no matching
+                                // entry, use the random address from LE_Set_Advertising_Set_Random_
+                                // Address.
+}
+
+export enum LePeerAddressType {
+  PublicDeviceAddress, // Public Device Address or Public Identity Address
+  RandomDeviceAddress, // Random Device Address or Random (static) Identity Address
+}
+
+export enum LeAdvertisingFilterPolicy {
+  ProcessScanFromAllDevices,          // Process scan and connection requests from all devices (i.e., the White
+                                      // List is not in use)
+  ProcessConnectionRequest,           // Process connection requests from all devices and scan requests only
+                                      // from devices that are in the White List.
+  ProcesScanRequest,                  // Process scan requests from all devices and connection requests only
+                                      // from devices that are in the White List.
+  ProcessScanFromDevicesInWhiteList,  // Process scan and connection requests only from devices in the White
+                                      // List.
+}
+
+export enum LePrimaryAdvertisingPhy {
+  Phy1M    = 0x01, // Primary advertisement PHY is LE 1M
+  PhyCoded = 0x03, // Primary advertisement PHY is LE Coded
+}
+
+export enum LeSecondaryAdvertisingPhy {
+  Phy1M    = 0x01, // Secondary advertisement PHY is LE 1M
+  Phy2M    = 0x02, // Secondary advertisement PHY is LE 2M
+  PhyCoded = 0x03, // Secondary advertisement PHY is LE Coded
+}

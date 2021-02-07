@@ -1,11 +1,16 @@
 import Hci from './Hci';
+import { LeAdvertisingChannelMap, LeAdvertisingEventProperties, LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy } from './HciLe';
 
 let sendEvent: ((_: Buffer) => void) | null = null;
+let txBuffer: Buffer | null = null;
 
 (async () => {
   try {
     const hci = new Hci({
-      send: (data) => console.log(data.toString('hex')),
+      send: (data) => {
+        console.log(data.toString('hex'));
+        txBuffer = data;
+      },
       setEventHandler: (handler) => sendEvent = handler,
     });
 
@@ -62,6 +67,54 @@ let sendEvent: ((_: Buffer) => void) | null = null;
     setImmediate(() => sendEvent!(Buffer.from('0e0c012f2000fb00900afb00900a', 'hex')));
     const maxDataLength = await hci.leReadMaximumDataLength();
     console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
+
+    setImmediate(() => sendEvent!(Buffer.from('0e08012320001b004801', 'hex')));
+    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
+
+    setImmediate(() => sendEvent!(Buffer.from('0e05013b200001', 'hex')));
+    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+    console.log(`number of supported advertising sets: ${advSets}`);
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401630c00', 'hex')));
+    await hci.setEventMaskPage2();
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401242000', 'hex')));
+    await hci.leWriteSuggestedDefaultDataLength({
+      suggestedMaxTxOctets: 5,
+      suggestedMaxTxTime: 111,
+    });
+
+    setImmediate(() => sendEvent!(Buffer.from('0e0401312000', 'hex')));
+    await hci.leSetDefaultPhy({
+      txPhys: LePhy.PhyCoded,
+      rxPhys: LePhy.PhyCoded,
+    });
+
+    setImmediate(() => sendEvent!(Buffer.from('0e050136200000', 'hex')));
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters({
+      advertisingHandle: 0,
+      advertisingEventProperties: [LeAdvertisingEventProperties.UseLegacyPDUs],
+      primaryAdvertisingIntervalMinMs: 1280,
+      primaryAdvertisingIntervalMaxMs: 1280,
+      primaryAdvertisingChannelMap: [
+        LeAdvertisingChannelMap.Channel37,
+        LeAdvertisingChannelMap.Channel38,
+        LeAdvertisingChannelMap.Channel39,
+      ],
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      peerAddressType: LePeerAddressType.PublicDeviceAddress,
+      peerAddress: 0x000000000000,
+      advertisingFilterPolicy: LeAdvertisingFilterPolicy.ProcessScanFromAllDevices,
+      primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
+      secondaryAdvertisingMaxSkip: 0,
+      secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
+      advertisingSid: 0,
+      scanRequestNotificationEnable: false
+    });
+    const refBuffer = Buffer.from('362019001000000800000800070100000000000000007f0100010000', 'hex');
+    console.log('Compare: ', Buffer.compare(txBuffer!, refBuffer) === 0);
+    console.log('Selected Tx: ', selectedTxPower);
 
     console.log('done');
   } catch (err) {
