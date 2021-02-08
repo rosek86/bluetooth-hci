@@ -2,7 +2,7 @@ import Hci from './Hci';
 import {
   LeAdvertisingChannelMap, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy,
-  LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, ScanningFilterPolicy,
+  LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates } from './HciLe';
 
@@ -116,7 +116,7 @@ function checkRequest(req: string): boolean {
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
       peerAddress: 0x000000000000,
-      advertisingFilterPolicy: LeAdvertisingFilterPolicy.ProcessScanFromAllDevices,
+      advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
       secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
@@ -140,7 +140,7 @@ function checkRequest(req: string): boolean {
     prepareResult('0e0401412000');
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: ScanningFilterPolicy.All,
+      scanningFilterPolicy: LeScanningFilterPolicy.All,
       scanningPhy: {
         Phy1M: {
           type: LeScanType.Active,

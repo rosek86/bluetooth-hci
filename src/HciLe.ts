@@ -101,6 +101,19 @@ export enum LePhy {
   PhyCoded = 2,
 }
 
+export enum LeAdvertisingType {
+  // Connectable and scannable undirected advertising (ADV_IND) (default)
+  Undirected            = 0,
+  // Connectable high duty cycle directed advertising (ADV_DIRECT_IND, high duty cycle)
+  DirectedHighDutyCycle = 1,
+  // Scannable undirected advertising (ADV_SCAN_IND)
+  Scannable             = 2,
+  // Non connectable undirected advertising (ADV_NONCONN_IND)
+  NonConnectable        = 3,
+  // Connectable low duty cycle directed advertising (ADV_DIRECT_IND, low duty cycle)
+  DirectedLowDutyCycle  = 4,
+}
+
 export enum LeAdvertisingEventProperties {
   Connectable                      = 0, // Connectable advertising
   Scannable                        = 1, // Scannable advertising
@@ -136,14 +149,14 @@ export enum LePeerAddressType {
 }
 
 export enum LeAdvertisingFilterPolicy {
-  ProcessScanFromAllDevices,          // Process scan and connection requests from all devices (i.e., the White
-                                      // List is not in use)
-  ProcessConnectionRequest,           // Process connection requests from all devices and scan requests only
-                                      // from devices that are in the White List.
-  ProcesScanRequest,                  // Process scan requests from all devices and connection requests only
-                                      // from devices that are in the White List.
-  ProcessScanFromDevicesInWhiteList,  // Process scan and connection requests only from devices in the White
-                                      // List.
+  Any,                  // Process scan and connection requests from all devices (i.e., the White
+                        // List is not in use)
+  WhiteListConnect,     // Process connection requests from all devices and scan requests only
+                        // from devices that are in the White List.
+  WhiteListScan,        // Process scan requests from all devices and connection requests only
+                        // from devices that are in the White List.
+  WhiteListScanConnect, // Process scan and connection requests only from devices in the White
+                        // List.
 }
 
 export enum LePrimaryAdvertisingPhy {
@@ -171,7 +184,7 @@ export enum LeScanResponseDataOperation {
   FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
 }
 
-export enum ScanningFilterPolicy {
+export enum LeScanningFilterPolicy {
   // Accept all advertising and scan response PDUs except directed advertising
   // PDUs not addressed to this device
   All = 0x00,
