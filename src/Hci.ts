@@ -132,7 +132,7 @@ export default class Hci extends EventEmitter {
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMask,
       }),
-      params: mask
+      params: mask,
     });
   }
 
@@ -144,7 +144,7 @@ export default class Hci extends EventEmitter {
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMaskPage2,
       }),
-      params: mask
+      params: mask,
     });
   }
 
@@ -158,6 +158,7 @@ export default class Hci extends EventEmitter {
   public async leReadBufferSize() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
     const result = await this.sendLeCommand(ocf);
+
     const returnParameters = result.returnParameters;
     if (returnParameters.length < 3) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
@@ -171,6 +172,7 @@ export default class Hci extends EventEmitter {
   public async leReadBufferSizeV2() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV2;
     const result = await this.sendLeCommand(ocf);
+
     const returnParameters = result.returnParameters;
     if (returnParameters.length < 6) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
@@ -186,6 +188,7 @@ export default class Hci extends EventEmitter {
   public async leReadSupportedFeatures(): Promise<BigInt> {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
     const result = await this.sendLeCommand(ocf);
+
     if (result.returnParameters.length < (64/8)) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -194,8 +197,9 @@ export default class Hci extends EventEmitter {
   }
 
   public async leSetRandomAddress(randomAddress: number): Promise<void> {
-    const payload = Buffer.alloc(6);
+    const payload = Buffer.allocUnsafe(6);
     payload.writeUIntLE(randomAddress, 0, 6);
+
     const ocf = HciOcfLeControllerCommands.SetRandomAddress;
     await this.sendLeCommand(ocf, payload);
   }
@@ -203,6 +207,7 @@ export default class Hci extends EventEmitter {
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
     const result = await this.sendLeCommand(ocf);
+
     if (result.returnParameters.length < 1) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
@@ -216,10 +221,12 @@ export default class Hci extends EventEmitter {
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
     const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
     const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < (64/8)) {
+
+    const params = result.returnParameters;
+    if (params.length < (64/8)) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
-    const bitmask = result.returnParameters.readBigUInt64LE(0);
+    const bitmask = params.readBigUInt64LE(0);
     return LeSupportedStates.fromBitmask(bitmask);
   }
 
@@ -228,10 +235,11 @@ export default class Hci extends EventEmitter {
   }> {
     const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
     const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < 4) {
+
+    const params = result.returnParameters;
+    if (params.length < 4) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
-    const params = result.returnParameters;
     return {
       suggestedMaxTxOctets: params.readUInt16LE(0),
       suggestedMaxTxTime:   params.readUInt16LE(2)
@@ -242,9 +250,9 @@ export default class Hci extends EventEmitter {
     suggestedMaxTxOctets: number,
     suggestedMaxTxTime: number,
   }): Promise<void> {
-    const payload = Buffer.alloc(4);
+    const payload = Buffer.allocUnsafe(4);
     payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
-    payload.writeUInt16LE(params.suggestedMaxTxTime, 2);
+    payload.writeUInt16LE(params.suggestedMaxTxTime,   2);
     const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
     await this.sendLeCommand(ocf, payload);
   }
@@ -268,10 +276,11 @@ export default class Hci extends EventEmitter {
   }> {
     const ocf = HciOcfLeControllerCommands.ReadMaximumDataLength;
     const result = await this.sendLeCommand(ocf);
-    if (result.returnParameters.length < 8) {
+    const params = result.returnParameters;
+
+    if (params.length < 8) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
-    const params = result.returnParameters;
     return {
       supportedMaxTxOctets: params.readUInt16LE(0),
       supportedMaxTxTime:   params.readUInt16LE(2),
@@ -287,12 +296,14 @@ export default class Hci extends EventEmitter {
   }> {
     const payload = Buffer.alloc(2);
     payload.writeUInt16LE(connectionHandle, 0);
+
     const ocf = HciOcfLeControllerCommands.ReadPhy;
     const result = await this.sendLeCommand(ocf, payload);
-    if (result.returnParameters.length < 4) {
+    const params = result.returnParameters;
+
+    if (params.length < 4) {
       throw this.makeError(HciParserError.InvalidPayloadSize);
     }
-    const params = result.returnParameters;
     return {
       connectionHandle: params.readUInt16LE(0),
       txPhy:            params.readUInt8(2),
@@ -317,10 +328,12 @@ export default class Hci extends EventEmitter {
       rxPhys = 1 << params.rxPhys;
     }
 
-    const payload = Buffer.alloc(3);
-    payload.writeUInt8(allPhys, 0);
-    payload.writeUInt8(txPhys,  1);
-    payload.writeUInt8(rxPhys,  2);
+    const payload = Buffer.allocUnsafe(3);
+
+    let o = 0;
+    o = payload.writeUInt8(allPhys, o);
+    o = payload.writeUInt8(txPhys,  o);
+    o = payload.writeUInt8(rxPhys,  o);
 
     const ocf = HciOcfLeControllerCommands.SetDefaultPhy;
     await this.sendLeCommand(ocf, payload);
@@ -330,10 +343,11 @@ export default class Hci extends EventEmitter {
     advertisingHandle: number,
     advertisingRandomAddress: number,
   }): Promise<void> {
-    let o = 0, s = 0;
-    const payload = Buffer.alloc(7);
-    s = 1; payload.writeUIntLE(params.advertisingHandle,        o, s); o += s;
-    s = 6; payload.writeUIntLE(params.advertisingRandomAddress, o, s); o += s;
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.advertisingHandle,        o, 1);
+    o = payload.writeUIntLE(params.advertisingRandomAddress, o, 6);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
     await this.sendLeCommand(ocf, payload);
@@ -364,23 +378,24 @@ export default class Hci extends EventEmitter {
     const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
     const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
 
-    let o = 0, s = 0;
-    const payload = Buffer.alloc(25);
-    s = 1; payload.writeUIntLE(params.advertisingHandle,             o, s); o += s;
-    s = 2; payload.writeUIntLE(advertisingEventProperties,           o, s); o += s;
-    s = 3; payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, s); o += s;
-    s = 3; payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, s); o += s;
-    s = 1; payload.writeUIntLE(primaryAdvertisingChannelMap,         o, s); o += s;
-    s = 1; payload.writeUIntLE(params.ownAddressType,                o, s); o += s;
-    s = 1; payload.writeUIntLE(params.peerAddressType,               o, s); o += s;
-    s = 6; payload.writeUIntLE(params.peerAddress,                   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.advertisingFilterPolicy,       o, s); o += s;
-    s = 1; payload.writeIntLE (advertisingTxPower,                   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.primaryAdvertisingPhy,         o, s); o += s;
-    s = 1; payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, s); o += s;
-    s = 1; payload.writeUIntLE(params.advertisingSid,                o, s); o += s;
-    s = 1; payload.writeUIntLE(scanRequestNotificationEnable,        o, s); o += s;
+    const payload = Buffer.allocUnsafe(25);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.advertisingHandle,             o, 1);
+    o = payload.writeUIntLE(advertisingEventProperties,           o, 2);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingChannelMap,         o, 1);
+    o = payload.writeUIntLE(params.ownAddressType,                o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
+    o = payload.writeUIntLE(params.peerAddress,                   o, 6);
+    o = payload.writeUIntLE(params.advertisingFilterPolicy,       o, 1);
+    o = payload.writeIntLE (advertisingTxPower,                   o, 1);
+    o = payload.writeUIntLE(params.primaryAdvertisingPhy,         o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, 1);
+    o = payload.writeUIntLE(params.advertisingSid,                o, 1);
+    o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
     const result = await this.sendLeCommand(ocf, payload);
@@ -399,12 +414,13 @@ export default class Hci extends EventEmitter {
     fragment: boolean,
     data: Buffer,
   }): Promise<void> {
-    let o = 0, s = 0;
-    const payload = Buffer.alloc(4 + params.data.length);
-    s = 1; payload.writeUIntLE(params.advertisingHandle,  o, s); o += s;
-    s = 1; payload.writeUIntLE(params.operation,          o, s); o += s;
-    s = 1; payload.writeUIntLE(params.fragment ? 0 : 1,   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
+    const payload = Buffer.allocUnsafe(4 + params.data.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.advertisingHandle,  o, 1);
+    o = payload.writeUIntLE(params.operation,          o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1,   o, 1);
+    o = payload.writeUIntLE(params.data.length,        o, 1);
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingData;
@@ -417,12 +433,13 @@ export default class Hci extends EventEmitter {
     fragment: boolean,
     data: Buffer,
   }): Promise<void> {
-    let o = 0, s = 0;
-    const payload = Buffer.alloc(4 + params.data.length);
-    s = 1; payload.writeUIntLE(params.advertisingHandle,  o, s); o += s;
-    s = 1; payload.writeUIntLE(params.operation,          o, s); o += s;
-    s = 1; payload.writeUIntLE(params.fragment ? 0 : 1,   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.data.length,        o, s); o += s;
+    const payload = Buffer.allocUnsafe(4 + params.data.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.advertisingHandle,  o, 1);
+    o = payload.writeUIntLE(params.operation,          o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1,   o, 1);
+    o = payload.writeUIntLE(params.data.length,        o, 1);
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanResponseData;
@@ -461,34 +478,34 @@ export default class Hci extends EventEmitter {
       throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.alloc(3 + phys.count * (1+2+2));
+    const payload = Buffer.allocUnsafe(3 + phys.count * (1+2+2));
 
-    let o = 0, s = 0;
-    s = 1; payload.writeUIntLE(params.ownAddressType,       o, s); o += s;
-    s = 1; payload.writeUIntLE(params.scanningFilterPolicy, o, s); o += s;
-    s = 1; payload.writeUIntLE(phys.bitmask,                o, s); o += s;
+    let o = 0;
+    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
+    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
+    o = payload.writeUIntLE(phys.bitmask,                o, 1);
 
     if (params.scanningPhy.Phy1M) {
-      s = 1; payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, s); o += s;
+      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
     }
     if (params.scanningPhy.PhyCoded) {
-      s = 1; payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, s); o += s;
+      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
     }
     if (params.scanningPhy.Phy1M) {
       const interval = this.msToHciValue(params.scanningPhy.Phy1M.intervalMs);
-      s = 2; payload.writeUIntLE(interval, o, s); o += s;
+      o = payload.writeUIntLE(interval, o, 2);
     }
     if (params.scanningPhy.PhyCoded) {
       const interval = this.msToHciValue(params.scanningPhy.PhyCoded.intervalMs);
-      s = 2; payload.writeUIntLE(interval, o, s); o += s;
+      o = payload.writeUIntLE(interval, o, 2);
     }
     if (params.scanningPhy.Phy1M) {
       const window = this.msToHciValue(params.scanningPhy.Phy1M.windowMs);
-      s = 2; payload.writeUIntLE(window, o, s); o += s;
+      o = payload.writeUIntLE(window, o, 2);
     }
     if (params.scanningPhy.PhyCoded) {
       const window = this.msToHciValue(params.scanningPhy.PhyCoded.windowMs);
-      s = 2; payload.writeUIntLE(window, o, s); o += s;
+      o = payload.writeUIntLE(window, o, 2);
     }
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanParameters;
@@ -504,13 +521,13 @@ export default class Hci extends EventEmitter {
     const duration = Math.round((params.durationMs ?? 0) / 10);
     const period = Math.round((params.periodSec ?? 0) / 1.28);
 
-    const payload = Buffer.alloc(1+1+2+2);
+    const payload = Buffer.allocUnsafe(1+1+2+2);
 
-    let o = 0, s = 0;
-    s = 1; payload.writeUIntLE(params.enable ? 1 : 0,   o, s); o += s;
-    s = 1; payload.writeUIntLE(params.filterDuplicates, o, s); o += s;
-    s = 2; payload.writeUIntLE(duration,                o, s); o += s;
-    s = 2; payload.writeUIntLE(period,                  o, s); o += s;
+    let o = 0;
+    o = payload.writeUIntLE(params.enable ? 1 : 0,   o, 1);
+    o = payload.writeUIntLE(params.filterDuplicates, o, 1);
+    o = payload.writeUIntLE(duration,                o, 2);
+    o = payload.writeUIntLE(period,                  o, 2);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanEnable;
     await this.sendLeCommand(ocf, payload);
