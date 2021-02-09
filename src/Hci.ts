@@ -9,7 +9,7 @@ import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
-  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType
+  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType
 } from './HciLe';
 
 const debug = Debug('nble-hci');
@@ -355,6 +355,102 @@ export default class Hci extends EventEmitter {
   public async leCreateConnectionCancel(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.CreateConnectionCancel;
     await this.sendLeCommand(ocf);
+  }
+
+  public async leAddDeviceToWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
+    const payload = Buffer.allocUnsafe(1+6);
+    payload.writeUIntLE(addressType,  0, 1);
+    payload.writeUIntLE(address ?? 0, 1, 6);
+    const ocf = HciOcfLeControllerCommands.AddDeviceToWhiteList;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leRemoveDeviceFromWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
+    const payload = Buffer.allocUnsafe(1+6);
+    payload.writeUIntLE(addressType,  0, 1);
+    payload.writeUIntLE(address ?? 0, 1, 6);
+    const ocf = HciOcfLeControllerCommands.RemoveDeviceFromWhiteList;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leConnectionUpdate(params: {
+    connectionHandle: number,
+    connectionIntervalMinMs: number,
+    connectionIntervalMaxMs: number,
+    connectionLatency: number,
+    supervisionTimeoutMs: number,
+    minCeLengthMs: number,
+    maxCeLengthMs: number,
+  }): Promise<void> {
+    const payload = Buffer.allocUnsafe(2+2+2+2+2+2+2);
+
+    const connIntervalMin    = this.msToHciValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = this.msToHciValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = this.msToHciValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = this.msToHciValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = this.msToHciValue(params.maxCeLengthMs,           0.625);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(connIntervalMin,              o, 2);
+    o = payload.writeUIntLE(connIntervalMax,              o, 2);
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
+    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
+    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+
+    const ocf = HciOcfLeControllerCommands.ConnectionUpdate;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leSetHostChannelClassification(channelMap: number): Promise<void> {
+    const payload = Buffer.allocUnsafe(5);
+    payload.writeUIntLE(channelMap, 0, 5);
+    const ocf = HciOcfLeControllerCommands.SetHostChannelClassification;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leReadChannelMap(connHandle: number): Promise<{ connHandle: number, channelMap: number }> {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUIntLE(connHandle, 0, 2);
+    const ocf = HciOcfLeControllerCommands.ReadChannelMap;
+    const result = await this.sendLeCommand(ocf, payload);
+
+    const params = result.returnParameters;
+    if (params.length < 7) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      connHandle: params.readUIntLE(0, 2),
+      channelMap: params.readUIntLE(2, 5),
+    };
+  }
+
+  public async leReadRemoteFeatures(connHandle: number): Promise<void> {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUIntLE(connHandle, 0, 2);
+    const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leEncrypt(key: Buffer, plaintextData: Buffer): Promise<Buffer> {
+    if (key.length !== 16 || plaintextData.length !== 16) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(32);
+    key.copy(payload, 0);
+    plaintextData.copy(payload, 16);
+
+    const ocf = HciOcfLeControllerCommands.Encrypt;
+    const result = await this.sendLeCommand(ocf, payload);
+    return result.returnParameters;
+  }
+
+  public async leRand(): Promise<Buffer> {
+    const ocf = HciOcfLeControllerCommands.Rand;
+    const result = await this.sendLeCommand(ocf);
+    return result.returnParameters;
   }
 
   public async leReadWhiteListSize(): Promise<number> {

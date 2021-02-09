@@ -148,6 +148,12 @@ export enum LePeerAddressType {
   RandomDeviceAddress, // Random Device Address or Random (static) Identity Address
 }
 
+export enum LeWhiteListAddressType {
+  Public,
+  Random,
+  Anonymous,
+}
+
 export enum LeAdvertisingFilterPolicy {
   Any,                  // Process scan and connection requests from all devices (i.e., the White
                         // List is not in use)
