@@ -279,11 +279,76 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf, payload);
   }
 
+  public async leSetScanParameters(params: {
+    type: LeScanType,
+    intervalMs: number,
+    windowMs: number,
+    ownAddressType: LeOwnAddressType,
+    scanningFilterPolicy: LeScanningFilterPolicy,
+  }): Promise<void> {
+    const payload = Buffer.allocUnsafe(1+2+2+1+1);
+
+    const interval = this.msToHciValue(params.intervalMs);
+    const window   = this.msToHciValue(params.windowMs);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.type,                 o, 1);
+    o = payload.writeUIntLE(interval,                    o, 2);
+    o = payload.writeUIntLE(window,                      o, 2);
+    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
+    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
+
+    const ocf = HciOcfLeControllerCommands.SetScanParameters;
+    await this.sendLeCommand(ocf, payload);
+  }
+
   public async leSetScanEnable(enable: boolean, filterDuplicates?: boolean): Promise<void> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUInt8(enable           ? 1 : 0);
     payload.writeUInt8(filterDuplicates ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetScanEnable;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leCreateConnection(params: {
+    scanIntervalMs: number,
+    scanWindowMs: number,
+    initiatorFilterPolicy: number,
+    peerAddressType: LePeerAddressType,
+    peerAddress: number,
+    ownAddressType: LeOwnAddressType,
+    connectionIntervalMinMs: number,
+    connectionIntervalMaxMs: number,
+    connectionLatency: number,
+    supervisionTimeoutMs: number,
+    minCeLengthMs: number,
+    maxCeLengthMs: number,
+  }): Promise<void> {
+    const payload = Buffer.allocUnsafe(2+2+1+1+6+1+2+2+2+2+2+2);
+
+    const scanInterval       = this.msToHciValue(params.scanIntervalMs,          0.625);
+    const scanWindow         = this.msToHciValue(params.scanWindowMs,            0.625);
+    const connIntervalMin    = this.msToHciValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = this.msToHciValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = this.msToHciValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = this.msToHciValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = this.msToHciValue(params.maxCeLengthMs,           0.625);
+
+    let o = 0;
+    o = payload.writeUIntLE(scanInterval,                 o, 2);
+    o = payload.writeUIntLE(scanWindow,                   o, 2);
+    o = payload.writeUIntLE(params.initiatorFilterPolicy, o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,       o, 1);
+    o = payload.writeUIntLE(params.peerAddress,           o, 6);
+    o = payload.writeUIntLE(params.ownAddressType,        o, 1);
+    o = payload.writeUIntLE(connIntervalMin,              o, 2);
+    o = payload.writeUIntLE(connIntervalMax,              o, 2);
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
+    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
+    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+
+    const ocf = HciOcfLeControllerCommands.CreateConnection;
     await this.sendLeCommand(ocf, payload);
   }
 
@@ -630,11 +695,11 @@ export default class Hci extends EventEmitter {
     });
   }
 
-  private msToHciValue(ms: number): number {
-    return Math.round(ms / 0.625);
+  private hciValueToMs(val: number, factor: number = 0.625): number {
+    return val * factor;
   }
-  private hciValueToMs(val: number): number {
-    return val * 0.625;
+  private msToHciValue(ms: number, factor: number = 0.625): number {
+    return Math.round(ms / factor);
   }
 
   private buildBitfield(bits: number[]): number {

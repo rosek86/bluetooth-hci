@@ -234,9 +234,9 @@ export enum HciOcfLeControllerCommands {
   SetAdvertisingData                                  = 0x0008, // * LE Set Advertising Data
   SetScanResponseData                                 = 0x0009, // * LE Set Scan Response Data
   SetAdvertisingEnable                                = 0x000A, // * LE Set Advertising Enable
-  SetScanParameters                                   = 0x000B, // LE Set Scan Parameters
+  SetScanParameters                                   = 0x000B, // * LE Set Scan Parameters
   SetScanEnable                                       = 0x000C, // * LE Set Scan Enable
-  CreateConnection                                    = 0x000D, // LE Create Connection
+  CreateConnection                                    = 0x000D, // * LE Create Connection
   CreateConnectionCancel                              = 0x000E, // * LE Create Connection Cancel
   ReadWhiteListSize                                   = 0x000F, // * LE Read White List Size
   ClearWhiteList                                      = 0x0010, // * LE Clear White List
