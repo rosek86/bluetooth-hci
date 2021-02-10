@@ -9,7 +9,8 @@ import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
-  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType, LeModulationIndex, LeCteType
+  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType,
+  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel
 } from './HciLe';
 
 const debug = Debug('nble-hci');
@@ -530,7 +531,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async leReceiverTestV1(params: { rxChannelMhz: number }): Promise<void> {
-    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+    const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
 
     const payload = Buffer.allocUnsafe(1);
     payload.writeUIntLE(rxChannel, 0, 1);
@@ -539,7 +540,7 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf, payload);
   }
 
-  private rxChannelToValue(rxChannelMhz: number): number {
+  private channelFrequencyToHciValue(rxChannelMhz: number): number {
     return (rxChannelMhz - 2402) / 2;
   }
 
@@ -548,7 +549,7 @@ export default class Hci extends EventEmitter {
     phy: LePhy,
     modulationIndex: LeModulationIndex,
   }): Promise<void> {
-    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+    const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
 
     const payload = Buffer.allocUnsafe(1+1+1);
 
@@ -570,7 +571,7 @@ export default class Hci extends EventEmitter {
     slotDurations: 1|2,
     antennaIds: number[],
   }): Promise<void> {
-    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+    const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
 
     const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
 
@@ -589,6 +590,115 @@ export default class Hci extends EventEmitter {
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV3;
     await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leTransmitterTestV1(params: {
+    txChannelMhz: number,
+    testDataLength: number,
+    packetPayload: LeTxTestPayload,
+  }): Promise<void> {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,              o, 1);
+    o = payload.writeUIntLE(params.testDataLength,  o, 1);
+    o = payload.writeUIntLE(params.packetPayload,   o, 1);
+
+    const ocf = HciOcfLeControllerCommands.TransmitterTestV1;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leTransmitterTestV2(params: {
+    txChannelMhz: number,
+    testDataLength: number,
+    packetPayload: LeTxTestPayload,
+    phy: LeTxPhy,
+  }): Promise<void> {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,              o, 1);
+    o = payload.writeUIntLE(params.testDataLength,  o, 1);
+    o = payload.writeUIntLE(params.packetPayload,   o, 1);
+    o = payload.writeUIntLE(params.phy,             o, 1);
+
+    const ocf = HciOcfLeControllerCommands.TransmitterTestV2;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leTransmitterTestV3(params: {
+    txChannelMhz: number,
+    testDataLength: number,
+    packetPayload: LeTxTestPayload,
+    phy: LeTxPhy,
+    cteLength: number,
+    cteType: LeCteType,
+    antennaIds: number[],
+  }): Promise<void> {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,                o, 1);
+    o = payload.writeUIntLE(params.testDataLength,    o, 1);
+    o = payload.writeUIntLE(params.packetPayload,     o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.cteLength,         o, 1);
+    o = payload.writeUIntLE(params.cteType,           o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    const ocf = HciOcfLeControllerCommands.TransmitterTestV3;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leTransmitterTestV4(params: {
+    txChannelMhz: number,
+    testDataLength: number,
+    packetPayload: LeTxTestPayload,
+    phy: LeTxPhy,
+    cteLength: number,
+    cteType: LeCteType,
+    antennaIds: number[],
+    transmitPowerLevel: number|LeMinTransmitPowerLevel|LeMaxTransmitPowerLevel,
+  }): Promise<void> {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,                o, 1);
+    o = payload.writeUIntLE(params.testDataLength,    o, 1);
+    o = payload.writeUIntLE(params.packetPayload,     o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.cteLength,         o, 1);
+    o = payload.writeUIntLE(params.cteType,           o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    o = payload.writeIntLE(params.transmitPowerLevel, o, 1);
+
+    const ocf = HciOcfLeControllerCommands.TransmitterTestV4;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leTestEnd(): Promise<number> {
+    const result = await this.sendLeCommand(HciOcfLeControllerCommands.TestEnd);
+    if (result.returnParameters.length < 2) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt16LE(0);
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<{

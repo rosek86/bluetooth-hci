@@ -255,11 +255,11 @@ export enum HciOcfLeControllerCommands {
   ReceiverTestV1                                      = 0x001D, // * LE Receiver Test
   ReceiverTestV2                                      = 0x0033, // * LE Receiver Test
   ReceiverTestV3                                      = 0x004F, // * LE Receiver Test
-  TransmitterTestV1                                   = 0x001E, // LE Transmitter Test
-  TransmitterTestV2                                   = 0x0034, // LE Transmitter Test
-  TransmitterTestV3                                   = 0x0050, // LE Transmitter Test
-  TransmitterTestV4                                   = 0x007B, // LE Transmitter Test
-  TestEnd                                             = 0x001F, // LE Test End
+  TransmitterTestV1                                   = 0x001E, // * LE Transmitter Test
+  TransmitterTestV2                                   = 0x0034, // * LE Transmitter Test
+  TransmitterTestV3                                   = 0x0050, // * LE Transmitter Test
+  TransmitterTestV4                                   = 0x007B, // * LE Transmitter Test
+  TestEnd                                             = 0x001F, // * LE Test End
   RemoteConnectionParameterRequestReply               = 0x0020, // LE Remote Connection Parameter Request Reply
   RemoteConnectionParameterRequestNegativeReply       = 0x0021, // LE Remote Connection Parameter Request Negative Reply
   SetDataLength                                       = 0x0022, // LE Set Data Length

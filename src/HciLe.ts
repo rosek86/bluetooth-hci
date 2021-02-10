@@ -101,6 +101,13 @@ export enum LePhy {
   PhyCoded = 2,
 }
 
+export enum LeTxPhy {
+  Phy1M      = 0x01, // Transmitter set to use the LE 1M PHY
+  Phy2M      = 0x02, // Transmitter set to use the LE 2M PHY
+  PhyCodedS8 = 0x03, // Transmitter set to use the LE Coded PHY with S=8 data coding
+  PhyCodedS2 = 0x04, // Transmitter set to use the LE Coded PHY with S=2 data coding
+}
+
 export enum LeAdvertisingType {
   // Connectable and scannable undirected advertising (ADV_IND) (default)
   Undirected            = 0,
@@ -243,3 +250,18 @@ export enum LeCteType {
   AoDConstantTone1us = 0x01, // Expect AoD Constant Tone Extension with 1 μs slots
   AoDConstantTone2us = 0x02, // Expect AoD Constant Tone Extension with 2 μs slots
 }
+
+export enum LeTxTestPayload {
+  SequencePRBS9     = 0x00, // PRBS9 sequence '11111111100000111101…' (in transmission order) as
+                            // described in [Vol 6] Part F, Section 4.1.5
+  Sequence11110000  = 0x01, // Repeated '11110000' (in transmission order) sequence as described in
+                            // [Vol 6] Part F, Section 4.1.5
+  Sequence10101010  = 0x02, // Repeated '10101010' (in transmission order) sequence as described in
+                            // [Vol 6] Part F, Section 4.1.5
+  SequencePRBS15    = 0x03, // PRBS15 sequence as described in [Vol 6] Part F, Section 4.1.5
+  Sequence11111111  = 0x04, // Repeated '11111111' (in transmission order) sequence
+  Sequence00000000  = 0x05, // Repeated '00000000' (in transmission order) sequence
+}
+
+export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transmit power level
+export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
