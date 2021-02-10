@@ -252,9 +252,9 @@ export enum HciOcfLeControllerCommands {
   LongTermKeyRequestReply                             = 0x001A, // * LE Long Term Key Request Reply
   LongTermKeyRequestNegativeReply                     = 0x001B, // * LE Long Term Key Request Negative Reply
   ReadSupportedStates                                 = 0x001C, // * LE Read Supported States
-  ReceiverTestV1                                      = 0x001D, // LE Receiver Test
-  ReceiverTestV2                                      = 0x0033, // LE Receiver Test
-  ReceiverTestV3                                      = 0x004F, // LE Receiver Test
+  ReceiverTestV1                                      = 0x001D, // * LE Receiver Test
+  ReceiverTestV2                                      = 0x0033, // * LE Receiver Test
+  ReceiverTestV3                                      = 0x004F, // * LE Receiver Test
   TransmitterTestV1                                   = 0x001E, // LE Transmitter Test
   TransmitterTestV2                                   = 0x0034, // LE Transmitter Test
   TransmitterTestV3                                   = 0x0050, // LE Transmitter Test

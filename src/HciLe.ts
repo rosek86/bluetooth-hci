@@ -232,3 +232,14 @@ export enum LeScanFilterDuplicates {
   Enabled  = 0x01, // Duplicate filtering enabled
   Reset    = 0x02, // Duplicate filtering enabled, reset for each scan period
 }
+
+export enum LeModulationIndex {
+  Standard = 0, // Assume transmitter will have a standard modulation index
+  Stable   = 1, // Assume transmitter will have a stable modulation index
+}
+
+export enum LeCteType {
+  AoAConstatTone     = 0x00, // Expect AoA Constant Tone Extension
+  AoDConstantTone1us = 0x01, // Expect AoD Constant Tone Extension with 1 μs slots
+  AoDConstantTone2us = 0x02, // Expect AoD Constant Tone Extension with 2 μs slots
+}

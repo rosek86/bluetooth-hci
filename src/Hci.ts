@@ -9,7 +9,7 @@ import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
-  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType
+  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType, LeModulationIndex, LeCteType
 } from './HciLe';
 
 const debug = Debug('nble-hci');
@@ -359,6 +359,20 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf);
   }
 
+  public async leReadWhiteListSize(): Promise<number> {
+    const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
+    const result = await this.sendLeCommand(ocf);
+
+    if (result.returnParameters.length < 1) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    return result.returnParameters.readUInt8(0);
+  }
+
+  public async leClearWhiteList(): Promise<void> {
+    await this.sendLeCommand(HciOcfLeControllerCommands.ClearWhiteList);
+  }
+
   public async leAddDeviceToWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
     const payload = Buffer.allocUnsafe(1+6);
     payload.writeUIntLE(addressType,  0, 1);
@@ -503,20 +517,6 @@ export default class Hci extends EventEmitter {
     return result.returnParameters.readUInt16LE(0);
   }
 
-  public async leReadWhiteListSize(): Promise<number> {
-    const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
-    const result = await this.sendLeCommand(ocf);
-
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
-    }
-    return result.returnParameters.readUInt8(0);
-  }
-
-  public async leClearWhiteList(): Promise<void> {
-    await this.sendLeCommand(HciOcfLeControllerCommands.ClearWhiteList);
-  }
-
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
     const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
     const result = await this.sendLeCommand(ocf);
@@ -527,6 +527,68 @@ export default class Hci extends EventEmitter {
     }
     const bitmask = params.readBigUInt64LE(0);
     return LeSupportedStates.fromBitmask(bitmask);
+  }
+
+  public async leReceiverTestV1(params: { rxChannelMhz: number }): Promise<void> {
+    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1);
+    payload.writeUIntLE(rxChannel, 0, 1);
+
+    const ocf = HciOcfLeControllerCommands.ReceiverTestV1;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  private rxChannelToValue(rxChannelMhz: number): number {
+    return (rxChannelMhz - 2402) / 2;
+  }
+
+  public async leReceiverTestV2(params: {
+    rxChannelMhz: number,
+    phy: LePhy,
+    modulationIndex: LeModulationIndex,
+  }): Promise<void> {
+    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(rxChannel,              o, 1);
+    o = payload.writeUIntLE(params.phy,             o, 1);
+    o = payload.writeUIntLE(params.modulationIndex, o, 1);
+
+    const ocf = HciOcfLeControllerCommands.ReceiverTestV2;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leReceiverTestV3(params: {
+    rxChannelMhz: number,
+    phy: LePhy,
+    modulationIndex: LeModulationIndex,
+    expectedCteLength: number,
+    expectedCteType: LeCteType,
+    slotDurations: 1|2,
+    antennaIds: number[],
+  }): Promise<void> {
+    const rxChannel = this.rxChannelToValue(params.rxChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(rxChannel,                o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.modulationIndex,   o, 1);
+    o = payload.writeUIntLE(params.expectedCteLength, o, 1);
+    o = payload.writeUIntLE(params.expectedCteType,   o, 1);
+    o = payload.writeUIntLE(params.slotDurations,     o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    const ocf = HciOcfLeControllerCommands.ReceiverTestV3;
+    await this.sendLeCommand(ocf, payload);
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<{
