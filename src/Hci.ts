@@ -701,8 +701,68 @@ export default class Hci extends EventEmitter {
     return result.returnParameters.readUInt16LE(0);
   }
 
+  public async leRemoteConnectionParameterRequestReply(params: {
+    connHandle: number,
+    intervalMinMs: number, // 7.5ms - 4000ms
+    intervalMaxMs: number, // 7.5ms - 4000ms
+    latency: number,
+    timeoutMs: number,
+    minCeLengthMs: number,
+    maxCeLengthMs: number,
+  }): Promise<void> {
+    const intervalMin   = this.msToHciValue(params.intervalMinMs, 1.25);
+    const intervalMax   = this.msToHciValue(params.intervalMaxMs, 1.25);
+    const timeout       = this.msToHciValue(params.timeoutMs,     10);
+    const minCeLength   = this.msToHciValue(params.minCeLengthMs, 0.625);
+    const maxCeLength   = this.msToHciValue(params.maxCeLengthMs, 0.625);
+
+    const payload = Buffer.allocUnsafe(2+2+2+2+2+2);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.connHandle,  o, 2);
+    o = payload.writeUIntLE(intervalMin,        o, 2);
+    o = payload.writeUIntLE(intervalMax,        o, 2);
+    o = payload.writeUIntLE(timeout,            o, 2);
+    o = payload.writeUIntLE(minCeLength,        o, 2);
+    o = payload.writeUIntLE(maxCeLength,        o, 2);
+
+    const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
+    await this.sendLeConnCommand(ocf, params.connHandle, payload);
+  }
+
+  public async leRemoteConnectionParameterRequestNegativeReply(params: {
+    connHandle: number,
+    reason: HciErrorCode,
+  }): Promise<void> {
+    const payload = Buffer.allocUnsafe(2+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.connHandle,  o, 2);
+    o = payload.writeUIntLE(params.reason,      o, 1);
+
+    const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
+    await this.sendLeConnCommand(ocf, params.connHandle, payload);
+  }
+
+  public async leSetDataLength(params: {
+    connHandle: number,
+    txOctets: number,
+    txTime: number,
+  }): Promise<void> {
+    const payload = Buffer.allocUnsafe(2+2+2);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.connHandle, o, 2);
+    o = payload.writeUIntLE(params.txOctets,   o, 2);
+    o = payload.writeUIntLE(params.txTime,     o, 2);
+
+    const ocf = HciOcfLeControllerCommands.SetDataLength;
+    await this.sendLeConnCommand(ocf, params.connHandle, payload);
+  }
+
   public async leReadSuggestedDefaultDataLength(): Promise<{
-    suggestedMaxTxOctets: number, suggestedMaxTxTime: number,
+    suggestedMaxTxOctets: number,
+    suggestedMaxTxTime: number,
   }> {
     const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
     const result = await this.sendLeCommand(ocf);

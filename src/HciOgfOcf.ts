@@ -260,9 +260,9 @@ export enum HciOcfLeControllerCommands {
   TransmitterTestV3                                   = 0x0050, // * LE Transmitter Test
   TransmitterTestV4                                   = 0x007B, // * LE Transmitter Test
   TestEnd                                             = 0x001F, // * LE Test End
-  RemoteConnectionParameterRequestReply               = 0x0020, // LE Remote Connection Parameter Request Reply
-  RemoteConnectionParameterRequestNegativeReply       = 0x0021, // LE Remote Connection Parameter Request Negative Reply
-  SetDataLength                                       = 0x0022, // LE Set Data Length
+  RemoteConnectionParameterRequestReply               = 0x0020, // * LE Remote Connection Parameter Request Reply
+  RemoteConnectionParameterRequestNegativeReply       = 0x0021, // * LE Remote Connection Parameter Request Negative Reply
+  SetDataLength                                       = 0x0022, // * LE Set Data Length
   ReadSuggestedDefaultDataLength                      = 0x0023, // * LE Read Suggested Default Data Length
   WriteSuggestedDefaultDataLength                     = 0x0024, // * LE Write Suggested Default Data Length
   ReadLocalP256PublicKey                              = 0x0025, // LE Read Local P-256 Public Key
