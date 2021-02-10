@@ -22,6 +22,7 @@ interface HciInit {
 
 interface HciCommand {
   opcode: number;
+  connHandle?: number;
   params?: Buffer;
 }
 
@@ -54,11 +55,12 @@ enum HciParserError {
   Timeout,
 }
 
+// TODO: should I reverse parameter buffers?
+
 export default class Hci extends EventEmitter {
   private sendRaw: (data: Buffer) => void;
   private cmdTimeout: number;
 
-  private cmdOpcode = 0;
   private onCmdComplete: ((_: HciEvtCmdComplete) => void) | null = null;
 
   public constructor(init: HciInit) {
@@ -453,6 +455,54 @@ export default class Hci extends EventEmitter {
     return result.returnParameters;
   }
 
+  public async leEnableEncryption(params: {
+    connHandle: number,
+    randomNumber: Buffer,
+    encryptedDiversifier: number,
+    longTermKey: Buffer,
+  }): Promise<void> {
+    if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(2+8+2+16);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.connHandle, o, 2);
+    o += params.randomNumber.copy(payload, o);
+    o  = payload.writeUIntLE(params.encryptedDiversifier, o, 2);
+    o += params.longTermKey.copy(payload, o);
+
+    const ocf = HciOcfLeControllerCommands.EnableEncryption;
+    await this.sendLeCommand(ocf, payload);
+  }
+
+  public async leLongTermKeyRequestReply(params: {
+    connHandle: number,
+    longTermKey: Buffer,
+  }): Promise<number> {
+    if (params.longTermKey.length !== 16) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(2+16);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.connHandle, o, 2);
+    o += params.longTermKey.copy(payload, o);
+
+    const ocf = HciOcfLeControllerCommands.LongTermKeyRequestReply;
+    const result = await this.sendLeConnCommand(ocf, params.connHandle, payload);
+    return result.returnParameters.readUInt16LE(0);
+  }
+
+  public async leLongTermKeyRequestNegativeReply(connHandle: number): Promise<number> {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUIntLE(connHandle, 0, 2);
+
+    const ocf = HciOcfLeControllerCommands.LongTermKeyRequestNegativeReply;
+    const result = await this.sendLeConnCommand(ocf, connHandle, payload);
+    return result.returnParameters.readUInt16LE(0);
+  }
+
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
     const result = await this.sendLeCommand(ocf);
@@ -791,6 +841,20 @@ export default class Hci extends EventEmitter {
     });
   }
 
+  private async sendLeConnCommand(
+    ocf: HciOcfLeControllerCommands,
+    connHandle: number,
+    payload?: Buffer
+  ): Promise<HciEvtCmdComplete> {
+    return await this.send({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands, ocf,
+      }),
+      connHandle: connHandle,
+      params: payload,
+    });
+  }
+
   private hciValueToMs(val: number, factor: number = 0.625): number {
     return val * factor;
   }
@@ -806,7 +870,7 @@ export default class Hci extends EventEmitter {
     return bitfield;
   }
 
-  private async send(cmd: HciCommand): Promise<HciEvtCmdComplete> {
+  private async send(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
     return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -821,16 +885,30 @@ export default class Hci extends EventEmitter {
       );
       this.onCmdComplete = (evt: HciEvtCmdComplete) => {
         console.log(JSON.stringify(evt, null, 2), HciOpcode.expand(evt.opcode));
-        if (this.cmdOpcode !== evt.opcode) {
+        if (cmd.opcode !== evt.opcode) {
           return;
         }
-        if (evt.status === HciErrorCode.Success) {
-          complete(undefined, evt);
+        if (connHandle === undefined) {
+          if (evt.status !== HciErrorCode.Success) {
+            complete(this.makeHciError(evt.status));
+          } else {
+            complete(undefined, evt);
+          }
         } else {
-          complete(this.makeHciError(evt.status));
+          if (evt.returnParameters.length < 2) {
+            debug(`Cannot parse connection command complete event`);
+            return; // NOTE: can't tell which connection
+          }
+          if (connHandle !== evt.returnParameters.readUInt16LE(0)) {
+            return;
+          }
+          if (evt.status !== HciErrorCode.Success) {
+            complete(this.makeHciError(evt.status));
+          } else {
+            complete(undefined, evt);
+          }
         }
       };
-      this.cmdOpcode = cmd.opcode;
       this.sendRaw(this.buildBuffer(cmd));
     });
   }

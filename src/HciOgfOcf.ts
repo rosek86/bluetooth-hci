@@ -248,9 +248,9 @@ export enum HciOcfLeControllerCommands {
   ReadRemoteFeatures                                  = 0x0016, // * LE Read Remote Features
   Encrypt                                             = 0x0017, // * LE Encrypt
   Rand                                                = 0x0018, // * LE Rand
-  EnableEncryption                                    = 0x0019, // LE Enable Encryption
-  LongTermKeyRequestReply                             = 0x001A, // LE Long Term Key Request Reply
-  LongTermKeyRequestNegativeReply                     = 0x001B, // LE Long Term Key Request Negative Reply
+  EnableEncryption                                    = 0x0019, // * LE Enable Encryption
+  LongTermKeyRequestReply                             = 0x001A, // * LE Long Term Key Request Reply
+  LongTermKeyRequestNegativeReply                     = 0x001B, // * LE Long Term Key Request Negative Reply
   ReadSupportedStates                                 = 0x001C, // * LE Read Supported States
   ReceiverTestV1                                      = 0x001D, // LE Receiver Test
   ReceiverTestV2                                      = 0x0033, // LE Receiver Test
@@ -331,7 +331,7 @@ export enum HciOcfLeControllerCommands {
   CreateBigTest                                       = 0x0069, // LE Create BIG Test
   TerminateBig                                        = 0x006A, // LE Terminate BIG
   BigCreateSync                                       = 0x006B, // LE BIG Create Sync
-  BigTerminateSync                                    = 0x006C, // LE BIG Terminate Sync,
+  BigTerminateSync                                    = 0x006C, // LE BIG Terminate Sync
   RequestPeerSca                                      = 0x006D, // LE Request Peer SCA (Sleep Clock Accuracy)
   SetupIsoDataPath                                    = 0x006E, // LE Setup ISO Data Path
   RemoveIsoDataPath                                   = 0x006F, // LE Remove ISO Data Path
