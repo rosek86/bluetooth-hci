@@ -28,7 +28,8 @@ interface HciCommand {
 }
 
 enum HciEventCode {
-  HCI_EVT_CMD_COMPLETE = 0x0e
+  CommandComplete = 0x0E,
+  CommandStatus   = 0x0F
 }
 
 interface HciEvtCmdComplete {
@@ -36,6 +37,12 @@ interface HciEvtCmdComplete {
   opcode: number;
   status: number;
   returnParameters: Buffer;
+}
+
+interface HciEvtCmdStatus {
+  status: number;
+  numHciPackets: number;
+  opcode: number;
 }
 
 class HciOpcode {
@@ -63,6 +70,7 @@ export default class Hci extends EventEmitter {
   private cmdTimeout: number;
 
   private onCmdComplete: ((_: HciEvtCmdComplete) => void) | null = null;
+  private onCmdStatus: ((_: HciEvtCmdStatus) => void) | null = null;
 
   public constructor(init: HciInit) {
     super();
@@ -73,7 +81,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async reset(): Promise<void> {
-    await this.send({
+    await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.Reset,
@@ -82,7 +90,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalSupportedFeatures(): Promise<BigInt> {
-    const result = await this.send({
+    const result = await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalSupportedFeatures,
@@ -95,7 +103,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalVersionInformation(): Promise<Buffer> {
-    const result = await this.send({
+    const result = await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalVersionInformation,
@@ -105,7 +113,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readBdAddr(): Promise<number> {
-    const result = await this.send({
+    const result = await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadBdAddr,
@@ -118,7 +126,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalSupportedCommands(): Promise<Buffer> {
-    const result = await this.send({
+    const result = await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalSupportedCommands,
@@ -131,7 +139,7 @@ export default class Hci extends EventEmitter {
   public async setEventMask(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('90e8040200800020', 'hex');
-    await this.send({
+    await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMask,
@@ -143,7 +151,7 @@ export default class Hci extends EventEmitter {
   public async setEventMaskPage2(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('0000800000000000', 'hex');
-    await this.send({
+    await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMaskPage2,
@@ -788,6 +796,39 @@ export default class Hci extends EventEmitter {
     await this.sendLeCommand(ocf, payload);
   }
 
+  public async leReadLocalP256PublicKey(): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.ReadLocalP256PublicKey;
+    await this.sendLeCommandWaitStatus(ocf);
+  }
+
+  public async leGenerateDhKeyV1(params: {
+    publicKey: Buffer,
+  }): Promise<void> {
+    if (params.publicKey.length !== 64) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(64);
+    params.publicKey.copy(payload, 0);
+
+    const ocf = HciOcfLeControllerCommands.GenerateDhKeyV1;
+    await this.sendLeCommandWaitStatus(ocf, payload);
+  }
+
+  public async leGenerateDhKeyV2(params: {
+    publicKey: Buffer,
+    keyType: number,
+  }): Promise<void> {
+    if (params.publicKey.length !== 64) {
+      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(65);
+    params.publicKey.copy(payload, 0);
+    payload.writeUInt8(params.keyType, 64);
+
+    const ocf = HciOcfLeControllerCommands.GenerateDhKeyV2;
+    await this.sendLeCommandWaitStatus(ocf, payload);
+  }
+
   public async leClearResolvingList(): Promise<void> {
     await this.sendLeCommand(HciOcfLeControllerCommands.ClearResolvingList);
   }
@@ -1065,7 +1106,19 @@ export default class Hci extends EventEmitter {
   }
 
   private async sendLeCommand(ocf: HciOcfLeControllerCommands, payload?: Buffer): Promise<HciEvtCmdComplete> {
-    return await this.send({
+    return await this.sendWaitComplete({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LeControllerCommands, ocf,
+      }),
+      params: payload,
+    });
+  }
+
+  private async sendLeCommandWaitStatus(
+      ocf: HciOcfLeControllerCommands,
+      payload?: Buffer
+  ): Promise<HciEvtCmdStatus> {
+    return await this.sendWaitStatus({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
@@ -1078,7 +1131,7 @@ export default class Hci extends EventEmitter {
     connHandle: number,
     payload?: Buffer
   ): Promise<HciEvtCmdComplete> {
-    return await this.send({
+    return await this.sendWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
@@ -1102,7 +1155,35 @@ export default class Hci extends EventEmitter {
     return bitfield;
   }
 
-  private async send(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
+  private async sendWaitStatus(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdStatus> {
+    return new Promise<HciEvtCmdComplete|HciEvtCmdStatus>((resolve, reject) => {
+      if (this.onCmdComplete !== null || this.onCmdStatus !== null) {
+        return reject(this.makeError(HciParserError.Busy));
+      }
+      const complete = (err?: Error, evt?: HciEvtCmdComplete|HciEvtCmdStatus) => {
+        clearTimeout(timeoutId);
+        this.onCmdComplete = null;
+        this.onCmdStatus = null;
+        err ? reject(err) : resolve(evt!);
+      };
+      const timeoutId = setTimeout(
+        () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
+      );
+      this.onCmdStatus = (evt: HciEvtCmdStatus) => {
+        if (cmd.opcode !== evt.opcode) {
+          return;
+        }
+        if (evt.status !== HciErrorCode.Success) {
+          complete(this.makeHciError(evt.status));
+        } else {
+          complete(undefined, evt);
+        }
+      };
+      this.sendRaw(this.buildBuffer(cmd));
+    });
+  }
+
+  private async sendWaitComplete(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
     return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -1110,13 +1191,13 @@ export default class Hci extends EventEmitter {
       const complete = (err?: Error, evt?: HciEvtCmdComplete) => {
         clearTimeout(timeoutId);
         this.onCmdComplete = null;
+        this.onCmdStatus = null;
         err ? reject(err) : resolve(evt!);
       };
       const timeoutId = setTimeout(
         () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
       );
       this.onCmdComplete = (evt: HciEvtCmdComplete) => {
-        console.log(JSON.stringify(evt, null, 2), HciOpcode.expand(evt.opcode));
         if (cmd.opcode !== evt.opcode) {
           return;
         }
@@ -1190,7 +1271,7 @@ export default class Hci extends EventEmitter {
     }
 
     switch (eventCode) {
-      case HciEventCode.HCI_EVT_CMD_COMPLETE:
+      case HciEventCode.CommandComplete:
         if (payload.length < 4) {
           this.emit('parser-error', `(evt-cmd_complete) invalid payload size: ${payload.length}`);
           return;
@@ -1201,6 +1282,19 @@ export default class Hci extends EventEmitter {
             opcode: payload.readUInt16LE(1),
             status: payload[3],
             returnParameters: payload.slice(4),
+          });
+        }
+        break;
+      case HciEventCode.CommandStatus:
+        if (payload.length < 4) {
+          this.emit('parser-error', `(evt-cmd_status) invalid payload size: ${payload.length}`);
+          return;
+        }
+        if (this.onCmdStatus) {
+          this.onCmdStatus({
+            status: payload[0],
+            numHciPackets: payload[1],
+            opcode: payload.readUInt16LE(2),
           });
         }
         break;
