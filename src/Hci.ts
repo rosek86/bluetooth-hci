@@ -21,6 +21,12 @@ interface HciInit {
   setEventHandler: (_: (data: Buffer) => void) => void;
 }
 
+enum HciPacketType {
+  Command = 0x01,
+  AclData = 0x02,
+  Event   = 0x04,
+}
+
 interface HciCommand {
   opcode: number;
   connHandle?: number;
@@ -81,7 +87,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async reset(): Promise<void> {
-    await this.sendWaitComplete({
+    await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.Reset,
@@ -90,7 +96,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalSupportedFeatures(): Promise<BigInt> {
-    const result = await this.sendWaitComplete({
+    const result = await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalSupportedFeatures,
@@ -103,7 +109,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalVersionInformation(): Promise<Buffer> {
-    const result = await this.sendWaitComplete({
+    const result = await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalVersionInformation,
@@ -113,7 +119,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readBdAddr(): Promise<number> {
-    const result = await this.sendWaitComplete({
+    const result = await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadBdAddr,
@@ -126,7 +132,7 @@ export default class Hci extends EventEmitter {
   }
 
   public async readLocalSupportedCommands(): Promise<Buffer> {
-    const result = await this.sendWaitComplete({
+    const result = await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.InformationParameters,
         ocf: HciOcfInformationParameters.ReadLocalSupportedCommands,
@@ -139,7 +145,7 @@ export default class Hci extends EventEmitter {
   public async setEventMask(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('90e8040200800020', 'hex');
-    await this.sendWaitComplete({
+    await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMask,
@@ -151,7 +157,7 @@ export default class Hci extends EventEmitter {
   public async setEventMaskPage2(): Promise<void> {
     // TODO pass event mask as argument
     const mask = Buffer.from('0000800000000000', 'hex');
-    await this.sendWaitComplete({
+    await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: HciOcfControlAndBasebandCommands.SetEventMaskPage2,
@@ -1106,7 +1112,7 @@ export default class Hci extends EventEmitter {
   }
 
   private async sendLeCommand(ocf: HciOcfLeControllerCommands, payload?: Buffer): Promise<HciEvtCmdComplete> {
-    return await this.sendWaitComplete({
+    return await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
@@ -1118,7 +1124,7 @@ export default class Hci extends EventEmitter {
       ocf: HciOcfLeControllerCommands,
       payload?: Buffer
   ): Promise<HciEvtCmdStatus> {
-    return await this.sendWaitStatus({
+    return await this.sendHciCommandWaitStatus({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
@@ -1131,7 +1137,7 @@ export default class Hci extends EventEmitter {
     connHandle: number,
     payload?: Buffer
   ): Promise<HciEvtCmdComplete> {
-    return await this.sendWaitComplete({
+    return await this.sendHciCommandWaitComplete({
       opcode: HciOpcode.build({
         ogf: HciOgf.LeControllerCommands, ocf,
       }),
@@ -1155,7 +1161,7 @@ export default class Hci extends EventEmitter {
     return bitfield;
   }
 
-  private async sendWaitStatus(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdStatus> {
+  private async sendHciCommandWaitStatus(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdStatus> {
     return new Promise<HciEvtCmdComplete|HciEvtCmdStatus>((resolve, reject) => {
       if (this.onCmdComplete !== null || this.onCmdStatus !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -1179,11 +1185,11 @@ export default class Hci extends EventEmitter {
           complete(undefined, evt);
         }
       };
-      this.sendRaw(this.buildBuffer(cmd));
+      this.sendRaw(this.buildHciCommandBuffer(cmd));
     });
   }
 
-  private async sendWaitComplete(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
+  private async sendHciCommandWaitComplete(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
     return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -1222,7 +1228,7 @@ export default class Hci extends EventEmitter {
           }
         }
       };
-      this.sendRaw(this.buildBuffer(cmd));
+      this.sendRaw(this.buildHciCommandBuffer(cmd));
     });
   }
 
@@ -1243,14 +1249,19 @@ export default class Hci extends EventEmitter {
     return new Error(`Unexpected error`);
   }
 
-  private buildBuffer(cmd: HciCommand): Buffer {
+  private buildHciCommandBuffer(cmd: HciCommand): Buffer {
     const payloadLength = cmd.params?.length ?? 0;
-    const buffer = Buffer.allocUnsafe(3 + payloadLength);
-    buffer.writeUInt16LE(cmd.opcode, 0);
-    buffer.writeUInt8(payloadLength, 2);
+    const buffer = Buffer.allocUnsafe(4 + payloadLength);
+
+    let o = 0;
+    o = buffer.writeUIntLE(HciPacketType.Command, o, 1);
+    o = buffer.writeUIntLE(cmd.opcode,            o, 2);
+    o = buffer.writeUIntLE(payloadLength,         o, 1);
+
     if (cmd.params && payloadLength > 0) {
       cmd.params.copy(buffer, 3);
     }
+
     return buffer;
   }
 
