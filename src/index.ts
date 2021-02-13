@@ -1,4 +1,5 @@
 import Hci from './Hci';
+import H5 from './H5';
 import { PacketType } from './Hci';
 import {
   LeAdvertisingChannelMap, LeAdvertisingEventProperties,

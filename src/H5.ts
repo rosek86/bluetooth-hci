@@ -16,11 +16,20 @@ enum H5TransportRetCode {
   ParserPacketChecksum            = 4,
 }
 
+interface EncoderData {
+  seqNum: number,
+  ackNum: number,
+  crcPresent: 0|1,
+  reliablePacket: 0|1,
+  packetType: number;
+  payload: number[];
+}
+
 type DecoderResult = (
   { code: 0 } & H5Packet) |
   { code: H5TransportRetCode };
 
-export class H5 {
+export default class H5 {
   private readonly h5HeaderLength = 4;
 
   private readonly seqNumMask                     = 0x07;
@@ -37,27 +46,25 @@ export class H5 {
   private readonly payloadLengthSecondNibbleMask  = 0x0FF0;
   private readonly payloadLengthPos               = 4;
 
-  public encode(
-    payload: number[],
-    seqNum: number, ackNum: number, crcPresent: 0|1,
-    reliablePacket: 0|1, packetType: number)
-  {
-    const packet = [];
+  public encode(data: EncoderData): number[] {
+    const packet: number[] = [];
 
     this.addHeader(packet, {
-      seqNum,
-      ackNum,
-      crcPresent,
-      reliablePacket,
-      packetType,
-      payloadLength: payload.length,
+      seqNum:         data.seqNum,
+      ackNum:         data.ackNum,
+      crcPresent:     data.crcPresent,
+      reliablePacket: data.reliablePacket,
+      packetType:     data.packetType,
+      payloadLength:  data.payload.length,
     });
 
-    packet.push(...payload);
+    packet.push(...data.payload);
 
-    if (crcPresent) {
+    if (data.crcPresent) {
       this.addCrc16(packet);
     }
+
+    return packet;
   }
 
   private addHeader(packet: number[], hdr: H5Header): void {
@@ -69,7 +76,7 @@ export class H5 {
     );
 
     packet.push(
-      ((hdr.packetType    & this.packetTypeMask              ) << this.packetTypePos) |
+      ((hdr.packetType    & this.packetTypeMask              ) << this.packetTypePos   ) |
       ((hdr.payloadLength & this.payloadLengthFirstNibbleMask) << this.payloadLengthPos)
     );
 
@@ -81,7 +88,8 @@ export class H5 {
   }
 
   private calculateHeaderChecksum(header: number[]): number {
-    let checksum = header[0];
+    let checksum = 0;
+    checksum  = header[0];
     checksum += header[1];
     checksum += header[2];
     checksum &= 0xFF;
@@ -98,7 +106,7 @@ export class H5 {
   private calculateCrc16Checksum(packet: number[]): number {
     let crc = 0xFFFF;
     for (const byte of packet) {
-      crc = (crc >> 8) | (crc << 8);
+      crc  = (crc >> 8) | (crc << 8);
       crc ^= byte;
       crc ^= (crc & 0xFF) >> 4;
       crc ^= crc << 12;
@@ -112,28 +120,17 @@ export class H5 {
       return { code: H5TransportRetCode.ParserSlipPayloadSize };
     }
 
-    const seqNum         = ((slipPayload[0] >> this.seqNumPos        ) & this.seqNumMask);
-    const ackNum         = ((slipPayload[0] >> this.ackNumPos        ) & this.ackNumMask);
-    const crcPresent     = ((slipPayload[0] >> this.crcPresentPos    ) & this.crcPresentMask);
+    const seqNum         = ((slipPayload[0] >> this.seqNumPos        ) & this.seqNumMask        );
+    const ackNum         = ((slipPayload[0] >> this.ackNumPos        ) & this.ackNumMask        );
+    const crcPresent     = ((slipPayload[0] >> this.crcPresentPos    ) & this.crcPresentMask    );
     const reliablePacket = ((slipPayload[0] >> this.reliablePacketPos) & this.reliablePacketMask);
-    const packetType     = ((slipPayload[1] >> this.packetTypePos    ) & this.packetTypeMask);
+    const packetType     = ((slipPayload[1] >> this.packetTypePos    ) & this.packetTypeMask    );
     const payloadLength  = (
       ((slipPayload[1] >> this.payloadLengthPos) & this.payloadLengthFirstNibbleMask) |
       ((slipPayload[2] << this.payloadLengthPos) & 0xFF)
     );
     const headerChecksum = slipPayload[3];
 
-    const result: DecoderResult = {
-      code: 0,
-      seqNum,
-      ackNum,
-      crcPresent: crcPresent ? 1:0,
-      reliablePacket: reliablePacket ? 1:0,
-      packetType,
-      payloadLength,
-    };
-
-    // Check if received packet size matches the packet size stated in header
     const calculatedPayloadSize = payloadLength + this.h5HeaderLength + (crcPresent ? 2 : 0);
 
     if (slipPayload.length !== calculatedPayloadSize) {
@@ -147,16 +144,27 @@ export class H5 {
     }
 
     if (crcPresent) {
-      const packetChecksum = slipPayload[payloadLength + this.h5HeaderLength] +
-                              (slipPayload[payloadLength + this.h5HeaderLength + 1] << 8);
+      const packetChecksum = (
+        (slipPayload[payloadLength + this.h5HeaderLength + 0] << 0) +
+        (slipPayload[payloadLength + this.h5HeaderLength + 1] << 8)
+      );
       const calculatedPacketChecksum = this.calculateCrc16Checksum(
         slipPayload.slice(0, payloadLength + this.h5HeaderLength)
       );
-
       if (packetChecksum !== calculatedPacketChecksum) {
         return { code: H5TransportRetCode.ParserPacketChecksum };
       }
     }
+
+    const result: DecoderResult = {
+      code: 0,
+      seqNum,
+      ackNum,
+      crcPresent: crcPresent ? 1:0,
+      reliablePacket: reliablePacket ? 1:0,
+      packetType,
+      payloadLength,
+    };
 
     if (payloadLength > 0) {
       result.payload = slipPayload.slice(
