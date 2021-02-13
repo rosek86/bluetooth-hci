@@ -17,14 +17,19 @@ const debug = Debug('nble-hci');
 
 interface HciInit {
   cmdTimeout?: number;
-  send: (data: Buffer) => void;
-  setEventHandler: (_: (data: Buffer) => void) => void;
+  send: (pt: PacketType, data: Buffer) => void;
+  setDataHandler: (_: (pt: PacketType, data: Buffer) => void) => void;
 }
 
-enum HciPacketType {
-  Command = 0x01,
-  AclData = 0x02,
-  Event   = 0x04,
+export enum PacketType {
+  Ack             = 0,  // Acknowledgment packets
+  HciCommand      = 1,  // HCI Command packet
+  HciAclData      = 2,  // HCI ACL Data packet
+  HciSyncData     = 3,  // HCI Synchronous Data packet
+  HciEvent        = 4,  // HCI Event packet
+  HciIsoData      = 5,  // HCI ISO Data packet
+  VendorSpecific  = 14, // Vendor Specific
+  LinkControl     = 15, // Link Control packet
 }
 
 interface HciCommand {
@@ -72,7 +77,7 @@ enum HciParserError {
 // TODO: should I reverse parameter buffers?
 
 export default class Hci extends EventEmitter {
-  private sendRaw: (data: Buffer) => void;
+  private sendRaw: (pt: PacketType, data: Buffer) => void;
   private cmdTimeout: number;
 
   private onCmdComplete: ((_: HciEvtCmdComplete) => void) | null = null;
@@ -83,7 +88,7 @@ export default class Hci extends EventEmitter {
 
     this.sendRaw = init.send;
     this.cmdTimeout = init.cmdTimeout ?? 2000;
-    init.setEventHandler(this.onData.bind(this));
+    init.setDataHandler(this.onData.bind(this));
   }
 
   public async reset(): Promise<void> {
@@ -1189,7 +1194,7 @@ export default class Hci extends EventEmitter {
           complete(undefined, evt);
         }
       };
-      this.sendRaw(this.buildHciCommandBuffer(cmd));
+      this.sendRaw(PacketType.HciCommand, this.buildHciCommandBuffer(cmd));
     });
   }
 
@@ -1232,7 +1237,7 @@ export default class Hci extends EventEmitter {
           }
         }
       };
-      this.sendRaw(this.buildHciCommandBuffer(cmd));
+      this.sendRaw(PacketType.HciCommand, this.buildHciCommandBuffer(cmd));
     });
   }
 
@@ -1255,10 +1260,9 @@ export default class Hci extends EventEmitter {
 
   private buildHciCommandBuffer(cmd: HciCommand): Buffer {
     const payloadLength = cmd.payload?.length ?? 0;
-    const buffer = Buffer.allocUnsafe(4 + payloadLength);
+    const buffer = Buffer.allocUnsafe(3 + payloadLength);
 
     let o = 0;
-    o = buffer.writeUIntLE(HciPacketType.Command, o, 1);
     o = buffer.writeUIntLE(cmd.opcode,            o, 2);
     o = buffer.writeUIntLE(payloadLength,         o, 1);
 
@@ -1269,8 +1273,15 @@ export default class Hci extends EventEmitter {
     return buffer;
   }
 
-  private onData(data: Buffer): void {
-    console.log(data);
+
+  private onData(packetType: PacketType, data: Buffer): void {
+    console.log(packetType, data.toString('hex'));
+    if (packetType === PacketType.HciEvent) {
+      this.onEvent(data);
+    }
+  }
+
+  private onEvent(data: Buffer): void {
     if (data.length < 2) {
       debug(`hci event - invalid size ${data.length}`);
       return;
