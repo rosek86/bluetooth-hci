@@ -4,16 +4,17 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "start": "node --experimental-specifier-resolution=node lib/index.js",
-    "build": "tsc"
+    "start": "node lib/index.js",
+    "build": "tsc",
+    "test": "mocha"
   },
   "keywords": [],
   "author": "Krzysztof Rosinski",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/node": "^14.14.22",
+    "mocha": "^8.3.0",
     "typescript": "^4.1.3"
   },
   "dependencies": {
