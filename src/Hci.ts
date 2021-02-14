@@ -1201,6 +1201,17 @@ export default class Hci extends EventEmitter {
       const timeoutId = setTimeout(
         () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
       );
+      this.onCmdStatus = (evt: HciEvtCmdStatus) => {
+        if (cmd.opcode !== evt.opcode) {
+          return;
+        }
+        if (evt.status !== HciErrorCode.Success) {
+          complete(this.makeHciError(evt.status));
+        } else {
+          // TODO: this command should return complete|status
+          // complete(undefined, evt);
+        }
+      };
       this.onCmdComplete = (evt: HciEvtCmdComplete) => {
         if (cmd.opcode !== evt.opcode) {
           return;
@@ -1291,13 +1302,14 @@ export default class Hci extends EventEmitter {
           this.emit('parser-error', `(evt-cmd_complete) invalid payload size: ${payload.length}`);
           return;
         }
+        const complete: HciEvtCmdComplete = {
+          numHciPackets: payload[0],
+          opcode: payload.readUInt16LE(1),
+          status: payload[3],
+          returnParameters: payload.slice(4),
+        };
         if (this.onCmdComplete) {
-          this.onCmdComplete({
-            numHciPackets: payload[0],
-            opcode: payload.readUInt16LE(1),
-            status: payload[3],
-            returnParameters: payload.slice(4),
-          });
+          this.onCmdComplete(complete);
         }
         break;
       case HciEventCode.CommandStatus:
@@ -1305,12 +1317,13 @@ export default class Hci extends EventEmitter {
           this.emit('parser-error', `(evt-cmd_status) invalid payload size: ${payload.length}`);
           return;
         }
+        const status: HciEvtCmdStatus = {
+          status: payload[0],
+          numHciPackets: payload[1],
+          opcode: payload.readUInt16LE(2),
+        };
         if (this.onCmdStatus) {
-          this.onCmdStatus({
-            status: payload[0],
-            numHciPackets: payload[1],
-            opcode: payload.readUInt16LE(2),
-          });
+          this.onCmdStatus(status);
         }
         break;
     }

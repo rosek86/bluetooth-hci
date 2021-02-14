@@ -165,7 +165,7 @@ export default class HciError extends Error implements NodeJS.ErrnoException {
     this.code = HciError.codeToString(errno);
     this.path = path;
 
-    this.message = `Error: ${this.code}: ${this.path ? `, '${this.path}'` : ''}`;
+    this.message = `Error: ${this.code}${this.path ? `, '${this.path}'` : ''}`;
   }
 
   public static codeToString(code: HciErrorCode): string {
