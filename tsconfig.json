@@ -15,5 +15,11 @@
     "emitDecoratorMetadata": true,
     "declaration": true
   },
-  "files": ["./src/index.ts"]
+  "files": [
+    "./src/index.ts",
+    "./src/Slip.ts",
+    "./src/H5.ts",
+    "./src/H4.ts",
+    "./src/Address.ts",
+  ]
 }

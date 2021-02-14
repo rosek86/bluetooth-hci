@@ -1,3 +1,5 @@
+import { crc16ccitt } from 'crc';
+
 interface H5Header {
   seqNum: number;
   ackNum: number;
@@ -7,7 +9,7 @@ interface H5Header {
   payloadLength: number;
 }
 
-type H5Packet = H5Header & { payload?: number[]; };
+type H5Packet = H5Header & { payload?: Buffer; };
 
 enum H5TransportRetCode {
   ParserSlipPayloadSize           = 1,
@@ -22,7 +24,7 @@ interface EncoderData {
   crcPresent: 0|1,
   reliablePacket: 0|1,
   packetType: number;
-  payload: number[];
+  payload: Buffer;
 }
 
 type DecoderResult = (
@@ -46,7 +48,7 @@ export default class H5 {
   private readonly payloadLengthSecondNibbleMask  = 0x0FF0;
   private readonly payloadLengthPos               = 4;
 
-  public encode(data: EncoderData): number[] {
+  public encode(data: EncoderData): Buffer {
     const packet: number[] = [];
 
     this.addHeader(packet, {
@@ -64,7 +66,7 @@ export default class H5 {
       this.addCrc16(packet);
     }
 
-    return packet;
+    return Buffer.from(packet);
   }
 
   private addHeader(packet: number[], hdr: H5Header): void {
@@ -84,38 +86,33 @@ export default class H5 {
       ((hdr.payloadLength & this.payloadLengthSecondNibbleMask) >> this.payloadLengthPos)
     );
 
-    packet.push(this.calculateHeaderChecksum(packet))
+    packet.push(this.calculateHeaderChecksum(Buffer.from(packet)))
   }
 
-  private calculateHeaderChecksum(header: number[]): number {
-    let checksum = 0;
-    checksum  = header[0];
-    checksum += header[1];
-    checksum += header[2];
-    checksum &= 0xFF;
-    checksum = (~checksum + 1);
-    return checksum & 0xFF;
+  private calculateHeaderChecksum(hdr: Buffer): number {
+    return ~((hdr[0] + hdr[1] + hdr[2]) & 0xFF) & 0xFF;
   }
 
   private addCrc16(packet: number[]): void {
-    const crc16 = this.calculateCrc16Checksum(packet);
+    const crc16 = this.calculateCrc16Checksum(Buffer.from(packet));
     packet.push((crc16 >> 0) & 0xFF);
     packet.push((crc16 >> 8) & 0xFF);
   }
 
-  private calculateCrc16Checksum(packet: number[]): number {
-    let crc = 0xFFFF;
-    for (const byte of packet) {
-      crc  = (crc >> 8) | (crc << 8);
-      crc ^= byte;
-      crc ^= (crc & 0xFF) >> 4;
-      crc ^= crc << 12;
-      crc ^= (crc & 0xFF) << 5;
-    }
-    return crc & 0xFFFF;
+  private calculateCrc16Checksum(packet: Buffer): number {
+    // let crc = 0xFFFF;
+    // for (const byte of packet) {
+    //   crc  = (crc >> 8) | (crc << 8);
+    //   crc ^= byte;
+    //   crc ^= (crc & 0xFF) >> 4;
+    //   crc ^= crc << 12;
+    //   crc ^= (crc & 0xFF) << 5;
+    // }
+    // return crc & 0xFFFF;
+    return crc16ccitt(packet, 0xFFFF);
   }
 
-  public decode(slipPayload: number[]): DecoderResult {
+  public decode(slipPayload: Buffer): DecoderResult {
     if (slipPayload.length < this.h5HeaderLength) {
       return { code: H5TransportRetCode.ParserSlipPayloadSize };
     }
@@ -167,9 +164,9 @@ export default class H5 {
     };
 
     if (payloadLength > 0) {
-      result.payload = slipPayload.slice(
+      result.payload = Buffer.from(slipPayload.slice(
         this.h5HeaderLength, this.h5HeaderLength + payloadLength
-      );
+      ));
     }
 
     return result;

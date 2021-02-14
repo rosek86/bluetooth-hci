@@ -1,6 +1,5 @@
 import Hci from './Hci';
-import H5 from './H5';
-import { PacketType } from './Hci';
+import { HciPacketType } from './HciPacketType';
 import {
   LeAdvertisingChannelMap, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy,
@@ -8,11 +7,11 @@ import {
   LeScanType,
   LeScanFilterDuplicates } from './HciLe';
 
-let sendEvent: ((_pt: PacketType, _b: Buffer) => void) | null = null;
+let hci: Hci | null = null;
 let txBuffer: Buffer | null = null;
 
 function prepareResult(res: string): void {
-  setImmediate(() => sendEvent!(PacketType.HciEvent, Buffer.from(res, 'hex')));
+  setImmediate(() => hci!.onData(HciPacketType.HciEvent, Buffer.from(res, 'hex')));
 }
 
 function checkRequest(req: string): boolean {
@@ -21,12 +20,11 @@ function checkRequest(req: string): boolean {
 
 (async () => {
   try {
-    const hci = new Hci({
+    hci = new Hci({
       send: (packetType, data) => {
         console.log(packetType, data.toString('hex'));
         txBuffer = data;
       },
-      setDataHandler: (handler) => sendEvent = handler,
     });
 
     prepareResult('0e0401030c00');

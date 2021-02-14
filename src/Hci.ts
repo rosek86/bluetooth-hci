@@ -1,10 +1,12 @@
+import { EventEmitter } from 'events';
+import Debug from 'debug';
 
-import { EventEmitter } from "events";
-import Debug from "debug";
-
+import { HciPacketType } from './HciPacketType';
 import HciError from './HciError';
 import { HciErrorCode } from './HciError';
-import { HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands } from './HciOgfOcf'
+import {
+  HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands
+} from './HciOgfOcf'
 import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
@@ -17,19 +19,7 @@ const debug = Debug('nble-hci');
 
 interface HciInit {
   cmdTimeout?: number;
-  send: (pt: PacketType, data: Buffer) => void;
-  setDataHandler: (_: (pt: PacketType, data: Buffer) => void) => void;
-}
-
-export enum PacketType {
-  Ack             = 0,  // Acknowledgment packets
-  HciCommand      = 1,  // HCI Command packet
-  HciAclData      = 2,  // HCI ACL Data packet
-  HciSyncData     = 3,  // HCI Synchronous Data packet
-  HciEvent        = 4,  // HCI Event packet
-  HciIsoData      = 5,  // HCI ISO Data packet
-  VendorSpecific  = 14, // Vendor Specific
-  LinkControl     = 15, // Link Control packet
+  send: (pt: HciPacketType, data: Buffer) => void;
 }
 
 interface HciCommand {
@@ -77,7 +67,7 @@ enum HciParserError {
 // TODO: should I reverse parameter buffers?
 
 export default class Hci extends EventEmitter {
-  private sendRaw: (pt: PacketType, data: Buffer) => void;
+  private sendRaw: (pt: HciPacketType, data: Buffer) => void;
   private cmdTimeout: number;
 
   private onCmdComplete: ((_: HciEvtCmdComplete) => void) | null = null;
@@ -88,7 +78,6 @@ export default class Hci extends EventEmitter {
 
     this.sendRaw = init.send;
     this.cmdTimeout = init.cmdTimeout ?? 2000;
-    init.setDataHandler(this.onData.bind(this));
   }
 
   public async reset(): Promise<void> {
@@ -1194,7 +1183,7 @@ export default class Hci extends EventEmitter {
           complete(undefined, evt);
         }
       };
-      this.sendRaw(PacketType.HciCommand, this.buildHciCommandBuffer(cmd));
+      this.sendRaw(HciPacketType.HciCommand, this.buildHciCommandBuffer(cmd));
     });
   }
 
@@ -1237,7 +1226,7 @@ export default class Hci extends EventEmitter {
           }
         }
       };
-      this.sendRaw(PacketType.HciCommand, this.buildHciCommandBuffer(cmd));
+      this.sendRaw(HciPacketType.HciCommand, this.buildHciCommandBuffer(cmd));
     });
   }
 
@@ -1274,9 +1263,9 @@ export default class Hci extends EventEmitter {
   }
 
 
-  private onData(packetType: PacketType, data: Buffer): void {
+  public onData(packetType: HciPacketType, data: Buffer): void {
     console.log(packetType, data.toString('hex'));
-    if (packetType === PacketType.HciEvent) {
+    if (packetType === HciPacketType.HciEvent) {
       this.onEvent(data);
     }
   }
