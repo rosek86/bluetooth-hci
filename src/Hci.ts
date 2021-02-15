@@ -1276,9 +1276,12 @@ export default class Hci extends EventEmitter {
 
 
   public onData(packetType: HciPacketType, data: Buffer): void {
-    // console.log(packetType, data.toString('hex'));
-    if (packetType === HciPacketType.HciEvent) {
-      this.onEvent(data);
+    try {
+      if (packetType === HciPacketType.HciEvent) {
+        this.onEvent(data);
+      }
+    } catch (err) {
+      debug(err);
     }
   }
 
@@ -1347,70 +1350,74 @@ export default class Hci extends EventEmitter {
   private parseLeExtAdvertReport(data: Buffer) {
     const numReports = data[0];
 
-    const values: Partial<LeExtAdvReport>[] = [];
+    const reportsRaw: Partial<{
+      eventType: number;
+      addressType: number;
+      address: number;
+      primaryPhy: number;
+      secondaryPhy: number;
+      advertisingSid: number;
+      txPower: number;
+      rssi: number;
+      periodicAdvertisingInterval: number;
+      directAddressType: number;
+      directAddress: number;
+      dataLength: number;
+      data: Buffer;
+    }>[] = [];
 
     for (let i = 0; i < numReports; i++) {
-      values.push({});
+      reportsRaw.push({});
     }
 
     let o = 1;
 
     for (let i = 0; i < numReports; i++, o += 2) {
-      values[i].eventType = data.readUIntLE(o, 2);
+      reportsRaw[i].eventType = data.readUIntLE(o, 2);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].addressType = data.readUIntLE(o, 1);
+      reportsRaw[i].addressType = data.readUIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 6) {
-      values[i].address = data.readUIntLE(o, 6);
+      reportsRaw[i].address = data.readUIntLE(o, 6);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].primaryPhy = data.readUIntLE(o, 1);
+      reportsRaw[i].primaryPhy = data.readUIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].secondaryPhy = data.readUIntLE(o, 1);
+      reportsRaw[i].secondaryPhy = data.readUIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].advertisingSid = data.readUIntLE(o, 1);
+      reportsRaw[i].advertisingSid = data.readUIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].txPower = data.readIntLE(o, 1);
+      reportsRaw[i].txPower = data.readIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].rssi = data.readIntLE(o, 1);
+      reportsRaw[i].rssi = data.readIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 2) {
-      values[i].periodicAdvertisingInterval = data.readUIntLE(o, 2);
+      reportsRaw[i].periodicAdvertisingInterval = data.readUIntLE(o, 2);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].directAddressType = data.readUIntLE(o, 1);
+      reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 6) {
-      values[i].directAddress = data.readUIntLE(o, 6);
+      reportsRaw[i].directAddress = data.readUIntLE(o, 6);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
-      values[i].dataLength = data.readUIntLE(o, 1);
+      reportsRaw[i].dataLength = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++) {
+      const dataLength = reportsRaw[i].dataLength!;
+      reportsRaw[i].data = data.slice(o, o + dataLength);
+      o += dataLength;
     }
 
-    console.log(values);
+    console.log(reportsRaw);
 
-
-    // Data[i]
+    return reportsRaw.map((reportRaw) => {
+      return reportRaw
+    });
   }
-}
-
-interface LeExtAdvReport {
-  eventType: number;
-  addressType: number;
-  address: number;
-  primaryPhy: number;
-  secondaryPhy: number;
-  advertisingSid: number;
-  txPower: number;
-  rssi: number;
-  periodicAdvertisingInterval: number;
-  directAddressType: number;
-  directAddress: number;
-  dataLength: number;
-  data: Buffer;
 }
