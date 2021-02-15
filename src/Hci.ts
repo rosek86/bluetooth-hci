@@ -3,6 +3,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
 import HciError from './HciError';
+import { HciEvent, HciLeEvent } from './HciEvent';
 import { HciErrorCode } from './HciError';
 import {
   HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands
@@ -28,10 +29,10 @@ interface HciCommand {
   payload?: Buffer;
 }
 
-enum HciEventCode {
-  CommandComplete = 0x0E,
-  CommandStatus   = 0x0F
-}
+// enum HciEventCode {
+//   CommandComplete = 0x0E,
+//   CommandStatus   = 0x0F
+// }
 
 interface HciEvtCmdComplete {
   numHciPackets: number;
@@ -1275,7 +1276,7 @@ export default class Hci extends EventEmitter {
 
 
   public onData(packetType: HciPacketType, data: Buffer): void {
-    console.log(packetType, data.toString('hex'));
+    // console.log(packetType, data.toString('hex'));
     if (packetType === HciPacketType.HciEvent) {
       this.onEvent(data);
     }
@@ -1297,7 +1298,7 @@ export default class Hci extends EventEmitter {
     }
 
     switch (eventCode) {
-      case HciEventCode.CommandComplete:
+      case HciEvent.CommandComplete:
         if (payload.length < 4) {
           this.emit('parser-error', `(evt-cmd_complete) invalid payload size: ${payload.length}`);
           return;
@@ -1312,7 +1313,7 @@ export default class Hci extends EventEmitter {
           this.onCmdComplete(complete);
         }
         break;
-      case HciEventCode.CommandStatus:
+      case HciEvent.CommandStatus:
         if (payload.length < 4) {
           this.emit('parser-error', `(evt-cmd_status) invalid payload size: ${payload.length}`);
           return;
@@ -1326,6 +1327,90 @@ export default class Hci extends EventEmitter {
           this.onCmdStatus(status);
         }
         break;
+      case HciEvent.LEMeta:
+        this.onLeEvent(payload);
+        break;
     }
   }
+
+  private onLeEvent(data: Buffer): void {
+    const eventType = data[0];
+    const payload = data.slice(1);
+
+    switch  (eventType) {
+      case HciLeEvent.ExtendedAdvertisingReport:
+        this.parseLeExtAdvertReport(payload);
+        break;
+    }
+  }
+
+  private parseLeExtAdvertReport(data: Buffer) {
+    const numReports = data[0];
+
+    const values: Partial<LeExtAdvReport>[] = [];
+
+    for (let i = 0; i < numReports; i++) {
+      values.push({});
+    }
+
+    let o = 1;
+
+    for (let i = 0; i < numReports; i++, o += 2) {
+      values[i].eventType = data.readUIntLE(o, 2);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].addressType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 6) {
+      values[i].address = data.readUIntLE(o, 6);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].primaryPhy = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].secondaryPhy = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].advertisingSid = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].txPower = data.readIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].rssi = data.readIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 2) {
+      values[i].periodicAdvertisingInterval = data.readUIntLE(o, 2);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].directAddressType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 6) {
+      values[i].directAddress = data.readUIntLE(o, 6);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      values[i].dataLength = data.readUIntLE(o, 1);
+    }
+
+    console.log(values);
+
+
+    // Data[i]
+  }
+}
+
+interface LeExtAdvReport {
+  eventType: number;
+  addressType: number;
+  address: number;
+  primaryPhy: number;
+  secondaryPhy: number;
+  advertisingSid: number;
+  txPower: number;
+  rssi: number;
+  periodicAdvertisingInterval: number;
+  directAddressType: number;
+  directAddress: number;
+  dataLength: number;
+  data: Buffer;
 }

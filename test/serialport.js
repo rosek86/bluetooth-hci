@@ -83,8 +83,8 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
     console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
 
-    // const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    // console.log(`number of supported advertising sets: ${advSets}`);
+    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+    console.log(`number of supported advertising sets: ${advSets}`);
 
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,
@@ -96,49 +96,53 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       rxPhys: LePhy.PhyCoded,
     });
 
-    // const selectedTxPower = await hci.leSetExtendedAdvertisingParameters({
-    //   advertisingHandle: 0,
-    //   advertisingEventProperties: [LeAdvertisingEventProperties.UseLegacyPDUs],
-    //   primaryAdvertisingIntervalMinMs: 1280,
-    //   primaryAdvertisingIntervalMaxMs: 1280,
-    //   primaryAdvertisingChannelMap: [
-    //     LeAdvertisingChannelMap.Channel37,
-    //     LeAdvertisingChannelMap.Channel38,
-    //     LeAdvertisingChannelMap.Channel39,
-    //   ],
-    //   ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-    //   peerAddressType: LePeerAddressType.PublicDeviceAddress,
-    //   peerAddress: 0x000000000000,
-    //   advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
-    //   primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
-    //   secondaryAdvertisingMaxSkip: 0,
-    //   secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
-    //   advertisingSid: 0,
-    //   scanRequestNotificationEnable: false
-    // });
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters({
+      advertisingHandle: 0,
+      advertisingEventProperties: [
+        LeAdvertisingEventProperties.UseLegacyPDUs
+      ],
+      primaryAdvertisingIntervalMinMs: 1280,
+      primaryAdvertisingIntervalMaxMs: 1280,
+      primaryAdvertisingChannelMap: [
+        LeAdvertisingChannelMap.Channel37,
+        LeAdvertisingChannelMap.Channel38,
+        LeAdvertisingChannelMap.Channel39,
+      ],
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      peerAddressType: LePeerAddressType.PublicDeviceAddress,
+      peerAddress: 0x000000000000,
+      advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
+      primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
+      secondaryAdvertisingMaxSkip: 0,
+      secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
+      advertisingSid: 0,
+      scanRequestNotificationEnable: false,
+      advertisingTxPower: 0,
+    });
+    console.log(`TX Power: ${selectedTxPower}`);
 
-    // await hci.leSetAdvertisingSetRandomAddress({
-    //   advertisingHandle: 0,
-    //   advertisingRandomAddress: 0x1429c386d3a9,
-    // });
+    await hci.leSetAdvertisingSetRandomAddress({
+      advertisingHandle: 0,
+      advertisingRandomAddress: 0x1429c386d3a9,
+    });
 
     await hci.leSetRandomAddress(0x153c7f2c4b82);
-    // await hci.leSetExtendedScanParameters({
-    //   ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-    //   scanningFilterPolicy: LeScanningFilterPolicy.All,
-    //   scanningPhy: {
-    //     Phy1M: {
-    //       type: LeScanType.Active,
-    //       intervalMs: 11.25,
-    //       windowMs: 11.25
-    //     }
-    //   }
-    // });
+    await hci.leSetExtendedScanParameters({
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      scanningFilterPolicy: LeScanningFilterPolicy.All,
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 11.25,
+          windowMs: 11.25
+        }
+      }
+    });
 
-    // await hci.leSetExtendedScanEnable({
-    //   enable: true,
-    //   filterDuplicates: LeScanFilterDuplicates.Enabled,
-    // });
+    await hci.leSetExtendedScanEnable({
+      enable: true,
+      filterDuplicates: LeScanFilterDuplicates.Enabled,
+    });
 
     console.log('end');
 
