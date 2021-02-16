@@ -145,7 +145,7 @@ const HciErrorCodeToString: { [id: number]: string } = {
   0x45: "Packet Too Long",
 };
 
-export default class HciError extends Error implements NodeJS.ErrnoException {
+export class HciError extends Error implements NodeJS.ErrnoException {
   public errno?: number;
   public code?: string;
   public path?: string;

@@ -31,7 +31,7 @@ type DecoderResult = (
   { code: 0 } & H5Packet) |
   { code: H5TransportRetCode };
 
-export default class H5 {
+export class H5 {
   private readonly h5HeaderLength = 4;
 
   private readonly seqNumMask                     = 0x07;

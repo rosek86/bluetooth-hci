@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
-import HciError from './HciError';
+import { HciError } from './HciError';
 import { HciEvent, HciLeEvent } from './HciEvent';
 import { HciErrorCode } from './HciError';
 import {
@@ -13,8 +13,9 @@ import {
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
   LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType,
-  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel
+  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel, LeExtAdvReport
 } from './HciLe';
+import { Address } from './Address';
 
 const debug = Debug('nble-hci');
 
@@ -28,11 +29,6 @@ interface HciCommand {
   connHandle?: number;
   payload?: Buffer;
 }
-
-// enum HciEventCode {
-//   CommandComplete = 0x0E,
-//   CommandStatus   = 0x0F
-// }
 
 interface HciEvtCmdComplete {
   numHciPackets: number;
@@ -67,7 +63,14 @@ enum HciParserError {
 
 // TODO: should I reverse parameter buffers?
 
-export default class Hci extends EventEmitter {
+export declare interface Hci {
+  on(event: 'hello', listener: (name: string) => void): this;
+  on(event: string, listener: Function): this;
+}
+
+
+
+export class Hci extends EventEmitter {
   private sendRaw: (pt: HciPacketType, data: Buffer) => void;
   private cmdTimeout: number;
 
@@ -1347,7 +1350,7 @@ export default class Hci extends EventEmitter {
     }
   }
 
-  private parseLeExtAdvertReport(data: Buffer) {
+  private parseLeExtAdvertReport(data: Buffer): void {
     const numReports = data[0];
 
     const reportsRaw: Partial<{
@@ -1366,12 +1369,11 @@ export default class Hci extends EventEmitter {
       data: Buffer;
     }>[] = [];
 
+    let o = 1;
+
     for (let i = 0; i < numReports; i++) {
       reportsRaw.push({});
     }
-
-    let o = 1;
-
     for (let i = 0; i < numReports; i++, o += 2) {
       reportsRaw[i].eventType = data.readUIntLE(o, 2);
     }
@@ -1414,10 +1416,25 @@ export default class Hci extends EventEmitter {
       o += dataLength;
     }
 
-    console.log(reportsRaw);
-
-    return reportsRaw.map((reportRaw) => {
-      return reportRaw
+    const reports = reportsRaw.map<LeExtAdvReport>((reportRaw) => {
+      return {
+        eventType:                    reportRaw.eventType!,
+        addressType:                  reportRaw.addressType!,
+        address:                      Address.from(reportRaw.address!),
+        primaryPhy:                   reportRaw.primaryPhy!,
+        secondaryPhy:                 reportRaw.secondaryPhy!,
+        advertisingSid:               reportRaw.advertisingSid!,
+        txPower:                      reportRaw.txPower!,
+        rssi:                         reportRaw.rssi!,
+        periodicAdvertisingInterval:  reportRaw.periodicAdvertisingInterval!,
+        directAddressType:            reportRaw.directAddressType!,
+        directAddress:                reportRaw.directAddress!,
+        data:                         reportRaw.data!,
+      };
     });
+
+    for (const report of reports) {
+      this.emit('ext-adv-report', report);
+    }
   }
 }

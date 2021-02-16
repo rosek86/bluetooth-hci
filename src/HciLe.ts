@@ -1,3 +1,5 @@
+import { Address } from "./Address";
+
 export enum LeState {
   ScanUndirectAdv,
   ConnScanUndirectAdv,
@@ -265,3 +267,18 @@ export enum LeTxTestPayload {
 
 export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transmit power level
 export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
+
+export interface LeExtAdvReport {
+  eventType: number;
+  addressType: number;
+  address: Address;
+  primaryPhy: number;
+  secondaryPhy: number;
+  advertisingSid: number;
+  txPower: number;
+  rssi: number;
+  periodicAdvertisingInterval: number;
+  directAddressType: number;
+  directAddress: number;
+  data: Buffer;
+}

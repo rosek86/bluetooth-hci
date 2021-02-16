@@ -1,4 +1,4 @@
-import Hci from './Hci';
+import { Hci } from './Hci';
 import { HciPacketType } from './HciPacketType';
 import {
   LeAdvertisingChannelMap, LeAdvertisingEventProperties,

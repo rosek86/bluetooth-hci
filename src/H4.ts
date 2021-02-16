@@ -6,7 +6,7 @@ enum ParserState {
 
 type PacketHdrSize = Partial<Record<number, number>>;
 
-export default class H4 {
+export class H4 {
   private readonly headerSize: PacketHdrSize = {};
 
   private parserState = ParserState.Type;

@@ -2,7 +2,7 @@ enum SlipDecoderState {
   WaitBeg, WaitEnd, WaitEndEsc,
 }
 
-export default class Slip {
+export class Slip {
   private readonly END     = 0x0C; // indicates end of packet
   private readonly ESC     = 0xDB; // indicates byte stuffing
   private readonly ESC_END = 0xDC; // ESC ESC_END means END data byte

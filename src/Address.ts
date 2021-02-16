@@ -1,20 +1,24 @@
-export default class Address {
+export class Address {
   constructor(private address: number) {
   }
 
-  static from(address: string): Address|null {
+  static from(address: string|number): Address {
+    if (typeof address === 'number') {
+      return new Address(address);
+    }
+
     const num = address
       .replace(/:/g, '')
       .match(/.{1,2}/g)?.join('');
 
     if (!num) {
-      return null;
+      return new Address(0);
     }
 
     return new Address(parseInt(num, 16));
   }
 
-  public get Address(): number {
+  public toNumeric(): number {
     return this.address;
   }
 

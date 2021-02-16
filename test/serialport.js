@@ -1,8 +1,8 @@
 const SerialPort = require('serialport');
 
-const H4 = require('../lib/H4').default;
-const Hci = require('../lib/Hci').default;
-const Address = require('../lib/Address').default;
+const H4 = require('../lib/H4').H4;
+const Hci = require('../lib/Hci').Hci;
+const Address = require('../lib/Address').Address;
 
 const HciLe = require('../lib/HciLe');
 
@@ -142,6 +142,10 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     await hci.leSetExtendedScanEnable({
       enable: true,
       filterDuplicates: LeScanFilterDuplicates.Enabled,
+    });
+
+    hci.on('ext-adv-report', (advReport) => {
+      console.log(JSON.stringify(advReport, null, 2));
     });
 
     console.log('end');
