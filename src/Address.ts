@@ -29,4 +29,8 @@ export class Address {
       .match(/.{1,2}/g)!
       .join(':');
   }
+
+  get [Symbol.toStringTag]() {
+    return this.toString();
+  }
 }
