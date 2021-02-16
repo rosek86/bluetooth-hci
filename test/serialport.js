@@ -144,8 +144,8 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       filterDuplicates: LeScanFilterDuplicates.Enabled,
     });
 
-    hci.on('ext-adv-report', (advReport) => {
-      console.log(JSON.stringify(advReport, null, 2));
+    hci.on('ext-adv-report', (report) => {
+      console.log(JSON.stringify(report, null, 2));
     });
 
     console.log('end');

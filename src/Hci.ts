@@ -64,11 +64,9 @@ enum HciParserError {
 // TODO: should I reverse parameter buffers?
 
 export declare interface Hci {
-  on(event: 'hello', listener: (name: string) => void): this;
+  on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
   on(event: string, listener: Function): this;
 }
-
-
 
 export class Hci extends EventEmitter {
   private sendRaw: (pt: HciPacketType, data: Buffer) => void;
@@ -1362,7 +1360,7 @@ export class Hci extends EventEmitter {
       advertisingSid: number;
       txPower: number;
       rssi: number;
-      periodicAdvertisingInterval: number;
+      periodicAdvInterval: number;
       directAddressType: number;
       directAddress: number;
       dataLength: number;
@@ -1399,7 +1397,7 @@ export class Hci extends EventEmitter {
       reportsRaw[i].rssi = data.readIntLE(o, 1);
     }
     for (let i = 0; i < numReports; i++, o += 2) {
-      reportsRaw[i].periodicAdvertisingInterval = data.readUIntLE(o, 2);
+      reportsRaw[i].periodicAdvInterval = data.readUIntLE(o, 2);
     }
     for (let i = 0; i < numReports; i++, o += 1) {
       reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
@@ -1416,20 +1414,24 @@ export class Hci extends EventEmitter {
       o += dataLength;
     }
 
+    const powerOrNull = (v: number): number|null => {
+      return v !== 0x7F ? v : null;
+    };
+
     const reports = reportsRaw.map<LeExtAdvReport>((reportRaw) => {
       return {
-        eventType:                    LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
-        addressType:                  reportRaw.addressType!,
-        address:                      Address.from(reportRaw.address!),
-        primaryPhy:                   reportRaw.primaryPhy!,
-        secondaryPhy:                 reportRaw.secondaryPhy!,
-        advertisingSid:               reportRaw.advertisingSid!,
-        txPower:                      reportRaw.txPower!,
-        rssi:                         reportRaw.rssi!,
-        periodicAdvertisingInterval:  reportRaw.periodicAdvertisingInterval!,
-        directAddressType:            reportRaw.directAddressType!,
-        directAddress:                reportRaw.directAddress!,
-        data:                         reportRaw.data!,
+        eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
+        addressType:            reportRaw.addressType!,
+        address:                Address.from(reportRaw.address!),
+        primaryPhy:             reportRaw.primaryPhy!,
+        secondaryPhy:           reportRaw.secondaryPhy!,
+        advertisingSid:         reportRaw.advertisingSid!,
+        txPower:                powerOrNull(reportRaw.txPower!),
+        rssi:                   powerOrNull(reportRaw.rssi!),
+        periodicAdvIntervalMs:  reportRaw.periodicAdvInterval! * 1.25,
+        directAddressType:      reportRaw.directAddressType!,
+        directAddress:          reportRaw.directAddress!,
+        data:                   reportRaw.data!,
       };
     });
 

@@ -268,21 +268,6 @@ export enum LeTxTestPayload {
 export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transmit power level
 export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
 
-export interface LeExtAdvReport {
-  eventType: LeExtAdvEventType;
-  addressType: number;
-  address: Address;
-  primaryPhy: number;
-  secondaryPhy: number;
-  advertisingSid: number;
-  txPower: number;
-  rssi: number;
-  periodicAdvertisingInterval: number;
-  directAddressType: number;
-  directAddress: number;
-  data: Buffer;
-}
-
 export enum LeExtAdvEventTypeDataStatus {
   Complete            = 0,
   IncompleteMoreData  = 1,
@@ -320,4 +305,39 @@ export class LeExtAdvEventTypeParser {
       DataStatus:             fields[5],
     };
   }
+}
+
+export enum LeExtAdvReportAddrType {
+  PublicDeviceAddress   = 0x00, // Public Device Address
+  RandomDeviceAddress   = 0x01, // Random Device Address
+  PublicIdentityAddress = 0x02, // Public Identity Address
+  RandomIdentityAddress = 0x03, // Random (static) Identity Address
+  Anonymous             = 0xFF, // No address provided (anonymous advertisement)
+}
+
+export enum LePrimaryAdvertiserPhy {
+  Phy1M    = 0x01, // Advertiser PHY is LE 1M
+  PhyCoded = 0x03, // Advertiser PHY is LE Coded
+}
+
+export enum LeSecondaryAdvertiserPhy {
+  NotUsed  = 0x00, // No packets on the secondary advertising physical channel
+  Phy1M    = 0x01, // Advertiser PHY is LE 1M
+  Phy2M    = 0x02, // Advertiser PHY is LE 2M
+  PhyCoded = 0x03, // Advertiser PHY is LE Coded
+}
+
+export interface LeExtAdvReport {
+  eventType: LeExtAdvEventType;
+  addressType: LeExtAdvReportAddrType;
+  address: Address;
+  primaryPhy: LePrimaryAdvertiserPhy;
+  secondaryPhy: LeSecondaryAdvertiserPhy;
+  advertisingSid: number;
+  txPower: number|null;
+  rssi: number|null;
+  periodicAdvIntervalMs: number;
+  directAddressType: number;
+  directAddress: number;
+  data: Buffer;
 }
