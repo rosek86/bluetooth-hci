@@ -13,7 +13,7 @@ import {
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
   LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType,
-  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel, LeExtAdvReport
+  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
 } from './HciLe';
 import { Address } from './Address';
 
@@ -1418,7 +1418,7 @@ export class Hci extends EventEmitter {
 
     const reports = reportsRaw.map<LeExtAdvReport>((reportRaw) => {
       return {
-        eventType:                    reportRaw.eventType!,
+        eventType:                    LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
         addressType:                  reportRaw.addressType!,
         address:                      Address.from(reportRaw.address!),
         primaryPhy:                   reportRaw.primaryPhy!,

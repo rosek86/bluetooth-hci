@@ -18,13 +18,25 @@ export class Address {
     return new Address(parseInt(num, 16));
   }
 
+  public toId(): string {
+    return this.address
+      .toString(16)
+      .toLowerCase()
+      .padStart(12, '0');
+  }
+
   public toNumeric(): number {
     return this.address;
+  }
+
+  public toJSON(): string {
+    return this.toString();
   }
 
   public toString(): string {
     return this.address
       .toString(16)
+      .toUpperCase()
       .padStart(12, '0')
       .match(/.{1,2}/g)!
       .join(':');

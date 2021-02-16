@@ -269,7 +269,7 @@ export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transm
 export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
 
 export interface LeExtAdvReport {
-  eventType: number;
+  eventType: LeExtAdvEventType;
   addressType: number;
   address: Address;
   primaryPhy: number;
@@ -281,4 +281,43 @@ export interface LeExtAdvReport {
   directAddressType: number;
   directAddress: number;
   data: Buffer;
+}
+
+export enum LeExtAdvEventTypeDataStatus {
+  Complete            = 0,
+  IncompleteMoreData  = 1,
+  IncompleteTruncated = 2,
+  Reserved            = 3,
+}
+
+export interface LeExtAdvEventType {
+  ConnectableAdvertising: boolean;
+  ScannableAdvertising: boolean;
+  DirectedAdvertising: boolean;
+  ScanResponse: boolean;
+  LegacyAdvertisingPDUs: boolean;
+  DataStatus: LeExtAdvEventTypeDataStatus;
+}
+
+export class LeExtAdvEventTypeParser {
+  private static readonly offsets = [0,1,2,3,4,5];
+  private static readonly masks   = [1,1,1,1,1,3];
+
+  public static parse(type: number): LeExtAdvEventType {
+    const fields = [];
+    for (let i = 0; i < this.offsets.length; i++) {
+      fields.push(
+        (type >> this.offsets[i]) & this.masks[i]
+      );
+    }
+
+    return {
+      ConnectableAdvertising: fields[0] ? true : false,
+      ScannableAdvertising:   fields[1] ? true : false,
+      DirectedAdvertising:    fields[2] ? true : false,
+      ScanResponse:           fields[3] ? true : false,
+      LegacyAdvertisingPDUs:  fields[4] ? true : false,
+      DataStatus:             fields[5],
+    };
+  }
 }
