@@ -6,7 +6,7 @@ import { HciError } from './HciError';
 import { HciEvent, HciLeEvent } from './HciEvent';
 import { HciErrorCode } from './HciError';
 import {
-  HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands
+  HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands, HciOcfStatusParameters
 } from './HciOgfOcf'
 import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
@@ -59,6 +59,18 @@ enum HciParserError {
   InvalidPayloadSize,
   Busy,
   Timeout,
+}
+
+enum AclDataBoundary {
+  FirstNoFlushFrag,
+  NextFrag,
+  FirstFrag,
+  Complete
+}
+
+enum AclDataBroadcast {
+  PointToPoint,
+  Broadcast,
 }
 
 // TODO: should I reverse parameter buffers?
@@ -160,6 +172,26 @@ export class Hci extends EventEmitter {
       }),
       payload: mask,
     });
+  }
+
+  public async readRSSI(connHandle: number): Promise<number> {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUInt16LE(connHandle, 0);
+
+    const result = await this.sendHciCommandWaitComplete({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.StatusParameters,
+        ocf: HciOcfStatusParameters.ReadRssi,
+      }),
+      payload: payload,
+      connHandle: connHandle,
+    });
+    const returnParameters = result.returnParameters;
+    if (returnParameters.length < 3) {
+      throw this.makeError(HciParserError.InvalidPayloadSize);
+    }
+    const rssi = returnParameters.readInt8(2);
+    return rssi;
   }
 
   public async leSetEventMask(): Promise<void> {
@@ -1161,7 +1193,7 @@ export class Hci extends EventEmitter {
     return bitfield;
   }
 
-  private async sendHciCommandWaitStatus(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdStatus> {
+  private async sendHciCommandWaitStatus(cmd: HciCommand): Promise<HciEvtCmdStatus> {
     return new Promise<HciEvtCmdComplete|HciEvtCmdStatus>((resolve, reject) => {
       if (this.onCmdComplete !== null || this.onCmdStatus !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -1189,7 +1221,7 @@ export class Hci extends EventEmitter {
     });
   }
 
-  private async sendHciCommandWaitComplete(cmd: HciCommand, connHandle?: number): Promise<HciEvtCmdComplete> {
+  private async sendHciCommandWaitComplete(cmd: HciCommand): Promise<HciEvtCmdComplete> {
     return new Promise<HciEvtCmdComplete>((resolve, reject) => {
       if (this.onCmdComplete !== null) {
         return reject(this.makeError(HciParserError.Busy));
@@ -1218,7 +1250,7 @@ export class Hci extends EventEmitter {
         if (cmd.opcode !== evt.opcode) {
           return;
         }
-        if (connHandle === undefined) {
+        if (cmd.connHandle === undefined) {
           if (evt.status !== HciErrorCode.Success) {
             complete(this.makeHciError(evt.status));
           } else {
@@ -1229,7 +1261,7 @@ export class Hci extends EventEmitter {
             debug(`Cannot parse connection command complete event`);
             return; // NOTE: can't tell which connection
           }
-          if (connHandle !== evt.returnParameters.readUInt16LE(0)) {
+          if (cmd.connHandle !== evt.returnParameters.readUInt16LE(0)) {
             return;
           }
           if (evt.status !== HciErrorCode.Success) {
@@ -1241,6 +1273,26 @@ export class Hci extends EventEmitter {
       };
       this.sendRaw(HciPacketType.HciCommand, this.buildHciCommandBuffer(cmd));
     });
+  }
+
+  public async sendAclData(params: {
+    handle: number,
+    boundary: AclDataBoundary,
+    broadcast: AclDataBroadcast,
+    data: Buffer,
+  }): Promise<void> {
+    const aclHdrSize = 4;
+    const hdr = params.handle     <<  0 |
+                params.boundary   << 12 |
+                params.broadcast  << 14;
+
+    const totalSize = aclHdrSize + params.data.length;
+    const buffer = Buffer.allocUnsafe(totalSize);
+    buffer.writeUInt16LE(hdr, 0);
+    buffer.writeUInt16LE(params.data.length, 2);
+    params.data.copy(buffer, aclHdrSize);
+
+    await this.sendRaw(HciPacketType.HciAclData, buffer);
   }
 
   private makeHciError(code: HciErrorCode): HciError {

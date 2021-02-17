@@ -29,6 +29,12 @@ export class Address {
     return this.address;
   }
 
+  public toObject() {
+    return {
+      address: this.toString(),
+    };
+  }
+
   public toJSON(): string {
     return this.toString();
   }
