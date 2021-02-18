@@ -2,10 +2,19 @@ import Debug from 'debug';
 
 import { HciPacketType } from "./HciPacketType";
 
-import { HciErrorCode } from "./HciError";
-import { HciParserError } from "./HciError";
+import { HciErrorCode, HciParserError } from "./HciError";
 import { makeHciError, makeParserError} from "./HciError";
-import { HciOcfControlAndBasebandCommands, HciOcfInformationParameters, HciOcfLeControllerCommands, HciOcfLinkControlCommands, HciOcfStatusParameters, HciOcfTestingCommands, HciOgf, HicOcfLinkPolicyCommands } from './HciOgfOcf';
+
+import {
+  HciOgf,
+  HciOcfControlAndBasebandCommands,
+  HciOcfInformationParameters,
+  HciOcfLeControllerCommands,
+  HciOcfLinkControlCommands,
+  HciOcfStatusParameters,
+  HciOcfTestingCommands,
+  HicOcfLinkPolicyCommands
+} from './HciOgfOcf';
 
 const debug = Debug('nble-hci-cmd');
 
