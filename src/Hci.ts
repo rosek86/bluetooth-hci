@@ -1268,6 +1268,9 @@ export class Hci extends EventEmitter {
     }
     for (let i = 0; i < numReports; i++) {
       const dataLength = reportsRaw[i].dataLength!;
+      if (dataLength === 0) {
+        continue;
+      }
       reportsRaw[i].data = data.slice(o, o + dataLength);
       o += dataLength;
     }
@@ -1289,7 +1292,7 @@ export class Hci extends EventEmitter {
         periodicAdvIntervalMs:  reportRaw.periodicAdvInterval! * 1.25,
         directAddressType:      reportRaw.directAddressType!,
         directAddress:          reportRaw.directAddress!,
-        data:                   reportRaw.data!,
+        data:                   reportRaw.data ?? null,
       };
     });
 

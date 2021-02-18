@@ -339,5 +339,5 @@ export interface LeExtAdvReport {
   periodicAdvIntervalMs: number;
   directAddressType: number;
   directAddress: number;
-  data: Buffer;
+  data: Buffer|null;
 }
