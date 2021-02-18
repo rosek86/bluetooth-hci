@@ -187,7 +187,7 @@ export enum HciOcfInformationParameters {
   ReadLocalSupportedCommands                          = 0x0002, // *
   ReadLocalSupportedFeatures                          = 0x0003, // *
   ReadLocalExtendedFeatures                           = 0x0004,
-  ReadBufferSize                                      = 0x0005,
+  ReadBufferSize                                      = 0x0005, // *
   ReadBdAddr                                          = 0x0009, // *
   ReadDataBlockSize                                   = 0x000A,
   ReadLocalSupportedCodecsV1                          = 0x000B,

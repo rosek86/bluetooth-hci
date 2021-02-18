@@ -86,6 +86,26 @@ export class Hci extends EventEmitter {
     return params; // TODO: parse version information
   }
 
+  public async readBufferSize(): Promise<{
+    aclDataPacketLength: number,
+    synchronousDataPacketLength: number,
+    totalNumAclDataPackets: number,
+    totalNumSynchronousDataPackets: number,
+  }> {
+    const ocf = HciOcfInformationParameters.ReadBufferSize;
+    const result = await this.cmd.informationParameters({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 7) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      aclDataPacketLength:            params.readUInt16LE(0),
+      synchronousDataPacketLength:    params.readUInt8(2),
+      totalNumAclDataPackets:         params.readUInt16LE(3),
+      totalNumSynchronousDataPackets: params.readUInt16LE(5),
+    };
+  }
+
   public async readBdAddr(): Promise<number> {
     const ocf = HciOcfInformationParameters.ReadBdAddr;
     const result = await this.cmd.informationParameters({ ocf })
