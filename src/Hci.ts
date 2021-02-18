@@ -3,18 +3,22 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
 import { HciParserError, makeHciError, makeParserError } from './HciError';
-import { HciCmd, HciCmdResult } from "./HciCmd";
+import { HciCmd } from "./HciCmd";
 import { HciEvent, HciLeEvent } from './HciEvent';
 import { HciErrorCode } from './HciError';
 import {
-  HciOgf, HciOcfInformationParameters, HciOcfControlAndBasebandCommands, HciOcfLeControllerCommands, HciOcfStatusParameters
+   HciOcfInformationParameters,
+   HciOcfControlAndBasebandCommands,
+   HciOcfLeControllerCommands,
+   HciOcfStatusParameters
 } from './HciOgfOcf'
 import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
   LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType,
-  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel, LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
+  LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel,
+  LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
 } from './HciLe';
 import { Address } from './Address';
 
@@ -45,23 +49,21 @@ export declare interface Hci {
 }
 
 export class Hci extends EventEmitter {
-  private sendRaw: (pt: HciPacketType, data: Buffer) => void;
-  private cmdTimeout: number;
+  private send: (pt: HciPacketType, data: Buffer) => void;
   private cmd: HciCmd;
 
   public constructor(init: HciInit) {
     super();
 
-    this.sendRaw = init.send;
-    this.cmdTimeout = init.cmdTimeout ?? 2000;
+    this.send = init.send;
 
-    this.cmd = new HciCmd(this.sendRaw, this.cmdTimeout);
+    const timeout = init.cmdTimeout ?? 2000;
+    this.cmd = new HciCmd(this.send, timeout);
   }
 
   public async reset(): Promise<void> {
-    await this.cmd.controlAndBaseband({
-      ocf: HciOcfControlAndBasebandCommands.Reset,
-    })
+    const ocf = HciOcfControlAndBasebandCommands.Reset;
+    await this.cmd.controlAndBaseband({ ocf });
   }
 
   public async readLocalSupportedFeatures(): Promise<BigInt> {
@@ -1136,7 +1138,7 @@ export class Hci extends EventEmitter {
     buffer.writeUInt16LE(params.data.length, 2);
     params.data.copy(buffer, aclHdrSize);
 
-    await this.sendRaw(HciPacketType.HciAclData, buffer);
+    await this.send(HciPacketType.HciAclData, buffer);
   }
 
 
