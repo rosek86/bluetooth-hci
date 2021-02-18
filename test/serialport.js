@@ -46,7 +46,9 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     await hci.reset();
 
     const localFeatures = await hci.readLocalSupportedFeatures();
-    console.log(localFeatures);
+    if (localFeatures.leSupported === false) {
+      throw new Error('LE not supported');
+    }
 
     const localVersion = await hci.readLocalVersionInformation();
     console.log(localVersion);

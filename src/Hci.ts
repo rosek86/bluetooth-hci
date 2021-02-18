@@ -28,6 +28,65 @@ import {
 
 const debug = Debug('nble-hci');
 
+interface LocalSupportedFeatures {
+  threeSlotPackets:                     boolean;
+  fiveSlotPackets:                      boolean;
+  encryption:                           boolean;
+  slotOffset:                           boolean;
+  timingAccuracy:                       boolean;
+  roleSwitch:                           boolean;
+  holdMode:                             boolean;
+  sniffMode:                            boolean;
+  previouslyUsed:                       boolean;
+  powerControlRequests:                 boolean;
+  channelQualityDrivenDataRate:         boolean;
+  scolink:                              boolean;
+  hv2packets:                           boolean;
+  hv3packets:                           boolean;
+  microLawLogSynchronousData:           boolean;
+  aLawLogSynchronousData:               boolean;
+  cvsSynchronousData:                   boolean;
+  pagingParameterNegotiation:           boolean;
+  powerControl:                         boolean;
+  transparentSynchronousData:           boolean;
+  flowControlLagLsb:                    boolean;
+  flowControlLagMiddleBit:              boolean;
+  flowControlLagMsb:                    boolean;
+  broadcastEncryption:                  boolean;
+  enhancedDataRateAcl2MbpsMode:         boolean;
+  enhancedDataRateAcl3MbpsMode:         boolean;
+  enhancedInquiryScan:                  boolean;
+  interlacedInquiryScan:                boolean;
+  interlacedPageScan:                   boolean;
+  rssiWithInquiryResults:               boolean;
+  extendedScoLinkEv3Packets:            boolean;
+  ev4Packets:                           boolean;
+  ev5Packets:                           boolean;
+  afhCapableSlave:                      boolean;
+  afhClassificationSlave:               boolean;
+  brEdrNotSupported:                    boolean;
+  leSupported:                          boolean;
+  threeSlotEnhancedDataRateAclPackets:  boolean;
+  fiveSlotEnhancedDataRateAclPackets:   boolean;
+  sniffSubrating:                       boolean;
+  pauseEncryption:                      boolean;
+  afhCapableMaster:                     boolean;
+  afhClassificationMaster:              boolean;
+  enhancedDataRateESco2MbpsMode:        boolean;
+  enhancedDataRateESco3MbpsMode:        boolean;
+  threeSlotEnhancedDataRateEScoPackets: boolean;
+  extendedInquiryResponse:              boolean;
+  simultaneousLeAndBrEdr:               boolean;
+  secureSimplePairing:                  boolean;
+  encapsulatedPdu:                      boolean;
+  erroneousDataReporting:               boolean;
+  nonFlushablePacketBoundaryFlag:       boolean;
+  linkSupervisionTimeoutChangedEvent:   boolean;
+  variableInquiryTxPowerLevel:          boolean;
+  enhancedPowerControl:                 boolean;
+  extendedFeatures:                     boolean;
+}
+
 interface HciInit {
   cmdTimeout?: number;
   send: (pt: HciPacketType, data: Buffer) => void;
@@ -81,24 +140,94 @@ export class Hci extends EventEmitter {
     await this.cmd.controlAndBaseband({ ocf });
   }
 
-  public async readLocalSupportedFeatures(): Promise<BigInt> {
+  public async readLocalSupportedFeatures(): Promise<LocalSupportedFeatures> {
     const ocf = HciOcfInformationParameters.ReadLocalSupportedFeatures;
     const result = await this.cmd.informationParameters({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < (64/8)) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return params.readBigUInt64LE(0); // TODO: parse LMP features
+    const features = params.readBigUInt64LE(0);
+    return {
+      threeSlotPackets:                     ((features >>  0n) & 1n) !== 0n,
+      fiveSlotPackets:                      ((features >>  1n) & 1n) !== 0n,
+      encryption:                           ((features >>  2n) & 1n) !== 0n,
+      slotOffset:                           ((features >>  3n) & 1n) !== 0n,
+      timingAccuracy:                       ((features >>  4n) & 1n) !== 0n,
+      roleSwitch:                           ((features >>  5n) & 1n) !== 0n,
+      holdMode:                             ((features >>  6n) & 1n) !== 0n,
+      sniffMode:                            ((features >>  7n) & 1n) !== 0n,
+      previouslyUsed:                       ((features >>  8n) & 1n) !== 0n,
+      powerControlRequests:                 ((features >>  9n) & 1n) !== 0n,
+      channelQualityDrivenDataRate:         ((features >> 10n) & 1n) !== 0n,
+      scolink:                              ((features >> 11n) & 1n) !== 0n,
+      hv2packets:                           ((features >> 12n) & 1n) !== 0n,
+      hv3packets:                           ((features >> 13n) & 1n) !== 0n,
+      microLawLogSynchronousData:           ((features >> 14n) & 1n) !== 0n,
+      aLawLogSynchronousData:               ((features >> 15n) & 1n) !== 0n,
+      cvsSynchronousData:                   ((features >> 16n) & 1n) !== 0n,
+      pagingParameterNegotiation:           ((features >> 17n) & 1n) !== 0n,
+      powerControl:                         ((features >> 18n) & 1n) !== 0n,
+      transparentSynchronousData:           ((features >> 19n) & 1n) !== 0n,
+      flowControlLagLsb:                    ((features >> 20n) & 1n) !== 0n,
+      flowControlLagMiddleBit:              ((features >> 21n) & 1n) !== 0n,
+      flowControlLagMsb:                    ((features >> 22n) & 1n) !== 0n,
+      broadcastEncryption:                  ((features >> 23n) & 1n) !== 0n,
+      enhancedDataRateAcl2MbpsMode:         ((features >> 25n) & 1n) !== 0n,
+      enhancedDataRateAcl3MbpsMode:         ((features >> 26n) & 1n) !== 0n,
+      enhancedInquiryScan:                  ((features >> 27n) & 1n) !== 0n,
+      interlacedInquiryScan:                ((features >> 28n) & 1n) !== 0n,
+      interlacedPageScan:                   ((features >> 29n) & 1n) !== 0n,
+      rssiWithInquiryResults:               ((features >> 30n) & 1n) !== 0n,
+      extendedScoLinkEv3Packets:            ((features >> 31n) & 1n) !== 0n,
+      ev4Packets:                           ((features >> 32n) & 1n) !== 0n,
+      ev5Packets:                           ((features >> 33n) & 1n) !== 0n,
+      afhCapableSlave:                      ((features >> 35n) & 1n) !== 0n,
+      afhClassificationSlave:               ((features >> 36n) & 1n) !== 0n,
+      brEdrNotSupported:                    ((features >> 37n) & 1n) !== 0n,
+      leSupported:                          ((features >> 38n) & 1n) !== 0n,
+      threeSlotEnhancedDataRateAclPackets:  ((features >> 39n) & 1n) !== 0n,
+      fiveSlotEnhancedDataRateAclPackets:   ((features >> 40n) & 1n) !== 0n,
+      sniffSubrating:                       ((features >> 41n) & 1n) !== 0n,
+      pauseEncryption:                      ((features >> 42n) & 1n) !== 0n,
+      afhCapableMaster:                     ((features >> 43n) & 1n) !== 0n,
+      afhClassificationMaster:              ((features >> 44n) & 1n) !== 0n,
+      enhancedDataRateESco2MbpsMode:        ((features >> 45n) & 1n) !== 0n,
+      enhancedDataRateESco3MbpsMode:        ((features >> 46n) & 1n) !== 0n,
+      threeSlotEnhancedDataRateEScoPackets: ((features >> 47n) & 1n) !== 0n,
+      extendedInquiryResponse:              ((features >> 48n) & 1n) !== 0n,
+      simultaneousLeAndBrEdr:               ((features >> 49n) & 1n) !== 0n,
+      secureSimplePairing:                  ((features >> 51n) & 1n) !== 0n,
+      encapsulatedPdu:                      ((features >> 52n) & 1n) !== 0n,
+      erroneousDataReporting:               ((features >> 53n) & 1n) !== 0n,
+      nonFlushablePacketBoundaryFlag:       ((features >> 54n) & 1n) !== 0n,
+      linkSupervisionTimeoutChangedEvent:   ((features >> 56n) & 1n) !== 0n,
+      variableInquiryTxPowerLevel:          ((features >> 57n) & 1n) !== 0n,
+      enhancedPowerControl:                 ((features >> 58n) & 1n) !== 0n,
+      extendedFeatures:                     ((features >> 63n) & 1n) !== 0n,
+    };
   }
 
-  public async readLocalVersionInformation(): Promise<Buffer> {
+  public async readLocalVersionInformation(): Promise<{
+    hciVersion: number,
+    hciRevision: number,
+    lmpPalVersion: number,
+    lmpPalSubversion: number,
+    manufacturerName: number,
+  }> {
     const ocf = HciOcfInformationParameters.ReadLocalVersionInformation;
     const result = await this.cmd.informationParameters({ ocf });
     const params = result.returnParameters;
-    if (!params) {
+    if (!params || params.length < 8) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return params; // TODO: parse version information
+    return {
+      hciVersion:       params.readUIntLE(0, 1),
+      hciRevision:      params.readUIntLE(1, 2),
+      lmpPalVersion:    params.readUIntLE(3, 1),
+      lmpPalSubversion: params.readUIntLE(6, 2),
+      manufacturerName: params.readUIntLE(4, 2),
+    };
   }
 
   public async readBufferSize(): Promise<{
