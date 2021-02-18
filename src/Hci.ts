@@ -2,7 +2,8 @@ import { EventEmitter } from 'events';
 import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
-import { HciError } from './HciError';
+import { HciParserError, makeHciError, makeParserError } from './HciError';
+import { HciCmd, HciCmdResult } from "./HciCmd";
 import { HciEvent, HciLeEvent } from './HciEvent';
 import { HciErrorCode } from './HciError';
 import {
@@ -22,43 +23,6 @@ const debug = Debug('nble-hci');
 interface HciInit {
   cmdTimeout?: number;
   send: (pt: HciPacketType, data: Buffer) => void;
-}
-
-interface HciCommand {
-  opcode: number;
-  connHandle?: number;
-  payload?: Buffer;
-}
-
-interface HciEvtCmdComplete {
-  numHciPackets: number;
-  opcode: number;
-  status: number;
-  returnParameters: Buffer;
-}
-
-interface HciEvtCmdStatus {
-  status: number;
-  numHciPackets: number;
-  opcode: number;
-}
-
-class HciOpcode {
-  public static build(opcode: { ogf: number, ocf: number }): number {
-    return opcode.ogf << 10 | opcode.ocf;
-  }
-
-  public static expand(opcode: number): { ogf: number, ocf: number } {
-    const ogf = opcode >> 10;
-    const ocf = opcode & 1023;
-    return { ogf, ocf };
-  }
-}
-
-enum HciParserError {
-  InvalidPayloadSize,
-  Busy,
-  Timeout,
 }
 
 enum AclDataBoundary {
@@ -83,163 +47,141 @@ export declare interface Hci {
 export class Hci extends EventEmitter {
   private sendRaw: (pt: HciPacketType, data: Buffer) => void;
   private cmdTimeout: number;
-
-  private onCmdComplete: ((_: HciEvtCmdComplete) => void) | null = null;
-  private onCmdStatus: ((_: HciEvtCmdStatus) => void) | null = null;
+  private cmd: HciCmd;
 
   public constructor(init: HciInit) {
     super();
 
     this.sendRaw = init.send;
     this.cmdTimeout = init.cmdTimeout ?? 2000;
+
+    this.cmd = new HciCmd(this.sendRaw, this.cmdTimeout);
   }
 
   public async reset(): Promise<void> {
-    await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.ControlAndBasebandCommands,
-        ocf: HciOcfControlAndBasebandCommands.Reset,
-      }),
-    });
+    await this.cmd.controlAndBaseband({
+      ocf: HciOcfControlAndBasebandCommands.Reset,
+    })
   }
 
   public async readLocalSupportedFeatures(): Promise<BigInt> {
-    const result = await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.InformationParameters,
-        ocf: HciOcfInformationParameters.ReadLocalSupportedFeatures,
-      }),
-    });
-    if (result.returnParameters.length < (64/8)) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const ocf = HciOcfInformationParameters.ReadLocalSupportedFeatures;
+    const result = await this.cmd.informationParameters({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < (64/8)) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readBigUInt64LE(0); // TODO: parse LMP features
+    return params.readBigUInt64LE(0); // TODO: parse LMP features
   }
 
   public async readLocalVersionInformation(): Promise<Buffer> {
-    const result = await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.InformationParameters,
-        ocf: HciOcfInformationParameters.ReadLocalVersionInformation,
-      }),
-    });
-    return result.returnParameters; // TODO: parse version information
+    const ocf = HciOcfInformationParameters.ReadLocalVersionInformation;
+    const result = await this.cmd.informationParameters({ ocf });
+    const params = result.returnParameters;
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params; // TODO: parse version information
   }
 
   public async readBdAddr(): Promise<number> {
-    const result = await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.InformationParameters,
-        ocf: HciOcfInformationParameters.ReadBdAddr,
-      }),
-    });
-    if (result.returnParameters.length < 6) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const ocf = HciOcfInformationParameters.ReadBdAddr;
+    const result = await this.cmd.informationParameters({ ocf })
+    const params = result.returnParameters;
+    if (!params || params.length < 6) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readUIntLE(0, 6);
+    return params.readUIntLE(0, 6);
   }
 
   public async readLocalSupportedCommands(): Promise<Buffer> {
-    const result = await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.InformationParameters,
-        ocf: HciOcfInformationParameters.ReadLocalSupportedCommands,
-      }),
-    });
+    const ocf = HciOcfInformationParameters.ReadLocalSupportedCommands;
+    const result = await this.cmd.informationParameters({ ocf })
     // TODO: parse bitmask
-    return result.returnParameters;
+    const params = result.returnParameters;
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params;
   }
 
   public async setEventMask(): Promise<void> {
     // TODO pass event mask as argument
-    const mask = Buffer.from('90e8040200800020', 'hex');
-    await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.ControlAndBasebandCommands,
-        ocf: HciOcfControlAndBasebandCommands.SetEventMask,
-      }),
-      payload: mask,
+    const payload = Buffer.from('90e8040200800020', 'hex');
+    const ocf = HciOcfControlAndBasebandCommands.SetEventMask;
+    await this.cmd.controlAndBaseband({
+      ocf, payload,
     });
   }
 
   public async setEventMaskPage2(): Promise<void> {
     // TODO pass event mask as argument
-    const mask = Buffer.from('0000800000000000', 'hex');
-    await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.ControlAndBasebandCommands,
-        ocf: HciOcfControlAndBasebandCommands.SetEventMaskPage2,
-      }),
-      payload: mask,
+    const payload = Buffer.from('0000800000000000', 'hex');
+    const ocf = HciOcfControlAndBasebandCommands.SetEventMaskPage2;
+    await this.cmd.controlAndBaseband({
+      ocf, payload,
     });
   }
 
   public async readRSSI(connHandle: number): Promise<number> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUInt16LE(connHandle, 0);
-
-    const result = await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.StatusParameters,
-        ocf: HciOcfStatusParameters.ReadRssi,
-      }),
-      payload: payload,
-      connHandle: connHandle,
+    const ocf = HciOcfStatusParameters.ReadRssi;
+    const result = await this.cmd.statusParameters({
+      ocf, payload, connHandle,
     });
-    const returnParameters = result.returnParameters;
-    if (returnParameters.length < 3) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const params = result.returnParameters;
+    if (!params || params.length < 3) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    const rssi = returnParameters.readInt8(2);
+    const rssi = params.readInt8(2);
     return rssi;
   }
 
   public async leSetEventMask(): Promise<void> {
     // TODO pass event mask as argument
-    const mask = Buffer.from('5f1e0a0000000000', 'hex');
+    const payload = Buffer.from('5f1e0a0000000000', 'hex');
     const ocf = HciOcfLeControllerCommands.SetEventMask;
-    await this.sendLeCommandWaitComplete(ocf, mask);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReadBufferSize() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-
-    const returnParameters = result.returnParameters;
-    if (returnParameters.length < 3) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 3) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
-      leAclDataPacketLength:    returnParameters.readUInt16LE(0),
-      totalNumLeAclDataPackets: returnParameters.readUInt8(2),
+      leAclDataPacketLength:    params.readUInt16LE(0),
+      totalNumLeAclDataPackets: params.readUInt8(2),
     };
   }
 
   public async leReadBufferSizeV2() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV2;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-
-    const returnParameters = result.returnParameters;
-    if (returnParameters.length < 6) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 6) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
-      leAclDataPacketLength:    returnParameters.readUInt16LE(0),
-      totalNumLeAclDataPackets: returnParameters.readUInt8(2),
-      isoDataPacketLength:      returnParameters.readUInt16LE(3),
-      totalNumIsoDataPackets:   returnParameters.readUInt8(5),
+      leAclDataPacketLength:    params.readUInt16LE(0),
+      totalNumLeAclDataPackets: params.readUInt8(2),
+      isoDataPacketLength:      params.readUInt16LE(3),
+      totalNumIsoDataPackets:   params.readUInt8(5),
     };
   }
 
   public async leReadSupportedFeatures(): Promise<BigInt> {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-
-    if (result.returnParameters.length < (64/8)) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < (64/8)) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     // TODO: parse bitmask
-    return result.returnParameters.readBigUInt64LE(0);
+    return params.readBigUInt64LE(0);
   }
 
   public async leSetRandomAddress(randomAddress: number): Promise<void> {
@@ -247,7 +189,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(randomAddress, 0, 6);
 
     const ocf = HciOcfLeControllerCommands.SetRandomAddress;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetAdvertisingParameters(params: {
@@ -278,22 +220,22 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingParameters;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReadAdvertisingPhysicalChannelTxPower(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadAdvertisingPhysicalChannelTxPower;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readInt8(0);
+    return params.readInt8(0);
   }
 
   public async leSetAdvertisingData(data: Buffer): Promise<void> {
     if (data.length > 31) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(1+31, 0);
@@ -301,12 +243,12 @@ export class Hci extends EventEmitter {
     data.copy(payload, 1);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingData;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetScanResponseData(data: Buffer): Promise<void> {
     if (data.length > 31) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(1+31, 0);
@@ -314,14 +256,14 @@ export class Hci extends EventEmitter {
     data.copy(payload, 1);
 
     const ocf = HciOcfLeControllerCommands.SetScanResponseData;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetAdvertisingEnable(enable: boolean): Promise<void> {
     const payload = Buffer.allocUnsafe(1);
     payload.writeUInt8(enable ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetAdvertisingEnable;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetScanParameters(params: {
@@ -344,7 +286,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetScanParameters;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetScanEnable(enable: boolean, filterDuplicates?: boolean): Promise<void> {
@@ -352,7 +294,7 @@ export class Hci extends EventEmitter {
     payload.writeUInt8(enable           ? 1 : 0);
     payload.writeUInt8(filterDuplicates ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetScanEnable;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leCreateConnection(params: {
@@ -394,26 +336,27 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     const ocf = HciOcfLeControllerCommands.CreateConnection;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leCreateConnectionCancel(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.CreateConnectionCancel;
-    await this.sendLeCommandWaitComplete(ocf);
+    await this.cmd.lowEnergy({ ocf });
   }
 
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readUInt8(0);
+    return params.readUInt8(0);
   }
 
   public async leClearWhiteList(): Promise<void> {
-    await this.sendLeCommandWaitComplete(HciOcfLeControllerCommands.ClearWhiteList);
+    const ocf = HciOcfLeControllerCommands.ClearWhiteList;
+    await this.cmd.lowEnergy({ ocf });
   }
 
   public async leAddDeviceToWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
@@ -421,7 +364,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(addressType,  0, 1);
     payload.writeUIntLE(address ?? 0, 1, 6);
     const ocf = HciOcfLeControllerCommands.AddDeviceToWhiteList;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leRemoveDeviceFromWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
@@ -429,7 +372,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(addressType,  0, 1);
     payload.writeUIntLE(address ?? 0, 1, 6);
     const ocf = HciOcfLeControllerCommands.RemoveDeviceFromWhiteList;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leConnectionUpdate(params: {
@@ -459,25 +402,24 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     const ocf = HciOcfLeControllerCommands.ConnectionUpdate;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetHostChannelClassification(channelMap: number): Promise<void> {
     const payload = Buffer.allocUnsafe(5);
     payload.writeUIntLE(channelMap, 0, 5);
     const ocf = HciOcfLeControllerCommands.SetHostChannelClassification;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReadChannelMap(connHandle: number): Promise<{ connHandle: number, channelMap: number }> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadChannelMap;
-    const result = await this.sendLeCommandWaitComplete(ocf, payload);
-
+    const result = await this.cmd.lowEnergy({ ocf, payload });
     const params = result.returnParameters;
-    if (params.length < 7) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!params || params.length < 7) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
       connHandle: params.readUIntLE(0, 2),
@@ -489,12 +431,12 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leEncrypt(key: Buffer, plaintextData: Buffer): Promise<Buffer> {
     if (key.length !== 16 || plaintextData.length !== 16) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
     const payload = Buffer.allocUnsafe(32);
@@ -502,14 +444,22 @@ export class Hci extends EventEmitter {
     plaintextData.copy(payload, 16);
 
     const ocf = HciOcfLeControllerCommands.Encrypt;
-    const result = await this.sendLeCommandWaitComplete(ocf, payload);
-    return result.returnParameters;
+    const result = await this.cmd.lowEnergy({ ocf, payload });
+    const params = result.returnParameters;
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params;
   }
 
   public async leRand(): Promise<Buffer> {
     const ocf = HciOcfLeControllerCommands.Rand;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-    return result.returnParameters;
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params;
   }
 
   public async leEnableEncryption(params: {
@@ -519,7 +469,7 @@ export class Hci extends EventEmitter {
     longTermKey: Buffer,
   }): Promise<void> {
     if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(2+8+2+16);
 
@@ -530,44 +480,51 @@ export class Hci extends EventEmitter {
     o += params.longTermKey.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.EnableEncryption;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
-  public async leLongTermKeyRequestReply(params: {
+  public async leLongTermKeyRequestReply(input: {
     connHandle: number,
     longTermKey: Buffer,
   }): Promise<number> {
-    if (params.longTermKey.length !== 16) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+    if (input.longTermKey.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
-    const connHandle = params.connHandle;
+    const connHandle = input.connHandle;
     const payload = Buffer.allocUnsafe(2+16);
 
     let o = 0;
     o  = payload.writeUIntLE(connHandle, o, 2);
-    o += params.longTermKey.copy(payload, o);
+    o += input.longTermKey.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestReply;
-    const result = await this.sendLeConnCommandWaitComplete({ ocf, connHandle, payload });
-    return result.returnParameters.readUInt16LE(0);
+    const result = await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    const params = result.returnParameters;
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt16LE(0);
   }
 
   public async leLongTermKeyRequestNegativeReply(connHandle: number): Promise<number> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
-
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestNegativeReply;
-    const result = await this.sendLeConnCommandWaitComplete({ ocf, connHandle, payload });
-    return result.returnParameters.readUInt16LE(0);
+    const result = await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    const params = result.returnParameters;
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt16LE(0);
   }
 
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
     const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
-    const result = await this.sendLeCommandWaitComplete(ocf);
+    const result = await this.cmd.lowEnergy({ ocf });
 
     const params = result.returnParameters;
-    if (params.length < (64/8)) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!params || params.length < (64/8)) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     const bitmask = params.readBigUInt64LE(0);
     return LeSupportedStates.fromBitmask(bitmask);
@@ -580,7 +537,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(rxChannel, 0, 1);
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV1;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   private channelFrequencyToHciValue(rxChannelMhz: number): number {
@@ -602,7 +559,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.modulationIndex, o, 1);
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV2;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReceiverTestV3(params: {
@@ -632,7 +589,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV3;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leTransmitterTestV1(params: {
@@ -650,7 +607,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.packetPayload,   o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV1;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leTransmitterTestV2(params: {
@@ -670,7 +627,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.phy,             o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV2;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leTransmitterTestV3(params: {
@@ -700,7 +657,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV3;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leTransmitterTestV4(params: {
@@ -733,15 +690,17 @@ export class Hci extends EventEmitter {
     o = payload.writeIntLE(params.transmitPowerLevel, o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV4;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leTestEnd(): Promise<number> {
-    const result = await this.sendLeCommandWaitComplete(HciOcfLeControllerCommands.TestEnd);
-    if (result.returnParameters.length < 2) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const ocf = HciOcfLeControllerCommands.TestEnd;
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readUInt16LE(0);
+    return params.readUInt16LE(0);
   }
 
   public async leRemoteConnectionParameterRequestReply(params: {
@@ -771,7 +730,7 @@ export class Hci extends EventEmitter {
 
     const connHandle = params.connHandle;
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
-    await this.sendLeConnCommandWaitComplete({ ocf, connHandle, payload });
+    await this.cmd.lowEnergy({ ocf, connHandle, payload });
   }
 
   public async leRemoteConnectionParameterRequestNegativeReply(params: {
@@ -786,7 +745,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.reason,  o, 1);
 
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
-    await this.sendLeConnCommandWaitComplete({ ocf, connHandle, payload });
+    await this.cmd.lowEnergy({ ocf, connHandle, payload });
   }
 
   public async leSetDataLength(params: {
@@ -803,7 +762,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.txTime,    o, 2);
 
     const ocf = HciOcfLeControllerCommands.SetDataLength;
-    await this.sendLeConnCommandWaitComplete({ ocf, connHandle, payload });
+    await this.cmd.lowEnergy({ ocf, connHandle, payload });
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<{
@@ -811,11 +770,11 @@ export class Hci extends EventEmitter {
     suggestedMaxTxTime: number,
   }> {
     const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
-    const result = await this.sendLeCommandWaitComplete(ocf);
+    const result = await this.cmd.lowEnergy({ ocf });
 
     const params = result.returnParameters;
-    if (params.length < 4) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!params || params.length < 4) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
       suggestedMaxTxOctets: params.readUInt16LE(0),
@@ -831,25 +790,25 @@ export class Hci extends EventEmitter {
     payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
     payload.writeUInt16LE(params.suggestedMaxTxTime,   2);
     const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReadLocalP256PublicKey(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ReadLocalP256PublicKey;
-    await this.sendLeCommandWaitStatus({ ocf });
+    await this.cmd.lowEnergy({ ocf });
   }
 
   public async leGenerateDhKeyV1(params: {
     publicKey: Buffer,
   }): Promise<void> {
     if (params.publicKey.length !== 64) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(64);
     params.publicKey.copy(payload, 0);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV1;
-    await this.sendLeCommandWaitStatus({ ocf, payload });
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leGenerateDhKeyV2(params: {
@@ -857,27 +816,29 @@ export class Hci extends EventEmitter {
     keyType: number,
   }): Promise<void> {
     if (params.publicKey.length !== 64) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(65);
     params.publicKey.copy(payload, 0);
     payload.writeUInt8(params.keyType, 64);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV2;
-    await this.sendLeCommandWaitStatus({ ocf, payload });
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leClearResolvingList(): Promise<void> {
-    await this.sendLeCommandWaitComplete(HciOcfLeControllerCommands.ClearResolvingList);
+    const  ocf = HciOcfLeControllerCommands.ClearResolvingList;
+    await this.cmd.lowEnergy({ ocf });
   }
 
   public async leReadResolvingListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    const params = result.returnParameters;
+    if (!params|| params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return result.returnParameters.readUInt8(0);
+    return params.readUInt8(0);
   }
 
   public async leReadMaximumDataLength(): Promise<{
@@ -885,11 +846,11 @@ export class Hci extends EventEmitter {
     supportedMaxRxOctets: number, supportedMaxRxTime: number,
   }> {
     const ocf = HciOcfLeControllerCommands.ReadMaximumDataLength;
-    const result = await this.sendLeCommandWaitComplete(ocf);
+    const result = await this.cmd.lowEnergy({ ocf });
     const params = result.returnParameters;
 
-    if (params.length < 8) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!params|| params.length < 8) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
       supportedMaxTxOctets: params.readUInt16LE(0),
@@ -908,11 +869,11 @@ export class Hci extends EventEmitter {
     payload.writeUInt16LE(connectionHandle, 0);
 
     const ocf = HciOcfLeControllerCommands.ReadPhy;
-    const result = await this.sendLeCommandWaitComplete(ocf, payload);
+    const result = await this.cmd.lowEnergy({ ocf, payload });
     const params = result.returnParameters;
 
-    if (params.length < 4) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!params|| params.length < 4) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
       connectionHandle: params.readUInt16LE(0),
@@ -946,7 +907,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUInt8(rxPhys,  o);
 
     const ocf = HciOcfLeControllerCommands.SetDefaultPhy;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetAdvertisingSetRandomAddress(params: {
@@ -960,7 +921,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.advertisingRandomAddress, o, 6);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetExtendedAdvertisingParameters(params: {
@@ -1008,10 +969,10 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
-    const result = await this.sendLeCommandWaitComplete(ocf, payload);
+    const result = await this.cmd.lowEnergy({ ocf, payload });
 
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    if (!result.returnParameters || result.returnParameters.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
 
     const selectedTxPower = result.returnParameters.readInt8(0);
@@ -1034,7 +995,7 @@ export class Hci extends EventEmitter {
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingData;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetExtendedScanResponseData(params: {
@@ -1053,14 +1014,14 @@ export class Hci extends EventEmitter {
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanResponseData;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
-    const result = await this.sendLeCommandWaitComplete(ocf);
-    if (result.returnParameters.length < 1) {
-      throw this.makeError(HciParserError.InvalidPayloadSize);
+    const result = await this.cmd.lowEnergy({ ocf });
+    if (!result.returnParameters || result.returnParameters.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return result.returnParameters.readUInt8(0);
   }
@@ -1085,7 +1046,7 @@ export class Hci extends EventEmitter {
     }
 
     if (phys.count === 0) {
-      throw this.makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
     const payload = Buffer.allocUnsafe(3 + phys.count * (1+2+2));
@@ -1119,7 +1080,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanParameters;
-    await this.sendLeCommandWaitComplete(ocf, payload);
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   public async leSetExtendedScanEnable(params: {
@@ -1140,42 +1101,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(period,                  o, 2);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanEnable;
-    await this.sendLeCommandWaitComplete(ocf, payload);
-  }
-
-  private async sendLeCommandWaitComplete(ocf: HciOcfLeControllerCommands, payload?: Buffer): Promise<HciEvtCmdComplete> {
-    return await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands, ocf,
-      }),
-      payload,
-    });
-  }
-
-  private async sendLeCommandWaitStatus(params: {
-    ocf: HciOcfLeControllerCommands,
-    payload?: Buffer
-  }): Promise<HciEvtCmdStatus> {
-    return await this.sendHciCommandWaitStatus({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands, ocf: params.ocf,
-      }),
-      payload: params.payload,
-    });
-  }
-
-  private async sendLeConnCommandWaitComplete(params: {
-    ocf: HciOcfLeControllerCommands,
-    connHandle: number,
-    payload?: Buffer
-  }): Promise<HciEvtCmdComplete> {
-    return await this.sendHciCommandWaitComplete({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.LeControllerCommands, ocf: params.ocf,
-      }),
-      connHandle: params.connHandle,
-      payload: params.payload,
-    });
+    await this.cmd.lowEnergy({ ocf, payload });
   }
 
   private hciValueToMs(val: number, factor: number = 0.625): number {
@@ -1191,88 +1117,6 @@ export class Hci extends EventEmitter {
       bitfield |= 1 << bit;
     }
     return bitfield;
-  }
-
-  private async sendHciCommandWaitStatus(cmd: HciCommand): Promise<HciEvtCmdStatus> {
-    return new Promise<HciEvtCmdComplete|HciEvtCmdStatus>((resolve, reject) => {
-      if (this.onCmdComplete !== null || this.onCmdStatus !== null) {
-        return reject(this.makeError(HciParserError.Busy));
-      }
-      const complete = (err?: Error, evt?: HciEvtCmdComplete|HciEvtCmdStatus) => {
-        clearTimeout(timeoutId);
-        this.onCmdComplete = null;
-        this.onCmdStatus = null;
-        err ? reject(err) : resolve(evt!);
-      };
-      const timeoutId = setTimeout(
-        () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
-      );
-      this.onCmdStatus = (evt: HciEvtCmdStatus) => {
-        if (cmd.opcode !== evt.opcode) {
-          return;
-        }
-        if (evt.status !== HciErrorCode.Success) {
-          complete(this.makeHciError(evt.status));
-        } else {
-          complete(undefined, evt);
-        }
-      };
-      this.sendRaw(HciPacketType.HciCommand, this.buildHciCommandBuffer(cmd));
-    });
-  }
-
-  private async sendHciCommandWaitComplete(cmd: HciCommand): Promise<HciEvtCmdComplete> {
-    return new Promise<HciEvtCmdComplete>((resolve, reject) => {
-      if (this.onCmdComplete !== null) {
-        return reject(this.makeError(HciParserError.Busy));
-      }
-      const complete = (err?: Error, evt?: HciEvtCmdComplete) => {
-        clearTimeout(timeoutId);
-        this.onCmdComplete = null;
-        this.onCmdStatus = null;
-        err ? reject(err) : resolve(evt!);
-      };
-      const timeoutId = setTimeout(
-        () => complete(this.makeError(HciParserError.Timeout)), this.cmdTimeout
-      );
-      this.onCmdStatus = (evt: HciEvtCmdStatus) => {
-        if (cmd.opcode !== evt.opcode) {
-          return;
-        }
-        if (evt.status !== HciErrorCode.Success) {
-          complete(this.makeHciError(evt.status));
-        } else {
-          // TODO: this command should return complete|status
-          // complete(undefined, evt);
-        }
-      };
-      this.onCmdComplete = (evt: HciEvtCmdComplete) => {
-        if (cmd.opcode !== evt.opcode) {
-          return;
-        }
-        if (cmd.connHandle === undefined) {
-          if (evt.status !== HciErrorCode.Success) {
-            complete(this.makeHciError(evt.status));
-          } else {
-            complete(undefined, evt);
-          }
-        } else {
-          if (evt.returnParameters.length < 2) {
-            debug(`Cannot parse connection command complete event`);
-            return; // NOTE: can't tell which connection
-          }
-          if (cmd.connHandle !== evt.returnParameters.readUInt16LE(0)) {
-            return;
-          }
-          if (evt.status !== HciErrorCode.Success) {
-            complete(this.makeHciError(evt.status));
-          } else {
-            complete(undefined, evt);
-          }
-        }
-      };
-      this.sendRaw(HciPacketType.HciCommand, this.buildHciCommandBuffer(cmd));
-    });
   }
 
   public async sendAclData(params: {
@@ -1293,38 +1137,6 @@ export class Hci extends EventEmitter {
     params.data.copy(buffer, aclHdrSize);
 
     await this.sendRaw(HciPacketType.HciAclData, buffer);
-  }
-
-  private makeHciError(code: HciErrorCode): HciError {
-    return new HciError(code);
-  }
-
-  private makeError(code: HciParserError): Error {
-    if (code === HciParserError.InvalidPayloadSize) {
-      return new Error(`Cannot parse payload, invalid size`);
-    }
-    if (code === HciParserError.Busy) {
-      return new Error(`Busy, command in progress.`)
-    }
-    if (code === HciParserError.Timeout) {
-      return new Error(`Command timeout`);
-    }
-    return new Error(`Unexpected error`);
-  }
-
-  private buildHciCommandBuffer(cmd: HciCommand): Buffer {
-    const payloadLength = cmd.payload?.length ?? 0;
-    const buffer = Buffer.allocUnsafe(3 + payloadLength);
-
-    let o = 0;
-    o = buffer.writeUIntLE(cmd.opcode,            o, 2);
-    o = buffer.writeUIntLE(payloadLength,         o, 1);
-
-    if (cmd.payload && payloadLength > 0) {
-      cmd.payload.copy(buffer, 3);
-    }
-
-    return buffer;
   }
 
 
@@ -1349,39 +1161,33 @@ export class Hci extends EventEmitter {
     const payload       = data.slice(2);
 
     if (payloadLength !== payload.length) {
-      this.emit('parser-error', `(evt) invalid payload size: ${payloadLength}/${payload.length}`);
+      debug(`(evt) invalid payload size: ${payloadLength}/${payload.length}`);
       return;
     }
 
     switch (eventCode) {
       case HciEvent.CommandComplete:
         if (payload.length < 4) {
-          this.emit('parser-error', `(evt-cmd_complete) invalid payload size: ${payload.length}`);
+          debug(`(evt-cmd_complete) invalid payload size: ${payload.length}`);
           return;
         }
-        const complete: HciEvtCmdComplete = {
-          numHciPackets: payload[0],
-          opcode: payload.readUInt16LE(1),
-          status: payload[3],
+        this.cmd.onCmdResult({
+          status:           payload[3],
+          numHciPackets:    payload[0],
+          opcode:           payload.readUInt16LE(1),
           returnParameters: payload.slice(4),
-        };
-        if (this.onCmdComplete) {
-          this.onCmdComplete(complete);
-        }
+        });
         break;
       case HciEvent.CommandStatus:
         if (payload.length < 4) {
-          this.emit('parser-error', `(evt-cmd_status) invalid payload size: ${payload.length}`);
+          debug(`(evt-cmd_status) invalid payload size: ${payload.length}`);
           return;
         }
-        const status: HciEvtCmdStatus = {
-          status: payload[0],
-          numHciPackets: payload[1],
-          opcode: payload.readUInt16LE(2),
-        };
-        if (this.onCmdStatus) {
-          this.onCmdStatus(status);
-        }
+        this.cmd.onCmdResult({
+          status:         payload[0],
+          numHciPackets:  payload[1],
+          opcode:         payload.readUInt16LE(2),
+        });
         break;
       case HciEvent.LEMeta:
         this.onLeEvent(payload);

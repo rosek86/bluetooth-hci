@@ -181,3 +181,26 @@ export class HciError extends Error implements NodeJS.ErrnoException {
     return error;
   }
 }
+
+export enum HciParserError {
+  InvalidPayloadSize,
+  Busy,
+  Timeout,
+}
+
+export function makeHciError(code: HciErrorCode): HciError {
+  return new HciError(code);
+}
+
+export function makeParserError(code: HciParserError): Error {
+  if (code === HciParserError.InvalidPayloadSize) {
+    return new Error(`Cannot parse payload, invalid size`);
+  }
+  if (code === HciParserError.Busy) {
+    return new Error(`Busy, command in progress.`)
+  }
+  if (code === HciParserError.Timeout) {
+    return new Error(`Command timeout`);
+  }
+  return new Error(`Unexpected error`);
+}
