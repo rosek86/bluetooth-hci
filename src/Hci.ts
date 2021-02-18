@@ -2,15 +2,20 @@ import { EventEmitter } from 'events';
 import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
-import { HciParserError, makeHciError, makeParserError } from './HciError';
-import { HciCmd } from "./HciCmd";
-import { HciEvent, HciLeEvent } from './HciEvent';
+
 import { HciErrorCode } from './HciError';
+import { HciDisconnectReason } from './HciError';
+import { HciParserError, makeHciError, makeParserError } from './HciError';
+
+import { Address } from './Address';
+import { HciCmd } from './HciCmd';
+import { HciEvent, HciLeEvent } from './HciEvent';
 import {
    HciOcfInformationParameters,
    HciOcfControlAndBasebandCommands,
    HciOcfLeControllerCommands,
-   HciOcfStatusParameters
+   HciOcfStatusParameters,
+   HciOcfLinkControlCommands
 } from './HciOgfOcf'
 import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
@@ -20,7 +25,6 @@ import {
   LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel,
   LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
 } from './HciLe';
-import { Address } from './Address';
 
 const debug = Debug('nble-hci');
 
@@ -59,6 +63,17 @@ export class Hci extends EventEmitter {
 
     const timeout = init.cmdTimeout ?? 2000;
     this.cmd = new HciCmd(this.send, timeout);
+  }
+
+  public async disconnect(params: {
+    connHandle: number,
+    reason: HciDisconnectReason,
+  }) {
+    const payload = Buffer.allocUnsafe(3);
+    payload.writeUInt16LE(params.connHandle, 0);
+    payload.writeUInt8(params.reason);
+    const ocf = HciOcfLinkControlCommands.Disconnect;
+    await this.cmd.linkControl({ ocf, payload });
   }
 
   public async reset(): Promise<void> {
@@ -140,12 +155,30 @@ export class Hci extends EventEmitter {
     // TODO pass event mask as argument
     const payload = Buffer.from('0000800000000000', 'hex');
     const ocf = HciOcfControlAndBasebandCommands.SetEventMaskPage2;
-    await this.cmd.controlAndBaseband({
-      ocf, payload,
-    });
+    await this.cmd.controlAndBaseband({ ocf, payload });
   }
 
-  public async readRSSI(connHandle: number): Promise<number> {
+  public async readLeHostSupport(): Promise<boolean> {
+    const ocf = HciOcfControlAndBasebandCommands.ReadLeHostSupport;
+    const result = await this.cmd.controlAndBaseband({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    // Simultaneous Le Host shall be ignored [Vol 4] Part E, Section 6.35
+    const leSupportedHost = params.readUInt8(0) === 1;
+    return leSupportedHost;
+  }
+
+  public async writeLeHostSupported(leSupportedHost: boolean) {
+    const payload = Buffer.allocUnsafe(2);
+    payload[0] = leSupportedHost ? 1 : 0;
+    payload[1] = 0; // Simultaneous Le Host shall be ignored
+    const ocf = HciOcfControlAndBasebandCommands.WriteLeHostSupport;
+    await this.cmd.controlAndBaseband({ ocf });
+  }
+
+  public async readRssi(connHandle: number): Promise<number> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUInt16LE(connHandle, 0);
     const ocf = HciOcfStatusParameters.ReadRssi;

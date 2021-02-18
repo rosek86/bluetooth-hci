@@ -72,6 +72,16 @@ export enum HciErrorCode {
   PacketTooLong               = 0x45, // Packet Too Long
 };
 
+export enum HciDisconnectReason {
+  AuthFailure                 = HciErrorCode.AuthFailure,
+  ConnTerminatedByRemoteUser  = HciErrorCode.ConnTerminatedByRemoteUser,
+  ConnTerminatedLowResources  = HciErrorCode.ConnTerminatedLowResources,
+  ConnTerminatedPowerOff      = HciErrorCode.ConnTerminatedPowerOff,
+  UnsupportedFeature          = HciErrorCode.UnsupportedFeature,
+  UnitKeyNotSupported         = HciErrorCode.UnitKeyNotSupported,
+  ConnectionParameters        = HciErrorCode.ConnectionParameters,
+}
+
 const HciErrorCodeToString: { [id: number]: string } = {
   0x00: "Success",
   0x01: "Unknown HCI Command",

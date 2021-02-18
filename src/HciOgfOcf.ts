@@ -14,7 +14,7 @@ export enum HciOcfLinkControlCommands {
   PeriodicInquiryMode                                 = 0x0003, // Periodic Inquiry Mode
   ExitPeriodicInquiryMode                             = 0x0004, // Exit Periodic Inquiry Mode
   CreateConnection                                    = 0x0005, // Create Connection
-  Disconnect                                          = 0x0006, // Disconnect
+  Disconnect                                          = 0x0006, // * Disconnect
   CreateConnectionCancel                              = 0x0008, // Create Connection Cancel
   AcceptConnectionRequest                             = 0x0009, // Accept Connection Request
   RejectConnectionRequest                             = 0x000A, // Reject Connection Request
@@ -156,8 +156,8 @@ export enum HciOcfControlAndBasebandCommands {
   ReadBestEffortFlushTimeout                          = 0x0069,
   WriteBestEffortFlushTimeout                         = 0x006A,
   ShortRangeMode                                      = 0x006B,
-  ReadLeHostSupport                                   = 0x006C,
-  WriteLeHostSupport                                  = 0x006D,
+  ReadLeHostSupport                                   = 0x006C, // *
+  WriteLeHostSupport                                  = 0x006D, // *
   SetMwsChannelParameters                             = 0x006E,
   SetExternalFrameConfiguration                       = 0x006F,
   SetMwsSignaling                                     = 0x0070,
