@@ -5,9 +5,11 @@ import { HciPacketType } from "./HciPacketType";
 import { HciErrorCode } from "./HciError";
 import { HciParserError } from "./HciError";
 import { makeHciError, makeParserError} from "./HciError";
-import { HciOcfControlAndBasebandCommands, HciOcfInformationParameters, HciOcfLeControllerCommands, HciOcfStatusParameters, HciOgf } from './HciOgfOcf';
+import { HciOcfControlAndBasebandCommands, HciOcfInformationParameters, HciOcfLeControllerCommands, HciOcfLinkControlCommands, HciOcfStatusParameters, HciOcfTestingCommands, HciOgf, HicOcfLinkPolicyCommands } from './HciOgfOcf';
 
 const debug = Debug('nble-hci-cmd');
+
+type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 
 interface Command {
   opcode: number;
@@ -34,12 +36,40 @@ export interface HciCmdResult {
   returnParameters?: Buffer;
 }
 
-type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
-
 export class HciCmd {
   private onResult: ((_: HciCmdResult) => void) | null = null;
 
   public constructor(private send: HciSendFunction, private timeout: number = 2000) {
+  }
+
+  public async linkControl(params: {
+    ocf: HciOcfLinkControlCommands,
+    connHandle?: number,
+    payload?: Buffer
+  }): Promise<HciCmdResult> {
+    return await this.sendWaitResult({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LinkControlCommands,
+        ocf: params.ocf,
+      }),
+      payload: params.payload,
+      connHandle: params.connHandle,
+    });
+  }
+
+  public async linkPolicy(params: {
+    ocf: HicOcfLinkPolicyCommands,
+    connHandle?: number,
+    payload?: Buffer
+  }): Promise<HciCmdResult> {
+    return await this.sendWaitResult({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.LinkPolicyCommands,
+        ocf: params.ocf,
+      }),
+      payload: params.payload,
+      connHandle: params.connHandle,
+    });
   }
 
   public async controlAndBaseband(params: {
@@ -87,7 +117,22 @@ export class HciCmd {
     })
   }
 
-  public async lowEnergy(params: {
+  public async testing(params: {
+    ocf: HciOcfTestingCommands,
+    connHandle?: number,
+    payload?: Buffer
+  }): Promise<HciCmdResult> {
+    return await this.sendWaitResult({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.TestingCommands,
+        ocf: params.ocf,
+      }),
+      payload: params.payload,
+      connHandle: params.connHandle,
+    });
+  }
+
+  public async leController(params: {
     ocf: HciOcfLeControllerCommands,
     connHandle?: number,
     payload?: Buffer

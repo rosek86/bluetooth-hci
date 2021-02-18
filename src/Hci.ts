@@ -142,12 +142,12 @@ export class Hci extends EventEmitter {
     // TODO pass event mask as argument
     const payload = Buffer.from('5f1e0a0000000000', 'hex');
     const ocf = HciOcfLeControllerCommands.SetEventMask;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReadBufferSize() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < 3) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -160,7 +160,7 @@ export class Hci extends EventEmitter {
 
   public async leReadBufferSizeV2() {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV2;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < 6) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -175,7 +175,7 @@ export class Hci extends EventEmitter {
 
   public async leReadSupportedFeatures(): Promise<BigInt> {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < (64/8)) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -189,7 +189,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(randomAddress, 0, 6);
 
     const ocf = HciOcfLeControllerCommands.SetRandomAddress;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetAdvertisingParameters(params: {
@@ -220,12 +220,12 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingParameters;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReadAdvertisingPhysicalChannelTxPower(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadAdvertisingPhysicalChannelTxPower;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < 1) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -243,7 +243,7 @@ export class Hci extends EventEmitter {
     data.copy(payload, 1);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingData;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetScanResponseData(data: Buffer): Promise<void> {
@@ -256,14 +256,14 @@ export class Hci extends EventEmitter {
     data.copy(payload, 1);
 
     const ocf = HciOcfLeControllerCommands.SetScanResponseData;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetAdvertisingEnable(enable: boolean): Promise<void> {
     const payload = Buffer.allocUnsafe(1);
     payload.writeUInt8(enable ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetAdvertisingEnable;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetScanParameters(params: {
@@ -286,7 +286,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetScanParameters;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetScanEnable(enable: boolean, filterDuplicates?: boolean): Promise<void> {
@@ -294,7 +294,7 @@ export class Hci extends EventEmitter {
     payload.writeUInt8(enable           ? 1 : 0);
     payload.writeUInt8(filterDuplicates ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetScanEnable;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leCreateConnection(params: {
@@ -336,17 +336,17 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     const ocf = HciOcfLeControllerCommands.CreateConnection;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leCreateConnectionCancel(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.CreateConnectionCancel;
-    await this.cmd.lowEnergy({ ocf });
+    await this.cmd.leController({ ocf });
   }
 
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < 1) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -356,7 +356,7 @@ export class Hci extends EventEmitter {
 
   public async leClearWhiteList(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ClearWhiteList;
-    await this.cmd.lowEnergy({ ocf });
+    await this.cmd.leController({ ocf });
   }
 
   public async leAddDeviceToWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
@@ -364,7 +364,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(addressType,  0, 1);
     payload.writeUIntLE(address ?? 0, 1, 6);
     const ocf = HciOcfLeControllerCommands.AddDeviceToWhiteList;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leRemoveDeviceFromWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
@@ -372,7 +372,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(addressType,  0, 1);
     payload.writeUIntLE(address ?? 0, 1, 6);
     const ocf = HciOcfLeControllerCommands.RemoveDeviceFromWhiteList;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leConnectionUpdate(params: {
@@ -402,21 +402,21 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     const ocf = HciOcfLeControllerCommands.ConnectionUpdate;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetHostChannelClassification(channelMap: number): Promise<void> {
     const payload = Buffer.allocUnsafe(5);
     payload.writeUIntLE(channelMap, 0, 5);
     const ocf = HciOcfLeControllerCommands.SetHostChannelClassification;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReadChannelMap(connHandle: number): Promise<{ connHandle: number, channelMap: number }> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadChannelMap;
-    const result = await this.cmd.lowEnergy({ ocf, payload });
+    const result = await this.cmd.leController({ ocf, payload });
     const params = result.returnParameters;
     if (!params || params.length < 7) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -431,7 +431,7 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leEncrypt(key: Buffer, plaintextData: Buffer): Promise<Buffer> {
@@ -444,7 +444,7 @@ export class Hci extends EventEmitter {
     plaintextData.copy(payload, 16);
 
     const ocf = HciOcfLeControllerCommands.Encrypt;
-    const result = await this.cmd.lowEnergy({ ocf, payload });
+    const result = await this.cmd.leController({ ocf, payload });
     const params = result.returnParameters;
     if (!params) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -454,7 +454,7 @@ export class Hci extends EventEmitter {
 
   public async leRand(): Promise<Buffer> {
     const ocf = HciOcfLeControllerCommands.Rand;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -480,7 +480,7 @@ export class Hci extends EventEmitter {
     o += params.longTermKey.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.EnableEncryption;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leLongTermKeyRequestReply(input: {
@@ -498,7 +498,7 @@ export class Hci extends EventEmitter {
     o += input.longTermKey.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestReply;
-    const result = await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    const result = await this.cmd.leController({ ocf, connHandle, payload });
     const params = result.returnParameters;
     if (!params || params.length < 2) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -510,7 +510,7 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestNegativeReply;
-    const result = await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    const result = await this.cmd.leController({ ocf, connHandle, payload });
     const params = result.returnParameters;
     if (!params || params.length < 2) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -520,7 +520,7 @@ export class Hci extends EventEmitter {
 
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
     const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
 
     const params = result.returnParameters;
     if (!params || params.length < (64/8)) {
@@ -537,7 +537,7 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(rxChannel, 0, 1);
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV1;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   private channelFrequencyToHciValue(rxChannelMhz: number): number {
@@ -559,7 +559,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.modulationIndex, o, 1);
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV2;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReceiverTestV3(params: {
@@ -589,7 +589,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.ReceiverTestV3;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leTransmitterTestV1(params: {
@@ -607,7 +607,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.packetPayload,   o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV1;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leTransmitterTestV2(params: {
@@ -627,7 +627,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.phy,             o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV2;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leTransmitterTestV3(params: {
@@ -657,7 +657,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV3;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leTransmitterTestV4(params: {
@@ -690,12 +690,12 @@ export class Hci extends EventEmitter {
     o = payload.writeIntLE(params.transmitPowerLevel, o, 1);
 
     const ocf = HciOcfLeControllerCommands.TransmitterTestV4;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leTestEnd(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.TestEnd;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < 2) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -730,7 +730,7 @@ export class Hci extends EventEmitter {
 
     const connHandle = params.connHandle;
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
-    await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
   public async leRemoteConnectionParameterRequestNegativeReply(params: {
@@ -745,7 +745,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.reason,  o, 1);
 
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
-    await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
   public async leSetDataLength(params: {
@@ -762,7 +762,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.txTime,    o, 2);
 
     const ocf = HciOcfLeControllerCommands.SetDataLength;
-    await this.cmd.lowEnergy({ ocf, connHandle, payload });
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<{
@@ -770,7 +770,7 @@ export class Hci extends EventEmitter {
     suggestedMaxTxTime: number,
   }> {
     const ocf = HciOcfLeControllerCommands.ReadSuggestedDefaultDataLength;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
 
     const params = result.returnParameters;
     if (!params || params.length < 4) {
@@ -790,12 +790,12 @@ export class Hci extends EventEmitter {
     payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
     payload.writeUInt16LE(params.suggestedMaxTxTime,   2);
     const ocf = HciOcfLeControllerCommands.WriteSuggestedDefaultDataLength;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReadLocalP256PublicKey(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ReadLocalP256PublicKey;
-    await this.cmd.lowEnergy({ ocf });
+    await this.cmd.leController({ ocf });
   }
 
   public async leGenerateDhKeyV1(params: {
@@ -808,7 +808,7 @@ export class Hci extends EventEmitter {
     params.publicKey.copy(payload, 0);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV1;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leGenerateDhKeyV2(params: {
@@ -823,17 +823,17 @@ export class Hci extends EventEmitter {
     payload.writeUInt8(params.keyType, 64);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV2;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leClearResolvingList(): Promise<void> {
     const  ocf = HciOcfLeControllerCommands.ClearResolvingList;
-    await this.cmd.lowEnergy({ ocf });
+    await this.cmd.leController({ ocf });
   }
 
   public async leReadResolvingListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params|| params.length < 1) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -846,7 +846,7 @@ export class Hci extends EventEmitter {
     supportedMaxRxOctets: number, supportedMaxRxTime: number,
   }> {
     const ocf = HciOcfLeControllerCommands.ReadMaximumDataLength;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
 
     if (!params|| params.length < 8) {
@@ -869,7 +869,7 @@ export class Hci extends EventEmitter {
     payload.writeUInt16LE(connectionHandle, 0);
 
     const ocf = HciOcfLeControllerCommands.ReadPhy;
-    const result = await this.cmd.lowEnergy({ ocf, payload });
+    const result = await this.cmd.leController({ ocf, payload });
     const params = result.returnParameters;
 
     if (!params|| params.length < 4) {
@@ -907,7 +907,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUInt8(rxPhys,  o);
 
     const ocf = HciOcfLeControllerCommands.SetDefaultPhy;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetAdvertisingSetRandomAddress(params: {
@@ -921,7 +921,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(params.advertisingRandomAddress, o, 6);
 
     const ocf = HciOcfLeControllerCommands.SetAdvertisingSetRandomAddress;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetExtendedAdvertisingParameters(params: {
@@ -969,7 +969,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
-    const result = await this.cmd.lowEnergy({ ocf, payload });
+    const result = await this.cmd.leController({ ocf, payload });
 
     if (!result.returnParameters || result.returnParameters.length < 1) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
@@ -995,7 +995,7 @@ export class Hci extends EventEmitter {
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingData;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetExtendedScanResponseData(params: {
@@ -1014,12 +1014,12 @@ export class Hci extends EventEmitter {
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanResponseData;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
-    const result = await this.cmd.lowEnergy({ ocf });
+    const result = await this.cmd.leController({ ocf });
     if (!result.returnParameters || result.returnParameters.length < 1) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
@@ -1080,7 +1080,7 @@ export class Hci extends EventEmitter {
     }
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanParameters;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetExtendedScanEnable(params: {
@@ -1101,7 +1101,7 @@ export class Hci extends EventEmitter {
     o = payload.writeUIntLE(period,                  o, 2);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanEnable;
-    await this.cmd.lowEnergy({ ocf, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   private hciValueToMs(val: number, factor: number = 0.625): number {
