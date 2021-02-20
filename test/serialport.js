@@ -66,7 +66,12 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     console.log(leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
-    console.log(localCommands);
+
+    for (const [key, value] of Object.entries(localCommands)) {
+      if (value === true) {
+        console.log(key);
+      }
+    }
 
     await hci.setEventMask();
     await hci.setEventMaskPage2();
