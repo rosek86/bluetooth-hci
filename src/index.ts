@@ -58,7 +58,7 @@ function checkRequest(req: string): boolean {
     console.log(await hci.readLocalSupportedCommands());
 
     prepareResult('0e0401010c00');
-    await hci.setEventMask();
+    await hci.setEventMask({});
 
     prepareResult('0e0401012000');
     await hci.leSetEventMask();
@@ -88,7 +88,7 @@ function checkRequest(req: string): boolean {
     console.log(`number of supported advertising sets: ${advSets}`);
 
     prepareResult('0e0401630c00');
-    await hci.setEventMaskPage2();
+    await hci.setEventMaskPage2({});
 
     prepareResult('0e0401242000');
     await hci.leWriteSuggestedDefaultDataLength({

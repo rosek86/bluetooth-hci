@@ -73,7 +73,10 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       }
     }
 
-    await hci.setEventMask();
+    await hci.setEventMask({
+      disconnectionComplete: true,
+      leMeta: true,
+    });
     await hci.setEventMaskPage2();
 
     await hci.leSetEventMask();
