@@ -268,8 +268,8 @@ export enum HciOcfLeControllerCommands {
   ReadLocalP256PublicKey                              = 0x0025, // * LE Read Local P-256 Public Key
   GenerateDhKeyV1                                     = 0x0026, // * LE Generate DHKey
   GenerateDhKeyV2                                     = 0x005E, // * LE Generate DHKey
-  AddDeviceToResolvingList                            = 0x0027, // LE Add Device To Resolving List
-  RemoveDeviceFromResolvingList                       = 0x0028, // LE Remove Device From Resolving List
+  AddDeviceToResolvingList                            = 0x0027, // * LE Add Device To Resolving List
+  RemoveDeviceFromResolvingList                       = 0x0028, // * LE Remove Device From Resolving List
   ClearResolvingList                                  = 0x0029, // * LE Clear Resolving List
   ReadResolvingListSize                               = 0x002A, // * LE Read Resolving List Size
   ReadPeerResolvableAddress                           = 0x002B, // LE Read Peer Resolvable Address

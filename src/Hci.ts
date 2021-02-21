@@ -40,7 +40,7 @@ import {
   LeLongTermKeyRequestNegativeReply, LeReceiverTestV1, LeReceiverTestV2, LeReceiverTestV3,
   LeTransmitterTestV1, LeTransmitterTestV2, LeTransmitterTestV3, LeTransmitterTestV4, LeTestEnd,
   LeRemoteConnectionParameterRequestReply, LeRemoteConnectionParameterRequestNegativeReply,
-  LeDataLength, LeSuggestedDefaultDataLength, DhKeyV1, DhKeyV2
+  LeDataLength, LeSuggestedDefaultDataLength, LeDhKeyV1, LeDhKeyV2, LeAddDeviceToResolvingList, LeRemoveDeviceFromResolvingList, LeReadResolvingListSize
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -466,15 +466,27 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf });
   }
 
-  public async leGenerateDhKeyV1(dhKey: DhKeyV1): Promise<void> {
+  public async leGenerateDhKeyV1(dhKey: LeDhKeyV1): Promise<void> {
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV1;
-    const payload = DhKeyV1.inParams(dhKey);
+    const payload = LeDhKeyV1.inParams(dhKey);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leGenerateDhKeyV2(params: DhKeyV2): Promise<void> {
+  public async leGenerateDhKeyV2(params: LeDhKeyV2): Promise<void> {
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV2;
-    const payload = DhKeyV2.inParams(params);
+    const payload = LeDhKeyV2.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leAddDeviceToResolvingList(params: LeAddDeviceToResolvingList): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.AddDeviceToResolvingList;
+    const payload = LeAddDeviceToResolvingList.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leRemoveDeviceFromResolvingList(params: LeRemoveDeviceFromResolvingList): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.RemoveDeviceFromResolvingList;
+    const payload = LeRemoveDeviceFromResolvingList.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -486,11 +498,7 @@ export class Hci extends EventEmitter {
   public async leReadResolvingListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params|| params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params.readUInt8(0);
+    return LeReadResolvingListSize.outParams(result.returnParameters);
   }
 
   public async leReadMaximumDataLength(): Promise<{

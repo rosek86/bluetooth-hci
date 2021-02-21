@@ -703,6 +703,18 @@ export class LeReceiverTestV3 extends LeTest {
   }
 }
 
+export enum LeTxTestPayload {
+  SequencePRBS9     = 0x00, // PRBS9 sequence '11111111100000111101…' (in transmission order) as
+                            // described in [Vol 6] Part F, Section 4.1.5
+  Sequence11110000  = 0x01, // Repeated '11110000' (in transmission order) sequence as described in
+                            // [Vol 6] Part F, Section 4.1.5
+  Sequence10101010  = 0x02, // Repeated '10101010' (in transmission order) sequence as described in
+                            // [Vol 6] Part F, Section 4.1.5
+  SequencePRBS15    = 0x03, // PRBS15 sequence as described in [Vol 6] Part F, Section 4.1.5
+  Sequence11111111  = 0x04, // Repeated '11111111' (in transmission order) sequence
+  Sequence00000000  = 0x05, // Repeated '00000000' (in transmission order) sequence
+}
+
 export interface LeTransmitterTestV1 {
   txChannelMhz: number;
   testDataLength: number;
@@ -780,6 +792,10 @@ export class LeTransmitterTestV3 extends LeTest {
   }
 }
 
+export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transmit power level
+export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
+export type LeTransmitPowerLevel = number|LeMinTransmitPowerLevel|LeMaxTransmitPowerLevel;
+
 export interface LeTransmitterTestV4 {
   txChannelMhz: number;
   testDataLength: number;
@@ -788,7 +804,7 @@ export interface LeTransmitterTestV4 {
   cteLength: number;
   cteType: LeCteType;
   antennaIds: number[];
-  transmitPowerLevel: number|LeMinTransmitPowerLevel|LeMaxTransmitPowerLevel;
+  transmitPowerLevel: LeTransmitPowerLevel;
 }
 
 export class LeTransmitterTestV4 extends LeTest {
@@ -920,12 +936,12 @@ export class LeSuggestedDefaultDataLength {
   }
 }
 
-export interface DhKeyV1 {
+export interface LeDhKeyV1 {
   publicKey: Buffer;
 }
 
-export class DhKeyV1 {
-  static inParams(params: DhKeyV1): Buffer {
+export class LeDhKeyV1 {
+  static inParams(params: LeDhKeyV1): Buffer {
     if (params.publicKey.length !== 64) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
@@ -937,13 +953,13 @@ export class DhKeyV1 {
   }
 }
 
-export interface DhKeyV2 {
+export interface LeDhKeyV2 {
   publicKey: Buffer;
   keyType: number;
 }
 
-export class DhKeyV2 {
-  static inParams(params: DhKeyV2): Buffer {
+export class LeDhKeyV2 {
+  static inParams(params: LeDhKeyV2): Buffer {
     if (params.publicKey.length !== 64) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
@@ -951,6 +967,60 @@ export class DhKeyV2 {
     params.publicKey.reverse().copy(payload, 0);
     payload.writeUInt8(params.keyType, 64);
     return payload;
+  }
+}
+
+export interface LeAddDeviceToResolvingList {
+  peerIdentityAddressType: LePeerAddressType;
+  peerIdentityAddress: Address;
+  peerIrk: Buffer;
+  localIrk: Buffer;
+}
+
+export class LeAddDeviceToResolvingList {
+  static inParams(params: LeAddDeviceToResolvingList): Buffer {
+    if (params.peerIrk.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    if (params.localIrk.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(39);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o += params.peerIrk.reverse().copy(payload, o);
+    o += params.localIrk.reverse().copy(payload, o);
+
+    return payload;
+  }
+}
+
+export interface LeRemoveDeviceFromResolvingList {
+  peerIdentityAddressType: LePeerAddressType;
+  peerIdentityAddress: Address;
+}
+
+export class LeRemoveDeviceFromResolvingList {
+  static inParams(params: LeRemoveDeviceFromResolvingList): Buffer {
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+
+    return payload;
+  }
+}
+
+export class LeReadResolvingListSize {
+  static outParams(params?: Buffer): number {
+    if (!params|| params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt8(0);
   }
 }
 
@@ -1226,21 +1296,6 @@ export enum LeCteType {
   AoDConstantTone1us = 0x01, // Expect AoD Constant Tone Extension with 1 μs slots
   AoDConstantTone2us = 0x02, // Expect AoD Constant Tone Extension with 2 μs slots
 }
-
-export enum LeTxTestPayload {
-  SequencePRBS9     = 0x00, // PRBS9 sequence '11111111100000111101…' (in transmission order) as
-                            // described in [Vol 6] Part F, Section 4.1.5
-  Sequence11110000  = 0x01, // Repeated '11110000' (in transmission order) sequence as described in
-                            // [Vol 6] Part F, Section 4.1.5
-  Sequence10101010  = 0x02, // Repeated '10101010' (in transmission order) sequence as described in
-                            // [Vol 6] Part F, Section 4.1.5
-  SequencePRBS15    = 0x03, // PRBS15 sequence as described in [Vol 6] Part F, Section 4.1.5
-  Sequence11111111  = 0x04, // Repeated '11111111' (in transmission order) sequence
-  Sequence00000000  = 0x05, // Repeated '00000000' (in transmission order) sequence
-}
-
-export type LeMinTransmitPowerLevel = 0x7E; // Set transmitter to minimum transmit power level
-export type LeMaxTransmitPowerLevel = 0x7F; // Set transmitter to maximum transmit power level
 
 export enum LeExtAdvEventTypeDataStatus {
   Complete            = 0,
