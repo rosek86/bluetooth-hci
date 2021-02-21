@@ -1,3 +1,4 @@
+import { Address } from "./Address";
 import { HciParserError, makeParserError } from "./HciError";
 import { bigintBitGet, bitGet } from "./Utils";
 
@@ -170,11 +171,11 @@ export class ReadBufferSize {
 }
 
 export class ReadBdAddr {
-  static outParams(params?: Buffer): number {
+  static outParams(params?: Buffer): Address {
     if (!params || params.length < 6) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    return params.readUIntLE(0, 6);
+    return Address.from(params.readUIntLE(0, 6));
   }
 }
 

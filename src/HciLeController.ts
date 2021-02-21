@@ -223,7 +223,7 @@ export interface LeAdvertisingParameters {
   advertisingType: LeAdvertisingType;
   ownAddressType: LeOwnAddressType;
   peerAddressType: LePeerAddressType;
-  peerAddress: number;
+  peerAddress: Address;
   advertisingChannelMap: LeAdvertisingChannelMap[];
   advertisingFilterPolicy: LeAdvertisingFilterPolicy;
 }
@@ -242,7 +242,7 @@ export class LeSetAdvertisingParameters {
     o = payload.writeUIntLE(params.advertisingType,         o, 1);
     o = payload.writeUIntLE(params.ownAddressType,          o, 1);
     o = payload.writeUIntLE(params.peerAddressType,         o, 1);
-    o = payload.writeUIntLE(params.peerAddress,             o, 6);
+    o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 6);
     o = payload.writeUIntLE(advertisingChannelMap,          o, 1);
     o = payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
 
@@ -324,7 +324,7 @@ export interface LeCreateConnection {
   scanWindowMs: number,
   initiatorFilterPolicy: number,
   peerAddressType: LePeerAddressType,
-  peerAddress: number,
+  peerAddress: Address,
   ownAddressType: LeOwnAddressType,
   connectionIntervalMinMs: number,
   connectionIntervalMaxMs: number,
@@ -347,18 +347,18 @@ export class LeCreateConnection {
     const maxConnEvtLength   = this.msToValue(params.maxCeLengthMs,           0.625);
 
     let o = 0;
-    o = payload.writeUIntLE(scanInterval,                 o, 2);
-    o = payload.writeUIntLE(scanWindow,                   o, 2);
-    o = payload.writeUIntLE(params.initiatorFilterPolicy, o, 1);
-    o = payload.writeUIntLE(params.peerAddressType,       o, 1);
-    o = payload.writeUIntLE(params.peerAddress,           o, 6);
-    o = payload.writeUIntLE(params.ownAddressType,        o, 1);
-    o = payload.writeUIntLE(connIntervalMin,              o, 2);
-    o = payload.writeUIntLE(connIntervalMax,              o, 2);
-    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
-    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
-    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
-    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+    o = payload.writeUIntLE(scanInterval,                   o, 2);
+    o = payload.writeUIntLE(scanWindow,                     o, 2);
+    o = payload.writeUIntLE(params.initiatorFilterPolicy,   o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,         o, 1);
+    o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(params.ownAddressType,          o, 1);
+    o = payload.writeUIntLE(connIntervalMin,                o, 2);
+    o = payload.writeUIntLE(connIntervalMax,                o, 2);
+    o = payload.writeUIntLE(params.connectionLatency,       o, 2);
+    o = payload.writeUIntLE(supervisionTimeout,             o, 2);
+    o = payload.writeUIntLE(minConnEvtLength,               o, 2);
+    o = payload.writeUIntLE(maxConnEvtLength,               o, 2);
 
     return payload;
   }
@@ -1024,6 +1024,197 @@ export class LeReadResolvingListSize {
   }
 }
 
+export interface LeMaximumDataLength {
+  supportedMaxTxOctets: number;
+  supportedMaxTxTime: number;
+  supportedMaxRxOctets: number;
+  supportedMaxRxTime: number;
+}
+
+export class LeMaximumDataLength {
+  static outParams(params?: Buffer): LeMaximumDataLength {
+    if (!params|| params.length < 8) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      supportedMaxTxOctets: params.readUInt16LE(0),
+      supportedMaxTxTime:   params.readUInt16LE(2),
+      supportedMaxRxOctets: params.readUInt16LE(4),
+      supportedMaxRxTime:   params.readUInt16LE(6),
+    };
+  }
+}
+
+export class ConnHandle {
+  static inParams(connHandle: number): Buffer {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUInt16LE(connHandle, 0);
+    return payload;
+  }
+}
+
+export interface LeTxRxPhy {
+  txPhy: LePhy;
+  rxPhy: LePhy;
+}
+
+export class LeTxRxPhy {
+  static outParams(params?: Buffer): LeTxRxPhy {
+    if (!params|| params.length < 4) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      txPhy: params.readUInt8(2),
+      rxPhy: params.readUInt8(3),
+    };
+  }
+}
+
+export interface DefaultTxRxPhy {
+  txPhys: LePhy;
+  rxPhys: LePhy;
+}
+
+export class DefaultTxRxPhy {
+  static inParams(params: Partial<DefaultTxRxPhy>): Buffer {
+    let allPhys = 0, txPhys = 0, rxPhys = 0;
+
+    // Is there ps reference for tx/rx phy?
+    if (params.txPhys === undefined) {
+      allPhys |= (1 << 0);
+    } else {
+      txPhys = 1 << params.txPhys;
+    }
+    if (params.rxPhys === undefined) {
+      allPhys |= (1 << 1);
+    } else {
+      rxPhys = 1 << params.rxPhys;
+    }
+
+    const payload = Buffer.allocUnsafe(3);
+
+    let o = 0;
+    o = payload.writeUInt8(allPhys, o);
+    o = payload.writeUInt8(txPhys,  o);
+    o = payload.writeUInt8(rxPhys,  o);
+
+    return payload;
+  }
+}
+
+export enum LeSetTxRxPhyOpts {
+  noPreferredCoding,
+  prefersS2,
+  prefersS8,
+}
+
+export interface LeSetTxRxPhy {
+  txPhys: LePhy;
+  rxPhys: LePhy;
+  opts:   LeSetTxRxPhyOpts;
+}
+
+export class LeSetTxRxPhy {
+  static inParams(connHandle: number, params: Partial<LeSetTxRxPhy>): Buffer {
+    let allPhys = 0, txPhys = 0, rxPhys = 0;
+    let opts = 0;
+
+    // Is there ps reference for tx/rx phy?
+    if (params.txPhys === undefined) {
+      allPhys |= (1 << 0);
+    } else {
+      txPhys = 1 << params.txPhys;
+    }
+    if (params.rxPhys === undefined) {
+      allPhys |= (1 << 1);
+    } else {
+      rxPhys = 1 << params.rxPhys;
+    }
+    if (params.opts !== undefined) {
+      opts = params.opts;
+    }
+
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o = payload.writeUIntLE(connHandle, o, 2);
+    o = payload.writeUIntLE(allPhys,    o, 1);
+    o = payload.writeUIntLE(txPhys,     o, 1);
+    o = payload.writeUIntLE(rxPhys,     o, 1);
+    o = payload.writeUIntLE(opts,       o, 2);
+
+    return payload;
+  }
+}
+
+export class LeAdvertisingSetRandomAddress {
+  static inParams(advertHandle: number, randomAddress: Address): Buffer {
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o = payload.writeUIntLE(advertHandle,               o, 1);
+    o = payload.writeUIntLE(randomAddress.toNumeric(),  o, 6);
+
+    return payload;
+  }
+}
+
+export enum LeAdvertisingDataOperation {
+  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+  Complete              = 0x03, // Complete extended advertising data
+  Unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
+}
+
+export interface LeExtendedAdvertisingData {
+  operation: LeAdvertisingDataOperation;
+  fragment: boolean;
+  data: Buffer;
+}
+
+export class LeExtendedAdvertisingData {
+  static inParams(advertHandle: number, params: LeExtendedAdvertisingData): Buffer {
+    const payload = Buffer.allocUnsafe(4 + params.data.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(advertHandle,            o, 1);
+    o = payload.writeUIntLE(params.operation,        o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1, o, 1);
+    o = payload.writeUIntLE(params.data.length,      o, 1);
+    params.data.copy(payload, o);
+
+    return payload;
+  }
+}
+
+export enum LeScanResponseDataOperation {
+  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
+  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+}
+
+export interface LeExtendedScanResponseData {
+  operation: LeScanResponseDataOperation;
+  fragment: boolean;
+  data: Buffer;
+}
+
+export class LeExtendedScanResponseData {
+  static inParams(advertHandle: number, params: LeExtendedScanResponseData): Buffer {
+    const payload = Buffer.allocUnsafe(4 + params.data.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(advertHandle,            o, 1);
+    o = payload.writeUIntLE(params.operation,        o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1, o, 1);
+    o = payload.writeUIntLE(params.data.length,      o, 1);
+    params.data.copy(payload, o);
+
+    return payload;
+  }
+}
+
 export interface LeExtendedAdvertisingParameters {
   advertisingEventProperties: LeAdvertisingEventProperties[];
   primaryAdvertisingIntervalMinMs: number;
@@ -1031,7 +1222,7 @@ export interface LeExtendedAdvertisingParameters {
   primaryAdvertisingChannelMap: LeAdvertisingChannelMap[];
   ownAddressType: LeOwnAddressType;
   peerAddressType: LePeerAddressType;
-  peerAddress: number;
+  peerAddress: Address;
   advertisingFilterPolicy: LeAdvertisingFilterPolicy;
   advertisingTxPower?: number;
   primaryAdvertisingPhy: LePrimaryAdvertisingPhy;
@@ -1060,7 +1251,7 @@ export class LeExtendedAdvertisingParameters {
     o = payload.writeUIntLE(primaryAdvertisingChannelMap,       o, 1);
     o = payload.writeUIntLE(params.ownAddressType,              o, 1);
     o = payload.writeUIntLE(params.peerAddressType,             o, 1);
-    o = payload.writeUIntLE(params.peerAddress,                 o, 6);
+    o = payload.writeUIntLE(params.peerAddress.toNumeric(),     o, 6);
     o = payload.writeUIntLE(params.advertisingFilterPolicy,     o, 1);
     o = payload.writeIntLE (advertisingTxPower,                 o, 1);
     o = payload.writeUIntLE(params.primaryAdvertisingPhy,       o, 1);
@@ -1079,6 +1270,15 @@ export class LeExtendedAdvertisingParameters {
 
     const selectedTxPower = params.readInt8(0);
     return selectedTxPower;
+  }
+}
+
+export class LeNumberOfSupportedAdvertisingSets {
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt8(0);
   }
 }
 
@@ -1146,6 +1346,37 @@ export class LeExtendedScanParameters {
     return Math.round(ms / 0.625);
   }
 }
+
+export enum LeScanFilterDuplicates {
+  Disabled = 0x00, // Duplicate filtering disabled
+  Enabled  = 0x01, // Duplicate filtering enabled
+  Reset    = 0x02, // Duplicate filtering enabled, reset for each scan period
+}
+
+export interface LeExtendedScanEnabled {
+  enable: boolean,
+  filterDuplicates: LeScanFilterDuplicates,
+  durationMs?: number,
+  periodSec?: number,
+}
+
+export class LeExtendedScanEnabled {
+  static inParams(params: LeExtendedScanEnabled): Buffer {
+    const duration = Math.round((params.durationMs ?? 0) / 10);
+    const period   = Math.round((params.periodSec  ?? 0) / 1.28);
+
+    const payload = Buffer.allocUnsafe(1+1+2+2);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.enable ? 1 : 0,   o, 1);
+    o = payload.writeUIntLE(params.filterDuplicates, o, 1);
+    o = payload.writeUIntLE(duration,                o, 2);
+    o = payload.writeUIntLE(period,                  o, 2);
+
+    return payload;
+  }
+}
+
 
 export enum LePhy {
   Phy1M    = 0,
@@ -1229,20 +1460,6 @@ export enum LeSecondaryAdvertisingPhy {
   PhyCoded = 0x03, // Secondary advertisement PHY is LE Coded
 }
 
-export enum LeAdvertisingDataOperation {
-  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
-  Complete              = 0x03, // Complete extended advertising data
-  Unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
-}
-
-export enum LeScanResponseDataOperation {
-  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
-}
-
 export enum LeScanningFilterPolicy {
   // Accept all advertising and scan response PDUs except directed advertising
   // PDUs not addressed to this device
@@ -1278,12 +1495,6 @@ export enum LeScanningPhy {
 export enum LeScanType {
   Passive = 0x00, // Passive Scanning. No scan request PDUs shall be sent.
   Active  = 0x01, // Active Scanning. Scan request PDUs may be sent.
-}
-
-export enum LeScanFilterDuplicates {
-  Disabled = 0x00, // Duplicate filtering disabled
-  Enabled  = 0x01, // Duplicate filtering enabled
-  Reset    = 0x02, // Duplicate filtering enabled, reset for each scan period
 }
 
 export enum LeModulationIndex {

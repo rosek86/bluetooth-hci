@@ -38,7 +38,7 @@ function checkRequest(req: string): boolean {
     console.log(await hci.readLocalVersionInformation());
 
     prepareResult('0e0a01091000AABBCCDDEEFF');
-    console.log((await hci.readBdAddr()).toString(16));
+    console.log(await hci.readBdAddr());
 
     prepareResult('0e07010220001b0003');
     console.log(await hci.leReadBufferSize());
@@ -104,8 +104,7 @@ function checkRequest(req: string): boolean {
     });
 
     prepareResult('0e050136200000');
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters({
-      advertisingHandle: 0,
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
       advertisingEventProperties: [LeAdvertisingEventProperties.UseLegacyPDUs],
       primaryAdvertisingIntervalMinMs: 1280,
       primaryAdvertisingIntervalMaxMs: 1280,
@@ -116,7 +115,7 @@ function checkRequest(req: string): boolean {
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: 0x000000000000,
+      peerAddress: Address.from(0x000000000000),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
@@ -128,10 +127,7 @@ function checkRequest(req: string): boolean {
     console.log(`Selected Tx: ${selectedTxPower}`);
 
     prepareResult('0e0401352000');
-    await hci.leSetAdvertisingSetRandomAddress({
-      advertisingHandle: 0,
-      advertisingRandomAddress: 0x1429c386d3a9,
-    });
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
     console.log(`Compare: ${checkRequest('35200700a9d386c32914')}`);
 
     prepareResult('0e0401052000');

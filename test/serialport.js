@@ -53,7 +53,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     const localVersion = await hci.readLocalVersionInformation();
     console.log(localVersion);
 
-    const bdAddress = new Address(await hci.readBdAddr());
+    const bdAddress = await hci.readBdAddr();
     console.log(bdAddress.toString());
 
     const leBufferSize = await hci.leReadBufferSize();
@@ -113,8 +113,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       rxPhys: LePhy.PhyCoded,
     });
 
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters({
-      advertisingHandle: 0,
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
       advertisingEventProperties: [
         LeAdvertisingEventProperties.UseLegacyPDUs
       ],
@@ -127,7 +126,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: 0x000000000000,
+      peerAddress: Address.from(0x000000000000),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
@@ -138,10 +137,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress({
-      advertisingHandle: 0,
-      advertisingRandomAddress: 0x1429c386d3a9,
-    });
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
     await hci.leSetExtendedScanParameters({
