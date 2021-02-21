@@ -550,8 +550,7 @@ export class Hci extends EventEmitter {
     return params.readUInt16LE(0);
   }
 
-  public async leRemoteConnectionParameterRequestReply(params: {
-    connHandle: number,
+  public async leRemoteConnectionParameterRequestReply(connHandle: number, params: {
     intervalMinMs: number, // 7.5ms - 4000ms
     intervalMaxMs: number, // 7.5ms - 4000ms
     latency: number,
@@ -568,39 +567,35 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(2+2+2+2+2+2);
 
     let o = 0;
-    o = payload.writeUIntLE(params.connHandle,  o, 2);
-    o = payload.writeUIntLE(intervalMin,        o, 2);
-    o = payload.writeUIntLE(intervalMax,        o, 2);
-    o = payload.writeUIntLE(timeout,            o, 2);
-    o = payload.writeUIntLE(minCeLength,        o, 2);
-    o = payload.writeUIntLE(maxCeLength,        o, 2);
+    o = payload.writeUIntLE(connHandle,  o, 2);
+    o = payload.writeUIntLE(intervalMin, o, 2);
+    o = payload.writeUIntLE(intervalMax, o, 2);
+    o = payload.writeUIntLE(timeout,     o, 2);
+    o = payload.writeUIntLE(minCeLength, o, 2);
+    o = payload.writeUIntLE(maxCeLength, o, 2);
 
-    const connHandle = params.connHandle;
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
     await this.cmd.leController({ ocf, connHandle, payload });
   }
 
-  public async leRemoteConnectionParameterRequestNegativeReply(params: {
+  public async leRemoteConnectionParameterRequestNegativeReply(
     connHandle: number,
-    reason: HciErrorCode,
-  }): Promise<void> {
-    const connHandle = params.connHandle;
+    reason: HciErrorCode
+  ): Promise<void> {
     const payload = Buffer.allocUnsafe(2+1);
 
     let o = 0;
-    o = payload.writeUIntLE(connHandle,     o, 2);
-    o = payload.writeUIntLE(params.reason,  o, 1);
+    o = payload.writeUIntLE(connHandle, o, 2);
+    o = payload.writeUIntLE(reason,     o, 1);
 
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
     await this.cmd.leController({ ocf, connHandle, payload });
   }
 
-  public async leSetDataLength(params: {
-    connHandle: number,
+  public async leSetDataLength(connHandle: number, params: {
     txOctets: number,
     txTime: number,
   }): Promise<void> {
-    const connHandle = params.connHandle;
     const payload = Buffer.allocUnsafe(2+2+2);
 
     let o = 0;
@@ -645,14 +640,12 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf });
   }
 
-  public async leGenerateDhKeyV1(params: {
-    publicKey: Buffer,
-  }): Promise<void> {
-    if (params.publicKey.length !== 64) {
+  public async leGenerateDhKeyV1(publicKey: Buffer): Promise<void> {
+    if (publicKey.length !== 64) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(64);
-    params.publicKey.copy(payload, 0);
+    publicKey.reverse().copy(payload, 0);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV1;
     await this.cmd.leController({ ocf, payload });
@@ -666,7 +659,7 @@ export class Hci extends EventEmitter {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(65);
-    params.publicKey.copy(payload, 0);
+    params.publicKey.reverse().copy(payload, 0);
     payload.writeUInt8(params.keyType, 64);
 
     const ocf = HciOcfLeControllerCommands.GenerateDhKeyV2;
@@ -707,23 +700,21 @@ export class Hci extends EventEmitter {
     };
   }
 
-  public async leReadPhy(connectionHandle: number): Promise<{
-    connectionHandle: number,
+  public async leReadPhy(connHandle: number): Promise<{
     txPhy: LePhy,
     rxPhy: LePhy,
   }> {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt16LE(connectionHandle, 0);
+    payload.writeUInt16LE(connHandle, 0);
 
     const ocf = HciOcfLeControllerCommands.ReadPhy;
-    const result = await this.cmd.leController({ ocf, payload });
+    const result = await this.cmd.leController({ ocf, connHandle, payload });
     const params = result.returnParameters;
 
     if (!params|| params.length < 4) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
-      connectionHandle: params.readUInt16LE(0),
       txPhy:            params.readUInt8(2),
       rxPhy:            params.readUInt8(3),
     };
@@ -778,8 +769,7 @@ export class Hci extends EventEmitter {
     return LeExtendedAdvertisingParameters.outParams(result.returnParameters);
   }
 
-  public async leSetExtendedAdvertisingData(params: {
-    advertisingHandle: number,
+  public async leSetExtendedAdvertisingData(advertisingHandle: number, params: {
     operation: LeAdvertisingDataOperation,
     fragment: boolean,
     data: Buffer,
@@ -787,18 +777,17 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(4 + params.data.length);
 
     let o = 0;
-    o = payload.writeUIntLE(params.advertisingHandle,  o, 1);
-    o = payload.writeUIntLE(params.operation,          o, 1);
-    o = payload.writeUIntLE(params.fragment ? 0 : 1,   o, 1);
-    o = payload.writeUIntLE(params.data.length,        o, 1);
+    o = payload.writeUIntLE(advertisingHandle,       o, 1);
+    o = payload.writeUIntLE(params.operation,        o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1, o, 1);
+    o = payload.writeUIntLE(params.data.length,      o, 1);
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingData;
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetExtendedScanResponseData(params: {
-    advertisingHandle: number,
+  public async leSetExtendedScanResponseData(advertisingHandle: number, params: {
     operation: LeScanResponseDataOperation,
     fragment: boolean,
     data: Buffer,
@@ -806,10 +795,10 @@ export class Hci extends EventEmitter {
     const payload = Buffer.allocUnsafe(4 + params.data.length);
 
     let o = 0;
-    o = payload.writeUIntLE(params.advertisingHandle,  o, 1);
-    o = payload.writeUIntLE(params.operation,          o, 1);
-    o = payload.writeUIntLE(params.fragment ? 0 : 1,   o, 1);
-    o = payload.writeUIntLE(params.data.length,        o, 1);
+    o = payload.writeUIntLE(advertisingHandle,       o, 1);
+    o = payload.writeUIntLE(params.operation,        o, 1);
+    o = payload.writeUIntLE(params.fragment ? 0 : 1, o, 1);
+    o = payload.writeUIntLE(params.data.length,      o, 1);
     params.data.copy(payload, o);
 
     const ocf = HciOcfLeControllerCommands.SetExtendedScanResponseData;
