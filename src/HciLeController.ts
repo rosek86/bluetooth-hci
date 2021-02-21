@@ -634,10 +634,327 @@ export class LeSupportedStates {
   }
 }
 
+abstract class LeTest {
+  protected static channelFrequencyToHciValue(rxChannelMhz: number): number {
+    return (rxChannelMhz - 2402) / 2;
+  }
+}
 
+export class LeReceiverTestV1 extends LeTest {
+  static inParams(rxChannelMhz: number): Buffer {
+    const rxChannel = this.channelFrequencyToHciValue(rxChannelMhz);
+    const payload = Buffer.allocUnsafe(1);
+    payload.writeUIntLE(rxChannel, 0, 1);
+    return payload;
+  }
+}
+
+export interface LeReceiverTestV2 {
+  rxChannelMhz: number;
+  phy: LePhy;
+  modulationIndex: LeModulationIndex;
+}
+
+export class LeReceiverTestV2 extends LeTest {
+  static inParams(params: LeReceiverTestV2): Buffer {
+    const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(rxChannel,              o, 1);
+    o = payload.writeUIntLE(params.phy,             o, 1);
+    o = payload.writeUIntLE(params.modulationIndex, o, 1);
+
+    return payload;
+  }
+}
+
+export interface LeReceiverTestV3 {
+  rxChannelMhz: number;
+  phy: LePhy;
+  modulationIndex: LeModulationIndex;
+  expectedCteLength: number;
+  expectedCteType: LeCteType;
+  slotDurations: 1|2;
+  antennaIds: number[];
+}
+
+export class LeReceiverTestV3 extends LeTest {
+  static inParams(params: LeReceiverTestV3): Buffer {
+    const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(rxChannel,                o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.modulationIndex,   o, 1);
+    o = payload.writeUIntLE(params.expectedCteLength, o, 1);
+    o = payload.writeUIntLE(params.expectedCteType,   o, 1);
+    o = payload.writeUIntLE(params.slotDurations,     o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    return payload;
+  }
+}
+
+export interface LeTransmitterTestV1 {
+  txChannelMhz: number;
+  testDataLength: number;
+  packetPayload: LeTxTestPayload;
+}
+
+export class LeTransmitterTestV1 extends LeTest {
+  static inParams(params: LeTransmitterTestV1): Buffer {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,              o, 1);
+    o = payload.writeUIntLE(params.testDataLength,  o, 1);
+    o = payload.writeUIntLE(params.packetPayload,   o, 1);
+
+    return payload;
+  }
+}
+
+export interface LeTransmitterTestV2 {
+  txChannelMhz: number,
+  testDataLength: number,
+  packetPayload: LeTxTestPayload,
+  phy: LeTxPhy,
+}
+
+export class LeTransmitterTestV2 extends LeTest {
+  static inParams(params: LeTransmitterTestV2): Buffer {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,              o, 1);
+    o = payload.writeUIntLE(params.testDataLength,  o, 1);
+    o = payload.writeUIntLE(params.packetPayload,   o, 1);
+    o = payload.writeUIntLE(params.phy,             o, 1);
+
+    return payload;
+  }
+}
+
+export interface LeTransmitterTestV3 {
+  txChannelMhz: number;
+  testDataLength: number;
+  packetPayload: LeTxTestPayload;
+  phy: LeTxPhy;
+  cteLength: number;
+  cteType: LeCteType;
+  antennaIds: number[];
+}
+
+export class LeTransmitterTestV3 extends LeTest {
+  static inParams(params: LeTransmitterTestV3): Buffer {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,                o, 1);
+    o = payload.writeUIntLE(params.testDataLength,    o, 1);
+    o = payload.writeUIntLE(params.packetPayload,     o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.cteLength,         o, 1);
+    o = payload.writeUIntLE(params.cteType,           o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    return payload;
+  }
+}
+
+export interface LeTransmitterTestV4 {
+  txChannelMhz: number;
+  testDataLength: number;
+  packetPayload: LeTxTestPayload;
+  phy: LeTxPhy;
+  cteLength: number;
+  cteType: LeCteType;
+  antennaIds: number[];
+  transmitPowerLevel: number|LeMinTransmitPowerLevel|LeMaxTransmitPowerLevel;
+}
+
+export class LeTransmitterTestV4 extends LeTest {
+  static inParams(params: LeTransmitterTestV4): Buffer {
+    const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
+
+    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(txChannel,                o, 1);
+    o = payload.writeUIntLE(params.testDataLength,    o, 1);
+    o = payload.writeUIntLE(params.packetPayload,     o, 1);
+    o = payload.writeUIntLE(params.phy,               o, 1);
+    o = payload.writeUIntLE(params.cteLength,         o, 1);
+    o = payload.writeUIntLE(params.cteType,           o, 1);
+    o = payload.writeUIntLE(params.antennaIds.length, o, 1);
+
+    for (const antennaId of params.antennaIds) {
+      o = payload.writeUIntLE(antennaId, o, 1);
+    }
+
+    o = payload.writeIntLE(params.transmitPowerLevel, o, 1);
+
+    return payload;
+  }
+}
+
+export class LeTestEnd {
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt16LE(0);
+  }
+}
+
+export interface LeRemoteConnectionParameterRequestReply {
+  intervalMinMs: number, // 7.5ms - 4000ms
+  intervalMaxMs: number, // 7.5ms - 4000ms
+  latency: number,
+  timeoutMs: number,
+  minCeLengthMs: number,
+  maxCeLengthMs: number,
+}
+
+export class LeRemoteConnectionParameterRequestReply extends LeTest {
+  static inParams(
+    connHandle: number,
+    params: LeRemoteConnectionParameterRequestReply
+  ): Buffer {
+    const intervalMin   = this.msToValue(params.intervalMinMs, 1.25);
+    const intervalMax   = this.msToValue(params.intervalMaxMs, 1.25);
+    const timeout       = this.msToValue(params.timeoutMs,     10);
+    const minCeLength   = this.msToValue(params.minCeLengthMs, 0.625);
+    const maxCeLength   = this.msToValue(params.maxCeLengthMs, 0.625);
+
+    const payload = Buffer.allocUnsafe(2+2+2+2+2+2);
+
+    let o = 0;
+    o = payload.writeUIntLE(connHandle,  o, 2);
+    o = payload.writeUIntLE(intervalMin, o, 2);
+    o = payload.writeUIntLE(intervalMax, o, 2);
+    o = payload.writeUIntLE(timeout,     o, 2);
+    o = payload.writeUIntLE(minCeLength, o, 2);
+    o = payload.writeUIntLE(maxCeLength, o, 2);
+
+    return payload;
+  }
+
+  private static msToValue(ms: number, factor: number): number {
+    return Math.round(ms / factor);
+  }
+}
+
+export class LeRemoteConnectionParameterRequestNegativeReply extends LeTest {
+  static inParams(
+    connHandle: number,
+    reason: HciErrorCode
+  ): Buffer {
+    const payload = Buffer.allocUnsafe(2+1);
+
+    let o = 0;
+    o = payload.writeUIntLE(connHandle, o, 2);
+    o = payload.writeUIntLE(reason,     o, 1);
+
+    return payload;
+  }
+}
+
+export interface LeDataLength {
+  txOctets: number;
+  txTime: number;
+}
+
+export class LeDataLength {
+  static inParams(connHandle: number, params: LeDataLength): Buffer {
+    const payload = Buffer.allocUnsafe(2+2+2);
+
+    let o = 0;
+    o = payload.writeUIntLE(connHandle,       o, 2);
+    o = payload.writeUIntLE(params.txOctets,  o, 2);
+    o = payload.writeUIntLE(params.txTime,    o, 2);
+
+    return payload;
+  }
+}
+
+export interface LeSuggestedDefaultDataLength {
+  suggestedMaxTxOctets: number;
+  suggestedMaxTxTime: number;
+}
+
+export class LeSuggestedDefaultDataLength {
+  static inParams(params: LeSuggestedDefaultDataLength): Buffer {
+    const payload = Buffer.allocUnsafe(4);
+    payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
+    payload.writeUInt16LE(params.suggestedMaxTxTime,   2);
+    return payload;
+  }
+
+  static outParams(params?: Buffer): LeSuggestedDefaultDataLength {
+    if (!params || params.length < 4) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      suggestedMaxTxOctets: params.readUInt16LE(0),
+      suggestedMaxTxTime:   params.readUInt16LE(2)
+    };
+  }
+}
+
+export interface DhKeyV1 {
+  publicKey: Buffer;
+}
+
+export class DhKeyV1 {
+  static inParams(params: DhKeyV1): Buffer {
+    if (params.publicKey.length !== 64) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(64);
+    params.publicKey.reverse().copy(payload, 0);
+
+    return payload;
+  }
+}
+
+export interface DhKeyV2 {
+  publicKey: Buffer;
+  keyType: number;
+}
+
+export class DhKeyV2 {
+  static inParams(params: DhKeyV2): Buffer {
+    if (params.publicKey.length !== 64) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(65);
+    params.publicKey.reverse().copy(payload, 0);
+    payload.writeUInt8(params.keyType, 64);
+    return payload;
+  }
+}
 
 export interface LeExtendedAdvertisingParameters {
-  advertisingHandle: number;
   advertisingEventProperties: LeAdvertisingEventProperties[];
   primaryAdvertisingIntervalMinMs: number;
   primaryAdvertisingIntervalMaxMs: number;
@@ -655,7 +972,7 @@ export interface LeExtendedAdvertisingParameters {
 }
 
 export class LeExtendedAdvertisingParameters {
-  static inParams(params: LeExtendedAdvertisingParameters): Buffer {
+  static inParams(advertisingHandle: number, params: LeExtendedAdvertisingParameters): Buffer {
     const advertisingEventProperties    = buildBitfield(params.advertisingEventProperties);
     const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
     const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
@@ -666,21 +983,21 @@ export class LeExtendedAdvertisingParameters {
     const payload = Buffer.allocUnsafe(25);
 
     let o = 0;
-    o = payload.writeUIntLE(params.advertisingHandle,             o, 1);
-    o = payload.writeUIntLE(advertisingEventProperties,           o, 2);
-    o = payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, 3);
-    o = payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, 3);
-    o = payload.writeUIntLE(primaryAdvertisingChannelMap,         o, 1);
-    o = payload.writeUIntLE(params.ownAddressType,                o, 1);
-    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
-    o = payload.writeUIntLE(params.peerAddress,                   o, 6);
-    o = payload.writeUIntLE(params.advertisingFilterPolicy,       o, 1);
-    o = payload.writeIntLE (advertisingTxPower,                   o, 1);
-    o = payload.writeUIntLE(params.primaryAdvertisingPhy,         o, 1);
-    o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, 1);
-    o = payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, 1);
-    o = payload.writeUIntLE(params.advertisingSid,                o, 1);
-    o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
+    o = payload.writeUIntLE(advertisingHandle,                  o, 1);
+    o = payload.writeUIntLE(advertisingEventProperties,         o, 2);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMin,      o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMax,      o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingChannelMap,       o, 1);
+    o = payload.writeUIntLE(params.ownAddressType,              o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,             o, 1);
+    o = payload.writeUIntLE(params.peerAddress,                 o, 6);
+    o = payload.writeUIntLE(params.advertisingFilterPolicy,     o, 1);
+    o = payload.writeIntLE (advertisingTxPower,                 o, 1);
+    o = payload.writeUIntLE(params.primaryAdvertisingPhy,       o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip, o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingPhy,     o, 1);
+    o = payload.writeUIntLE(params.advertisingSid,              o, 1);
+    o = payload.writeUIntLE(scanRequestNotificationEnable,      o, 1);
 
     return payload;
   }
