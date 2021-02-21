@@ -96,7 +96,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
 
     const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    console.log(`number of supported advertising sets: ${advSets}`);
+    console.log(`Number of supported advertising sets: ${advSets}`);
 
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,

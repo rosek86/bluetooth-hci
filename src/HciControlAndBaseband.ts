@@ -118,16 +118,11 @@ export enum ReadTransmitPowerLevelType {
   Maximum = 1, // Read Maximum Transmit Power Level.
 }
 
-export interface ReadTransmitPowerLevelInParams {
-  connHandle: number,
-  type: ReadTransmitPowerLevelType,
-}
-
 export class ReadTransmitPowerLevel {
-  static inParams(params: ReadTransmitPowerLevelInParams): Buffer {
+  static inParams(connHandle: number, type: ReadTransmitPowerLevelType): Buffer {
     const payload = Buffer.allocUnsafe(3);
-    payload.writeUInt16LE(params.connHandle, 0);
-    payload.writeUInt8(params.type, 2);
+    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt8(type, 2);
     return payload;
   }
 
