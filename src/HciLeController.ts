@@ -1,5 +1,5 @@
 import { Address } from "./Address";
-import { HciParserError, makeParserError } from "./HciError";
+import { HciErrorCode, HciParserError, makeHciError, makeParserError } from "./HciError";
 import { bigintBitGet, bigintBitSet, buildBitfield } from "./Utils";
 
 export interface LeEvents {
@@ -250,6 +250,285 @@ export class LeSetAdvertisingParameters {
   }
 }
 
+export class LeReadAdvertisingPhysicalChannelTxPower {
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readInt8(0);
+  }
+}
+
+export class LeSetAdvertisingScanResponseData {
+  static inParams(data: Buffer): Buffer {
+    if (data.length > 31) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.alloc(1+31, 0);
+    payload.writeUInt8(data.length, 0);
+    data.copy(payload, 1);
+
+    return payload;
+  }
+}
+
+export class LeSetAdvertisingEnable {
+  static inParams(enable: boolean): Buffer {
+    const payload = Buffer.allocUnsafe(1);
+    payload.writeUInt8(enable ? 1 : 0);
+    return payload;
+  }
+}
+
+export interface LeScanParameters {
+  type:                 LeScanType;
+  intervalMs:           number;
+  windowMs:             number;
+  ownAddressType:       LeOwnAddressType;
+  scanningFilterPolicy: LeScanningFilterPolicy;
+}
+
+export class LeSetScanParameters {
+  private static readonly timeFactor = 0.625;
+
+  static inParams(params: LeScanParameters): Buffer {
+    const payload = Buffer.allocUnsafe(1+2+2+1+1);
+
+    const interval = Math.round(params.intervalMs / this.timeFactor);
+    const window   = Math.round(params.windowMs   / this.timeFactor);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.type,                 o, 1);
+    o = payload.writeUIntLE(interval,                    o, 2);
+    o = payload.writeUIntLE(window,                      o, 2);
+    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
+    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
+
+    return payload;
+  }
+}
+
+
+export class LeSetScanEnabled {
+  static inParams(enable: boolean, filterDuplicates?: boolean): Buffer {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUInt8(enable           ? 1 : 0);
+    payload.writeUInt8(filterDuplicates ? 1 : 0);
+    return payload;
+  }
+}
+
+export interface LeCreateConnection {
+  scanIntervalMs: number,
+  scanWindowMs: number,
+  initiatorFilterPolicy: number,
+  peerAddressType: LePeerAddressType,
+  peerAddress: number,
+  ownAddressType: LeOwnAddressType,
+  connectionIntervalMinMs: number,
+  connectionIntervalMaxMs: number,
+  connectionLatency: number,
+  supervisionTimeoutMs: number,
+  minCeLengthMs: number,
+  maxCeLengthMs: number,
+}
+
+export class LeCreateConnection {
+  static inParams(params: LeCreateConnection): Buffer {
+    const payload = Buffer.allocUnsafe(2+2+1+1+6+1+2+2+2+2+2+2);
+
+    const scanInterval       = this.msToValue(params.scanIntervalMs,          0.625);
+    const scanWindow         = this.msToValue(params.scanWindowMs,            0.625);
+    const connIntervalMin    = this.msToValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = this.msToValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = this.msToValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = this.msToValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = this.msToValue(params.maxCeLengthMs,           0.625);
+
+    let o = 0;
+    o = payload.writeUIntLE(scanInterval,                 o, 2);
+    o = payload.writeUIntLE(scanWindow,                   o, 2);
+    o = payload.writeUIntLE(params.initiatorFilterPolicy, o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,       o, 1);
+    o = payload.writeUIntLE(params.peerAddress,           o, 6);
+    o = payload.writeUIntLE(params.ownAddressType,        o, 1);
+    o = payload.writeUIntLE(connIntervalMin,              o, 2);
+    o = payload.writeUIntLE(connIntervalMax,              o, 2);
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
+    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
+    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+
+    return payload;
+  }
+
+  private static msToValue(ms: number, factor: number): number {
+    return Math.round(ms / factor);
+  }
+}
+
+export interface LeConnectionUpdate {
+  connectionHandle: number,
+  connectionIntervalMinMs: number,
+  connectionIntervalMaxMs: number,
+  connectionLatency: number,
+  supervisionTimeoutMs: number,
+  minCeLengthMs: number,
+  maxCeLengthMs: number,
+}
+
+export class LeConnectionUpdate {
+  static inParams(params: LeConnectionUpdate): Buffer {
+    const payload = Buffer.allocUnsafe(2+2+2+2+2+2+2);
+
+    const connIntervalMin    = this.msToValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = this.msToValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = this.msToValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = this.msToValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = this.msToValue(params.maxCeLengthMs,           0.625);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(connIntervalMin,              o, 2);
+    o = payload.writeUIntLE(connIntervalMax,              o, 2);
+    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
+    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
+    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
+    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+
+    return payload;
+  }
+
+  private static msToValue(ms: number, factor: number): number {
+    return Math.round(ms / factor);
+  }
+}
+
+export class LeReadWhiteListSize {
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt8(0);
+  }
+}
+
+export enum LeWhiteListAddressType {
+  Public,
+  Random,
+  Anonymous,
+}
+
+export interface LeWhiteList {
+  addressType: LeWhiteListAddressType;
+  address?: Address;
+}
+
+export class LeWhiteList {
+  static inParams(params: LeWhiteList): Buffer {
+    const payload = Buffer.allocUnsafe(1+6);
+    payload.writeUIntLE(params.addressType,  0, 1);
+    payload.writeUIntLE(params.address?.toNumeric() ?? 0, 1, 6);
+    return payload;
+  }
+}
+
+export interface LeReadChannelMap {
+
+}
+export class LeReadChannelMap {
+  static inParams(connHandle: number): Buffer {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUIntLE(connHandle, 0, 2);
+    return payload;
+  }
+
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 7) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUIntLE(2, 5);
+  }
+}
+
+export class LeEncrypt {
+  static inParams(key: Buffer, plaintextData: Buffer): Buffer {
+    if (key.length !== 16 || plaintextData.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(32);
+
+    key.reverse().copy(payload, 0);
+    plaintextData.reverse().copy(payload, 16);
+
+    return payload;
+  }
+
+  static outParams(params?: Buffer): Buffer {
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.reverse();
+  }
+}
+
+export class LeRand {
+  static outParams(params?: Buffer): Buffer {
+    if (!params) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.reverse();
+  }
+}
+
+export interface LeEnableEncryption {
+  randomNumber: Buffer,
+  encryptedDiversifier: number,
+  longTermKey: Buffer,
+}
+
+export class LeEnableEncryption {
+  static inParams(connHandle: number, params: LeEnableEncryption): Buffer {
+    if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(2+8+2+16);
+
+    let o = 0;
+    o  = payload.writeUIntLE(connHandle, o, 2);
+    o += params.randomNumber.reverse().copy(payload, o);
+    o  = payload.writeUIntLE(params.encryptedDiversifier, o, 2);
+    o += params.longTermKey.reverse().copy(payload, o);
+
+    return payload;
+  }
+}
+
+export class LeLongTermKeyRequestReply {
+  static inParams(connHandle: number, longTermKey: Buffer): Buffer {
+    if (longTermKey.length !== 16) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+    const payload = Buffer.allocUnsafe(2+16);
+
+    let o = 0;
+    o  = payload.writeUIntLE(connHandle, o, 2);
+    o += longTermKey.reverse().copy(payload, o);
+
+    return payload;
+  }
+}
+
+export class LeLongTermKeyRequestNegativeReply {
+  static inParams(connHandle: number): Buffer {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUIntLE(connHandle, 0, 2);
+    return payload;
+  }
+}
+
 export enum LeState {
   ScanUndirectAdv,
   ConnScanUndirectAdv,
@@ -328,6 +607,14 @@ export class LeSupportedStates {
     this.states = states;
   }
 
+  public static outParams(params?: Buffer): LeSupportedStates {
+    if (!params || params.length < (64/8)) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    const bitmask = params.readBigUInt64LE(0);
+    return LeSupportedStates.fromBitmask(bitmask);
+  }
+
   public static fromBitmask(bitmask: bigint): LeSupportedStates{
     const states: LeState[][] = [];
     for (let b = 0n; b <= 41n; b++) {
@@ -344,6 +631,132 @@ export class LeSupportedStates {
       strStates.push(state.map((e) => LeStateNames[e]));
     }
     return strStates;
+  }
+}
+
+
+
+export interface LeExtendedAdvertisingParameters {
+  advertisingHandle: number;
+  advertisingEventProperties: LeAdvertisingEventProperties[];
+  primaryAdvertisingIntervalMinMs: number;
+  primaryAdvertisingIntervalMaxMs: number;
+  primaryAdvertisingChannelMap: LeAdvertisingChannelMap[];
+  ownAddressType: LeOwnAddressType;
+  peerAddressType: LePeerAddressType;
+  peerAddress: number;
+  advertisingFilterPolicy: LeAdvertisingFilterPolicy;
+  advertisingTxPower?: number;
+  primaryAdvertisingPhy: LePrimaryAdvertisingPhy;
+  secondaryAdvertisingMaxSkip: number;
+  secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy;
+  advertisingSid: number;
+  scanRequestNotificationEnable: boolean;
+}
+
+export class LeExtendedAdvertisingParameters {
+  static inParams(params: LeExtendedAdvertisingParameters): Buffer {
+    const advertisingEventProperties    = buildBitfield(params.advertisingEventProperties);
+    const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
+    const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
+    const primaryAdvertisingChannelMap  = buildBitfield(params.primaryAdvertisingChannelMap);
+    const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
+    const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
+
+    const payload = Buffer.allocUnsafe(25);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.advertisingHandle,             o, 1);
+    o = payload.writeUIntLE(advertisingEventProperties,           o, 2);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, 3);
+    o = payload.writeUIntLE(primaryAdvertisingChannelMap,         o, 1);
+    o = payload.writeUIntLE(params.ownAddressType,                o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
+    o = payload.writeUIntLE(params.peerAddress,                   o, 6);
+    o = payload.writeUIntLE(params.advertisingFilterPolicy,       o, 1);
+    o = payload.writeIntLE (advertisingTxPower,                   o, 1);
+    o = payload.writeUIntLE(params.primaryAdvertisingPhy,         o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, 1);
+    o = payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, 1);
+    o = payload.writeUIntLE(params.advertisingSid,                o, 1);
+    o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
+
+    return payload;
+  }
+
+  static outParams(params?: Buffer): number {
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+
+    const selectedTxPower = params.readInt8(0);
+    return selectedTxPower;
+  }
+}
+
+export interface LeExtendedScanParameters {
+  ownAddressType: LeOwnAddressType;
+  scanningFilterPolicy: LeScanningFilterPolicy;
+  scanningPhy: {
+    Phy1M?:    { type: LeScanType; intervalMs: number; windowMs: number };
+    PhyCoded?: { type: LeScanType; intervalMs: number; windowMs: number };
+  };
+}
+
+export class LeExtendedScanParameters {
+  static inParams(params: LeExtendedScanParameters): Buffer {
+
+    const phys = { count: 0, bitmask: 0 };
+
+    if (params.scanningPhy.Phy1M) {
+      phys.count++;
+      phys.bitmask |= 1 << LeScanningPhy.Phy1M;
+    }
+    if (params.scanningPhy.PhyCoded) {
+      phys.count++;
+      phys.bitmask |= 1 << LeScanningPhy.PhyCoded;
+    }
+
+    if (phys.count === 0) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(3 + phys.count * (1+2+2));
+
+    let o = 0;
+    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
+    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
+    o = payload.writeUIntLE(phys.bitmask,                o, 1);
+
+    if (params.scanningPhy.Phy1M) {
+      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
+    }
+    if (params.scanningPhy.PhyCoded) {
+      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
+    }
+    if (params.scanningPhy.Phy1M) {
+      const interval = this.msToValue(params.scanningPhy.Phy1M.intervalMs);
+      o = payload.writeUIntLE(interval, o, 2);
+    }
+    if (params.scanningPhy.PhyCoded) {
+      const interval = this.msToValue(params.scanningPhy.PhyCoded.intervalMs);
+      o = payload.writeUIntLE(interval, o, 2);
+    }
+    if (params.scanningPhy.Phy1M) {
+      const window = this.msToValue(params.scanningPhy.Phy1M.windowMs);
+      o = payload.writeUIntLE(window, o, 2);
+    }
+    if (params.scanningPhy.PhyCoded) {
+      const window = this.msToValue(params.scanningPhy.PhyCoded.windowMs);
+      o = payload.writeUIntLE(window, o, 2);
+    }
+
+    return payload;
+  }
+
+  private static msToValue(ms: number): number {
+    return Math.round(ms / 0.625);
   }
 }
 
@@ -405,12 +818,6 @@ export enum LeOwnAddressType {
 export enum LePeerAddressType {
   PublicDeviceAddress, // Public Device Address or Public Identity Address
   RandomDeviceAddress, // Random Device Address or Random (static) Identity Address
-}
-
-export enum LeWhiteListAddressType {
-  Public,
-  Random,
-  Anonymous,
 }
 
 export enum LeAdvertisingFilterPolicy {

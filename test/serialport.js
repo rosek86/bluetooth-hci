@@ -83,6 +83,11 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       extendedAdvertisingReport: true,
     });
 
+    // const key = Buffer.alloc(16);
+    // const data = Buffer.alloc(16);
+    // const result = await hci.leEncrypt(key, data);
+    // console.log(result); // <Buffer 66 e9 4b d4 ef 8a 2c 3b 88 4c fa 59 ca 34 2b 2e>
+
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
     await hci.leClearWhiteList();
 

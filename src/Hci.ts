@@ -29,16 +29,17 @@ import {
   ReadLocalSupportedCommands, ReadRssi
 } from './HciInformationParameters';
 import {
-  LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
-  LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
-  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeWhiteListAddressType,
+  LeAdvertisingDataOperation,LePhy, LeSupportedStates, LeScanResponseDataOperation, LeScanFilterDuplicates,
   LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel,
   LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser, LeEvents, LeSetEventsMask, LeBufferSize,
   LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
-  LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters
+  LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
+  LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
+  LeScanParameters, LeCreateConnection, LeSetScanParameters, LeSetScanEnabled, LeConnectionUpdate,
+  LeReadWhiteListSize, LeWhiteList, LeExtendedAdvertisingParameters, LeExtendedScanParameters,
+  LeReadChannelMap, LeEncrypt, LeRand, LeEnableEncryption, LeLongTermKeyRequestReply,
+  LeLongTermKeyRequestNegativeReply
 } from './HciLeController';
-import { buildBitfield } from './Utils';
 
 const debug = Debug('nble-hci');
 
@@ -245,116 +246,42 @@ export class Hci extends EventEmitter {
   public async leReadAdvertisingPhysicalChannelTxPower(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadAdvertisingPhysicalChannelTxPower;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params.readInt8(0);
+    return LeReadAdvertisingPhysicalChannelTxPower.outParams(result.returnParameters);
   }
 
   public async leSetAdvertisingData(data: Buffer): Promise<void> {
-    if (data.length > 31) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-
-    const payload = Buffer.alloc(1+31, 0);
-    payload.writeUInt8(data.length, 0);
-    data.copy(payload, 1);
-
     const ocf = HciOcfLeControllerCommands.SetAdvertisingData;
+    const payload = LeSetAdvertisingScanResponseData.inParams(data);
     await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetScanResponseData(data: Buffer): Promise<void> {
-    if (data.length > 31) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-
-    const payload = Buffer.alloc(1+31, 0);
-    payload.writeUInt8(data.length, 0);
-    data.copy(payload, 1);
-
     const ocf = HciOcfLeControllerCommands.SetScanResponseData;
+    const payload = LeSetAdvertisingScanResponseData.inParams(data);
     await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetAdvertisingEnable(enable: boolean): Promise<void> {
-    const payload = Buffer.allocUnsafe(1);
-    payload.writeUInt8(enable ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetAdvertisingEnable;
+    const payload = LeSetAdvertisingEnable.inParams(enable);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetScanParameters(params: {
-    type: LeScanType,
-    intervalMs: number,
-    windowMs: number,
-    ownAddressType: LeOwnAddressType,
-    scanningFilterPolicy: LeScanningFilterPolicy,
-  }): Promise<void> {
-    const payload = Buffer.allocUnsafe(1+2+2+1+1);
-
-    const interval = this.msToHciValue(params.intervalMs);
-    const window   = this.msToHciValue(params.windowMs);
-
-    let o = 0;
-    o = payload.writeUIntLE(params.type,                 o, 1);
-    o = payload.writeUIntLE(interval,                    o, 2);
-    o = payload.writeUIntLE(window,                      o, 2);
-    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
-    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
-
+  public async leSetScanParameters(params: LeScanParameters): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetScanParameters;
+    const payload = LeSetScanParameters.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetScanEnable(enable: boolean, filterDuplicates?: boolean): Promise<void> {
-    const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt8(enable           ? 1 : 0);
-    payload.writeUInt8(filterDuplicates ? 1 : 0);
     const ocf = HciOcfLeControllerCommands.SetScanEnable;
+    const payload = LeSetScanEnabled.inParams(enable, filterDuplicates);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leCreateConnection(params: {
-    scanIntervalMs: number,
-    scanWindowMs: number,
-    initiatorFilterPolicy: number,
-    peerAddressType: LePeerAddressType,
-    peerAddress: number,
-    ownAddressType: LeOwnAddressType,
-    connectionIntervalMinMs: number,
-    connectionIntervalMaxMs: number,
-    connectionLatency: number,
-    supervisionTimeoutMs: number,
-    minCeLengthMs: number,
-    maxCeLengthMs: number,
-  }): Promise<void> {
-    const payload = Buffer.allocUnsafe(2+2+1+1+6+1+2+2+2+2+2+2);
-
-    const scanInterval       = this.msToHciValue(params.scanIntervalMs,          0.625);
-    const scanWindow         = this.msToHciValue(params.scanWindowMs,            0.625);
-    const connIntervalMin    = this.msToHciValue(params.connectionIntervalMinMs, 1.25);
-    const connIntervalMax    = this.msToHciValue(params.connectionIntervalMaxMs, 1.25);
-    const supervisionTimeout = this.msToHciValue(params.supervisionTimeoutMs,    10);
-    const minConnEvtLength   = this.msToHciValue(params.minCeLengthMs,           0.625);
-    const maxConnEvtLength   = this.msToHciValue(params.maxCeLengthMs,           0.625);
-
-    let o = 0;
-    o = payload.writeUIntLE(scanInterval,                 o, 2);
-    o = payload.writeUIntLE(scanWindow,                   o, 2);
-    o = payload.writeUIntLE(params.initiatorFilterPolicy, o, 1);
-    o = payload.writeUIntLE(params.peerAddressType,       o, 1);
-    o = payload.writeUIntLE(params.peerAddress,           o, 6);
-    o = payload.writeUIntLE(params.ownAddressType,        o, 1);
-    o = payload.writeUIntLE(connIntervalMin,              o, 2);
-    o = payload.writeUIntLE(connIntervalMax,              o, 2);
-    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
-    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
-    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
-    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
-
+  public async leCreateConnection(params: LeCreateConnection): Promise<void> {
     const ocf = HciOcfLeControllerCommands.CreateConnection;
+    const payload = LeCreateConnection.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -366,11 +293,7 @@ export class Hci extends EventEmitter {
   public async leReadWhiteListSize(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadWhiteListSize;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params.readUInt8(0);
+    return LeReadWhiteListSize.outParams(result.returnParameters);
   }
 
   public async leClearWhiteList(): Promise<void> {
@@ -378,49 +301,21 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf });
   }
 
-  public async leAddDeviceToWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(1+6);
-    payload.writeUIntLE(addressType,  0, 1);
-    payload.writeUIntLE(address ?? 0, 1, 6);
+  public async leAddDeviceToWhiteList(params: LeWhiteList): Promise<void> {
     const ocf = HciOcfLeControllerCommands.AddDeviceToWhiteList;
+    const payload = LeWhiteList.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leRemoveDeviceFromWhiteList(addressType: LeWhiteListAddressType, address?: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(1+6);
-    payload.writeUIntLE(addressType,  0, 1);
-    payload.writeUIntLE(address ?? 0, 1, 6);
+  public async leRemoveDeviceFromWhiteList(params: LeWhiteList): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoveDeviceFromWhiteList;
+    const payload = LeWhiteList.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leConnectionUpdate(params: {
-    connectionHandle: number,
-    connectionIntervalMinMs: number,
-    connectionIntervalMaxMs: number,
-    connectionLatency: number,
-    supervisionTimeoutMs: number,
-    minCeLengthMs: number,
-    maxCeLengthMs: number,
-  }): Promise<void> {
-    const payload = Buffer.allocUnsafe(2+2+2+2+2+2+2);
-
-    const connIntervalMin    = this.msToHciValue(params.connectionIntervalMinMs, 1.25);
-    const connIntervalMax    = this.msToHciValue(params.connectionIntervalMaxMs, 1.25);
-    const supervisionTimeout = this.msToHciValue(params.supervisionTimeoutMs,    10);
-    const minConnEvtLength   = this.msToHciValue(params.minCeLengthMs,           0.625);
-    const maxConnEvtLength   = this.msToHciValue(params.maxCeLengthMs,           0.625);
-
-    let o = 0;
-    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
-    o = payload.writeUIntLE(connIntervalMin,              o, 2);
-    o = payload.writeUIntLE(connIntervalMax,              o, 2);
-    o = payload.writeUIntLE(params.connectionLatency,     o, 2);
-    o = payload.writeUIntLE(supervisionTimeout,           o, 2);
-    o = payload.writeUIntLE(minConnEvtLength,             o, 2);
-    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
-
+  public async leConnectionUpdate(params: LeConnectionUpdate): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ConnectionUpdate;
+    const payload = LeConnectionUpdate.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -431,122 +326,55 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leReadChannelMap(connHandle: number): Promise<{ connHandle: number, channelMap: number }> {
-    const payload = Buffer.allocUnsafe(2);
-    payload.writeUIntLE(connHandle, 0, 2);
+  public async leReadChannelMap(connHandle: number): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadChannelMap;
-    const result = await this.cmd.leController({ ocf, payload });
-    const params = result.returnParameters;
-    if (!params || params.length < 7) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return {
-      connHandle: params.readUIntLE(0, 2),
-      channelMap: params.readUIntLE(2, 5),
-    };
+    const payload = LeReadChannelMap.inParams(connHandle);
+    const result = await this.cmd.leController({ ocf, connHandle, payload });
+    return LeReadChannelMap.outParams(result.returnParameters);
   }
 
   public async leReadRemoteFeatures(connHandle: number): Promise<void> {
     const payload = Buffer.allocUnsafe(2);
     payload.writeUIntLE(connHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
-    await this.cmd.leController({ ocf, payload });
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
-  public async leEncrypt(key: Buffer, plaintextData: Buffer): Promise<Buffer> {
-    if (key.length !== 16 || plaintextData.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-
-    const payload = Buffer.allocUnsafe(32);
-    key.copy(payload, 0);
-    plaintextData.copy(payload, 16);
-
+  public async leEncrypt(key: Buffer, plainTextData: Buffer): Promise<Buffer> {
     const ocf = HciOcfLeControllerCommands.Encrypt;
+    const payload = LeEncrypt.inParams(key, plainTextData);
     const result = await this.cmd.leController({ ocf, payload });
-    const params = result.returnParameters;
-    if (!params) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params;
+    return LeEncrypt.outParams(result.returnParameters);
   }
 
   public async leRand(): Promise<Buffer> {
     const ocf = HciOcfLeControllerCommands.Rand;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params;
+    return LeRand.outParams(result.returnParameters);
   }
 
-  public async leEnableEncryption(params: {
-    connHandle: number,
-    randomNumber: Buffer,
-    encryptedDiversifier: number,
-    longTermKey: Buffer,
-  }): Promise<void> {
-    if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-    const payload = Buffer.allocUnsafe(2+8+2+16);
-
-    let o = 0;
-    o  = payload.writeUIntLE(params.connHandle, o, 2);
-    o += params.randomNumber.copy(payload, o);
-    o  = payload.writeUIntLE(params.encryptedDiversifier, o, 2);
-    o += params.longTermKey.copy(payload, o);
-
+  public async leEnableEncryption(connHandle: number, params: LeEnableEncryption): Promise<void> {
     const ocf = HciOcfLeControllerCommands.EnableEncryption;
-    await this.cmd.leController({ ocf, payload });
+    const payload = LeEnableEncryption.inParams(connHandle, params);
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
-  public async leLongTermKeyRequestReply(input: {
-    connHandle: number,
-    longTermKey: Buffer,
-  }): Promise<number> {
-    if (input.longTermKey.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-    const connHandle = input.connHandle;
-    const payload = Buffer.allocUnsafe(2+16);
-
-    let o = 0;
-    o  = payload.writeUIntLE(connHandle, o, 2);
-    o += input.longTermKey.copy(payload, o);
-
+  public async leLongTermKeyRequestReply(connHandle: number, longTermKey: Buffer): Promise<void> {
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestReply;
-    const result = await this.cmd.leController({ ocf, connHandle, payload });
-    const params = result.returnParameters;
-    if (!params || params.length < 2) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params.readUInt16LE(0);
+    const payload = LeLongTermKeyRequestReply.inParams(connHandle, longTermKey);
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
-  public async leLongTermKeyRequestNegativeReply(connHandle: number): Promise<number> {
-    const payload = Buffer.allocUnsafe(2);
-    payload.writeUIntLE(connHandle, 0, 2);
+  public async leLongTermKeyRequestNegativeReply(connHandle: number): Promise<void> {
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestNegativeReply;
-    const result = await this.cmd.leController({ ocf, connHandle, payload });
-    const params = result.returnParameters;
-    if (!params || params.length < 2) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return params.readUInt16LE(0);
+    const payload = LeLongTermKeyRequestNegativeReply.inParams(connHandle);
+    await this.cmd.leController({ ocf, connHandle, payload });
   }
 
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
     const ocf = HciOcfLeControllerCommands.ReadSupportedStates;
     const result = await this.cmd.leController({ ocf });
-
-    const params = result.returnParameters;
-    if (!params || params.length < (64/8)) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    const bitmask = params.readBigUInt64LE(0);
-    return LeSupportedStates.fromBitmask(bitmask);
+    return LeSupportedStates.outParams(result.returnParameters);
   }
 
   public async leReceiverTestV1(params: { rxChannelMhz: number }): Promise<void> {
@@ -943,59 +771,11 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetExtendedAdvertisingParameters(params: {
-    advertisingHandle: number,
-    advertisingEventProperties: LeAdvertisingEventProperties[],
-    primaryAdvertisingIntervalMinMs: number,
-    primaryAdvertisingIntervalMaxMs: number,
-    primaryAdvertisingChannelMap: LeAdvertisingChannelMap[],
-    ownAddressType: LeOwnAddressType,
-    peerAddressType: LePeerAddressType,
-    peerAddress: number,
-    advertisingFilterPolicy: LeAdvertisingFilterPolicy,
-    advertisingTxPower?: number,
-    primaryAdvertisingPhy: LePrimaryAdvertisingPhy,
-    secondaryAdvertisingMaxSkip: number,
-    secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy,
-    advertisingSid: number,
-    scanRequestNotificationEnable: boolean,
-  }): Promise<number> {
-
-    const advertisingEventProperties    = buildBitfield(params.advertisingEventProperties);
-    const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
-    const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
-    const primaryAdvertisingChannelMap  = buildBitfield(params.primaryAdvertisingChannelMap);
-    const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
-    const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
-
-    const payload = Buffer.allocUnsafe(25);
-
-    let o = 0;
-    o = payload.writeUIntLE(params.advertisingHandle,             o, 1);
-    o = payload.writeUIntLE(advertisingEventProperties,           o, 2);
-    o = payload.writeUIntLE(primaryAdvertisingIntervalMin,        o, 3);
-    o = payload.writeUIntLE(primaryAdvertisingIntervalMax,        o, 3);
-    o = payload.writeUIntLE(primaryAdvertisingChannelMap,         o, 1);
-    o = payload.writeUIntLE(params.ownAddressType,                o, 1);
-    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
-    o = payload.writeUIntLE(params.peerAddress,                   o, 6);
-    o = payload.writeUIntLE(params.advertisingFilterPolicy,       o, 1);
-    o = payload.writeIntLE (advertisingTxPower,                   o, 1);
-    o = payload.writeUIntLE(params.primaryAdvertisingPhy,         o, 1);
-    o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip,   o, 1);
-    o = payload.writeUIntLE(params.secondaryAdvertisingPhy,       o, 1);
-    o = payload.writeUIntLE(params.advertisingSid,                o, 1);
-    o = payload.writeUIntLE(scanRequestNotificationEnable,        o, 1);
-
+  public async leSetExtendedAdvertisingParameters(params: LeExtendedAdvertisingParameters): Promise<number> {
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
+    const payload = LeExtendedAdvertisingParameters.inParams(params);
     const result = await this.cmd.leController({ ocf, payload });
-
-    if (!result.returnParameters || result.returnParameters.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-
-    const selectedTxPower = result.returnParameters.readInt8(0);
-    return selectedTxPower;
+    return LeExtendedAdvertisingParameters.outParams(result.returnParameters);
   }
 
   public async leSetExtendedAdvertisingData(params: {
@@ -1045,60 +825,9 @@ export class Hci extends EventEmitter {
     return result.returnParameters.readUInt8(0);
   }
 
-  public async leSetExtendedScanParameters(params: {
-    ownAddressType: LeOwnAddressType,
-    scanningFilterPolicy: LeScanningFilterPolicy,
-    scanningPhy: {
-      Phy1M?:    { type: LeScanType, intervalMs: number, windowMs: number },
-      PhyCoded?: { type: LeScanType, intervalMs: number, windowMs: number },
-    },
-  }): Promise<void> {
-    const phys = { count: 0, bitmask: 0 };
-
-    if (params.scanningPhy.Phy1M) {
-      phys.count++;
-      phys.bitmask |= 1 << LeScanningPhy.Phy1M;
-    }
-    if (params.scanningPhy.PhyCoded) {
-      phys.count++;
-      phys.bitmask |= 1 << LeScanningPhy.PhyCoded;
-    }
-
-    if (phys.count === 0) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
-    }
-
-    const payload = Buffer.allocUnsafe(3 + phys.count * (1+2+2));
-
-    let o = 0;
-    o = payload.writeUIntLE(params.ownAddressType,       o, 1);
-    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
-    o = payload.writeUIntLE(phys.bitmask,                o, 1);
-
-    if (params.scanningPhy.Phy1M) {
-      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
-    }
-    if (params.scanningPhy.PhyCoded) {
-      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
-    }
-    if (params.scanningPhy.Phy1M) {
-      const interval = this.msToHciValue(params.scanningPhy.Phy1M.intervalMs);
-      o = payload.writeUIntLE(interval, o, 2);
-    }
-    if (params.scanningPhy.PhyCoded) {
-      const interval = this.msToHciValue(params.scanningPhy.PhyCoded.intervalMs);
-      o = payload.writeUIntLE(interval, o, 2);
-    }
-    if (params.scanningPhy.Phy1M) {
-      const window = this.msToHciValue(params.scanningPhy.Phy1M.windowMs);
-      o = payload.writeUIntLE(window, o, 2);
-    }
-    if (params.scanningPhy.PhyCoded) {
-      const window = this.msToHciValue(params.scanningPhy.PhyCoded.windowMs);
-      o = payload.writeUIntLE(window, o, 2);
-    }
-
+  public async leSetExtendedScanParameters(params: LeExtendedScanParameters): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetExtendedScanParameters;
+    const payload = LeExtendedScanParameters.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -1123,9 +852,6 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  private hciValueToMs(val: number, factor: number = 0.625): number {
-    return val * factor;
-  }
   private msToHciValue(ms: number, factor: number = 0.625): number {
     return Math.round(ms / factor);
   }
