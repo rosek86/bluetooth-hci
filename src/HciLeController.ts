@@ -1,6 +1,9 @@
 import { Address } from "./Address";
-import { HciErrorCode, HciParserError, makeHciError, makeParserError } from "./HciError";
-import { bigintBitGet, bigintBitSet, buildBitfield } from "./Utils";
+import {
+  HciErrorCode, HciParserError,
+  makeHciError, makeParserError
+} from "./HciError";
+import { bitGet, bitSet, buildBitfield } from "./Utils";
 
 export interface LeEvents {
   connectionComplete:                      boolean;
@@ -42,40 +45,40 @@ export interface LeEvents {
 export class LeSetEventsMask {
   static inParams(events: Partial<LeEvents>): Buffer {
     let mask = 0n;
-    mask = bigintBitSet(mask, 0n,   events.connectionComplete);
-    mask = bigintBitSet(mask, 1n,   events.advertisingReport);
-    mask = bigintBitSet(mask, 2n,   events.connectionUpdateComplete);
-    mask = bigintBitSet(mask, 3n,   events.readRemoteFeaturesComplete);
-    mask = bigintBitSet(mask, 4n,   events.longTermKeyRequest);
-    mask = bigintBitSet(mask, 5n,   events.remoteConnectionParameterRequest);
-    mask = bigintBitSet(mask, 6n,   events.dataLengthChange);
-    mask = bigintBitSet(mask, 7n,   events.readLocalP256PublicKeyComplete);
-    mask = bigintBitSet(mask, 8n,   events.generateDhKeyComplete);
-    mask = bigintBitSet(mask, 9n,   events.enhancedConnectionComplete);
-    mask = bigintBitSet(mask, 10n,  events.directedAdvertisingReport);
-    mask = bigintBitSet(mask, 11n,  events.phyUpdateComplete);
-    mask = bigintBitSet(mask, 12n,  events.extendedAdvertisingReport);
-    mask = bigintBitSet(mask, 13n,  events.periodicAdvertisingSyncEstablished);
-    mask = bigintBitSet(mask, 14n,  events.periodicAdvertisingReport);
-    mask = bigintBitSet(mask, 15n,  events.periodicAdvertisingSyncLost);
-    mask = bigintBitSet(mask, 16n,  events.scanTimeout);
-    mask = bigintBitSet(mask, 17n,  events.advertisingSetTerminated);
-    mask = bigintBitSet(mask, 18n,  events.scanRequestReceived);
-    mask = bigintBitSet(mask, 19n,  events.channelSelectionAlgorithm);
-    mask = bigintBitSet(mask, 20n,  events.connectionlessIqReport);
-    mask = bigintBitSet(mask, 21n,  events.connectionIqReport);
-    mask = bigintBitSet(mask, 22n,  events.cteRequestFailed);
-    mask = bigintBitSet(mask, 23n,  events.periodicAdvertisingSyncTransferReceived);
-    mask = bigintBitSet(mask, 24n,  events.cisEstablished);
-    mask = bigintBitSet(mask, 25n,  events.cisRequest);
-    mask = bigintBitSet(mask, 26n,  events.createBigComplete);
-    mask = bigintBitSet(mask, 27n,  events.terminateBigComplete);
-    mask = bigintBitSet(mask, 28n,  events.bigSyncEstablished);
-    mask = bigintBitSet(mask, 29n,  events.bigSyncLost);
-    mask = bigintBitSet(mask, 30n,  events.requestPeerScaComplete);
-    mask = bigintBitSet(mask, 31n,  events.pathLossThreshold);
-    mask = bigintBitSet(mask, 32n,  events.transmitPowerReporting);
-    mask = bigintBitSet(mask, 33n,  events.bigInfoAdvertisingReport);
+    mask = bitSet(mask, 0n,  events.connectionComplete);
+    mask = bitSet(mask, 1n,  events.advertisingReport);
+    mask = bitSet(mask, 2n,  events.connectionUpdateComplete);
+    mask = bitSet(mask, 3n,  events.readRemoteFeaturesComplete);
+    mask = bitSet(mask, 4n,  events.longTermKeyRequest);
+    mask = bitSet(mask, 5n,  events.remoteConnectionParameterRequest);
+    mask = bitSet(mask, 6n,  events.dataLengthChange);
+    mask = bitSet(mask, 7n,  events.readLocalP256PublicKeyComplete);
+    mask = bitSet(mask, 8n,  events.generateDhKeyComplete);
+    mask = bitSet(mask, 9n,  events.enhancedConnectionComplete);
+    mask = bitSet(mask, 10n, events.directedAdvertisingReport);
+    mask = bitSet(mask, 11n, events.phyUpdateComplete);
+    mask = bitSet(mask, 12n, events.extendedAdvertisingReport);
+    mask = bitSet(mask, 13n, events.periodicAdvertisingSyncEstablished);
+    mask = bitSet(mask, 14n, events.periodicAdvertisingReport);
+    mask = bitSet(mask, 15n, events.periodicAdvertisingSyncLost);
+    mask = bitSet(mask, 16n, events.scanTimeout);
+    mask = bitSet(mask, 17n, events.advertisingSetTerminated);
+    mask = bitSet(mask, 18n, events.scanRequestReceived);
+    mask = bitSet(mask, 19n, events.channelSelectionAlgorithm);
+    mask = bitSet(mask, 20n, events.connectionlessIqReport);
+    mask = bitSet(mask, 21n, events.connectionIqReport);
+    mask = bitSet(mask, 22n, events.cteRequestFailed);
+    mask = bitSet(mask, 23n, events.periodicAdvertisingSyncTransferReceived);
+    mask = bitSet(mask, 24n, events.cisEstablished);
+    mask = bitSet(mask, 25n, events.cisRequest);
+    mask = bitSet(mask, 26n, events.createBigComplete);
+    mask = bitSet(mask, 27n, events.terminateBigComplete);
+    mask = bitSet(mask, 28n, events.bigSyncEstablished);
+    mask = bitSet(mask, 29n, events.bigSyncLost);
+    mask = bitSet(mask, 30n, events.requestPeerScaComplete);
+    mask = bitSet(mask, 31n, events.pathLossThreshold);
+    mask = bitSet(mask, 32n, events.transmitPowerReporting);
+    mask = bitSet(mask, 33n, events.bigInfoAdvertisingReport);
 
     const payload = Buffer.allocUnsafe(8);
     payload.writeBigUInt64LE(mask, 0);
@@ -169,42 +172,42 @@ export class LeReadLocalSupportedFeatures {
 
     const mask = params.readBigUInt64LE(0);
     return {
-      leEncryption:                               bigintBitGet(mask, 0n),
-      connectionParametersRequestProcedure:       bigintBitGet(mask, 1n),
-      extendedRejectIndication:                   bigintBitGet(mask, 2n),
-      slaveInitiatedFeaturesExchange:             bigintBitGet(mask, 3n),
-      lePing:                                     bigintBitGet(mask, 4n),
-      leDataPacketLengthExtension:                bigintBitGet(mask, 5n),
-      llPrivacy:                                  bigintBitGet(mask, 6n),
-      extendedScannerFilterPolicies:              bigintBitGet(mask, 7n),
-      le2mPhy:                                    bigintBitGet(mask, 8n),
-      stableModulationIndexTransmitter:           bigintBitGet(mask, 9n),
-      stableModulationIndexReceiver:              bigintBitGet(mask, 10n),
-      leCodedPhy:                                 bigintBitGet(mask, 11n),
-      leExtendedAdvertising:                      bigintBitGet(mask, 12n),
-      lePeriodicAdvertising:                      bigintBitGet(mask, 13n),
-      channelSelectionAlgorithmV2:                bigintBitGet(mask, 14n),
-      lePowerClass1:                              bigintBitGet(mask, 15n),
-      minimumNumberOfUsedChannelsProcedure:       bigintBitGet(mask, 16n),
-      connectionCteRequest:                       bigintBitGet(mask, 17n),
-      connectionCteResponse:                      bigintBitGet(mask, 18n),
-      connectionlessCteTransmitter:               bigintBitGet(mask, 19n),
-      connectionlessCteReceiver:                  bigintBitGet(mask, 20n),
-      antennaSwitchingDuringCteTransmission:      bigintBitGet(mask, 21n),
-      antennaSwitchingDuringCteReception:         bigintBitGet(mask, 22n),
-      receivingConstantToneExtensions:            bigintBitGet(mask, 23n),
-      periodicAdvertisingSyncTransferSender:      bigintBitGet(mask, 24n),
-      periodicAdvertisingSyncTransferRecipient:   bigintBitGet(mask, 25n),
-      sleepClockAccuracyUpdates:                  bigintBitGet(mask, 26n),
-      remotePublicKeyValidation:                  bigintBitGet(mask, 27n),
-      connectedIsochronousStreamMaster:           bigintBitGet(mask, 28n),
-      connectedIsochronousStreamSlave:            bigintBitGet(mask, 29n),
-      isochronousBroadcaster:                     bigintBitGet(mask, 30n),
-      synchronizedReceiver:                       bigintBitGet(mask, 31n),
-      isochronousChannels:                        bigintBitGet(mask, 32n),
-      lePowerControlRequest:                      bigintBitGet(mask, 33n),
-      lePowerChangeIndication:                    bigintBitGet(mask, 34n),
-      lePathLossMonitoring:                       bigintBitGet(mask, 35n),
+      leEncryption:                             bitGet(mask, 0n),
+      connectionParametersRequestProcedure:     bitGet(mask, 1n),
+      extendedRejectIndication:                 bitGet(mask, 2n),
+      slaveInitiatedFeaturesExchange:           bitGet(mask, 3n),
+      lePing:                                   bitGet(mask, 4n),
+      leDataPacketLengthExtension:              bitGet(mask, 5n),
+      llPrivacy:                                bitGet(mask, 6n),
+      extendedScannerFilterPolicies:            bitGet(mask, 7n),
+      le2mPhy:                                  bitGet(mask, 8n),
+      stableModulationIndexTransmitter:         bitGet(mask, 9n),
+      stableModulationIndexReceiver:            bitGet(mask, 10n),
+      leCodedPhy:                               bitGet(mask, 11n),
+      leExtendedAdvertising:                    bitGet(mask, 12n),
+      lePeriodicAdvertising:                    bitGet(mask, 13n),
+      channelSelectionAlgorithmV2:              bitGet(mask, 14n),
+      lePowerClass1:                            bitGet(mask, 15n),
+      minimumNumberOfUsedChannelsProcedure:     bitGet(mask, 16n),
+      connectionCteRequest:                     bitGet(mask, 17n),
+      connectionCteResponse:                    bitGet(mask, 18n),
+      connectionlessCteTransmitter:             bitGet(mask, 19n),
+      connectionlessCteReceiver:                bitGet(mask, 20n),
+      antennaSwitchingDuringCteTransmission:    bitGet(mask, 21n),
+      antennaSwitchingDuringCteReception:       bitGet(mask, 22n),
+      receivingConstantToneExtensions:          bitGet(mask, 23n),
+      periodicAdvertisingSyncTransferSender:    bitGet(mask, 24n),
+      periodicAdvertisingSyncTransferRecipient: bitGet(mask, 25n),
+      sleepClockAccuracyUpdates:                bitGet(mask, 26n),
+      remotePublicKeyValidation:                bitGet(mask, 27n),
+      connectedIsochronousStreamMaster:         bitGet(mask, 28n),
+      connectedIsochronousStreamSlave:          bitGet(mask, 29n),
+      isochronousBroadcaster:                   bitGet(mask, 30n),
+      synchronizedReceiver:                     bitGet(mask, 31n),
+      isochronousChannels:                      bitGet(mask, 32n),
+      lePowerControlRequest:                    bitGet(mask, 33n),
+      lePowerChangeIndication:                  bitGet(mask, 34n),
+      lePathLossMonitoring:                     bitGet(mask, 35n),
     };
   }
 }
