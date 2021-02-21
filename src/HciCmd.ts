@@ -48,13 +48,13 @@ export interface HciCmdResult {
 export class HciCmd {
   private onResult: ((_: HciCmdResult) => void) | null = null;
 
-  public constructor(private send: HciSendFunction, private timeout: number = 2000) {
+  public constructor(private sendBuffer: HciSendFunction, private timeout: number = 2000) {
   }
 
   public async linkControl(params: {
     ocf: HciOcfLinkControlCommands,
     connHandle?: number,
-    payload?: Buffer
+    payload?: Buffer,
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: HciOpcode.build({
@@ -87,6 +87,21 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
+      opcode: HciOpcode.build({
+        ogf: HciOgf.ControlAndBasebandCommands,
+        ocf: params.ocf,
+      }),
+      payload: params.payload,
+      connHandle: params.connHandle,
+    });
+  }
+
+  public async controlAndBasebandNoResponse(params: {
+    ocf: HciOcfControlAndBasebandCommands,
+    connHandle?: number,
+    payload?: Buffer
+  }): Promise<void> {
+    await this.sendCommand({
       opcode: HciOpcode.build({
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: params.ocf,
@@ -198,8 +213,12 @@ export class HciCmd {
           }
         }
       };
-      this.send(HciPacketType.HciCommand, this.buildCommand(cmd));
+      this.sendCommand(cmd);
     });
+  }
+
+  private sendCommand(cmd: Command): void {
+    this.sendBuffer(HciPacketType.HciCommand, this.buildCommand(cmd));
   }
 
   public onCmdResult(result: HciCmdResult) {

@@ -31,7 +31,7 @@ export enum HciOcfLinkControlCommands {
   RemoteNameRequestCancel                             = 0x001A, // Remote Name Request Cancel
   ReadRemoteSupportedFeatures                         = 0x001B, // Read Remote Supported Features
   ReadRemoteExtendedFeatures                          = 0x001C, // Read Remote Extended Features
-  ReadRemoteVersionInformation                        = 0x001D, // Read Remote Version Information
+  ReadRemoteVersionInformation                        = 0x001D, // * Read Remote Version Information
   ReadClockOffset                                     = 0x001F, // Read Clock Offset
   ReadLmpHandle                                       = 0x0020, // Read LMP Handle
   SetupSynchronousConnection                          = 0x0028, // Setup Synchronous Connection
@@ -113,12 +113,12 @@ export enum HciOcfControlAndBasebandCommands {
   WriteNumBroadcastRetransmissions                    = 0x002A,
   ReadHoldModeActivity                                = 0x002B,
   WriteHoldModeActivity                               = 0x002C,
-  ReadTransmitPowerLevel                              = 0x002D,
+  ReadTransmitPowerLevel                              = 0x002D, // *
   ReadSynchronousFlowControlEnable                    = 0x002E,
   WriteSynchronousFlowControlEnable                   = 0x002F,
-  SetControllerToHostFlowControl                      = 0x0031,
-  HostBufferSize                                      = 0x0033,
-  HostNumberOfCompletedPackets                        = 0x0035,
+  SetControllerToHostFlowControl                      = 0x0031, // *
+  HostBufferSize                                      = 0x0033, // *
+  HostNumberOfCompletedPackets                        = 0x0035, // *
   ReadLinkSupervisionTimeout                          = 0x0036,
   WriteLinkSupervisionTimeout                         = 0x0037,
   ReadNumberOfSupportedIac                            = 0x0038,
@@ -171,8 +171,8 @@ export enum HciOcfControlAndBasebandCommands {
   WriteSynchronizationTrainParameters                 = 0x0078,
   ReadSecureConnectionsHostSupport                    = 0x0079,
   WriteSecureConnectionsHostSupport                   = 0x007A,
-  ReadAuthenticatedPayloadTimeout                     = 0x007B,
-  WriteAuthenticatedPayloadTimeout                    = 0x007C,
+  ReadAuthenticatedPayloadTimeout                     = 0x007B, // *
+  WriteAuthenticatedPayloadTimeout                    = 0x007C, // *
   ReadLocalOobExtendedData                            = 0x007D,
   ReadExtendedPageTimeout                             = 0x007E,
   WriteExtendedPageTimeout                            = 0x007F,

@@ -26,6 +26,10 @@ import {
   LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
 } from './HciLe';
 
+import { CompletedPackets, EventMask, EventMask2, FlowControlEnable, HostBufferSize, HostNumberOfCompletedPackets, ReadAuthenticatedPayloadTimeout, ReadLeHostSupport, ReadTransmitPowerLevel, ReadTransmitPowerLevelInParams, SetControllerToHostFlowControl, SetEventMask, SetEventMask2, WriteAuthenticatedPayloadTimeout, WriteLeHostSupported } from './HciControlAndBaseband';
+
+import { bitGet, bigintBitGet, bigintBitSet } from './Utils';
+
 const debug = Debug('nble-hci');
 
 interface LocalSupportedFeatures {
@@ -123,6 +127,8 @@ export class Hci extends EventEmitter {
     this.cmd = new HciCmd(this.send, timeout);
   }
 
+  // Link Control
+
   public async disconnect(params: {
     connHandle: number,
     reason: HciDisconnectReason,
@@ -134,10 +140,84 @@ export class Hci extends EventEmitter {
     await this.cmd.linkControl({ ocf, payload });
   }
 
+  public async readRemoteVersionInformation(connHandle: number): Promise<void> {
+    const payload = Buffer.allocUnsafe(2);
+    payload.writeUInt16LE(connHandle, 0);
+    const ocf = HciOcfLinkControlCommands.ReadRemoteVersionInformation;
+    await this.cmd.linkControl({ ocf, payload });
+  }
+
+  // Control and Baseband
+
+  public async setEventMask(events: Partial<EventMask> = {}): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.SetEventMask;
+    const payload = SetEventMask.inParams(events);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
   public async reset(): Promise<void> {
     const ocf = HciOcfControlAndBasebandCommands.Reset;
     await this.cmd.controlAndBaseband({ ocf });
   }
+
+  public async readTransmitPowerLevel(params: ReadTransmitPowerLevelInParams): Promise<number> {
+    const ocf = HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel;
+    const connHandle = params.connHandle;
+    const payload = ReadTransmitPowerLevel.inParams(params);
+    const result = await this.cmd.controlAndBaseband({ ocf, connHandle, payload });
+    return ReadTransmitPowerLevel.outParams(result.returnParameters);
+  }
+
+  public async setControllerToHostFlowControl(enable: FlowControlEnable): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.SetControllerToHostFlowControl;
+    const payload = SetControllerToHostFlowControl.inParams(enable);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
+  public async setEventMaskPage2(events: Partial<EventMask2> = {}): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.SetEventMaskPage2;
+    const payload = SetEventMask2.inParams(events);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
+  public async readLeHostSupport(): Promise<boolean> {
+    const ocf = HciOcfControlAndBasebandCommands.ReadLeHostSupport;
+    const result = await this.cmd.controlAndBaseband({ ocf });
+    return ReadLeHostSupport.outParams(result.returnParameters);
+  }
+
+  public async writeLeHostSupported(leSupportedHost: boolean): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.WriteLeHostSupport;
+    const payload = WriteLeHostSupported.inParams(leSupportedHost);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
+  public async hostBufferSize(params: HostBufferSize): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.HostBufferSize;
+    const payload = HostBufferSize.inParams(params);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
+  public async hostNumberOfCompletedPackets(params: CompletedPackets[]): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.HostNumberOfCompletedPackets;
+    const payload = HostNumberOfCompletedPackets.inParams(params);
+    await this.cmd.controlAndBasebandNoResponse({ ocf, payload });
+  }
+
+  public async readAuthenticatedPayloadTimeout(connHandle: number): Promise<number> {
+    const ocf = HciOcfControlAndBasebandCommands.ReadAuthenticatedPayloadTimeout;
+    const payload = ReadAuthenticatedPayloadTimeout.inParams(connHandle);
+    const result = await this.cmd.controlAndBaseband({ ocf, payload });
+    return ReadAuthenticatedPayloadTimeout.outParams(result.returnParameters);
+  }
+
+  public async writeAuthenticatedPayloadTimeout(connHandle: number, timeoutMs: number): Promise<void> {
+    const ocf = HciOcfControlAndBasebandCommands.WriteAuthenticatedPayloadTimeout;
+    const payload = WriteAuthenticatedPayloadTimeout.inParams(connHandle, timeoutMs);
+    await this.cmd.controlAndBaseband({ ocf, payload });
+  }
+
+  // Information parameters
 
   public async readLocalSupportedFeatures(): Promise<LocalSupportedFeatures> {
     const ocf = HciOcfInformationParameters.ReadLocalSupportedFeatures;
@@ -266,540 +346,333 @@ export class Hci extends EventEmitter {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
     return {
-      inquiry:                                                this.bitGet(params[0], 0),
-      inquiryCancel:                                          this.bitGet(params[0], 1),
-      periodicInquiryMode:                                    this.bitGet(params[0], 2),
-      exitPeriodicInquiryMode:                                this.bitGet(params[0], 3),
-      createConnection:                                       this.bitGet(params[0], 4),
-      disconnect:                                             this.bitGet(params[0], 5),
-      addScoConnection:                                       this.bitGet(params[0], 6),
-      createConnectionCancel:                                 this.bitGet(params[0], 7),
-      acceptConnectionRequest:                                this.bitGet(params[1], 0),
-      rejectConnectionRequest:                                this.bitGet(params[1], 1),
-      linkKeyRequestReply:                                    this.bitGet(params[1], 2),
-      linkKeyRequestNegativeReply:                            this.bitGet(params[1], 3),
-      pinCodeRequestReply:                                    this.bitGet(params[1], 4),
-      pinCodeRequestNegativeReply:                            this.bitGet(params[1], 5),
-      changeConnectionPacketType:                             this.bitGet(params[1], 6),
-      authenticationRequested:                                this.bitGet(params[1], 7),
-      setConnectionEncryption:                                this.bitGet(params[2], 0),
-      changeConnectionLinkKey:                                this.bitGet(params[2], 1),
-      masterLinkKey:                                          this.bitGet(params[2], 2),
-      remoteNameRequest:                                      this.bitGet(params[2], 3),
-      remoteNameRequestCancel:                                this.bitGet(params[2], 4),
-      readRemoteSupportedFeatures:                            this.bitGet(params[2], 5),
-      readRemoteExtendedFeatures:                             this.bitGet(params[2], 6),
-      readRemoteVersionInformation:                           this.bitGet(params[2], 7),
-      readClockOffset:                                        this.bitGet(params[3], 0),
-      readLmpHandle:                                          this.bitGet(params[3], 1),
-      holdMode:                                               this.bitGet(params[4], 1),
-      sniffMode:                                              this.bitGet(params[4], 2),
-      exitSniffMode:                                          this.bitGet(params[4], 3),
-      qosSetup:                                               this.bitGet(params[4], 6),
-      roleDiscovery:                                          this.bitGet(params[4], 7),
-      switchRole:                                             this.bitGet(params[5], 0),
-      readLinkPolicySettings:                                 this.bitGet(params[5], 1),
-      writeLinkPolicySettings:                                this.bitGet(params[5], 2),
-      readDefaultLinkPolicySettings:                          this.bitGet(params[5], 3),
-      writeDefaultLinkPolicySettings:                         this.bitGet(params[5], 4),
-      flowSpecification:                                      this.bitGet(params[5], 5),
-      setEventMask:                                           this.bitGet(params[5], 6),
-      reset:                                                  this.bitGet(params[5], 7),
-      setEventFilter:                                         this.bitGet(params[6], 0),
-      flush:                                                  this.bitGet(params[6], 1),
-      readPinType:                                            this.bitGet(params[6], 2),
-      writePinType:                                           this.bitGet(params[6], 3),
-      readStoredLinkKey:                                      this.bitGet(params[6], 5),
-      writeStoredLinkKey:                                     this.bitGet(params[6], 6),
-      deleteStoredLinkKey:                                    this.bitGet(params[6], 7),
-      writeLocalName:                                         this.bitGet(params[7], 0),
-      readLocalName:                                          this.bitGet(params[7], 1),
-      readConnectionAcceptTimeout:                            this.bitGet(params[7], 2),
-      writeConnectionAcceptTimeout:                           this.bitGet(params[7], 3),
-      readPageTimeout:                                        this.bitGet(params[7], 4),
-      writePageTimeout:                                       this.bitGet(params[7], 5),
-      readScanEnable:                                         this.bitGet(params[7], 6),
-      writeScanEnable:                                        this.bitGet(params[7], 7),
-      readPageScanActivity:                                   this.bitGet(params[8], 0),
-      writePageScanActivity:                                  this.bitGet(params[8], 1),
-      readInquiryScanActivity:                                this.bitGet(params[8], 2),
-      writeInquiryScanActivity:                               this.bitGet(params[8], 3),
-      readAuthenticationEnable:                               this.bitGet(params[8], 4),
-      writeAuthenticationEnable:                              this.bitGet(params[8], 5),
-      readEncryptionMode:                                     this.bitGet(params[8], 6),
-      writeEncryptionMode:                                    this.bitGet(params[8], 7),
-      readClassOfDevice:                                      this.bitGet(params[9], 0),
-      writeClassOfDevice:                                     this.bitGet(params[9], 1),
-      readVoiceSetting:                                       this.bitGet(params[9], 2),
-      writeVoiceSetting:                                      this.bitGet(params[9], 3),
-      readAutomaticFlushTimeout:                              this.bitGet(params[9], 4),
-      writeAutomaticFlushTimeout:                             this.bitGet(params[9], 5),
-      readNumBroadcastRetransmissions:                        this.bitGet(params[9], 6),
-      writeNumBroadcastRetransmissions:                       this.bitGet(params[9], 7),
-      readHoldModeActivity:                                   this.bitGet(params[10], 0),
-      writeHoldModeActivity:                                  this.bitGet(params[10], 1),
-      readTransmitPowerLevel:                                 this.bitGet(params[10], 2),
-      readSynchronousFlowControlEnable:                       this.bitGet(params[10], 3),
-      writeSynchronousFlowControlEnable:                      this.bitGet(params[10], 4),
-      setControllerToHostFlowControl:                         this.bitGet(params[10], 5),
-      hostBufferSize:                                         this.bitGet(params[10], 6),
-      hostNumberOfCompletedPackets:                           this.bitGet(params[10], 7),
-      readLinkSupervisionTimeout:                             this.bitGet(params[11], 0),
-      writeLinkSupervisionTimeout:                            this.bitGet(params[11], 1),
-      readNumberOfSupportedIac:                               this.bitGet(params[11], 2),
-      readCurrentIacLap:                                      this.bitGet(params[11], 3),
-      writeCurrentIacLap:                                     this.bitGet(params[11], 4),
-      readPageScanModePeriod:                                 this.bitGet(params[11], 5),
-      writePageScanModePeriod:                                this.bitGet(params[11], 6),
-      readPageScanMode:                                       this.bitGet(params[11], 7),
-      writePageScanMode:                                      this.bitGet(params[12], 0),
-      setAfhHostChannelClassification:                        this.bitGet(params[12], 1),
-      readInquiryScanType:                                    this.bitGet(params[12], 4),
-      writeInquiryScanType:                                   this.bitGet(params[12], 5),
-      readInquiryMode:                                        this.bitGet(params[12], 6),
-      writeInquiryMode:                                       this.bitGet(params[12], 7),
-      readPageScanType:                                       this.bitGet(params[13], 0),
-      writePageScanType:                                      this.bitGet(params[13], 1),
-      readAfhChannelAssessmentMode:                           this.bitGet(params[13], 2),
-      writeAfhChannelAssessmentMode:                          this.bitGet(params[13], 3),
-      readLocalVersionInformation:                            this.bitGet(params[14], 3),
-      readLocalSupportedFeatures:                             this.bitGet(params[14], 5),
-      readLocalExtendedFeatures:                              this.bitGet(params[14], 6),
-      readBufferSize:                                         this.bitGet(params[14], 7),
-      readCountryCode:                                        this.bitGet(params[15], 0),
-      readBdAddr:                                             this.bitGet(params[15], 1),
-      readFailedContactCounter:                               this.bitGet(params[15], 2),
-      resetFailedContactCounter:                              this.bitGet(params[15], 3),
-      readLinkQuality:                                        this.bitGet(params[15], 4),
-      readRssi:                                               this.bitGet(params[15], 5),
-      readAfhChannelMap:                                      this.bitGet(params[15], 6),
-      readClock:                                              this.bitGet(params[15], 7),
-      readLoopbackMode:                                       this.bitGet(params[16], 0),
-      writeLoopbackMode:                                      this.bitGet(params[16], 1),
-      enableDeviceUnderTestMode:                              this.bitGet(params[16], 2),
-      setupSynchronousConnectionRequest:                      this.bitGet(params[16], 3),
-      acceptSynchronousConnectionRequest:                     this.bitGet(params[16], 4),
-      rejectSynchronousConnectionRequest:                     this.bitGet(params[16], 5),
-      readExtendedInquiryResponse:                            this.bitGet(params[17], 0),
-      writeExtendedInquiryResponse:                           this.bitGet(params[17], 1),
-      refreshEncryptionKey:                                   this.bitGet(params[17], 2),
-      sniffSubrating:                                         this.bitGet(params[17], 4),
-      readSimplePairingMode:                                  this.bitGet(params[17], 5),
-      writeSimplePairingMode:                                 this.bitGet(params[17], 6),
-      readLocalOobData:                                       this.bitGet(params[17], 7),
-      readInquiryResponseTransmitPowerLevel:                  this.bitGet(params[18], 0),
-      writeInquiryTransmitPowerLevel:                         this.bitGet(params[18], 1),
-      readDefaultErroneousDataReporting:                      this.bitGet(params[18], 2),
-      writeDefaultErroneousDataReporting:                     this.bitGet(params[18], 3),
-      ioCapabilityRequestReply:                               this.bitGet(params[18], 7),
-      userConfirmationRequestReply:                           this.bitGet(params[19], 0),
-      userConfirmationRequestNegativeReply:                   this.bitGet(params[19], 1),
-      userPasskeyRequestReply:                                this.bitGet(params[19], 2),
-      userPasskeyRequestNegativeReply:                        this.bitGet(params[19], 3),
-      remoteOobDataRequestReply:                              this.bitGet(params[19], 4),
-      writeSimplePairingDebugMode:                            this.bitGet(params[19], 5),
-      enhancedFlush:                                          this.bitGet(params[19], 6),
-      remoteOobDataRequestNegativeReply:                      this.bitGet(params[19], 7),
-      sendKeypressNotification:                               this.bitGet(params[20], 2),
-      ioCapabilityRequestNegativeReply:                       this.bitGet(params[20], 3),
-      readEncryptionKeySize:                                  this.bitGet(params[20], 4),
-      createPhysicalLink:                                     this.bitGet(params[21], 0),
-      acceptPhysicalLink:                                     this.bitGet(params[21], 1),
-      disconnectPhysicalLink:                                 this.bitGet(params[21], 2),
-      createLogicalLink:                                      this.bitGet(params[21], 3),
-      acceptLogicalLink:                                      this.bitGet(params[21], 4),
-      disconnectLogicalLink:                                  this.bitGet(params[21], 5),
-      logicalLinkCancel:                                      this.bitGet(params[21], 6),
-      flowSpecModify:                                         this.bitGet(params[21], 7),
-      readLogicalLinkAcceptTimeout:                           this.bitGet(params[22], 0),
-      writeLogicalLinkAcceptTimeout:                          this.bitGet(params[22], 1),
-      setEventMaskPage2:                                      this.bitGet(params[22], 2),
-      readLocationData:                                       this.bitGet(params[22], 3),
-      writeLocationData:                                      this.bitGet(params[22], 4),
-      readLocalAmpInfo:                                       this.bitGet(params[22], 5),
-      readLocalAmpAassoc:                                     this.bitGet(params[22], 6),
-      writeRemoteAmpAssoc:                                    this.bitGet(params[22], 7),
-      readFlowControlMode:                                    this.bitGet(params[23], 0),
-      writeFlowControlMode:                                   this.bitGet(params[23], 1),
-      readDataBlockSize:                                      this.bitGet(params[23], 2),
-      enableAmpReceiverReports:                               this.bitGet(params[23], 5),
-      ampTestEnd:                                             this.bitGet(params[23], 6),
-      ampTest:                                                this.bitGet(params[23], 7),
-      readEnhancedTransmitPowerLevel:                         this.bitGet(params[24], 0),
-      readBestEffortFlushTimeout:                             this.bitGet(params[24], 2),
-      writeBestEffortFlushTimeout:                            this.bitGet(params[24], 3),
-      shortRangeMode:                                         this.bitGet(params[24], 4),
-      readLeHostSupport:                                      this.bitGet(params[24], 5),
-      writeLeHostSupport:                                     this.bitGet(params[24], 6),
-      leSetEventMask:                                         this.bitGet(params[25], 0),
-      leReadBufferSizeV1:                                     this.bitGet(params[25], 1),
-      leReadLocalSupportedFeatures:                           this.bitGet(params[25], 2),
-      leSetRandomAddress:                                     this.bitGet(params[25], 4),
-      leSetAdvertisingParameters:                             this.bitGet(params[25], 5),
-      leReadAdvertisingPhysicalChannelTxPower:                this.bitGet(params[25], 6),
-      leSetAdvertisingData:                                   this.bitGet(params[25], 7),
-      leSetScanResponseData:                                  this.bitGet(params[26], 0),
-      leSetAdvertisingEnable:                                 this.bitGet(params[26], 1),
-      leSetScanParameters:                                    this.bitGet(params[26], 2),
-      leSetScanEnable:                                        this.bitGet(params[26], 3),
-      leCreateConnection:                                     this.bitGet(params[26], 4),
-      leCreateConnectionCancel:                               this.bitGet(params[26], 5),
-      leReadWhiteListSize:                                    this.bitGet(params[26], 6),
-      leClearWhiteList:                                       this.bitGet(params[26], 7),
-      leAddDeviceToWhiteList:                                 this.bitGet(params[27], 0),
-      leRemoveDeviceFromWhiteList:                            this.bitGet(params[27], 1),
-      leConnectionUpdate:                                     this.bitGet(params[27], 2),
-      leSetHostChannelClassification:                         this.bitGet(params[27], 3),
-      leReadChannelMap:                                       this.bitGet(params[27], 4),
-      leReadRemoteFeatures:                                   this.bitGet(params[27], 5),
-      leEncrypt:                                              this.bitGet(params[27], 6),
-      leRand:                                                 this.bitGet(params[27], 7),
-      leEnableEncryption:                                     this.bitGet(params[28], 0),
-      leLongTermKeyRequestReply:                              this.bitGet(params[28], 1),
-      leLongTermKeyRequestNegativeReply:                      this.bitGet(params[28], 2),
-      leReadSupportedStates:                                  this.bitGet(params[28], 3),
-      leReceiverTestV1:                                       this.bitGet(params[28], 4),
-      leTransmitterTestV1:                                    this.bitGet(params[28], 5),
-      leTestEnd:                                              this.bitGet(params[28], 6),
-      enhancedSetupSynchronousConnection:                     this.bitGet(params[29], 3),
-      enhancedAcceptSynchronousConnection:                    this.bitGet(params[29], 4),
-      readLocalSupportedCodecs:                               this.bitGet(params[29], 5),
-      setMWSChannelParameters:                                this.bitGet(params[29], 6),
-      setExternalFrameConfiguration:                          this.bitGet(params[29], 7),
-      setMwsSignaling:                                        this.bitGet(params[30], 0),
-      setMwsTransportLayer:                                   this.bitGet(params[30], 1),
-      setMwsScanFrequencyTable:                               this.bitGet(params[30], 2),
-      getMwsTransportLayerConfiguration:                      this.bitGet(params[30], 3),
-      setMwsPatternConfiguration:                             this.bitGet(params[30], 4),
-      setTriggeredClockCapture:                               this.bitGet(params[30], 5),
-      truncatedPage:                                          this.bitGet(params[30], 6),
-      truncatedPageCancel:                                    this.bitGet(params[30], 7),
-      setConnectionlessSlaveBroadcast:                        this.bitGet(params[31], 0),
-      setConnectionlessSlaveBroadcastReceive:                 this.bitGet(params[31], 1),
-      startSynchronizationTrain:                              this.bitGet(params[31], 2),
-      receiveSynchronizationTrain:                            this.bitGet(params[31], 3),
-      setReservedLtAddr:                                      this.bitGet(params[31], 4),
-      deleteReservedLtAddr:                                   this.bitGet(params[31], 5),
-      setConnectionlessSlaveBroadcastData:                    this.bitGet(params[31], 6),
-      readSynchronizationTrainParameters:                     this.bitGet(params[31], 7),
-      writeSynchronizationTrainParameters:                    this.bitGet(params[32], 0),
-      remoteOobExtendedDataRequestReply:                      this.bitGet(params[32], 1),
-      readSecureConnectionsHostSupport:                       this.bitGet(params[32], 2),
-      writeSecureConnectionsHostSupport:                      this.bitGet(params[32], 3),
-      readAuthenticatedPayloadTimeout:                        this.bitGet(params[32], 4),
-      writeAuthenticatedPayloadTimeout:                       this.bitGet(params[32], 5),
-      readLocalOobExtendedData:                               this.bitGet(params[32], 6),
-      writeSecureConnectionsTestMode:                         this.bitGet(params[32], 7),
-      readExtendedPageTimeout:                                this.bitGet(params[33], 0),
-      writeExtendedPageTimeout:                               this.bitGet(params[33], 1),
-      readExtendedInquiryLength:                              this.bitGet(params[33], 2),
-      writeExtendedInquiryLength:                             this.bitGet(params[33], 3),
-      leRemoteConnectionParameterRequestReply:                this.bitGet(params[33], 4),
-      leRemoteConnectionParameterRequestNegativeReply:        this.bitGet(params[33], 5),
-      leSetDataLength:                                        this.bitGet(params[33], 6),
-      leReadSuggestedDefaultDataLength:                       this.bitGet(params[33], 7),
-      leWriteSuggestedDefaultDataLength:                      this.bitGet(params[34], 0),
-      leReadLocalP256PublicKey:                               this.bitGet(params[34], 1),
-      leGenerateDhKeyV1:                                      this.bitGet(params[34], 2),
-      leAddDeviceToResolvingList:                             this.bitGet(params[34], 3),
-      leRemoveDeviceFromResolvingList:                        this.bitGet(params[34], 4),
-      leClearResolvingList:                                   this.bitGet(params[34], 5),
-      leReadResolvingListSize:                                this.bitGet(params[34], 6),
-      leReadPeerResolvableAddress:                            this.bitGet(params[34], 7),
-      leReadLocalResolvableAddress:                           this.bitGet(params[35], 0),
-      leSetAddressResolutionEnable:                           this.bitGet(params[35], 1),
-      leSetResolvablePrivateAddressTimeout:                   this.bitGet(params[35], 2),
-      leReadMaximumDataLength:                                this.bitGet(params[35], 3),
-      leReadPhy:                                              this.bitGet(params[35], 4),
-      leSetDefaultPhy:                                        this.bitGet(params[35], 5),
-      leSetPhy:                                               this.bitGet(params[35], 6),
-      leReceiverTestV2:                                       this.bitGet(params[35], 7),
-      leTransmitterTestV2:                                    this.bitGet(params[36], 0),
-      leSetAdvertisingSetRandomAddress:                       this.bitGet(params[36], 1),
-      leSetExtendedAdvertisingParameters:                     this.bitGet(params[36], 2),
-      leSetExtendedAdvertisingData:                           this.bitGet(params[36], 3),
-      leSetExtendedScanResponseData:                          this.bitGet(params[36], 4),
-      leSetExtendedAdvertisingEnable:                         this.bitGet(params[36], 5),
-      leReadMaximumAdvertisingDataLength:                     this.bitGet(params[36], 6),
-      leReadNumberOfSupportedAdvertisingSets:                 this.bitGet(params[36], 7),
-      leRemoveAdvertisingSet:                                 this.bitGet(params[37], 0),
-      leClearAdvertisingSets:                                 this.bitGet(params[37], 1),
-      leSetPeriodicAdvertisingParameters:                     this.bitGet(params[37], 2),
-      leSetPeriodicAdvertisingData:                           this.bitGet(params[37], 3),
-      leSetPeriodicAdvertisingEnable:                         this.bitGet(params[37], 4),
-      leSetExtendedScanParameters:                            this.bitGet(params[37], 5),
-      leSetExtendedScanEnable:                                this.bitGet(params[37], 6),
-      leExtendedCreateConnection:                             this.bitGet(params[37], 7),
-      lePeriodicAdvertisingCreateSync:                        this.bitGet(params[38], 0),
-      lePeriodicAdvertisingCreateSyncCancel:                  this.bitGet(params[38], 1),
-      lePeriodicAdvertisingTerminateSync:                     this.bitGet(params[38], 2),
-      leAddDeviceToPeriodicAdvertiserList:                    this.bitGet(params[38], 3),
-      leRemoveDeviceFromPeriodicAdvertiserList:               this.bitGet(params[38], 4),
-      leClearPeriodicAdvertiserList:                          this.bitGet(params[38], 5),
-      leReadPeriodicAdvertiserListSize:                       this.bitGet(params[38], 6),
-      leReadTransmitPower:                                    this.bitGet(params[38], 7),
-      leReadRfPathCompensation:                               this.bitGet(params[39], 0),
-      leWriteRfPathCompensation:                              this.bitGet(params[39], 1),
-      leSetPrivacyMode:                                       this.bitGet(params[39], 2),
-      leReceiverTestV3:                                       this.bitGet(params[39], 3),
-      leTransmitterTestV3:                                    this.bitGet(params[39], 4),
-      leSetConnectionlessCteTransmitParameters:               this.bitGet(params[39], 5),
-      leSetConnectionlessCteTransmitEnable:                   this.bitGet(params[39], 6),
-      leSetConnectionlessIqSamplingEnable:                    this.bitGet(params[39], 7),
-      leSetConnectionCteReceiveParameters:                    this.bitGet(params[40], 0),
-      leSetConnectionCteTransmitParameters:                   this.bitGet(params[40], 1),
-      leConnectionCteRequestEnable:                           this.bitGet(params[40], 2),
-      leConnectionCteResponseEnable:                          this.bitGet(params[40], 3),
-      leReadAntennaInformation:                               this.bitGet(params[40], 4),
-      leSetPeriodicAdvertisingReceiveEnable:                  this.bitGet(params[40], 5),
-      lePeriodicAdvertisingSyncTransfer:                      this.bitGet(params[40], 6),
-      lePeriodicAdvertisingSetInfoTransfer:                   this.bitGet(params[40], 7),
-      leSetPeriodicAdvertisingSyncTransferParameters:         this.bitGet(params[41], 0),
-      leSetDefaultPeriodicAdvertisingSyncTransferParameters:  this.bitGet(params[41], 1),
-      leGenerateDhKeyV2:                                      this.bitGet(params[41], 2),
-      readLocalSimplePairingOptions:                          this.bitGet(params[41], 3),
-      leModifySleepClockAccuracy:                             this.bitGet(params[41], 4),
-      leReadBufferSizeV2:                                     this.bitGet(params[41], 5),
-      leReadIsoTxSync:                                        this.bitGet(params[41], 6),
-      leSetCigParameters:                                     this.bitGet(params[41], 7),
-      leSetCigParametersTest:                                 this.bitGet(params[42], 0),
-      leCreateCis:                                            this.bitGet(params[42], 1),
-      leRemoveCig:                                            this.bitGet(params[42], 2),
-      leAcceptCisRequest:                                     this.bitGet(params[42], 3),
-      leRejectCisRequest:                                     this.bitGet(params[42], 4),
-      leCreateBig:                                            this.bitGet(params[42], 5),
-      leCreateBigTest:                                        this.bitGet(params[42], 6),
-      leTerminateBig:                                         this.bitGet(params[42], 7),
-      leBigCreateSync:                                        this.bitGet(params[43], 0),
-      leBigTerminateSync:                                     this.bitGet(params[43], 1),
-      leRequestPeerSca:                                       this.bitGet(params[43], 2),
-      leSetupIsoDataPath:                                     this.bitGet(params[43], 3),
-      leRemoveIsoDataPath:                                    this.bitGet(params[43], 4),
-      leIsoTransmitTest:                                      this.bitGet(params[43], 5),
-      leIsoReceiveTest:                                       this.bitGet(params[43], 6),
-      leIsoReadTestCounters:                                  this.bitGet(params[43], 7),
-      leIsoTestEnd:                                           this.bitGet(params[44], 0),
-      leSetHostFeature:                                       this.bitGet(params[44], 1),
-      leReadIsoLinkQuality:                                   this.bitGet(params[44], 2),
-      leEnhancedReadTransmitPowerLevel:                       this.bitGet(params[44], 3),
-      leReadRemoteTransmitPowerLevel:                         this.bitGet(params[44], 4),
-      leSetPathLossReportingParameters:                       this.bitGet(params[44], 5),
-      leSetPathLossReportingEnable:                           this.bitGet(params[44], 6),
-      leSetTransmitPowerReportingEnable:                      this.bitGet(params[44], 7),
-      leTransmitterTestV4:                                    this.bitGet(params[45], 0),
-      setEcosystemBaseInterval:                               this.bitGet(params[45], 1),
-      readLocalSupportedCodecsV2:                             this.bitGet(params[45], 2),
-      readLocalSupportedCodecCapabilities:                    this.bitGet(params[45], 3),
-      readLocalSupportedControllerDelay:                      this.bitGet(params[45], 4),
-      configureDataPath:                                      this.bitGet(params[45], 5),
+      inquiry:                                                bitGet(params[0], 0),
+      inquiryCancel:                                          bitGet(params[0], 1),
+      periodicInquiryMode:                                    bitGet(params[0], 2),
+      exitPeriodicInquiryMode:                                bitGet(params[0], 3),
+      createConnection:                                       bitGet(params[0], 4),
+      disconnect:                                             bitGet(params[0], 5),
+      addScoConnection:                                       bitGet(params[0], 6),
+      createConnectionCancel:                                 bitGet(params[0], 7),
+      acceptConnectionRequest:                                bitGet(params[1], 0),
+      rejectConnectionRequest:                                bitGet(params[1], 1),
+      linkKeyRequestReply:                                    bitGet(params[1], 2),
+      linkKeyRequestNegativeReply:                            bitGet(params[1], 3),
+      pinCodeRequestReply:                                    bitGet(params[1], 4),
+      pinCodeRequestNegativeReply:                            bitGet(params[1], 5),
+      changeConnectionPacketType:                             bitGet(params[1], 6),
+      authenticationRequested:                                bitGet(params[1], 7),
+      setConnectionEncryption:                                bitGet(params[2], 0),
+      changeConnectionLinkKey:                                bitGet(params[2], 1),
+      masterLinkKey:                                          bitGet(params[2], 2),
+      remoteNameRequest:                                      bitGet(params[2], 3),
+      remoteNameRequestCancel:                                bitGet(params[2], 4),
+      readRemoteSupportedFeatures:                            bitGet(params[2], 5),
+      readRemoteExtendedFeatures:                             bitGet(params[2], 6),
+      readRemoteVersionInformation:                           bitGet(params[2], 7),
+      readClockOffset:                                        bitGet(params[3], 0),
+      readLmpHandle:                                          bitGet(params[3], 1),
+      holdMode:                                               bitGet(params[4], 1),
+      sniffMode:                                              bitGet(params[4], 2),
+      exitSniffMode:                                          bitGet(params[4], 3),
+      qosSetup:                                               bitGet(params[4], 6),
+      roleDiscovery:                                          bitGet(params[4], 7),
+      switchRole:                                             bitGet(params[5], 0),
+      readLinkPolicySettings:                                 bitGet(params[5], 1),
+      writeLinkPolicySettings:                                bitGet(params[5], 2),
+      readDefaultLinkPolicySettings:                          bitGet(params[5], 3),
+      writeDefaultLinkPolicySettings:                         bitGet(params[5], 4),
+      flowSpecification:                                      bitGet(params[5], 5),
+      setEventMask:                                           bitGet(params[5], 6),
+      reset:                                                  bitGet(params[5], 7),
+      setEventFilter:                                         bitGet(params[6], 0),
+      flush:                                                  bitGet(params[6], 1),
+      readPinType:                                            bitGet(params[6], 2),
+      writePinType:                                           bitGet(params[6], 3),
+      readStoredLinkKey:                                      bitGet(params[6], 5),
+      writeStoredLinkKey:                                     bitGet(params[6], 6),
+      deleteStoredLinkKey:                                    bitGet(params[6], 7),
+      writeLocalName:                                         bitGet(params[7], 0),
+      readLocalName:                                          bitGet(params[7], 1),
+      readConnectionAcceptTimeout:                            bitGet(params[7], 2),
+      writeConnectionAcceptTimeout:                           bitGet(params[7], 3),
+      readPageTimeout:                                        bitGet(params[7], 4),
+      writePageTimeout:                                       bitGet(params[7], 5),
+      readScanEnable:                                         bitGet(params[7], 6),
+      writeScanEnable:                                        bitGet(params[7], 7),
+      readPageScanActivity:                                   bitGet(params[8], 0),
+      writePageScanActivity:                                  bitGet(params[8], 1),
+      readInquiryScanActivity:                                bitGet(params[8], 2),
+      writeInquiryScanActivity:                               bitGet(params[8], 3),
+      readAuthenticationEnable:                               bitGet(params[8], 4),
+      writeAuthenticationEnable:                              bitGet(params[8], 5),
+      readEncryptionMode:                                     bitGet(params[8], 6),
+      writeEncryptionMode:                                    bitGet(params[8], 7),
+      readClassOfDevice:                                      bitGet(params[9], 0),
+      writeClassOfDevice:                                     bitGet(params[9], 1),
+      readVoiceSetting:                                       bitGet(params[9], 2),
+      writeVoiceSetting:                                      bitGet(params[9], 3),
+      readAutomaticFlushTimeout:                              bitGet(params[9], 4),
+      writeAutomaticFlushTimeout:                             bitGet(params[9], 5),
+      readNumBroadcastRetransmissions:                        bitGet(params[9], 6),
+      writeNumBroadcastRetransmissions:                       bitGet(params[9], 7),
+      readHoldModeActivity:                                   bitGet(params[10], 0),
+      writeHoldModeActivity:                                  bitGet(params[10], 1),
+      readTransmitPowerLevel:                                 bitGet(params[10], 2),
+      readSynchronousFlowControlEnable:                       bitGet(params[10], 3),
+      writeSynchronousFlowControlEnable:                      bitGet(params[10], 4),
+      setControllerToHostFlowControl:                         bitGet(params[10], 5),
+      hostBufferSize:                                         bitGet(params[10], 6),
+      hostNumberOfCompletedPackets:                           bitGet(params[10], 7),
+      readLinkSupervisionTimeout:                             bitGet(params[11], 0),
+      writeLinkSupervisionTimeout:                            bitGet(params[11], 1),
+      readNumberOfSupportedIac:                               bitGet(params[11], 2),
+      readCurrentIacLap:                                      bitGet(params[11], 3),
+      writeCurrentIacLap:                                     bitGet(params[11], 4),
+      readPageScanModePeriod:                                 bitGet(params[11], 5),
+      writePageScanModePeriod:                                bitGet(params[11], 6),
+      readPageScanMode:                                       bitGet(params[11], 7),
+      writePageScanMode:                                      bitGet(params[12], 0),
+      setAfhHostChannelClassification:                        bitGet(params[12], 1),
+      readInquiryScanType:                                    bitGet(params[12], 4),
+      writeInquiryScanType:                                   bitGet(params[12], 5),
+      readInquiryMode:                                        bitGet(params[12], 6),
+      writeInquiryMode:                                       bitGet(params[12], 7),
+      readPageScanType:                                       bitGet(params[13], 0),
+      writePageScanType:                                      bitGet(params[13], 1),
+      readAfhChannelAssessmentMode:                           bitGet(params[13], 2),
+      writeAfhChannelAssessmentMode:                          bitGet(params[13], 3),
+      readLocalVersionInformation:                            bitGet(params[14], 3),
+      readLocalSupportedFeatures:                             bitGet(params[14], 5),
+      readLocalExtendedFeatures:                              bitGet(params[14], 6),
+      readBufferSize:                                         bitGet(params[14], 7),
+      readCountryCode:                                        bitGet(params[15], 0),
+      readBdAddr:                                             bitGet(params[15], 1),
+      readFailedContactCounter:                               bitGet(params[15], 2),
+      resetFailedContactCounter:                              bitGet(params[15], 3),
+      readLinkQuality:                                        bitGet(params[15], 4),
+      readRssi:                                               bitGet(params[15], 5),
+      readAfhChannelMap:                                      bitGet(params[15], 6),
+      readClock:                                              bitGet(params[15], 7),
+      readLoopbackMode:                                       bitGet(params[16], 0),
+      writeLoopbackMode:                                      bitGet(params[16], 1),
+      enableDeviceUnderTestMode:                              bitGet(params[16], 2),
+      setupSynchronousConnectionRequest:                      bitGet(params[16], 3),
+      acceptSynchronousConnectionRequest:                     bitGet(params[16], 4),
+      rejectSynchronousConnectionRequest:                     bitGet(params[16], 5),
+      readExtendedInquiryResponse:                            bitGet(params[17], 0),
+      writeExtendedInquiryResponse:                           bitGet(params[17], 1),
+      refreshEncryptionKey:                                   bitGet(params[17], 2),
+      sniffSubrating:                                         bitGet(params[17], 4),
+      readSimplePairingMode:                                  bitGet(params[17], 5),
+      writeSimplePairingMode:                                 bitGet(params[17], 6),
+      readLocalOobData:                                       bitGet(params[17], 7),
+      readInquiryResponseTransmitPowerLevel:                  bitGet(params[18], 0),
+      writeInquiryTransmitPowerLevel:                         bitGet(params[18], 1),
+      readDefaultErroneousDataReporting:                      bitGet(params[18], 2),
+      writeDefaultErroneousDataReporting:                     bitGet(params[18], 3),
+      ioCapabilityRequestReply:                               bitGet(params[18], 7),
+      userConfirmationRequestReply:                           bitGet(params[19], 0),
+      userConfirmationRequestNegativeReply:                   bitGet(params[19], 1),
+      userPasskeyRequestReply:                                bitGet(params[19], 2),
+      userPasskeyRequestNegativeReply:                        bitGet(params[19], 3),
+      remoteOobDataRequestReply:                              bitGet(params[19], 4),
+      writeSimplePairingDebugMode:                            bitGet(params[19], 5),
+      enhancedFlush:                                          bitGet(params[19], 6),
+      remoteOobDataRequestNegativeReply:                      bitGet(params[19], 7),
+      sendKeypressNotification:                               bitGet(params[20], 2),
+      ioCapabilityRequestNegativeReply:                       bitGet(params[20], 3),
+      readEncryptionKeySize:                                  bitGet(params[20], 4),
+      createPhysicalLink:                                     bitGet(params[21], 0),
+      acceptPhysicalLink:                                     bitGet(params[21], 1),
+      disconnectPhysicalLink:                                 bitGet(params[21], 2),
+      createLogicalLink:                                      bitGet(params[21], 3),
+      acceptLogicalLink:                                      bitGet(params[21], 4),
+      disconnectLogicalLink:                                  bitGet(params[21], 5),
+      logicalLinkCancel:                                      bitGet(params[21], 6),
+      flowSpecModify:                                         bitGet(params[21], 7),
+      readLogicalLinkAcceptTimeout:                           bitGet(params[22], 0),
+      writeLogicalLinkAcceptTimeout:                          bitGet(params[22], 1),
+      setEventMaskPage2:                                      bitGet(params[22], 2),
+      readLocationData:                                       bitGet(params[22], 3),
+      writeLocationData:                                      bitGet(params[22], 4),
+      readLocalAmpInfo:                                       bitGet(params[22], 5),
+      readLocalAmpAassoc:                                     bitGet(params[22], 6),
+      writeRemoteAmpAssoc:                                    bitGet(params[22], 7),
+      readFlowControlMode:                                    bitGet(params[23], 0),
+      writeFlowControlMode:                                   bitGet(params[23], 1),
+      readDataBlockSize:                                      bitGet(params[23], 2),
+      enableAmpReceiverReports:                               bitGet(params[23], 5),
+      ampTestEnd:                                             bitGet(params[23], 6),
+      ampTest:                                                bitGet(params[23], 7),
+      readEnhancedTransmitPowerLevel:                         bitGet(params[24], 0),
+      readBestEffortFlushTimeout:                             bitGet(params[24], 2),
+      writeBestEffortFlushTimeout:                            bitGet(params[24], 3),
+      shortRangeMode:                                         bitGet(params[24], 4),
+      readLeHostSupport:                                      bitGet(params[24], 5),
+      writeLeHostSupport:                                     bitGet(params[24], 6),
+      leSetEventMask:                                         bitGet(params[25], 0),
+      leReadBufferSizeV1:                                     bitGet(params[25], 1),
+      leReadLocalSupportedFeatures:                           bitGet(params[25], 2),
+      leSetRandomAddress:                                     bitGet(params[25], 4),
+      leSetAdvertisingParameters:                             bitGet(params[25], 5),
+      leReadAdvertisingPhysicalChannelTxPower:                bitGet(params[25], 6),
+      leSetAdvertisingData:                                   bitGet(params[25], 7),
+      leSetScanResponseData:                                  bitGet(params[26], 0),
+      leSetAdvertisingEnable:                                 bitGet(params[26], 1),
+      leSetScanParameters:                                    bitGet(params[26], 2),
+      leSetScanEnable:                                        bitGet(params[26], 3),
+      leCreateConnection:                                     bitGet(params[26], 4),
+      leCreateConnectionCancel:                               bitGet(params[26], 5),
+      leReadWhiteListSize:                                    bitGet(params[26], 6),
+      leClearWhiteList:                                       bitGet(params[26], 7),
+      leAddDeviceToWhiteList:                                 bitGet(params[27], 0),
+      leRemoveDeviceFromWhiteList:                            bitGet(params[27], 1),
+      leConnectionUpdate:                                     bitGet(params[27], 2),
+      leSetHostChannelClassification:                         bitGet(params[27], 3),
+      leReadChannelMap:                                       bitGet(params[27], 4),
+      leReadRemoteFeatures:                                   bitGet(params[27], 5),
+      leEncrypt:                                              bitGet(params[27], 6),
+      leRand:                                                 bitGet(params[27], 7),
+      leEnableEncryption:                                     bitGet(params[28], 0),
+      leLongTermKeyRequestReply:                              bitGet(params[28], 1),
+      leLongTermKeyRequestNegativeReply:                      bitGet(params[28], 2),
+      leReadSupportedStates:                                  bitGet(params[28], 3),
+      leReceiverTestV1:                                       bitGet(params[28], 4),
+      leTransmitterTestV1:                                    bitGet(params[28], 5),
+      leTestEnd:                                              bitGet(params[28], 6),
+      enhancedSetupSynchronousConnection:                     bitGet(params[29], 3),
+      enhancedAcceptSynchronousConnection:                    bitGet(params[29], 4),
+      readLocalSupportedCodecs:                               bitGet(params[29], 5),
+      setMWSChannelParameters:                                bitGet(params[29], 6),
+      setExternalFrameConfiguration:                          bitGet(params[29], 7),
+      setMwsSignaling:                                        bitGet(params[30], 0),
+      setMwsTransportLayer:                                   bitGet(params[30], 1),
+      setMwsScanFrequencyTable:                               bitGet(params[30], 2),
+      getMwsTransportLayerConfiguration:                      bitGet(params[30], 3),
+      setMwsPatternConfiguration:                             bitGet(params[30], 4),
+      setTriggeredClockCapture:                               bitGet(params[30], 5),
+      truncatedPage:                                          bitGet(params[30], 6),
+      truncatedPageCancel:                                    bitGet(params[30], 7),
+      setConnectionlessSlaveBroadcast:                        bitGet(params[31], 0),
+      setConnectionlessSlaveBroadcastReceive:                 bitGet(params[31], 1),
+      startSynchronizationTrain:                              bitGet(params[31], 2),
+      receiveSynchronizationTrain:                            bitGet(params[31], 3),
+      setReservedLtAddr:                                      bitGet(params[31], 4),
+      deleteReservedLtAddr:                                   bitGet(params[31], 5),
+      setConnectionlessSlaveBroadcastData:                    bitGet(params[31], 6),
+      readSynchronizationTrainParameters:                     bitGet(params[31], 7),
+      writeSynchronizationTrainParameters:                    bitGet(params[32], 0),
+      remoteOobExtendedDataRequestReply:                      bitGet(params[32], 1),
+      readSecureConnectionsHostSupport:                       bitGet(params[32], 2),
+      writeSecureConnectionsHostSupport:                      bitGet(params[32], 3),
+      readAuthenticatedPayloadTimeout:                        bitGet(params[32], 4),
+      writeAuthenticatedPayloadTimeout:                       bitGet(params[32], 5),
+      readLocalOobExtendedData:                               bitGet(params[32], 6),
+      writeSecureConnectionsTestMode:                         bitGet(params[32], 7),
+      readExtendedPageTimeout:                                bitGet(params[33], 0),
+      writeExtendedPageTimeout:                               bitGet(params[33], 1),
+      readExtendedInquiryLength:                              bitGet(params[33], 2),
+      writeExtendedInquiryLength:                             bitGet(params[33], 3),
+      leRemoteConnectionParameterRequestReply:                bitGet(params[33], 4),
+      leRemoteConnectionParameterRequestNegativeReply:        bitGet(params[33], 5),
+      leSetDataLength:                                        bitGet(params[33], 6),
+      leReadSuggestedDefaultDataLength:                       bitGet(params[33], 7),
+      leWriteSuggestedDefaultDataLength:                      bitGet(params[34], 0),
+      leReadLocalP256PublicKey:                               bitGet(params[34], 1),
+      leGenerateDhKeyV1:                                      bitGet(params[34], 2),
+      leAddDeviceToResolvingList:                             bitGet(params[34], 3),
+      leRemoveDeviceFromResolvingList:                        bitGet(params[34], 4),
+      leClearResolvingList:                                   bitGet(params[34], 5),
+      leReadResolvingListSize:                                bitGet(params[34], 6),
+      leReadPeerResolvableAddress:                            bitGet(params[34], 7),
+      leReadLocalResolvableAddress:                           bitGet(params[35], 0),
+      leSetAddressResolutionEnable:                           bitGet(params[35], 1),
+      leSetResolvablePrivateAddressTimeout:                   bitGet(params[35], 2),
+      leReadMaximumDataLength:                                bitGet(params[35], 3),
+      leReadPhy:                                              bitGet(params[35], 4),
+      leSetDefaultPhy:                                        bitGet(params[35], 5),
+      leSetPhy:                                               bitGet(params[35], 6),
+      leReceiverTestV2:                                       bitGet(params[35], 7),
+      leTransmitterTestV2:                                    bitGet(params[36], 0),
+      leSetAdvertisingSetRandomAddress:                       bitGet(params[36], 1),
+      leSetExtendedAdvertisingParameters:                     bitGet(params[36], 2),
+      leSetExtendedAdvertisingData:                           bitGet(params[36], 3),
+      leSetExtendedScanResponseData:                          bitGet(params[36], 4),
+      leSetExtendedAdvertisingEnable:                         bitGet(params[36], 5),
+      leReadMaximumAdvertisingDataLength:                     bitGet(params[36], 6),
+      leReadNumberOfSupportedAdvertisingSets:                 bitGet(params[36], 7),
+      leRemoveAdvertisingSet:                                 bitGet(params[37], 0),
+      leClearAdvertisingSets:                                 bitGet(params[37], 1),
+      leSetPeriodicAdvertisingParameters:                     bitGet(params[37], 2),
+      leSetPeriodicAdvertisingData:                           bitGet(params[37], 3),
+      leSetPeriodicAdvertisingEnable:                         bitGet(params[37], 4),
+      leSetExtendedScanParameters:                            bitGet(params[37], 5),
+      leSetExtendedScanEnable:                                bitGet(params[37], 6),
+      leExtendedCreateConnection:                             bitGet(params[37], 7),
+      lePeriodicAdvertisingCreateSync:                        bitGet(params[38], 0),
+      lePeriodicAdvertisingCreateSyncCancel:                  bitGet(params[38], 1),
+      lePeriodicAdvertisingTerminateSync:                     bitGet(params[38], 2),
+      leAddDeviceToPeriodicAdvertiserList:                    bitGet(params[38], 3),
+      leRemoveDeviceFromPeriodicAdvertiserList:               bitGet(params[38], 4),
+      leClearPeriodicAdvertiserList:                          bitGet(params[38], 5),
+      leReadPeriodicAdvertiserListSize:                       bitGet(params[38], 6),
+      leReadTransmitPower:                                    bitGet(params[38], 7),
+      leReadRfPathCompensation:                               bitGet(params[39], 0),
+      leWriteRfPathCompensation:                              bitGet(params[39], 1),
+      leSetPrivacyMode:                                       bitGet(params[39], 2),
+      leReceiverTestV3:                                       bitGet(params[39], 3),
+      leTransmitterTestV3:                                    bitGet(params[39], 4),
+      leSetConnectionlessCteTransmitParameters:               bitGet(params[39], 5),
+      leSetConnectionlessCteTransmitEnable:                   bitGet(params[39], 6),
+      leSetConnectionlessIqSamplingEnable:                    bitGet(params[39], 7),
+      leSetConnectionCteReceiveParameters:                    bitGet(params[40], 0),
+      leSetConnectionCteTransmitParameters:                   bitGet(params[40], 1),
+      leConnectionCteRequestEnable:                           bitGet(params[40], 2),
+      leConnectionCteResponseEnable:                          bitGet(params[40], 3),
+      leReadAntennaInformation:                               bitGet(params[40], 4),
+      leSetPeriodicAdvertisingReceiveEnable:                  bitGet(params[40], 5),
+      lePeriodicAdvertisingSyncTransfer:                      bitGet(params[40], 6),
+      lePeriodicAdvertisingSetInfoTransfer:                   bitGet(params[40], 7),
+      leSetPeriodicAdvertisingSyncTransferParameters:         bitGet(params[41], 0),
+      leSetDefaultPeriodicAdvertisingSyncTransferParameters:  bitGet(params[41], 1),
+      leGenerateDhKeyV2:                                      bitGet(params[41], 2),
+      readLocalSimplePairingOptions:                          bitGet(params[41], 3),
+      leModifySleepClockAccuracy:                             bitGet(params[41], 4),
+      leReadBufferSizeV2:                                     bitGet(params[41], 5),
+      leReadIsoTxSync:                                        bitGet(params[41], 6),
+      leSetCigParameters:                                     bitGet(params[41], 7),
+      leSetCigParametersTest:                                 bitGet(params[42], 0),
+      leCreateCis:                                            bitGet(params[42], 1),
+      leRemoveCig:                                            bitGet(params[42], 2),
+      leAcceptCisRequest:                                     bitGet(params[42], 3),
+      leRejectCisRequest:                                     bitGet(params[42], 4),
+      leCreateBig:                                            bitGet(params[42], 5),
+      leCreateBigTest:                                        bitGet(params[42], 6),
+      leTerminateBig:                                         bitGet(params[42], 7),
+      leBigCreateSync:                                        bitGet(params[43], 0),
+      leBigTerminateSync:                                     bitGet(params[43], 1),
+      leRequestPeerSca:                                       bitGet(params[43], 2),
+      leSetupIsoDataPath:                                     bitGet(params[43], 3),
+      leRemoveIsoDataPath:                                    bitGet(params[43], 4),
+      leIsoTransmitTest:                                      bitGet(params[43], 5),
+      leIsoReceiveTest:                                       bitGet(params[43], 6),
+      leIsoReadTestCounters:                                  bitGet(params[43], 7),
+      leIsoTestEnd:                                           bitGet(params[44], 0),
+      leSetHostFeature:                                       bitGet(params[44], 1),
+      leReadIsoLinkQuality:                                   bitGet(params[44], 2),
+      leEnhancedReadTransmitPowerLevel:                       bitGet(params[44], 3),
+      leReadRemoteTransmitPowerLevel:                         bitGet(params[44], 4),
+      leSetPathLossReportingParameters:                       bitGet(params[44], 5),
+      leSetPathLossReportingEnable:                           bitGet(params[44], 6),
+      leSetTransmitPowerReportingEnable:                      bitGet(params[44], 7),
+      leTransmitterTestV4:                                    bitGet(params[45], 0),
+      setEcosystemBaseInterval:                               bitGet(params[45], 1),
+      readLocalSupportedCodecsV2:                             bitGet(params[45], 2),
+      readLocalSupportedCodecCapabilities:                    bitGet(params[45], 3),
+      readLocalSupportedControllerDelay:                      bitGet(params[45], 4),
+      configureDataPath:                                      bitGet(params[45], 5),
     };
-  }
-
-  private bitGet(field: number, bit: number): boolean {
-    return ((field >> bit) & 1) === 1;
-  }
-
-  private bigintBitGet(field: bigint, bit: bigint): boolean {
-    return ((field >> bit) & 1n) === 1n;
-  }
-
-  private bigintBitSet(field: bigint, bit: bigint, set?: boolean): bigint {
-    if (set === true) {
-      field |= 1n << bit;
-    }
-    return field;
-  }
-
-  public async setEventMask(events: {
-    inquiryComplete?: boolean,
-    inquiryResult?: boolean,
-    connectionComplete?: boolean,
-    connectionRequest?: boolean,
-    disconnectionComplete?: boolean,
-    authenticationComplete?: boolean,
-    remoteNameRequestComplete?: boolean,
-    encryptionChange?: boolean,
-    changeConnectionLinkKeyComplete?: boolean,
-    masterLinkKeyComplete?: boolean,
-    readRemoteSupportedFeaturesComplete?: boolean,
-    readRemoteVersionInformationComplete?: boolean,
-    qosSetupComplete?: boolean,
-    hardwareError?: boolean,
-    flushOccurred?: boolean,
-    roleChange?: boolean,
-    modeChange?: boolean,
-    returnLinkKeys?: boolean,
-    pinCodeRequest?: boolean,
-    linkKeyRequest?: boolean,
-    linkKeyNotification?: boolean,
-    loopbackCommand?: boolean,
-    dataBufferOverflow?: boolean,
-    maxSlotsChange?: boolean,
-    readClockOffsetComplete?: boolean,
-    connectionPacketTypeChanged?: boolean,
-    qosViolation?: boolean,
-    pageScanModeChange?: boolean,
-    pageScanRepetitionModeChange?: boolean,
-    flowSpecificationComplete?: boolean,
-    inquiryResultWithRssi?: boolean,
-    readRemoteExtendedFeaturesComplete?: boolean,
-    synchronousConnectionComplete?: boolean,
-    synchronousConnectionChanged?: boolean,
-    sniffSubrating?: boolean,
-    extendedInquiryResult?: boolean,
-    encryptionKeyRefreshComplete?: boolean,
-    ioCapabilityRequest?: boolean,
-    ioCapabilityResponse?: boolean,
-    userConfirmationRequest?: boolean,
-    userPasskeyRequest?: boolean,
-    remoteOobDataRequest?: boolean,
-    simplePairingComplete?: boolean,
-    linkSupervisionTimeoutChanged?: boolean,
-    enhancedFlushComplete?: boolean,
-    userPasskeyNotification?: boolean,
-    keypressNotification?: boolean,
-    remoteHostSupportedFeaturesNotification?: boolean,
-    leMeta?: boolean,
-  } = {}): Promise<void> {
-    let mask = 0n;
-    mask = this.bigintBitSet(mask, 0n,  events.inquiryComplete);
-    mask = this.bigintBitSet(mask, 1n,  events.inquiryResult);
-    mask = this.bigintBitSet(mask, 2n,  events.connectionComplete);
-    mask = this.bigintBitSet(mask, 3n,  events.connectionRequest);
-    mask = this.bigintBitSet(mask, 4n,  events.disconnectionComplete);
-    mask = this.bigintBitSet(mask, 5n,  events.authenticationComplete);
-    mask = this.bigintBitSet(mask, 6n,  events.remoteNameRequestComplete);
-    mask = this.bigintBitSet(mask, 7n,  events.encryptionChange);
-    mask = this.bigintBitSet(mask, 8n,  events.changeConnectionLinkKeyComplete);
-    mask = this.bigintBitSet(mask, 9n,  events.masterLinkKeyComplete);
-    mask = this.bigintBitSet(mask, 10n, events.readRemoteSupportedFeaturesComplete);
-    mask = this.bigintBitSet(mask, 11n, events.readRemoteVersionInformationComplete);
-    mask = this.bigintBitSet(mask, 12n, events.qosSetupComplete);
-    mask = this.bigintBitSet(mask, 15n, events.hardwareError);
-    mask = this.bigintBitSet(mask, 16n, events.flushOccurred);
-    mask = this.bigintBitSet(mask, 17n, events.roleChange);
-    mask = this.bigintBitSet(mask, 19n, events.modeChange);
-    mask = this.bigintBitSet(mask, 20n, events.returnLinkKeys);
-    mask = this.bigintBitSet(mask, 21n, events.pinCodeRequest);
-    mask = this.bigintBitSet(mask, 22n, events.linkKeyRequest);
-    mask = this.bigintBitSet(mask, 23n, events.linkKeyNotification);
-    mask = this.bigintBitSet(mask, 24n, events.loopbackCommand);
-    mask = this.bigintBitSet(mask, 25n, events.dataBufferOverflow);
-    mask = this.bigintBitSet(mask, 26n, events.maxSlotsChange);
-    mask = this.bigintBitSet(mask, 27n, events.readClockOffsetComplete);
-    mask = this.bigintBitSet(mask, 28n, events.connectionPacketTypeChanged);
-    mask = this.bigintBitSet(mask, 29n, events.qosViolation);
-    mask = this.bigintBitSet(mask, 30n, events.pageScanModeChange);
-    mask = this.bigintBitSet(mask, 31n, events.pageScanRepetitionModeChange);
-    mask = this.bigintBitSet(mask, 32n, events.flowSpecificationComplete);
-    mask = this.bigintBitSet(mask, 33n, events.inquiryResultWithRssi);
-    mask = this.bigintBitSet(mask, 34n, events.readRemoteExtendedFeaturesComplete);
-    mask = this.bigintBitSet(mask, 43n, events.synchronousConnectionComplete);
-    mask = this.bigintBitSet(mask, 44n, events.synchronousConnectionChanged);
-    mask = this.bigintBitSet(mask, 45n, events.sniffSubrating);
-    mask = this.bigintBitSet(mask, 46n, events.extendedInquiryResult);
-    mask = this.bigintBitSet(mask, 47n, events.encryptionKeyRefreshComplete);
-    mask = this.bigintBitSet(mask, 48n, events.ioCapabilityRequest);
-    mask = this.bigintBitSet(mask, 49n, events.ioCapabilityResponse);
-    mask = this.bigintBitSet(mask, 50n, events.userConfirmationRequest);
-    mask = this.bigintBitSet(mask, 51n, events.userPasskeyRequest);
-    mask = this.bigintBitSet(mask, 52n, events.remoteOobDataRequest);
-    mask = this.bigintBitSet(mask, 53n, events.simplePairingComplete);
-    mask = this.bigintBitSet(mask, 55n, events.linkSupervisionTimeoutChanged);
-    mask = this.bigintBitSet(mask, 56n, events.enhancedFlushComplete);
-    mask = this.bigintBitSet(mask, 58n, events.userPasskeyNotification);
-    mask = this.bigintBitSet(mask, 59n, events.keypressNotification);
-    mask = this.bigintBitSet(mask, 60n, events.remoteHostSupportedFeaturesNotification);
-    mask = this.bigintBitSet(mask, 61n, events.leMeta);
-
-    const payload = Buffer.allocUnsafe(8);
-    payload.writeBigUInt64LE(mask, 0);
-
-    const ocf = HciOcfControlAndBasebandCommands.SetEventMask;
-    await this.cmd.controlAndBaseband({
-      ocf, payload,
-    });
-  }
-
-  public async setEventMaskPage2(events: {
-    physicalLinkComplete?: boolean,
-    channelSelected?: boolean,
-    disconnectionPhysicalLinkComplete?: boolean,
-    physicalLinkLossEarlyWarning?: boolean,
-    physicalLinkRecovery?: boolean,
-    logicalLinkComplete?: boolean,
-    disconnectionLogicalLinkComplete?: boolean,
-    flowSpecModifyComplete?: boolean,
-    numberOfCompletedDataBlocks?: boolean,
-    ampStartTest?: boolean,
-    ampTestEnd?: boolean,
-    ampReceiverReport?: boolean,
-    shortRangeModeChangeComplete?: boolean,
-    ampStatusChange?: boolean,
-    triggeredClockCapture?: boolean,
-    synchronizationTrainComplete?: boolean,
-    synchronizationTrainReceived?: boolean,
-    connectionlessSlaveBroadcastReceive?: boolean,
-    connectionlessSlaveBroadcastTimeout?: boolean,
-    truncatedPageComplete?: boolean,
-    slavePageResponseTimeout?: boolean,
-    connectionlessSlaveBroadcastChannelMapChange?: boolean,
-    inquiryResponseNotification?: boolean,
-    authenticatedPayloadTimeoutExpired?: boolean,
-    samStatusChange?: boolean,
-  } = {}): Promise<void> {
-    let mask = 0n;
-    mask = this.bigintBitSet(mask, 0n,   events.physicalLinkComplete);
-    mask = this.bigintBitSet(mask, 1n,   events.channelSelected);
-    mask = this.bigintBitSet(mask, 2n,   events.disconnectionPhysicalLinkComplete);
-    mask = this.bigintBitSet(mask, 3n,   events.physicalLinkLossEarlyWarning);
-    mask = this.bigintBitSet(mask, 4n,   events.physicalLinkRecovery);
-    mask = this.bigintBitSet(mask, 5n,   events.logicalLinkComplete);
-    mask = this.bigintBitSet(mask, 6n,   events.disconnectionLogicalLinkComplete);
-    mask = this.bigintBitSet(mask, 7n,   events.flowSpecModifyComplete);
-    mask = this.bigintBitSet(mask, 8n,   events.numberOfCompletedDataBlocks);
-    mask = this.bigintBitSet(mask, 9n,   events.ampStartTest);
-    mask = this.bigintBitSet(mask, 10n,  events.ampTestEnd);
-    mask = this.bigintBitSet(mask, 11n,  events.ampReceiverReport);
-    mask = this.bigintBitSet(mask, 12n,  events.shortRangeModeChangeComplete);
-    mask = this.bigintBitSet(mask, 13n,  events.ampStatusChange);
-    mask = this.bigintBitSet(mask, 14n,  events.triggeredClockCapture);
-    mask = this.bigintBitSet(mask, 15n,  events.synchronizationTrainComplete);
-    mask = this.bigintBitSet(mask, 16n,  events.synchronizationTrainReceived);
-    mask = this.bigintBitSet(mask, 17n,  events.connectionlessSlaveBroadcastReceive);
-    mask = this.bigintBitSet(mask, 18n,  events.connectionlessSlaveBroadcastTimeout);
-    mask = this.bigintBitSet(mask, 19n,  events.truncatedPageComplete);
-    mask = this.bigintBitSet(mask, 20n,  events.slavePageResponseTimeout);
-    mask = this.bigintBitSet(mask, 21n,  events.connectionlessSlaveBroadcastChannelMapChange);
-    mask = this.bigintBitSet(mask, 22n,  events.inquiryResponseNotification);
-    mask = this.bigintBitSet(mask, 23n,  events.authenticatedPayloadTimeoutExpired);
-    mask = this.bigintBitSet(mask, 24n,  events.samStatusChange);
-
-    const payload = Buffer.allocUnsafe(8);
-    payload.writeBigUInt64LE(mask, 0);
-
-    const ocf = HciOcfControlAndBasebandCommands.SetEventMaskPage2;
-    await this.cmd.controlAndBaseband({ ocf, payload });
-  }
-
-  public async readLeHostSupport(): Promise<boolean> {
-    const ocf = HciOcfControlAndBasebandCommands.ReadLeHostSupport;
-    const result = await this.cmd.controlAndBaseband({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    // Simultaneous Le Host shall be ignored [Vol 4] Part E, Section 6.35
-    const leSupportedHost = params.readUInt8(0) === 1;
-    return leSupportedHost;
-  }
-
-  public async writeLeHostSupported(leSupportedHost: boolean) {
-    const payload = Buffer.allocUnsafe(2);
-    payload[0] = leSupportedHost ? 1 : 0;
-    payload[1] = 0; // Simultaneous Le Host shall be ignored
-    const ocf = HciOcfControlAndBasebandCommands.WriteLeHostSupport;
-    await this.cmd.controlAndBaseband({ ocf });
   }
 
   public async readRssi(connHandle: number): Promise<number> {
@@ -854,40 +727,40 @@ export class Hci extends EventEmitter {
     bigInfoAdvertisingReport?:                boolean,
   } = {}): Promise<void> {
     let mask = 0n;
-    mask = this.bigintBitSet(mask, 0n,   events.connectionComplete);
-    mask = this.bigintBitSet(mask, 1n,   events.advertisingReport);
-    mask = this.bigintBitSet(mask, 2n,   events.connectionUpdateComplete);
-    mask = this.bigintBitSet(mask, 3n,   events.readRemoteFeaturesComplete);
-    mask = this.bigintBitSet(mask, 4n,   events.longTermKeyRequest);
-    mask = this.bigintBitSet(mask, 5n,   events.remoteConnectionParameterRequest);
-    mask = this.bigintBitSet(mask, 6n,   events.dataLengthChange);
-    mask = this.bigintBitSet(mask, 7n,   events.readLocalP256PublicKeyComplete);
-    mask = this.bigintBitSet(mask, 8n,   events.generateDhKeyComplete);
-    mask = this.bigintBitSet(mask, 9n,   events.enhancedConnectionComplete);
-    mask = this.bigintBitSet(mask, 10n,  events.directedAdvertisingReport);
-    mask = this.bigintBitSet(mask, 11n,  events.phyUpdateComplete);
-    mask = this.bigintBitSet(mask, 12n,  events.extendedAdvertisingReport);
-    mask = this.bigintBitSet(mask, 13n,  events.periodicAdvertisingSyncEstablished);
-    mask = this.bigintBitSet(mask, 14n,  events.periodicAdvertisingReport);
-    mask = this.bigintBitSet(mask, 15n,  events.periodicAdvertisingSyncLost);
-    mask = this.bigintBitSet(mask, 16n,  events.scanTimeout);
-    mask = this.bigintBitSet(mask, 17n,  events.advertisingSetTerminated);
-    mask = this.bigintBitSet(mask, 18n,  events.scanRequestReceived);
-    mask = this.bigintBitSet(mask, 19n,  events.channelSelectionAlgorithm);
-    mask = this.bigintBitSet(mask, 20n,  events.connectionlessIqReport);
-    mask = this.bigintBitSet(mask, 21n,  events.connectionIqReport);
-    mask = this.bigintBitSet(mask, 22n,  events.cteRequestFailed);
-    mask = this.bigintBitSet(mask, 23n,  events.periodicAdvertisingSyncTransferReceived);
-    mask = this.bigintBitSet(mask, 24n,  events.cisEstablished);
-    mask = this.bigintBitSet(mask, 25n,  events.cisRequest);
-    mask = this.bigintBitSet(mask, 26n,  events.createBigComplete);
-    mask = this.bigintBitSet(mask, 27n,  events.terminateBigComplete);
-    mask = this.bigintBitSet(mask, 28n,  events.bigSyncEstablished);
-    mask = this.bigintBitSet(mask, 29n,  events.bigSyncLost);
-    mask = this.bigintBitSet(mask, 30n,  events.requestPeerScaComplete);
-    mask = this.bigintBitSet(mask, 31n,  events.pathLossThreshold);
-    mask = this.bigintBitSet(mask, 32n,  events.transmitPowerReporting);
-    mask = this.bigintBitSet(mask, 33n,  events.bigInfoAdvertisingReport);
+    mask = bigintBitSet(mask, 0n,   events.connectionComplete);
+    mask = bigintBitSet(mask, 1n,   events.advertisingReport);
+    mask = bigintBitSet(mask, 2n,   events.connectionUpdateComplete);
+    mask = bigintBitSet(mask, 3n,   events.readRemoteFeaturesComplete);
+    mask = bigintBitSet(mask, 4n,   events.longTermKeyRequest);
+    mask = bigintBitSet(mask, 5n,   events.remoteConnectionParameterRequest);
+    mask = bigintBitSet(mask, 6n,   events.dataLengthChange);
+    mask = bigintBitSet(mask, 7n,   events.readLocalP256PublicKeyComplete);
+    mask = bigintBitSet(mask, 8n,   events.generateDhKeyComplete);
+    mask = bigintBitSet(mask, 9n,   events.enhancedConnectionComplete);
+    mask = bigintBitSet(mask, 10n,  events.directedAdvertisingReport);
+    mask = bigintBitSet(mask, 11n,  events.phyUpdateComplete);
+    mask = bigintBitSet(mask, 12n,  events.extendedAdvertisingReport);
+    mask = bigintBitSet(mask, 13n,  events.periodicAdvertisingSyncEstablished);
+    mask = bigintBitSet(mask, 14n,  events.periodicAdvertisingReport);
+    mask = bigintBitSet(mask, 15n,  events.periodicAdvertisingSyncLost);
+    mask = bigintBitSet(mask, 16n,  events.scanTimeout);
+    mask = bigintBitSet(mask, 17n,  events.advertisingSetTerminated);
+    mask = bigintBitSet(mask, 18n,  events.scanRequestReceived);
+    mask = bigintBitSet(mask, 19n,  events.channelSelectionAlgorithm);
+    mask = bigintBitSet(mask, 20n,  events.connectionlessIqReport);
+    mask = bigintBitSet(mask, 21n,  events.connectionIqReport);
+    mask = bigintBitSet(mask, 22n,  events.cteRequestFailed);
+    mask = bigintBitSet(mask, 23n,  events.periodicAdvertisingSyncTransferReceived);
+    mask = bigintBitSet(mask, 24n,  events.cisEstablished);
+    mask = bigintBitSet(mask, 25n,  events.cisRequest);
+    mask = bigintBitSet(mask, 26n,  events.createBigComplete);
+    mask = bigintBitSet(mask, 27n,  events.terminateBigComplete);
+    mask = bigintBitSet(mask, 28n,  events.bigSyncEstablished);
+    mask = bigintBitSet(mask, 29n,  events.bigSyncLost);
+    mask = bigintBitSet(mask, 30n,  events.requestPeerScaComplete);
+    mask = bigintBitSet(mask, 31n,  events.pathLossThreshold);
+    mask = bigintBitSet(mask, 32n,  events.transmitPowerReporting);
+    mask = bigintBitSet(mask, 33n,  events.bigInfoAdvertisingReport);
 
     const payload = Buffer.allocUnsafe(8);
     payload.writeBigUInt64LE(mask, 0);
@@ -933,42 +806,42 @@ export class Hci extends EventEmitter {
 
     const mask = params.readBigUInt64LE(0);
     return {
-      leEncryption:                               this.bigintBitGet(mask, 0n),
-      connectionParametersRequestProcedure:       this.bigintBitGet(mask, 1n),
-      extendedRejectIndication:                   this.bigintBitGet(mask, 2n),
-      slaveInitiatedFeaturesExchange:             this.bigintBitGet(mask, 3n),
-      lePing:                                     this.bigintBitGet(mask, 4n),
-      leDataPacketLengthExtension:                this.bigintBitGet(mask, 5n),
-      llPrivacy:                                  this.bigintBitGet(mask, 6n),
-      extendedScannerFilterPolicies:              this.bigintBitGet(mask, 7n),
-      le2mPhy:                                    this.bigintBitGet(mask, 8n),
-      stableModulationIndexTransmitter:           this.bigintBitGet(mask, 9n),
-      stableModulationIndexReceiver:              this.bigintBitGet(mask, 10n),
-      leCodedPhy:                                 this.bigintBitGet(mask, 11n),
-      leExtendedAdvertising:                      this.bigintBitGet(mask, 12n),
-      lePeriodicAdvertising:                      this.bigintBitGet(mask, 13n),
-      channelSelectionAlgorithmV2:                this.bigintBitGet(mask, 14n),
-      lePowerClass1:                              this.bigintBitGet(mask, 15n),
-      minimumNumberOfUsedChannelsProcedure:       this.bigintBitGet(mask, 16n),
-      connectionCteRequest:                       this.bigintBitGet(mask, 17n),
-      connectionCteResponse:                      this.bigintBitGet(mask, 18n),
-      connectionlessCteTransmitter:               this.bigintBitGet(mask, 19n),
-      connectionlessCteReceiver:                  this.bigintBitGet(mask, 20n),
-      antennaSwitchingDuringCteTransmission:      this.bigintBitGet(mask, 21n),
-      antennaSwitchingDuringCteReception:         this.bigintBitGet(mask, 22n),
-      receivingConstantToneExtensions:            this.bigintBitGet(mask, 23n),
-      periodicAdvertisingSyncTransferSender:      this.bigintBitGet(mask, 24n),
-      periodicAdvertisingSyncTransferRecipient:   this.bigintBitGet(mask, 25n),
-      sleepClockAccuracyUpdates:                  this.bigintBitGet(mask, 26n),
-      remotePublicKeyValidation:                  this.bigintBitGet(mask, 27n),
-      connectedIsochronousStreamMaster:           this.bigintBitGet(mask, 28n),
-      connectedIsochronousStreamSlave:            this.bigintBitGet(mask, 29n),
-      isochronousBroadcaster:                     this.bigintBitGet(mask, 30n),
-      synchronizedReceiver:                       this.bigintBitGet(mask, 31n),
-      isochronousChannels:                        this.bigintBitGet(mask, 32n),
-      lePowerControlRequest:                      this.bigintBitGet(mask, 33n),
-      lePowerChangeIndication:                    this.bigintBitGet(mask, 34n),
-      lePathLossMonitoring:                       this.bigintBitGet(mask, 35n),
+      leEncryption:                               bigintBitGet(mask, 0n),
+      connectionParametersRequestProcedure:       bigintBitGet(mask, 1n),
+      extendedRejectIndication:                   bigintBitGet(mask, 2n),
+      slaveInitiatedFeaturesExchange:             bigintBitGet(mask, 3n),
+      lePing:                                     bigintBitGet(mask, 4n),
+      leDataPacketLengthExtension:                bigintBitGet(mask, 5n),
+      llPrivacy:                                  bigintBitGet(mask, 6n),
+      extendedScannerFilterPolicies:              bigintBitGet(mask, 7n),
+      le2mPhy:                                    bigintBitGet(mask, 8n),
+      stableModulationIndexTransmitter:           bigintBitGet(mask, 9n),
+      stableModulationIndexReceiver:              bigintBitGet(mask, 10n),
+      leCodedPhy:                                 bigintBitGet(mask, 11n),
+      leExtendedAdvertising:                      bigintBitGet(mask, 12n),
+      lePeriodicAdvertising:                      bigintBitGet(mask, 13n),
+      channelSelectionAlgorithmV2:                bigintBitGet(mask, 14n),
+      lePowerClass1:                              bigintBitGet(mask, 15n),
+      minimumNumberOfUsedChannelsProcedure:       bigintBitGet(mask, 16n),
+      connectionCteRequest:                       bigintBitGet(mask, 17n),
+      connectionCteResponse:                      bigintBitGet(mask, 18n),
+      connectionlessCteTransmitter:               bigintBitGet(mask, 19n),
+      connectionlessCteReceiver:                  bigintBitGet(mask, 20n),
+      antennaSwitchingDuringCteTransmission:      bigintBitGet(mask, 21n),
+      antennaSwitchingDuringCteReception:         bigintBitGet(mask, 22n),
+      receivingConstantToneExtensions:            bigintBitGet(mask, 23n),
+      periodicAdvertisingSyncTransferSender:      bigintBitGet(mask, 24n),
+      periodicAdvertisingSyncTransferRecipient:   bigintBitGet(mask, 25n),
+      sleepClockAccuracyUpdates:                  bigintBitGet(mask, 26n),
+      remotePublicKeyValidation:                  bigintBitGet(mask, 27n),
+      connectedIsochronousStreamMaster:           bigintBitGet(mask, 28n),
+      connectedIsochronousStreamSlave:            bigintBitGet(mask, 29n),
+      isochronousBroadcaster:                     bigintBitGet(mask, 30n),
+      synchronizedReceiver:                       bigintBitGet(mask, 31n),
+      isochronousChannels:                        bigintBitGet(mask, 32n),
+      lePowerControlRequest:                      bigintBitGet(mask, 33n),
+      lePowerChangeIndication:                    bigintBitGet(mask, 34n),
+      lePathLossMonitoring:                       bigintBitGet(mask, 35n),
     };
   }
 
