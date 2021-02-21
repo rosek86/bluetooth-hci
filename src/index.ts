@@ -5,7 +5,8 @@ import {
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy,
   LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeScanningFilterPolicy,
   LeScanType,
-  LeScanFilterDuplicates } from './HciLe';
+  LeScanFilterDuplicates } from './HciLeController';
+import { Address } from './Address';
 
 let hci: Hci | null = null;
 let txBuffer: Buffer | null = null;
@@ -134,7 +135,7 @@ function checkRequest(req: string): boolean {
     console.log(`Compare: ${checkRequest('35200700a9d386c32914')}`);
 
     prepareResult('0e0401052000');
-    await hci.leSetRandomAddress(0x153c7f2c4b82);
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
     console.log(`Compare: ${checkRequest('052006824b2c7f3c15')}`);
 
     prepareResult('0e0401412000');

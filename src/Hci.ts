@@ -32,12 +32,13 @@ import {
   LeAdvertisingChannelMap, LeAdvertisingDataOperation, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy, LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy, LeSupportedStates, LeScanResponseDataOperation, LeScanningFilterPolicy,
-  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeAdvertisingType, LeWhiteListAddressType,
+  LeScanningPhy, LeScanType, LeScanFilterDuplicates, LeWhiteListAddressType,
   LeModulationIndex, LeCteType, LeTxTestPayload, LeTxPhy, LeMinTransmitPowerLevel,
-  LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser
-} from './HciLe';
-
-import { bitGet, bigintBitGet, bigintBitSet } from './Utils';
+  LeMaxTransmitPowerLevel, LeExtAdvReport, LeExtAdvEventTypeParser, LeEvents, LeSetEventsMask, LeBufferSize,
+  LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
+  LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters
+} from './HciLeController';
+import { buildBitfield } from './Utils';
 
 const debug = Debug('nble-hci');
 
@@ -205,197 +206,39 @@ export class Hci extends EventEmitter {
 
   // LE Controller
 
-  public async leSetEventMask(events: {
-    connectionComplete?:                      boolean,
-    advertisingReport?:                       boolean,
-    connectionUpdateComplete?:                boolean,
-    readRemoteFeaturesComplete?:              boolean,
-    longTermKeyRequest?:                      boolean,
-    remoteConnectionParameterRequest?:        boolean,
-    dataLengthChange?:                        boolean,
-    readLocalP256PublicKeyComplete?:          boolean,
-    generateDhKeyComplete?:                   boolean,
-    enhancedConnectionComplete?:              boolean,
-    directedAdvertisingReport?:               boolean,
-    phyUpdateComplete?:                       boolean,
-    extendedAdvertisingReport?:               boolean,
-    periodicAdvertisingSyncEstablished?:      boolean,
-    periodicAdvertisingReport?:               boolean,
-    periodicAdvertisingSyncLost?:             boolean,
-    scanTimeout?:                             boolean,
-    advertisingSetTerminated?:                boolean,
-    scanRequestReceived?:                     boolean,
-    channelSelectionAlgorithm?:               boolean,
-    connectionlessIqReport?:                  boolean,
-    connectionIqReport?:                      boolean,
-    cteRequestFailed?:                        boolean,
-    periodicAdvertisingSyncTransferReceived?: boolean,
-    cisEstablished?:                          boolean,
-    cisRequest?:                              boolean,
-    createBigComplete?:                       boolean,
-    terminateBigComplete?:                    boolean,
-    bigSyncEstablished?:                      boolean,
-    bigSyncLost?:                             boolean,
-    requestPeerScaComplete?:                  boolean,
-    pathLossThreshold?:                       boolean,
-    transmitPowerReporting?:                  boolean,
-    bigInfoAdvertisingReport?:                boolean,
-  } = {}): Promise<void> {
-    let mask = 0n;
-    mask = bigintBitSet(mask, 0n,   events.connectionComplete);
-    mask = bigintBitSet(mask, 1n,   events.advertisingReport);
-    mask = bigintBitSet(mask, 2n,   events.connectionUpdateComplete);
-    mask = bigintBitSet(mask, 3n,   events.readRemoteFeaturesComplete);
-    mask = bigintBitSet(mask, 4n,   events.longTermKeyRequest);
-    mask = bigintBitSet(mask, 5n,   events.remoteConnectionParameterRequest);
-    mask = bigintBitSet(mask, 6n,   events.dataLengthChange);
-    mask = bigintBitSet(mask, 7n,   events.readLocalP256PublicKeyComplete);
-    mask = bigintBitSet(mask, 8n,   events.generateDhKeyComplete);
-    mask = bigintBitSet(mask, 9n,   events.enhancedConnectionComplete);
-    mask = bigintBitSet(mask, 10n,  events.directedAdvertisingReport);
-    mask = bigintBitSet(mask, 11n,  events.phyUpdateComplete);
-    mask = bigintBitSet(mask, 12n,  events.extendedAdvertisingReport);
-    mask = bigintBitSet(mask, 13n,  events.periodicAdvertisingSyncEstablished);
-    mask = bigintBitSet(mask, 14n,  events.periodicAdvertisingReport);
-    mask = bigintBitSet(mask, 15n,  events.periodicAdvertisingSyncLost);
-    mask = bigintBitSet(mask, 16n,  events.scanTimeout);
-    mask = bigintBitSet(mask, 17n,  events.advertisingSetTerminated);
-    mask = bigintBitSet(mask, 18n,  events.scanRequestReceived);
-    mask = bigintBitSet(mask, 19n,  events.channelSelectionAlgorithm);
-    mask = bigintBitSet(mask, 20n,  events.connectionlessIqReport);
-    mask = bigintBitSet(mask, 21n,  events.connectionIqReport);
-    mask = bigintBitSet(mask, 22n,  events.cteRequestFailed);
-    mask = bigintBitSet(mask, 23n,  events.periodicAdvertisingSyncTransferReceived);
-    mask = bigintBitSet(mask, 24n,  events.cisEstablished);
-    mask = bigintBitSet(mask, 25n,  events.cisRequest);
-    mask = bigintBitSet(mask, 26n,  events.createBigComplete);
-    mask = bigintBitSet(mask, 27n,  events.terminateBigComplete);
-    mask = bigintBitSet(mask, 28n,  events.bigSyncEstablished);
-    mask = bigintBitSet(mask, 29n,  events.bigSyncLost);
-    mask = bigintBitSet(mask, 30n,  events.requestPeerScaComplete);
-    mask = bigintBitSet(mask, 31n,  events.pathLossThreshold);
-    mask = bigintBitSet(mask, 32n,  events.transmitPowerReporting);
-    mask = bigintBitSet(mask, 33n,  events.bigInfoAdvertisingReport);
-
-    const payload = Buffer.allocUnsafe(8);
-    payload.writeBigUInt64LE(mask, 0);
+  public async leSetEventMask(events: Partial<LeEvents> = {}): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetEventMask;
+    const payload = LeSetEventsMask.inParams(events);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leReadBufferSize() {
+  public async leReadBufferSize(): Promise<LeBufferSize> {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV1;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < 3) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return {
-      leAclDataPacketLength:    params.readUInt16LE(0),
-      totalNumLeAclDataPackets: params.readUInt8(2),
-    };
+    return LeReadBufferSize.outParams(result.returnParameters);
   }
 
-  public async leReadBufferSizeV2() {
+  public async leReadBufferSizeV2(): Promise<LeBufferSizeV2> {
     const ocf = HciOcfLeControllerCommands.ReadBufferSizeV2;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < 6) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-    return {
-      leAclDataPacketLength:    params.readUInt16LE(0),
-      totalNumLeAclDataPackets: params.readUInt8(2),
-      isoDataPacketLength:      params.readUInt16LE(3),
-      totalNumIsoDataPackets:   params.readUInt8(5),
-    };
+    return LeReadBufferSizeV2.outParams(result.returnParameters);
   }
 
-  public async leReadLocalSupportedFeatures() {
+  public async leReadLocalSupportedFeatures(): Promise<LeLocalSupportedFeatures> {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
     const result = await this.cmd.leController({ ocf });
-    const params = result.returnParameters;
-    if (!params || params.length < (64/8)) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
-    }
-
-    const mask = params.readBigUInt64LE(0);
-    return {
-      leEncryption:                               bigintBitGet(mask, 0n),
-      connectionParametersRequestProcedure:       bigintBitGet(mask, 1n),
-      extendedRejectIndication:                   bigintBitGet(mask, 2n),
-      slaveInitiatedFeaturesExchange:             bigintBitGet(mask, 3n),
-      lePing:                                     bigintBitGet(mask, 4n),
-      leDataPacketLengthExtension:                bigintBitGet(mask, 5n),
-      llPrivacy:                                  bigintBitGet(mask, 6n),
-      extendedScannerFilterPolicies:              bigintBitGet(mask, 7n),
-      le2mPhy:                                    bigintBitGet(mask, 8n),
-      stableModulationIndexTransmitter:           bigintBitGet(mask, 9n),
-      stableModulationIndexReceiver:              bigintBitGet(mask, 10n),
-      leCodedPhy:                                 bigintBitGet(mask, 11n),
-      leExtendedAdvertising:                      bigintBitGet(mask, 12n),
-      lePeriodicAdvertising:                      bigintBitGet(mask, 13n),
-      channelSelectionAlgorithmV2:                bigintBitGet(mask, 14n),
-      lePowerClass1:                              bigintBitGet(mask, 15n),
-      minimumNumberOfUsedChannelsProcedure:       bigintBitGet(mask, 16n),
-      connectionCteRequest:                       bigintBitGet(mask, 17n),
-      connectionCteResponse:                      bigintBitGet(mask, 18n),
-      connectionlessCteTransmitter:               bigintBitGet(mask, 19n),
-      connectionlessCteReceiver:                  bigintBitGet(mask, 20n),
-      antennaSwitchingDuringCteTransmission:      bigintBitGet(mask, 21n),
-      antennaSwitchingDuringCteReception:         bigintBitGet(mask, 22n),
-      receivingConstantToneExtensions:            bigintBitGet(mask, 23n),
-      periodicAdvertisingSyncTransferSender:      bigintBitGet(mask, 24n),
-      periodicAdvertisingSyncTransferRecipient:   bigintBitGet(mask, 25n),
-      sleepClockAccuracyUpdates:                  bigintBitGet(mask, 26n),
-      remotePublicKeyValidation:                  bigintBitGet(mask, 27n),
-      connectedIsochronousStreamMaster:           bigintBitGet(mask, 28n),
-      connectedIsochronousStreamSlave:            bigintBitGet(mask, 29n),
-      isochronousBroadcaster:                     bigintBitGet(mask, 30n),
-      synchronizedReceiver:                       bigintBitGet(mask, 31n),
-      isochronousChannels:                        bigintBitGet(mask, 32n),
-      lePowerControlRequest:                      bigintBitGet(mask, 33n),
-      lePowerChangeIndication:                    bigintBitGet(mask, 34n),
-      lePathLossMonitoring:                       bigintBitGet(mask, 35n),
-    };
+    return LeReadLocalSupportedFeatures.outParams(result.returnParameters);
   }
 
-  public async leSetRandomAddress(randomAddress: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(6);
-    payload.writeUIntLE(randomAddress, 0, 6);
-
+  public async leSetRandomAddress(randomAddress: Address): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetRandomAddress;
+    const payload = LeSetRandomAddress.inParams(randomAddress);
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetAdvertisingParameters(params: {
-    advertisingIntervalMinMs: number,
-    advertisingIntervalMaxMs: number,
-    advertisingType: LeAdvertisingType,
-    ownAddressType: LeOwnAddressType,
-    peerAddressType: LePeerAddressType,
-    peerAddress: number,
-    advertisingChannelMap: LeAdvertisingChannelMap[],
-    advertisingFilterPolicy: LeAdvertisingFilterPolicy,
-  }): Promise<void> {
-
-    const advertisingIntervalMin = Math.round(params.advertisingIntervalMinMs / 0.625);
-    const advertisingIntervalMax = Math.round(params.advertisingIntervalMaxMs / 0.625);
-    const advertisingChannelMap  = this.buildBitfield(params.advertisingChannelMap);
-
-    const payload = Buffer.allocUnsafe(15);
-
-    let o = 0;
-    o = payload.writeUIntLE(advertisingIntervalMin,         o, 2);
-    o = payload.writeUIntLE(advertisingIntervalMax,         o, 2);
-    o = payload.writeUIntLE(params.advertisingType,         o, 1);
-    o = payload.writeUIntLE(params.ownAddressType,          o, 1);
-    o = payload.writeUIntLE(params.peerAddressType,         o, 1);
-    o = payload.writeUIntLE(params.peerAddress,             o, 6);
-    o = payload.writeUIntLE(advertisingChannelMap,          o, 1);
-    o = payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
-
+  public async leSetAdvertisingParameters(params: LeAdvertisingParameters): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetAdvertisingParameters;
+    const payload = LeSetAdvertisingParameters.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -1118,10 +961,10 @@ export class Hci extends EventEmitter {
     scanRequestNotificationEnable: boolean,
   }): Promise<number> {
 
-    const advertisingEventProperties    = this.buildBitfield(params.advertisingEventProperties);
+    const advertisingEventProperties    = buildBitfield(params.advertisingEventProperties);
     const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
     const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
-    const primaryAdvertisingChannelMap  = this.buildBitfield(params.primaryAdvertisingChannelMap);
+    const primaryAdvertisingChannelMap  = buildBitfield(params.primaryAdvertisingChannelMap);
     const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
     const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
 
@@ -1285,14 +1128,6 @@ export class Hci extends EventEmitter {
   }
   private msToHciValue(ms: number, factor: number = 0.625): number {
     return Math.round(ms / factor);
-  }
-
-  private buildBitfield(bits: number[]): number {
-    let bitfield = 0;
-    for (const bit of bits) {
-      bitfield |= 1 << bit;
-    }
-    return bitfield;
   }
 
   public async sendAclData(params: {

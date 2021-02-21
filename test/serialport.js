@@ -138,7 +138,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       advertisingRandomAddress: 0x1429c386d3a9,
     });
 
-    await hci.leSetRandomAddress(0x153c7f2c4b82);
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.All,

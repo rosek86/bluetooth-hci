@@ -14,12 +14,10 @@ export function bigintBitSet(field: bigint, bit: bigint, set?: boolean): bigint 
   return field;
 }
 
-// export function bitGetG<T extends number|bigint>(field: T, bit: T): boolean {
-//   if (typeof field === 'number' && typeof bit === 'number') {
-//     return ((field >> bit) & 1) === 1;
-//   }
-//   if (typeof field === 'bigint' && typeof bit === 'bigint') {
-//     return ((field >> bit) & 1n) === 1n;
-//   }
-//   return false;
-// }
+export function buildBitfield(bits: number[]): number {
+  let bitfield = 0;
+  for (const bit of bits) {
+    bitfield |= 1 << bit;
+  }
+  return bitfield;
+}
