@@ -59,7 +59,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     const leBufferSize = await hci.leReadBufferSize();
     console.log(leBufferSize);
 
-    const leFeatures = await hci.leReadSupportedFeatures();
+    const leFeatures = await hci.leReadLocalSupportedFeatures();
     console.log(leFeatures);
 
     const leStates = await hci.leReadSupportedStates();
@@ -77,9 +77,11 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
       disconnectionComplete: true,
       leMeta: true,
     });
-    await hci.setEventMaskPage2();
+    await hci.setEventMaskPage2({});
 
-    await hci.leSetEventMask();
+    await hci.leSetEventMask({
+      extendedAdvertisingReport: true,
+    });
 
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
     await hci.leClearWhiteList();

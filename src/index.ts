@@ -43,7 +43,7 @@ function checkRequest(req: string): boolean {
     console.log(await hci.leReadBufferSize());
 
     prepareResult('0e0c01032000f559000000007b11');
-    console.log(await hci.leReadSupportedFeatures());
+    console.log(await hci.leReadLocalSupportedFeatures());
 
     prepareResult('0e0c011c2000ff590000ff007b11');
     console.log((await hci.leReadSupportedStates()).toString());
@@ -61,7 +61,7 @@ function checkRequest(req: string): boolean {
     await hci.setEventMask({});
 
     prepareResult('0e0401012000');
-    await hci.leSetEventMask();
+    await hci.leSetEventMask({});
 
     prepareResult('0e05010f200008');
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);

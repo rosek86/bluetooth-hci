@@ -599,6 +599,10 @@ export class Hci extends EventEmitter {
     return ((field >> bit) & 1) === 1;
   }
 
+  private bigintBitGet(field: bigint, bit: bigint): boolean {
+    return ((field >> bit) & 1n) === 1n;
+  }
+
   private bigintBitSet(field: bigint, bit: bigint, set?: boolean): bigint {
     if (set === true) {
       field |= 1n << bit;
@@ -656,7 +660,7 @@ export class Hci extends EventEmitter {
     keypressNotification?: boolean,
     remoteHostSupportedFeaturesNotification?: boolean,
     leMeta?: boolean,
-  }): Promise<void> {
+  } = {}): Promise<void> {
     let mask = 0n;
     mask = this.bigintBitSet(mask, 0n,  events.inquiryComplete);
     mask = this.bigintBitSet(mask, 1n,  events.inquiryResult);
@@ -743,7 +747,7 @@ export class Hci extends EventEmitter {
     inquiryResponseNotification?: boolean,
     authenticatedPayloadTimeoutExpired?: boolean,
     samStatusChange?: boolean,
-  }): Promise<void> {
+  } = {}): Promise<void> {
     let mask = 0n;
     mask = this.bigintBitSet(mask, 0n,   events.physicalLinkComplete);
     mask = this.bigintBitSet(mask, 1n,   events.channelSelected);
@@ -813,9 +817,80 @@ export class Hci extends EventEmitter {
     return rssi;
   }
 
-  public async leSetEventMask(): Promise<void> {
-    // TODO pass event mask as argument
-    const payload = Buffer.from('5f1e0a0000000000', 'hex');
+  public async leSetEventMask(events: {
+    connectionComplete?:                      boolean,
+    advertisingReport?:                       boolean,
+    connectionUpdateComplete?:                boolean,
+    readRemoteFeaturesComplete?:              boolean,
+    longTermKeyRequest?:                      boolean,
+    remoteConnectionParameterRequest?:        boolean,
+    dataLengthChange?:                        boolean,
+    readLocalP256PublicKeyComplete?:          boolean,
+    generateDhKeyComplete?:                   boolean,
+    enhancedConnectionComplete?:              boolean,
+    directedAdvertisingReport?:               boolean,
+    phyUpdateComplete?:                       boolean,
+    extendedAdvertisingReport?:               boolean,
+    periodicAdvertisingSyncEstablished?:      boolean,
+    periodicAdvertisingReport?:               boolean,
+    periodicAdvertisingSyncLost?:             boolean,
+    scanTimeout?:                             boolean,
+    advertisingSetTerminated?:                boolean,
+    scanRequestReceived?:                     boolean,
+    channelSelectionAlgorithm?:               boolean,
+    connectionlessIqReport?:                  boolean,
+    connectionIqReport?:                      boolean,
+    cteRequestFailed?:                        boolean,
+    periodicAdvertisingSyncTransferReceived?: boolean,
+    cisEstablished?:                          boolean,
+    cisRequest?:                              boolean,
+    createBigComplete?:                       boolean,
+    terminateBigComplete?:                    boolean,
+    bigSyncEstablished?:                      boolean,
+    bigSyncLost?:                             boolean,
+    requestPeerScaComplete?:                  boolean,
+    pathLossThreshold?:                       boolean,
+    transmitPowerReporting?:                  boolean,
+    bigInfoAdvertisingReport?:                boolean,
+  } = {}): Promise<void> {
+    let mask = 0n;
+    mask = this.bigintBitSet(mask, 0n,   events.connectionComplete);
+    mask = this.bigintBitSet(mask, 1n,   events.advertisingReport);
+    mask = this.bigintBitSet(mask, 2n,   events.connectionUpdateComplete);
+    mask = this.bigintBitSet(mask, 3n,   events.readRemoteFeaturesComplete);
+    mask = this.bigintBitSet(mask, 4n,   events.longTermKeyRequest);
+    mask = this.bigintBitSet(mask, 5n,   events.remoteConnectionParameterRequest);
+    mask = this.bigintBitSet(mask, 6n,   events.dataLengthChange);
+    mask = this.bigintBitSet(mask, 7n,   events.readLocalP256PublicKeyComplete);
+    mask = this.bigintBitSet(mask, 8n,   events.generateDhKeyComplete);
+    mask = this.bigintBitSet(mask, 9n,   events.enhancedConnectionComplete);
+    mask = this.bigintBitSet(mask, 10n,  events.directedAdvertisingReport);
+    mask = this.bigintBitSet(mask, 11n,  events.phyUpdateComplete);
+    mask = this.bigintBitSet(mask, 12n,  events.extendedAdvertisingReport);
+    mask = this.bigintBitSet(mask, 13n,  events.periodicAdvertisingSyncEstablished);
+    mask = this.bigintBitSet(mask, 14n,  events.periodicAdvertisingReport);
+    mask = this.bigintBitSet(mask, 15n,  events.periodicAdvertisingSyncLost);
+    mask = this.bigintBitSet(mask, 16n,  events.scanTimeout);
+    mask = this.bigintBitSet(mask, 17n,  events.advertisingSetTerminated);
+    mask = this.bigintBitSet(mask, 18n,  events.scanRequestReceived);
+    mask = this.bigintBitSet(mask, 19n,  events.channelSelectionAlgorithm);
+    mask = this.bigintBitSet(mask, 20n,  events.connectionlessIqReport);
+    mask = this.bigintBitSet(mask, 21n,  events.connectionIqReport);
+    mask = this.bigintBitSet(mask, 22n,  events.cteRequestFailed);
+    mask = this.bigintBitSet(mask, 23n,  events.periodicAdvertisingSyncTransferReceived);
+    mask = this.bigintBitSet(mask, 24n,  events.cisEstablished);
+    mask = this.bigintBitSet(mask, 25n,  events.cisRequest);
+    mask = this.bigintBitSet(mask, 26n,  events.createBigComplete);
+    mask = this.bigintBitSet(mask, 27n,  events.terminateBigComplete);
+    mask = this.bigintBitSet(mask, 28n,  events.bigSyncEstablished);
+    mask = this.bigintBitSet(mask, 29n,  events.bigSyncLost);
+    mask = this.bigintBitSet(mask, 30n,  events.requestPeerScaComplete);
+    mask = this.bigintBitSet(mask, 31n,  events.pathLossThreshold);
+    mask = this.bigintBitSet(mask, 32n,  events.transmitPowerReporting);
+    mask = this.bigintBitSet(mask, 33n,  events.bigInfoAdvertisingReport);
+
+    const payload = Buffer.allocUnsafe(8);
+    payload.writeBigUInt64LE(mask, 0);
     const ocf = HciOcfLeControllerCommands.SetEventMask;
     await this.cmd.leController({ ocf, payload });
   }
@@ -848,15 +923,53 @@ export class Hci extends EventEmitter {
     };
   }
 
-  public async leReadSupportedFeatures(): Promise<BigInt> {
+  public async leReadLocalSupportedFeatures() {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
     const result = await this.cmd.leController({ ocf });
     const params = result.returnParameters;
     if (!params || params.length < (64/8)) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
-    // TODO: parse bitmask
-    return params.readBigUInt64LE(0);
+
+    const mask = params.readBigUInt64LE(0);
+    return {
+      leEncryption:                               this.bigintBitGet(mask, 0n),
+      connectionParametersRequestProcedure:       this.bigintBitGet(mask, 1n),
+      extendedRejectIndication:                   this.bigintBitGet(mask, 2n),
+      slaveInitiatedFeaturesExchange:             this.bigintBitGet(mask, 3n),
+      lePing:                                     this.bigintBitGet(mask, 4n),
+      leDataPacketLengthExtension:                this.bigintBitGet(mask, 5n),
+      llPrivacy:                                  this.bigintBitGet(mask, 6n),
+      extendedScannerFilterPolicies:              this.bigintBitGet(mask, 7n),
+      le2mPhy:                                    this.bigintBitGet(mask, 8n),
+      stableModulationIndexTransmitter:           this.bigintBitGet(mask, 9n),
+      stableModulationIndexReceiver:              this.bigintBitGet(mask, 10n),
+      leCodedPhy:                                 this.bigintBitGet(mask, 11n),
+      leExtendedAdvertising:                      this.bigintBitGet(mask, 12n),
+      lePeriodicAdvertising:                      this.bigintBitGet(mask, 13n),
+      channelSelectionAlgorithmV2:                this.bigintBitGet(mask, 14n),
+      lePowerClass1:                              this.bigintBitGet(mask, 15n),
+      minimumNumberOfUsedChannelsProcedure:       this.bigintBitGet(mask, 16n),
+      connectionCteRequest:                       this.bigintBitGet(mask, 17n),
+      connectionCteResponse:                      this.bigintBitGet(mask, 18n),
+      connectionlessCteTransmitter:               this.bigintBitGet(mask, 19n),
+      connectionlessCteReceiver:                  this.bigintBitGet(mask, 20n),
+      antennaSwitchingDuringCteTransmission:      this.bigintBitGet(mask, 21n),
+      antennaSwitchingDuringCteReception:         this.bigintBitGet(mask, 22n),
+      receivingConstantToneExtensions:            this.bigintBitGet(mask, 23n),
+      periodicAdvertisingSyncTransferSender:      this.bigintBitGet(mask, 24n),
+      periodicAdvertisingSyncTransferRecipient:   this.bigintBitGet(mask, 25n),
+      sleepClockAccuracyUpdates:                  this.bigintBitGet(mask, 26n),
+      remotePublicKeyValidation:                  this.bigintBitGet(mask, 27n),
+      connectedIsochronousStreamMaster:           this.bigintBitGet(mask, 28n),
+      connectedIsochronousStreamSlave:            this.bigintBitGet(mask, 29n),
+      isochronousBroadcaster:                     this.bigintBitGet(mask, 30n),
+      synchronizedReceiver:                       this.bigintBitGet(mask, 31n),
+      isochronousChannels:                        this.bigintBitGet(mask, 32n),
+      lePowerControlRequest:                      this.bigintBitGet(mask, 33n),
+      lePowerChangeIndication:                    this.bigintBitGet(mask, 34n),
+      lePathLossMonitoring:                       this.bigintBitGet(mask, 35n),
+    };
   }
 
   public async leSetRandomAddress(randomAddress: number): Promise<void> {
