@@ -323,18 +323,18 @@ export class LeSetScanEnabled {
 }
 
 export interface LeCreateConnection {
-  scanIntervalMs: number,
-  scanWindowMs: number,
-  initiatorFilterPolicy: number,
-  peerAddressType: LePeerAddressType,
-  peerAddress: Address,
-  ownAddressType: LeOwnAddressType,
-  connectionIntervalMinMs: number,
-  connectionIntervalMaxMs: number,
-  connectionLatency: number,
-  supervisionTimeoutMs: number,
-  minCeLengthMs: number,
-  maxCeLengthMs: number,
+  scanIntervalMs:           number;
+  scanWindowMs:             number;
+  initiatorFilterPolicy:    LeInitiatorFilterPolicy;
+  peerAddressType:          LePeerAddressType;
+  peerAddress:              Address;
+  ownAddressType:           LeOwnAddressType;
+  connectionIntervalMinMs:  number;
+  connectionIntervalMaxMs:  number;
+  connectionLatency:        number;
+  supervisionTimeoutMs:     number;
+  minCeLengthMs:            number;
+  maxCeLengthMs:            number;
 }
 
 export class LeCreateConnection {
@@ -372,13 +372,13 @@ export class LeCreateConnection {
 }
 
 export interface LeConnectionUpdate {
-  connectionHandle: number,
-  connectionIntervalMinMs: number,
-  connectionIntervalMaxMs: number,
-  connectionLatency: number,
-  supervisionTimeoutMs: number,
-  minCeLengthMs: number,
-  maxCeLengthMs: number,
+  connectionHandle: number;
+  connectionIntervalMinMs: number;
+  connectionIntervalMaxMs: number;
+  connectionLatency: number;
+  supervisionTimeoutMs: number;
+  minCeLengthMs: number;
+  maxCeLengthMs: number;
 }
 
 export class LeConnectionUpdate {
@@ -437,9 +437,6 @@ export class LeWhiteList {
   }
 }
 
-export interface LeReadChannelMap {
-
-}
 export class LeReadChannelMap {
   static inParams(connHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
@@ -740,10 +737,10 @@ export class LeTransmitterTestV1 extends LeTest {
 }
 
 export interface LeTransmitterTestV2 {
-  txChannelMhz: number,
-  testDataLength: number,
-  packetPayload: LeTxTestPayload,
-  phy: LeTxPhy,
+  txChannelMhz: number;
+  testDataLength: number;
+  packetPayload: LeTxTestPayload;
+  phy: LeTxPhy;
 }
 
 export class LeTransmitterTestV2 extends LeTest {
@@ -845,12 +842,12 @@ export class LeTestEnd {
 }
 
 export interface LeRemoteConnectionParameterRequestReply {
-  intervalMinMs: number, // 7.5ms - 4000ms
-  intervalMaxMs: number, // 7.5ms - 4000ms
-  latency: number,
-  timeoutMs: number,
-  minCeLengthMs: number,
-  maxCeLengthMs: number,
+  intervalMinMs: number; // 7.5ms - 4000ms
+  intervalMaxMs: number; // 7.5ms - 4000ms
+  latency: number;
+  timeoutMs: number;
+  minCeLengthMs: number;
+  maxCeLengthMs: number;
 }
 
 export class LeRemoteConnectionParameterRequestReply extends LeTest {
@@ -1191,6 +1188,179 @@ export class LeExtendedAdvertisingData {
   }
 }
 
+export interface LeExtendedAdvertisingEnable {
+  enable: boolean;
+  sets: {
+    advertHandle: number;
+    durationMs: number;
+    maxExtendedAdvertisingEvents: number;
+  }[];
+}
+
+export class LeExtendedAdvertisingEnable {
+  static inParams(params: LeExtendedAdvertisingEnable): Buffer {
+    const payload = Buffer.allocUnsafe(1+1+(1+2+1) * params.sets.length);
+
+    let o = 0;
+    o = payload.writeUInt8(params.enable ? 1 : 0, o);
+    o = payload.writeUInt8(params.sets.length,    o);
+
+    for (const set of params.sets) {
+      const duration = Math.floor(set.durationMs / 10);
+      o = payload.writeUIntLE(set.advertHandle,                 o, 1);
+      o = payload.writeUIntLE(duration,                         o, 2);
+      o = payload.writeUIntLE(set.maxExtendedAdvertisingEvents, o, 1);
+    }
+
+    return payload;
+  }
+}
+
+export enum LeInitiatorFilterPolicy {
+  PeerAddress,
+  WhiteList,
+}
+
+export enum LeInitiatingPhy {
+  Phy1M    = 0,
+  Phy2M    = 1,
+  PhyCoded = 2,
+}
+
+interface LeExtendedCreateConnectionPhy {
+  scanIntervalMs:           number;
+  scanWindowMs:             number;
+  connectionIntervalMinMs:  number;
+  connectionIntervalMaxMs:  number;
+  connectionLatency:        number;
+  supervisionTimeoutMs:     number;
+  minCeLengthMs:            number;
+  maxCeLengthMs:            number;
+}
+
+export interface LeExtendedCreateConnection {
+  initiatorFilterPolicy: LeInitiatorFilterPolicy;
+  ownAddressType:        LeOwnAddressType;
+  peerAddressType:       LePeerAddressType;
+  peerAddress:           Address;
+  initiatingPhy: {
+    Phy1M?:    LeExtendedCreateConnectionPhy;
+    Phy2M?:    LeExtendedCreateConnectionPhy;
+    PhyCoded?: LeExtendedCreateConnectionPhy;
+  }
+}
+
+export class LeExtendedCreateConnection {
+  static inParams(params: LeExtendedCreateConnection): Buffer {
+    const physParams: LeExtendedCreateConnectionPhy[] = [];
+
+    let physBitmask = 0;
+
+    if (params.initiatingPhy.Phy1M) {
+      physBitmask |= 1 << LeInitiatingPhy.Phy1M;
+      physParams.push(params.initiatingPhy.Phy1M);
+    }
+    if (params.initiatingPhy.Phy2M) {
+      physBitmask |= 1 << LeInitiatingPhy.Phy2M;
+      physParams.push(params.initiatingPhy.Phy2M);
+    }
+    if (params.initiatingPhy.PhyCoded) {
+      physBitmask |= 1 << LeInitiatingPhy.PhyCoded;
+      physParams.push(params.initiatingPhy.PhyCoded);
+    }
+
+    if (physBitmask === 0) {
+      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+    }
+
+    const payload = Buffer.allocUnsafe(
+      1+1+1+6+1 + physParams.length * (2+2+2+2+2+2+2+2)
+    );
+
+    let o = 0;
+    o = payload.writeUIntLE(params.initiatorFilterPolicy,   o, 1);
+    o = payload.writeUIntLE(params.ownAddressType,          o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,         o, 1);
+    o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 1);
+    o = payload.writeUIntLE(physBitmask,                    o, 1);
+
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.scanIntervalMs,          0.625);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.scanWindowMs,            0.625);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.connectionIntervalMinMs, 1.25);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.connectionIntervalMaxMs, 1.25);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = phyParams.connectionLatency;
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.supervisionTimeoutMs,    10);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.minCeLengthMs,           0.625);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+    for (const phyParams of physParams) {
+      const value = this.msToValue(phyParams.maxCeLengthMs,           0.625);
+      o = payload.writeUIntLE(value, o, 2);
+    }
+
+    return payload;
+  }
+
+  private static msToValue(ms: number, factor: number): number {
+    return Math.round(ms / factor);
+  }
+}
+
+export interface LeTransmitPower {
+  minTxPower: number;
+  maxTxPower: number;
+}
+
+export class LeTransmitPower {
+  static outParams(params?: Buffer): LeTransmitPower {
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return {
+      minTxPower: params.readInt8(0),
+      maxTxPower: params.readInt8(1),
+    };
+  }
+}
+
+export interface LePrivacyMode {
+  peerIdentityAddressType: number;
+  peerIdentityAddress: Address;
+  privacyMode: number;
+}
+
+export class LePrivacyMode {
+  static inParams(params: LePrivacyMode): Buffer {
+    const payload = Buffer.allocUnsafe(8);
+
+    let o = 0;
+    o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+    o = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(params.privacyMode,                     o, 1);
+
+    return payload;
+  }
+}
+
 export enum LeScanResponseDataOperation {
   FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
   FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
@@ -1296,7 +1466,6 @@ export interface LeExtendedScanParameters {
 
 export class LeExtendedScanParameters {
   static inParams(params: LeExtendedScanParameters): Buffer {
-
     const phys = { count: 0, bitmask: 0 };
 
     if (params.scanningPhy.Phy1M) {
@@ -1357,10 +1526,10 @@ export enum LeScanFilterDuplicates {
 }
 
 export interface LeExtendedScanEnabled {
-  enable: boolean,
-  filterDuplicates: LeScanFilterDuplicates,
-  durationMs?: number,
-  periodSec?: number,
+  enable: boolean;
+  filterDuplicates: LeScanFilterDuplicates;
+  durationMs?: number;
+  periodSec?: number;
 }
 
 export class LeExtendedScanEnabled {

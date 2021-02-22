@@ -44,7 +44,9 @@ import {
   LeRemoveDeviceFromResolvingList, LeReadResolvingListSize, LeMaximumDataLength, LeTxRxPhy,
   ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
-  LeNumberOfSupportedAdvertisingSets
+  LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
+  LeTransmitPower,
+  LeExtendedCreateConnection
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -571,10 +573,37 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
+  public async leSetExtendedAdvertisingEnable(params: LeExtendedAdvertisingEnable) {
+    const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingEnable;
+    const payload = LeExtendedAdvertisingEnable.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leReadMaximumAdvertisingDataLength(): Promise<number> {
+    const ocf = HciOcfLeControllerCommands.ReadMaximumAdvertisingDataLength;
+    const result = await this.cmd.leController({ ocf });
+    const params = result.returnParameters;
+    if (!params || params.length < 2) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return params.readUInt16LE(0);
+  }
+
   public async leReadNumberOfSupportedAdvertisingSets(): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadNumberOfSupportedAdvertisingSets;
     const result = await this.cmd.leController({ ocf });
     return LeNumberOfSupportedAdvertisingSets.outParams(result.returnParameters);
+  }
+
+  public async leRemoveAdvertisingSet(advertHandle: number): Promise<void> {
+    const payload = Buffer.from([ advertHandle ]);
+    const ocf = HciOcfLeControllerCommands.RemoveAdvertisingSet;
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leClearAdvertisingSets(): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.ClearAdvertisingSets;
+    await this.cmd.leController({ ocf });
   }
 
   public async leSetExtendedScanParameters(params: LeExtendedScanParameters): Promise<void> {
@@ -586,6 +615,24 @@ export class Hci extends EventEmitter {
   public async leSetExtendedScanEnable(params: LeExtendedScanEnabled): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetExtendedScanEnable;
     const payload = LeExtendedScanEnabled.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leExtendedCreateConnection(params: LeExtendedCreateConnection): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.ReadTransmitPower;
+    const payload = LeExtendedCreateConnection.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leReadTransmitPower(): Promise<LeTransmitPower> {
+    const ocf = HciOcfLeControllerCommands.ReadTransmitPower;
+    const result = await this.cmd.leController({ ocf });
+    return LeTransmitPower.outParams(result.returnParameters);
+  }
+
+  public async leSetPrivacyMode(params: LePrivacyMode): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.SetPrivacyMode;
+    const payload = LePrivacyMode.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 
