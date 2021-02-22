@@ -294,7 +294,7 @@ export enum HciOcfLeControllerCommands {
   SetPeriodicAdvertisingEnable                        = 0x0040, // LE Set Periodic Advertising Enable
   SetExtendedScanParameters                           = 0x0041, // * LE Set Extended Scan Parameters
   SetExtendedScanEnable                               = 0x0042, // * LE Set Extended Scan Enable
-  ExtendedCreateConnection                            = 0x0043, // i LE Extended Create Connection
+  ExtendedCreateConnection                            = 0x0043, // * LE Extended Create Connection
   PeriodicAdvertisingCreateSync                       = 0x0044, // LE Periodic Advertising Create Sync
   PeriodicAdvertisingCreateSyncCancel                 = 0x0045, // LE Periodic Advertising Create Sync Cancel
   PeriodicAdvertisingTerminateSync                    = 0x0046, // LE Periodic Advertising Terminate Sync
