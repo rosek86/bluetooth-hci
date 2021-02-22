@@ -29,9 +29,8 @@ import {
   ReadLocalSupportedCommands, ReadRssi
 } from './HciInformationParameters';
 import {
-  LeSupportedStates, LeScanFilterDuplicates,
-  LeExtAdvReport, LeExtAdvEventTypeParser, LeEvents, LeSetEventsMask, LeBufferSize,
-  LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
+  LeSupportedStates, LeExtAdvReport, LeExtAdvEventTypeParser, LeEvents, LeSetEventsMask,
+  LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
   LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
   LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
   LeScanParameters, LeCreateConnection, LeSetScanParameters, LeSetScanEnabled, LeConnectionUpdate,
@@ -45,8 +44,7 @@ import {
   ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower,
-  LeExtendedCreateConnection
+  LeTransmitPower, LeExtendedCreateConnection
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
