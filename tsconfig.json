@@ -16,9 +16,9 @@
     "declaration": true
   },
   "files": [
-    "./src/index.ts",
-    "./src/H4.ts",
-    "./src/Address.ts",
-    "./src/AdvertParser.ts"
+    "src/index.ts",
+    "src/H4.ts",
+    "src/Address.ts",
+    "src/AdvDataParser.ts"
   ]
 }

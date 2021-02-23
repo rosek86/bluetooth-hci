@@ -7,16 +7,16 @@ export interface AdvDataField {
 }
 
 export enum AdvDataType {
-  Flags                                   = 0x01,
-  IncompleteListOf16ServiceClassUuids     = 0x02,
-  CompleteListOf16bitServiceClassUuids    = 0x03,
-  IncompleteListOf32bitServiceClassUuids  = 0x04,
-  CompleteListOf32bitServiceClassUuids    = 0x05,
-  IncompleteListOf128bitServiceClassUuids = 0x06,
-  CompleteListOf128bitServiceClassUuids   = 0x07,
-  ShortenedLocalName                      = 0x08,
-  CompleteLocalName                       = 0x09,
-  TxPowerLevel                            = 0x0A,
+  Flags                                   = 0x01, // *
+  IncompleteListOf16bitServiceClassUuids  = 0x02, // *
+  CompleteListOf16bitServiceClassUuids    = 0x03, // *
+  IncompleteListOf32bitServiceClassUuids  = 0x04, // *
+  CompleteListOf32bitServiceClassUuids    = 0x05, // *
+  IncompleteListOf128bitServiceClassUuids = 0x06, // *
+  CompleteListOf128bitServiceClassUuids   = 0x07, // *
+  ShortenedLocalName                      = 0x08, // *
+  CompleteLocalName                       = 0x09, // *
+  TxPowerLevel                            = 0x0A, // *
   ClassOfDevice                           = 0x0D,
   SimplePairingHashC                      = 0x0E,
   SimplePairingHashC192                   = 0x0E,
@@ -26,10 +26,10 @@ export enum AdvDataType {
   SecurityManagerTkValue                  = 0x10,
   SecurityManagerOobFlags                 = 0x11,
   SlaveConnectionIntervalRange            = 0x12,
-  ListOf16bitServiceSolicitationUuids     = 0x14,
-  ListOf128bitServiceSolicitationUuids    = 0x15,
-  ServiceData                             = 0x16,
-  ServiceData16bitUuid                    = 0x16,
+  ListOf16bitServiceSolicitationUuids     = 0x14, // *
+  ListOf128bitServiceSolicitationUuids    = 0x15, // *
+  ServiceData                             = 0x16, // *
+  ServiceData16bitUuid                    = 0x16, // *
   PublicTargetAddress                     = 0x17,
   RandomTargetAddress                     = 0x18,
   Appearance                              = 0x19,
@@ -38,9 +38,9 @@ export enum AdvDataType {
   LeRole                                  = 0x1C,
   SimplePairingHashC256                   = 0x1D,
   SimplePairingRandomizerR256             = 0x1E,
-  ListOf32bitServiceSolicitationUuids     = 0x1F,
-  ServiceData32bitUuid                    = 0x20,
-  ServiceData128bitUuid                   = 0x21,
+  ListOf32bitServiceSolicitationUuids     = 0x1F, // *
+  ServiceData32bitUuid                    = 0x20, // *
+  ServiceData128bitUuid                   = 0x21, // *
   LeSecureConnectionsConfirmationValue    = 0x22,
   LeSecureConnectionsRandomValue          = 0x23,
   Uri                                     = 0x24,
@@ -54,8 +54,7 @@ export enum AdvDataType {
   BigInfo                                 = 0x2C,
   BroadcastCode                           = 0x2D,
   InformationData3d                       = 0x3D,
-  ManufacturerSpecificData                = 0xFF,
-
+  ManufacturerSpecificData                = 0xFF, // *
 }
 
 export const AdvDataTypeLabel = [
@@ -108,8 +107,27 @@ export const AdvDataTypeLabel = [
   '3D Information Data',
   'Manufacturer Specific Data',
 ];
+
+export interface AdvData {
+  flags?: number;
+  serviceUuids?: string[];
+  serviceSolicitationUuids?: string[];
+  localName?: string;
+  shortenedLocalName?: string;
+  completeLocalName?: string;
+  txPowerLevel?: number;
+  manufacturerData?: {
+    ident: number;
+    data: Buffer;
+  };
+  serviceData?: {
+    uuid: string;
+    data: Buffer;
+  }[];
+}
+
 export class AdvDataParser {
-  static parse(advert: Buffer): AdvDataField[] {
+  static parse(advert: Buffer): AdvData {
     const fields: AdvDataField[] = [];
 
     let o = 0;
@@ -126,13 +144,136 @@ export class AdvDataParser {
       o += len - 1;
 
       fields.push({ type, data });
-
-      if (type === 8 || type === 9) {
-        const name = data.toString('ascii');
-        console.log(name);
-      }
     }
 
-    return fields;
+    const advData: AdvData = {};
+
+    for (const field of fields) {
+      this.parseField(advData, field);
+    }
+
+    return advData;
+  }
+
+  private static parseField(advData: AdvData, field: { type: number, data: Buffer }): void {
+    switch (field.type) {
+      case AdvDataType.Flags:
+        advData.flags = field.data[0];
+        break;
+
+      case AdvDataType.IncompleteListOf16bitServiceClassUuids:
+      case AdvDataType.CompleteListOf16bitServiceClassUuids:
+        for (let j = 0; j < field.data.length; j += 2) {
+          const uuid = field.data.slice(j, j + 2).reverse().toString('hex');
+
+          advData.serviceUuids = advData.serviceUuids ?? [];
+          if (advData.serviceUuids.indexOf(uuid) === -1) {
+            advData.serviceUuids.push(uuid);
+          }
+        }
+        break;
+
+      case AdvDataType.IncompleteListOf32bitServiceClassUuids:
+      case AdvDataType.CompleteListOf32bitServiceClassUuids:
+        for (let j = 0; j < field.data.length; j += 4) {
+          const uuid = field.data.slice(j, j + 4).reverse().toString('hex');
+
+          advData.serviceUuids = advData.serviceUuids ?? [];
+          if (advData.serviceUuids.indexOf(uuid) === -1) {
+            advData.serviceUuids.push(uuid);
+          }
+        }
+        break;
+    
+      case AdvDataType.IncompleteListOf128bitServiceClassUuids:
+      case AdvDataType.CompleteListOf128bitServiceClassUuids:
+        for (let j = 0; j < field.data.length; j += 16) {
+          const uuid = field.data.slice(j, j + 16).reverse().toString('hex');
+          if (!uuid) {
+            continue;
+          }
+
+          advData.serviceUuids = advData.serviceUuids ?? [];
+          if (advData.serviceUuids.indexOf(uuid) === -1) {
+            advData.serviceUuids.push(uuid);
+          }
+        }
+        break;
+
+      case AdvDataType.ShortenedLocalName:
+        advData.shortenedLocalName = field.data.toString('utf8');
+        if (!advData.localName) {
+          advData.localName = advData.shortenedLocalName;
+        }
+        break;
+      case AdvDataType.CompleteLocalName:
+        advData.completeLocalName = field.data.toString('utf8');
+        advData.localName = advData.completeLocalName;
+        break;
+
+      case AdvDataType.TxPowerLevel:
+        advData.txPowerLevel = field.data.readInt8(0);
+        break;
+
+      case AdvDataType.ListOf16bitServiceSolicitationUuids:
+        for (let j = 0; j < field.data.length; j += 2) {
+          const uuid = field.data.slice(j, j + 2).reverse().toString('hex');
+
+          advData.serviceSolicitationUuids = advData.serviceSolicitationUuids ?? [];
+          if (advData.serviceSolicitationUuids.indexOf(uuid) === -1) {
+            advData.serviceSolicitationUuids.push(uuid);
+          }
+        }
+        break;
+      case AdvDataType.ListOf32bitServiceSolicitationUuids:
+        for (let j = 0; j < field.data.length; j += 4) {
+          const uuid = field.data.slice(j, j + 4).reverse().toString('hex');
+
+          advData.serviceSolicitationUuids = advData.serviceSolicitationUuids ?? [];
+          if (advData.serviceSolicitationUuids.indexOf(uuid) === -1) {
+            advData.serviceSolicitationUuids.push(uuid);
+          }
+        }
+        break;
+      case AdvDataType.ListOf128bitServiceSolicitationUuids:
+        for (let j = 0; j < field.data.length; j += 16) {
+          const uuid = field.data.slice(j, j + 16).reverse().toString('hex');
+
+          advData.serviceSolicitationUuids = advData.serviceSolicitationUuids ?? [];
+          if (advData.serviceSolicitationUuids.indexOf(uuid) === -1) {
+            advData.serviceSolicitationUuids.push(uuid);
+          }
+        }
+        break;
+
+      case AdvDataType.ServiceData16bitUuid:
+        advData.serviceData = advData.serviceData ?? [];
+        advData.serviceData.push({
+          uuid: field.data.slice(0, 2).reverse().toString('hex'),
+          data: field.data.slice(2, field.data.length),
+        });
+        break;
+      case AdvDataType.ServiceData32bitUuid:
+        advData.serviceData = advData.serviceData ?? [];
+        advData.serviceData.push({
+          uuid: field.data.slice(0, 4).reverse().toString('hex'),
+          data: field.data.slice(4, field.data.length),
+        });
+        break;
+      case AdvDataType.ServiceData128bitUuid:
+        advData.serviceData = advData.serviceData ?? [];
+        advData.serviceData.push({
+          uuid: field.data.slice(0, 16).reverse().toString('hex'),
+          data: field.data.slice(16, field.data.length),
+        });
+        break;
+
+      case AdvDataType.ManufacturerSpecificData:
+        advData.manufacturerData = {
+          ident: field.data.readUInt16LE(0),
+          data:  field.data.slice(2),
+        };
+        break;
+    }
   }
 }
