@@ -160,8 +160,10 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
 
     hci.on('ext-adv-report', (report) => {
       // console.log(JSON.stringify(report, null, 2));
-      const advData = AdvDataParser.parse(report.data);
-      console.log({ report, advData });
+      const advData = AdvDataParser.parse(report);
+      if (advData.localName) {
+        console.log({ report, advData });
+      }
       // console.log(JSON.stringify(result))
     });
 
