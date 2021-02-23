@@ -3,7 +3,7 @@ const SerialPort = require('serialport');
 const H4 = require('../lib/H4').H4;
 const Hci = require('../lib/Hci').Hci;
 const Address = require('../lib/Address').Address;
-const AdvertParser = require('../lib/AdvertParser').AdvertParser;
+const AdvDataParser = require('../lib/AdvertParser').AdvDataParser;
 
 const HciLe = require('../lib/HciLe');
 
@@ -160,8 +160,7 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
 
     hci.on('ext-adv-report', (report) => {
       // console.log(JSON.stringify(report, null, 2));
-
-      const result = AdvertParser.parse(report.data)
+      AdvDataParser.parse(report.data);
       // console.log(JSON.stringify(result))
     });
 
