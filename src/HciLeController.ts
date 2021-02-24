@@ -1758,3 +1758,40 @@ export interface LeExtAdvReport {
   directAddress: number;
   data: Buffer|null;
 }
+
+export enum LeEnhPeerAddressType {
+  PublicDeviceAddress,
+  RandomDeviceAddress,
+  PublicIdentityAddress,
+  RandomIdentyAddress,
+}
+
+export enum LeMasterClockAccuracy {
+  ppm500 = 0x00,
+  ppm250 = 0x01,
+  ppm150 = 0x02,
+  ppm100 = 0x03,
+  ppm75  = 0x04,
+  ppm50  = 0x05,
+  ppm30  = 0x06,
+  ppm20  = 0x07,
+}
+
+export enum LeConnectionRole {
+  Master,
+  Slave
+}
+
+
+export interface LeEnhConnectionCreated {
+  connHandle: number;
+  role: LeConnectionRole;
+  peerAddressType: LeEnhPeerAddressType;
+  peerAddress: Address;
+  localResolvablePrivateAddress: Address;
+  peerResolvablePrivateAddress: Address;
+  connectionIntervalMs: number;
+  connectionLatency: number;
+  supervisionTimeoutMs: number;
+  masterClockAccuracy: LeMasterClockAccuracy;
+}

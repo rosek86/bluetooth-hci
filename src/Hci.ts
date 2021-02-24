@@ -3,7 +3,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
 
-import { HciErrorCode } from './HciError';
+import { HciErrorCode, makeHciError } from './HciError';
 import { HciDisconnectReason } from './HciError';
 import { HciParserError, makeParserError } from './HciError';
 
@@ -44,7 +44,7 @@ import {
   ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection
+  LeTransmitPower, LeExtendedCreateConnection, LeEnhConnectionCreated
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -68,6 +68,7 @@ enum AclDataBroadcast {
 
 export declare interface Hci {
   on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
+  on(event: 'enh-conn-created', listener: (err: Error|null, report?: LeEnhConnectionCreated) => void): this;
   on(event: string, listener: Function): this;
 }
 
@@ -739,7 +740,14 @@ export class Hci extends EventEmitter {
 
   private parseLeEnhConnectionCreated(data: Buffer): void {
     let o = 0;
-    const status                        = data.readUIntLE(o, 1); o += 1;
+
+    const status = data.readUIntLE(o, 1); o += 1;
+
+    if (status !== 0) {
+      this.emit('enh-conn-created', makeHciError(status));
+      return;
+    }
+
     const connHandle                    = data.readUIntLE(o, 2); o += 2;
     const role                          = data.readUIntLE(o, 1); o += 1;
     const peerAddressType               = data.readUIntLE(o, 1); o += 1;
@@ -751,20 +759,20 @@ export class Hci extends EventEmitter {
     const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
     const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
 
-    const result = {
-      status,
+    const result: LeEnhConnectionCreated = {
       connHandle,
       role,
       peerAddressType,
       peerAddress:                    Address.from(peerAddress),
       localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress),
       peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress),
-      connectionInterval,
+      connectionIntervalMs:           connectionInterval / 1.25,
       connectionLatency,
-      supervisionTimeout,
+      supervisionTimeoutMs:           supervisionTimeout / 10,
       masterClockAccuracy,
-    }
-    this.emit('enh-conn-created', result);
+    };
+
+    this.emit('enh-conn-created', null, result);
   }
 
   private parseLeExtAdvertReport(data: Buffer): void {
