@@ -5,7 +5,7 @@ const Hci = require('../lib/Hci').Hci;
 const Address = require('../lib/Address').Address;
 const AdvDataParser = require('../lib/AdvDataParser').AdvDataParser;
 
-const HciLe = require('../lib/HciLe');
+const HciLe = require('../lib/HciLeController');
 
 const LePhy = HciLe.LePhy;
 const LeAdvertisingEventProperties = HciLe.LeAdvertisingEventProperties;
@@ -18,6 +18,7 @@ const LeSecondaryAdvertisingPhy = HciLe.LeSecondaryAdvertisingPhy;
 const LeScanningFilterPolicy = HciLe.LeScanningFilterPolicy;
 const LeScanType = HciLe.LeScanType;
 const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
+const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
 
 (async () => {
   try {
@@ -82,6 +83,9 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
 
     await hci.leSetEventMask({
       extendedAdvertisingReport: true,
+      enhancedConnectionComplete: true,
+      connectionComplete: true,
+      channelSelectionAlgorithm: true,
     });
 
     // const key = Buffer.alloc(16);
@@ -110,8 +114,8 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     });
 
     await hci.leSetDefaultPhy({
-      txPhys: LePhy.PhyCoded,
-      rxPhys: LePhy.PhyCoded,
+      txPhys: LePhy.Phy1M,
+      rxPhys: LePhy.Phy1M,
     });
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
@@ -141,6 +145,16 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
     await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
+
+    // await hci.leSetScanParameters({
+    //   intervalMs: 100,
+    //   windowMs: 100,
+    //   ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+    //   scanningFilterPolicy: LeScanningFilterPolicy.All,
+    //   type: LeScanType.Active,
+    // });
+    // await hci.leSetScanEnable(true, false);
+
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.All,
@@ -152,19 +166,46 @@ const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
         }
       }
     });
-
     await hci.leSetExtendedScanEnable({
       enable: true,
       filterDuplicates: LeScanFilterDuplicates.Enabled,
     });
 
-    hci.on('ext-adv-report', (report) => {
-      // console.log(JSON.stringify(report, null, 2));
-      const advData = AdvDataParser.parse(report);
-      if (advData.localName) {
-        console.log({ report, advData });
+    hci.on('ext-adv-report', async (report) => {
+      try {
+        // console.log(JSON.stringify(report, null, 2));
+        const advData = AdvDataParser.parse(report);
+        if (advData.localName) {
+          console.log({ report, advData });
+        }
+        // console.log(JSON.stringify(result))
+
+        if (advData.localName) {
+          await hci.leSetExtendedScanEnable({ enable: false });
+
+          await hci.leExtendedCreateConnection({
+            initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
+            ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+            peerAddressType: report.addressType,
+            peerAddress: report.address,
+            initiatingPhy: {
+              Phy1M: {
+                scanIntervalMs: 100,
+                scanWindowMs: 100,
+                connectionIntervalMinMs: 7.5,
+                connectionIntervalMaxMs: 100,
+                connectionLatency: 0,
+                supervisionTimeoutMs: 4000,
+                minCeLengthMs: 2.5,
+                maxCeLengthMs: 3.75,
+              },
+            }
+          });
+          console.log('connecting...');
+        }
+      } catch (err) {
+        console.log(err);
       }
-      // console.log(JSON.stringify(result))
     });
 
     console.log('end');

@@ -714,9 +714,20 @@ export class Hci extends EventEmitter {
     const payload = data.slice(1);
 
     switch  (eventType) {
+      case HciLeEvent.AdvertisingReport:
+        console.log(data);
+        break;
+      case HciLeEvent.ConnectionComplete:
+        console.log('connection-complete', data);
+        break;
+      case HciLeEvent.EnhancedConnectionComplete:
+        console.log('enhanced-connection-complete', data);
+        break;
       case HciLeEvent.ExtendedAdvertisingReport:
         this.parseLeExtAdvertReport(payload);
         break;
+      default:
+        console.log('unknown event');
     }
   }
 

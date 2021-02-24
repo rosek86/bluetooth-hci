@@ -1281,7 +1281,7 @@ export class LeExtendedCreateConnection {
     o = payload.writeUIntLE(params.initiatorFilterPolicy,   o, 1);
     o = payload.writeUIntLE(params.ownAddressType,          o, 1);
     o = payload.writeUIntLE(params.peerAddressType,         o, 1);
-    o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 1);
+    o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 6);
     o = payload.writeUIntLE(physBitmask,                    o, 1);
 
     for (const phyParams of physParams) {
@@ -1527,7 +1527,7 @@ export enum LeScanFilterDuplicates {
 
 export interface LeExtendedScanEnabled {
   enable: boolean;
-  filterDuplicates: LeScanFilterDuplicates;
+  filterDuplicates?: LeScanFilterDuplicates;
   durationMs?: number;
   periodSec?: number;
 }
@@ -1537,13 +1537,18 @@ export class LeExtendedScanEnabled {
     const duration = Math.round((params.durationMs ?? 0) / 10);
     const period   = Math.round((params.periodSec  ?? 0) / 1.28);
 
+    let filterDuplicates = params.filterDuplicates;
+    if (filterDuplicates === undefined) {
+      filterDuplicates = LeScanFilterDuplicates.Disabled;
+    }
+
     const payload = Buffer.allocUnsafe(1+1+2+2);
 
     let o = 0;
-    o = payload.writeUIntLE(params.enable ? 1 : 0,   o, 1);
-    o = payload.writeUIntLE(params.filterDuplicates, o, 1);
-    o = payload.writeUIntLE(duration,                o, 2);
-    o = payload.writeUIntLE(period,                  o, 2);
+    o = payload.writeUIntLE(params.enable ? 1 : 0,  o, 1);
+    o = payload.writeUIntLE(filterDuplicates,       o, 1);
+    o = payload.writeUIntLE(duration,               o, 2);
+    o = payload.writeUIntLE(period,                 o, 2);
 
     return payload;
   }
