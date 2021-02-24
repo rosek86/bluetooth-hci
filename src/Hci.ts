@@ -617,7 +617,7 @@ export class Hci extends EventEmitter {
   }
 
   public async leExtendedCreateConnection(params: LeExtendedCreateConnection): Promise<void> {
-    const ocf = HciOcfLeControllerCommands.ReadTransmitPower;
+    const ocf = HciOcfLeControllerCommands.ExtendedCreateConnection;
     const payload = LeExtendedCreateConnection.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
@@ -703,6 +703,9 @@ export class Hci extends EventEmitter {
           opcode:         payload.readUInt16LE(2),
         });
         break;
+      case HciEvent.DisconnectionComplete:
+        console.log('disconnected');
+        break;
       case HciEvent.LEMeta:
         this.onLeEvent(payload);
         break;
@@ -722,6 +725,9 @@ export class Hci extends EventEmitter {
         break;
       case HciLeEvent.EnhancedConnectionComplete:
         console.log('enhanced-connection-complete', data);
+        break;
+      case HciLeEvent.ChannelSelectionAlgorithm:
+        console.log('chan-sel-algo', data);
         break;
       case HciLeEvent.ExtendedAdvertisingReport:
         this.parseLeExtAdvertReport(payload);
