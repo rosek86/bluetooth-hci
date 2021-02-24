@@ -4,7 +4,7 @@ export enum HciEvent {
   InquiryResult                                       = 0x02, // Inquiry Result
   ConnectionComplete                                  = 0x03, // Connection Complete
   ConnectionRequest                                   = 0x04, // Connection Request
-  DisconnectionComplete                               = 0x05, // Disconnection Complete
+  DisconnectionComplete                               = 0x05, // * Disconnection Complete
   AuthenticationComplete                              = 0x06, // Authentication Complete
   RemoteNameRequestComplete                           = 0x07, // Remote Name Request Complete
   EncryptionChange                                    = 0x08, // Encryption Change
@@ -79,7 +79,7 @@ export enum HciEvent {
 }
 
 export enum HciLeEvent {
-  ConnectionComplete                                  = 0x01, // LE Connection Complete
+  ConnectionComplete                                  = 0x01, // * LE Connection Complete
   AdvertisingReport                                   = 0x02, // LE Advertising Report
   ConnectionUpdateComplete                            = 0x03, // LE Connection Update Complete
   ReadRemoteFeaturesComplete                          = 0x04, // LE Read Remote Features Complete
@@ -88,17 +88,17 @@ export enum HciLeEvent {
   DataLengthChange                                    = 0x07, // LE Data Length Change
   ReadLocalP256PublicKeyComplete                      = 0x08, // LE Read Local P-256 Public Key Complete
   GenerateDhKeyComplete                               = 0x09, // LE Generate DHKey Complete
-  EnhancedConnectionComplete                          = 0x0A, // LE Enhanced Connection Complete
+  EnhancedConnectionComplete                          = 0x0A, // * LE Enhanced Connection Complete
   DirectedAdvertisingReport                           = 0x0B, // LE Directed Advertising Report
   PhyUpdateComplete                                   = 0x0C, // LE PHY Update Complete
-  ExtendedAdvertisingReport                           = 0x0D, // LE Extended Advertising Report
+  ExtendedAdvertisingReport                           = 0x0D, // * LE Extended Advertising Report
   PeriodicAdvertisingSyncEstablished                  = 0x0E, // LE Periodic Advertising Sync Established
   PeriodicAdvertisingReport                           = 0x0F, // LE Periodic Advertising Report
   PeriodicAdvertisingSyncLost                         = 0x10, // LE Periodic Advertising Sync Lost
   ScanTimeout                                         = 0x11, // LE Scan Timeout
   AdvertisingSetTerminated                            = 0x12, // LE Advertising Set Terminated
   ScanRequestReceived                                 = 0x13, // LE Scan Request Received
-  ChannelSelectionAlgorithm                           = 0x14, // LE Channel Selection Algorithm
+  ChannelSelectionAlgorithm                           = 0x14, // * LE Channel Selection Algorithm
   ConnectionlessIqReport                              = 0x15, // LE Connectionless IQ Report
   ConnectionIqReport                                  = 0x16, // LE Connection IQ Report
   CteRequestFailed                                    = 0x17, // LE CTE Request Failed

@@ -1955,3 +1955,8 @@ export class LeEnhConnectionCreated {
     return { status, eventData };
   }
 }
+
+export interface LeChannelSelAlgoEvent {
+  connHandle: number;
+  algorithm:  number;
+}

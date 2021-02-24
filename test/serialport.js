@@ -77,6 +77,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
 
     await hci.setEventMask({
       disconnectionComplete: true,
+      encryptionChange: true,
       leMeta: true,
     });
     await hci.setEventMaskPage2({});
@@ -213,6 +214,9 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
         console.log('connected');
         console.log(event);
       }
+    });
+    hci.on('ch-sel-algo', (event) => {
+      console.log(event);
     });
 
     console.log('end');

@@ -29,7 +29,7 @@ import {
   ReadLocalSupportedCommands, ReadRssi
 } from './HciInformationParameters';
 import {
-  LeSupportedStates, LeExtAdvReport, LeExtAdvEventTypeParser, LeEvents, LeSetEventsMask,
+  LeSupportedStates, LeExtAdvReport, LeEvents, LeSetEventsMask,
   LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
   LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
   LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
@@ -44,7 +44,8 @@ import {
   ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection, LeConnectionCreated, LeEnhConnectionCreated
+  LeTransmitPower, LeExtendedCreateConnection, LeConnectionCreated, LeEnhConnectionCreated,
+  LeChannelSelAlgoEvent
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -68,7 +69,9 @@ enum AclDataBroadcast {
 
 export declare interface Hci {
   on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'conn-created', listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
+  on(event: 'conn-created',   listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
+  on(event: 'ch-sel-algo',    listener: (event: LeChannelSelAlgoEvent) => void): this;
+
   on(event: string, listener: Function): this;
 }
 
@@ -657,7 +660,13 @@ export class Hci extends EventEmitter {
   public onData(packetType: HciPacketType, data: Buffer): void {
     try {
       if (packetType === HciPacketType.HciEvent) {
-        this.onEvent(data);
+        return this.onEvent(data);
+      }
+      if (packetType === HciPacketType.HciAclData) {
+        return;
+      }
+      if (packetType === HciPacketType.HciCommand) {
+        return;
       }
     } catch (err) {
       debug(err);
@@ -680,6 +689,12 @@ export class Hci extends EventEmitter {
     }
 
     switch (eventCode) {
+      case HciEvent.DisconnectionComplete:
+        console.log('disconnected');
+        break;
+      case HciEvent.EncryptionChange:
+        console.log('encryption change');
+        break;
       case HciEvent.CommandComplete:
         if (payload.length < 4) {
           debug(`(evt-cmd_complete) invalid payload size: ${payload.length}`);
@@ -703,8 +718,8 @@ export class Hci extends EventEmitter {
           opcode:         payload.readUInt16LE(2),
         });
         break;
-      case HciEvent.DisconnectionComplete:
-        console.log('disconnected');
+      case HciEvent.NumberOfCompletedPackets:
+        console.log('NumberOfCompletedPackets')
         break;
       case HciEvent.LEMeta:
         this.onLeEvent(payload);
@@ -718,7 +733,7 @@ export class Hci extends EventEmitter {
 
     switch  (eventType) {
       case HciLeEvent.AdvertisingReport:
-        console.log(data);
+        // console.log(data);
         break;
       case HciLeEvent.ConnectionComplete:
         this.parseLeConnectionCreated(payload);
@@ -727,7 +742,7 @@ export class Hci extends EventEmitter {
         this.parseLeEnhConnectionCreated(payload);
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
-        console.log('chan-sel-algo', data);
+        this.parseLeChannelSelAlgo(payload);
         break;
       case HciLeEvent.ExtendedAdvertisingReport:
         this.parseLeExtAdvertReport(payload);
@@ -755,6 +770,13 @@ export class Hci extends EventEmitter {
     } else {
       this.emit('conn-created', null, event.eventData!);
     }
+  }
+
+  private parseLeChannelSelAlgo(data: Buffer): void {
+    this.emit('ch-sel-algo', {
+      connHandle: data.readUIntLE(0, 2),
+      algorithm:  data.readUIntLE(2, 1),
+    });
   }
 
   private parseLeExtAdvertReport(data: Buffer): void {
