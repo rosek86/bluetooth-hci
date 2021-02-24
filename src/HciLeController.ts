@@ -1871,18 +1871,51 @@ export enum LeConnectionRole {
   Slave
 }
 
-
-export interface LeEnhConnectionCreated {
+export interface LeConnectionCreated {
   connHandle: number;
   role: LeConnectionRole;
   peerAddressType: LeEnhPeerAddressType;
   peerAddress: Address;
-  localResolvablePrivateAddress: Address;
-  peerResolvablePrivateAddress: Address;
+  localResolvablePrivateAddress?: Address;
+  peerResolvablePrivateAddress?: Address;
   connectionIntervalMs: number;
   connectionLatency: number;
   supervisionTimeoutMs: number;
   masterClockAccuracy: LeMasterClockAccuracy;
+}
+
+export class LeConnectionCreated {
+  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeEnhConnectionCreated } {
+    let o = 0;
+
+    const status = data.readUIntLE(o, 1); o += 1;
+
+    if (status !== 0) {
+      return { status };
+    }
+
+    const connHandle                    = data.readUIntLE(o, 2); o += 2;
+    const role                          = data.readUIntLE(o, 1); o += 1;
+    const peerAddressType               = data.readUIntLE(o, 1); o += 1;
+    const peerAddress                   = data.readUIntLE(o, 6); o += 6;
+    const connectionInterval            = data.readUIntLE(o, 2); o += 2;
+    const connectionLatency             = data.readUIntLE(o, 2); o += 2;
+    const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
+    const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
+
+    const eventData: LeConnectionCreated = {
+      connHandle,
+      role,
+      peerAddressType,
+      peerAddress:                    Address.from(peerAddress),
+      connectionIntervalMs:           connectionInterval * 1.25,
+      connectionLatency,
+      supervisionTimeoutMs:           supervisionTimeout * 10,
+      masterClockAccuracy,
+    };
+
+    return { status, eventData };
+  }
 }
 
 export class LeEnhConnectionCreated {
@@ -1906,7 +1939,7 @@ export class LeEnhConnectionCreated {
     const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
     const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
 
-    const eventData: LeEnhConnectionCreated = {
+    const eventData: LeConnectionCreated = {
       connHandle,
       role,
       peerAddressType,

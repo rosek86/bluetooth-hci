@@ -44,7 +44,7 @@ import {
   ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection, LeEnhConnectionCreated
+  LeTransmitPower, LeExtendedCreateConnection, LeConnectionCreated, LeEnhConnectionCreated
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -68,7 +68,7 @@ enum AclDataBroadcast {
 
 export declare interface Hci {
   on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'enh-conn-created', listener: (err: Error|null, event?: LeEnhConnectionCreated) => void): this;
+  on(event: 'conn-created', listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
   on(event: string, listener: Function): this;
 }
 
@@ -721,7 +721,7 @@ export class Hci extends EventEmitter {
         console.log(data);
         break;
       case HciLeEvent.ConnectionComplete:
-        console.log('connection-complete', data);
+        this.parseLeConnectionCreated(payload);
         break;
       case HciLeEvent.EnhancedConnectionComplete:
         this.parseLeEnhConnectionCreated(payload);
@@ -737,13 +737,23 @@ export class Hci extends EventEmitter {
     }
   }
 
+  private parseLeConnectionCreated(data: Buffer): void {
+    const event = LeConnectionCreated.parse(data);
+
+    if (event.status !== 0) {
+      this.emit('conn-created', makeHciError(event.status));
+    } else {
+      this.emit('conn-created', null, event.eventData!);
+    }
+  }
+
   private parseLeEnhConnectionCreated(data: Buffer): void {
     const event = LeEnhConnectionCreated.parse(data);
 
     if (event.status !== 0) {
-      this.emit('enh-conn-created', makeHciError(event.status));
+      this.emit('conn-created', makeHciError(event.status));
     } else {
-      this.emit('enh-conn-created', null, event.eventData!);
+      this.emit('conn-created', null, event.eventData!);
     }
   }
 

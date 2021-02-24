@@ -208,7 +208,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
 
-    hci.on('enh-conn-created', (status, event) => {
+    hci.on('conn-created', (status, event) => {
       if (status === null) {
         console.log('connected');
         console.log(event);
