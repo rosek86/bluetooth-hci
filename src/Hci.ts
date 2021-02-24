@@ -724,7 +724,7 @@ export class Hci extends EventEmitter {
         console.log('connection-complete', data);
         break;
       case HciLeEvent.EnhancedConnectionComplete:
-        console.log('enhanced-connection-complete', data);
+        this.parseLeEnhConnectionCreated(payload);
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
         console.log('chan-sel-algo', data);
@@ -735,6 +735,36 @@ export class Hci extends EventEmitter {
       default:
         console.log('unknown event');
     }
+  }
+
+  private parseLeEnhConnectionCreated(data: Buffer): void {
+    let o = 0;
+    const status                        = data.readUIntLE(o, 1); o += 1;
+    const connHandle                    = data.readUIntLE(o, 2); o += 2;
+    const role                          = data.readUIntLE(o, 1); o += 1;
+    const peerAddressType               = data.readUIntLE(o, 1); o += 1;
+    const peerAddress                   = data.readUIntLE(o, 6); o += 6;
+    const localResolvablePrivateAddress = data.readUIntLE(o, 6); o += 6;
+    const peerResolvablePrivateAddress  = data.readUIntLE(o, 6); o += 6;
+    const connectionInterval            = data.readUIntLE(o, 2); o += 2;
+    const connectionLatency             = data.readUIntLE(o, 2); o += 2;
+    const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
+    const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
+
+    const result = {
+      status,
+      connHandle,
+      role,
+      peerAddressType,
+      peerAddress:                    Address.from(peerAddress),
+      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress),
+      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress),
+      connectionInterval,
+      connectionLatency,
+      supervisionTimeout,
+      masterClockAccuracy,
+    }
+    this.emit('enh-conn-created', result);
   }
 
   private parseLeExtAdvertReport(data: Buffer): void {

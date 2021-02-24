@@ -208,6 +208,10 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
 
+    hci.on('enh-conn-created', (data) => {
+      console.log(data);
+    });
+
     console.log('end');
 
   } catch (err) {
