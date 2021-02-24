@@ -68,7 +68,7 @@ enum AclDataBroadcast {
 
 export declare interface Hci {
   on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'enh-conn-created', listener: (err: Error|null, report?: LeEnhConnectionCreated) => void): this;
+  on(event: 'enh-conn-created', listener: (err: Error|null, event?: LeEnhConnectionCreated) => void): this;
   on(event: string, listener: Function): this;
 }
 
@@ -654,7 +654,6 @@ export class Hci extends EventEmitter {
     await this.send(HciPacketType.HciAclData, buffer);
   }
 
-
   public onData(packetType: HciPacketType, data: Buffer): void {
     try {
       if (packetType === HciPacketType.HciEvent) {
@@ -739,131 +738,17 @@ export class Hci extends EventEmitter {
   }
 
   private parseLeEnhConnectionCreated(data: Buffer): void {
-    let o = 0;
+    const event = LeEnhConnectionCreated.parse(data);
 
-    const status = data.readUIntLE(o, 1); o += 1;
-
-    if (status !== 0) {
-      this.emit('enh-conn-created', makeHciError(status));
-      return;
+    if (event.status !== 0) {
+      this.emit('enh-conn-created', makeHciError(event.status));
+    } else {
+      this.emit('enh-conn-created', null, event.eventData!);
     }
-
-    const connHandle                    = data.readUIntLE(o, 2); o += 2;
-    const role                          = data.readUIntLE(o, 1); o += 1;
-    const peerAddressType               = data.readUIntLE(o, 1); o += 1;
-    const peerAddress                   = data.readUIntLE(o, 6); o += 6;
-    const localResolvablePrivateAddress = data.readUIntLE(o, 6); o += 6;
-    const peerResolvablePrivateAddress  = data.readUIntLE(o, 6); o += 6;
-    const connectionInterval            = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency             = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
-    const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
-
-    const result: LeEnhConnectionCreated = {
-      connHandle,
-      role,
-      peerAddressType,
-      peerAddress:                    Address.from(peerAddress),
-      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress),
-      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress),
-      connectionIntervalMs:           connectionInterval / 1.25,
-      connectionLatency,
-      supervisionTimeoutMs:           supervisionTimeout / 10,
-      masterClockAccuracy,
-    };
-
-    this.emit('enh-conn-created', null, result);
   }
 
   private parseLeExtAdvertReport(data: Buffer): void {
-    const numReports = data[0];
-
-    const reportsRaw: Partial<{
-      eventType: number;
-      addressType: number;
-      address: number;
-      primaryPhy: number;
-      secondaryPhy: number;
-      advertisingSid: number;
-      txPower: number;
-      rssi: number;
-      periodicAdvInterval: number;
-      directAddressType: number;
-      directAddress: number;
-      dataLength: number;
-      data: Buffer;
-    }>[] = [];
-
-    let o = 1;
-
-    for (let i = 0; i < numReports; i++) {
-      reportsRaw.push({});
-    }
-    for (let i = 0; i < numReports; i++, o += 2) {
-      reportsRaw[i].eventType = data.readUIntLE(o, 2);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].addressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].address = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].primaryPhy = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].secondaryPhy = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].advertisingSid = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].txPower = data.readIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].rssi = data.readIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 2) {
-      reportsRaw[i].periodicAdvInterval = data.readUIntLE(o, 2);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].directAddress = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].dataLength = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++) {
-      const dataLength = reportsRaw[i].dataLength!;
-      if (dataLength === 0) {
-        continue;
-      }
-      reportsRaw[i].data = data.slice(o, o + dataLength);
-      o += dataLength;
-    }
-
-    const powerOrNull = (v: number): number|null => {
-      return v !== 0x7F ? v : null;
-    };
-
-    const reports = reportsRaw.map<LeExtAdvReport>((reportRaw) => {
-      return {
-        eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
-        addressType:            reportRaw.addressType!,
-        address:                Address.from(reportRaw.address!),
-        primaryPhy:             reportRaw.primaryPhy!,
-        secondaryPhy:           reportRaw.secondaryPhy!,
-        advertisingSid:         reportRaw.advertisingSid!,
-        txPower:                powerOrNull(reportRaw.txPower!),
-        rssi:                   powerOrNull(reportRaw.rssi!),
-        periodicAdvIntervalMs:  reportRaw.periodicAdvInterval! * 1.25,
-        directAddressType:      reportRaw.directAddressType!,
-        directAddress:          reportRaw.directAddress!,
-        data:                   reportRaw.data ?? null,
-      };
-    });
+    const reports = LeExtAdvReport.parse(data);
 
     for (const report of reports) {
       this.emit('ext-adv-report', report);
