@@ -814,11 +814,11 @@ export class Hci extends EventEmitter {
       case HciLeEvent.EnhancedConnectionComplete:
         this.onLeEnhConnectionCreated(payload);
         break;
-      case HciLeEvent.ChannelSelectionAlgorithm:
-        this.onLeChannelSelAlgo(payload);
-        break;
       case HciLeEvent.ExtendedAdvertisingReport:
         this.onLeExtAdvertReport(payload);
+        break;
+      case HciLeEvent.ChannelSelectionAlgorithm:
+        this.onLeChannelSelAlgo(payload);
         break;
       default:
         debug('on-le-event: unknown event');

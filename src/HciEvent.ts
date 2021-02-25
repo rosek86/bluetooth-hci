@@ -8,14 +8,14 @@ export enum HciEvent {
   DisconnectionComplete                               = 0x05, // * Disconnection Complete
   AuthenticationComplete                              = 0x06, // Authentication Complete
   RemoteNameRequestComplete                           = 0x07, // Remote Name Request Complete
-  EncryptionChange                                    = 0x08, // Encryption Change
+  EncryptionChange                                    = 0x08, // * Encryption Change
   ChangeConnectionLinkKeyComplete                     = 0x09, // Change Connection Link Key Complete
   MasterLinkKeyComplete                               = 0x0A, // Master Link Key Complete
   ReadRemoteSupportedFeaturesComplete                 = 0x0B, // Read Remote Supported Features Complete
   ReadRemoteVersionInformationComplete                = 0x0C, // Read Remote Version Information Complete
   QosSetupComplete                                    = 0x0D, // QoS Setup Complete
-  CommandComplete                                     = 0x0E, // Command Complete
-  CommandStatus                                       = 0x0F, // Command Status
+  CommandComplete                                     = 0x0E, // * Command Complete
+  CommandStatus                                       = 0x0F, // * Command Status
   HardwareError                                       = 0x10, // Hardware Error
   FlushOccurred                                       = 0x11, // Flush Occurred
   RoleChange                                          = 0x12, // Role Change
@@ -51,7 +51,7 @@ export enum HciEvent {
   UserPasskeyNotification                             = 0x3B, // User Passkey Notification
   KeypressNotification                                = 0x3C, // Keypress Notification
   RemoteHostSupportedFeaturesNotification             = 0x3D, // Remote Host Supported Features Notification
-  LEMeta                                              = 0x3E, // LE Meta
+  LEMeta                                              = 0x3E, // * LE Meta
   PhysicalLinkComplete                                = 0x40, // Physical Link Complete
   ChannelSelected                                     = 0x41, // Channel Selected
   DisconnectionPhysicalLinkComplete                   = 0x42, // Disconnection Physical Link Complete
