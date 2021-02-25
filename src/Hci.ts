@@ -9,7 +9,7 @@ import { HciParserError, makeParserError } from './HciError';
 
 import { Address } from './Address';
 import { HciCmd } from './HciCmd';
-import { DisconnectionCompleteEvent, EncryptionEnabledEvent, HciEvent, HciLeEvent } from './HciEvent';
+import { DisconnectionCompleteEvent, EncryptionChangeEvent, HciEvent, HciLeEvent } from './HciEvent';
 import {
    HciOcfInformationParameters,
    HciOcfControlAndBasebandCommands,
@@ -69,7 +69,7 @@ enum AclDataBroadcast {
 
 export declare interface Hci {
   on(event: 'disconn-complete', listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
-  on(event: 'enc-enabled',      listener: (err: Error|null, event: EncryptionEnabledEvent) => void): this;
+  on(event: 'enc-change',       listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
   on(event: 'ext-adv-report',   listener: (report: LeExtAdvReport) => void): this;
   on(event: 'conn-created',     listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
   on(event: 'ch-sel-algo',      listener: (event: LeChannelSelAlgoEvent) => void): this;
@@ -740,13 +740,13 @@ export class Hci extends EventEmitter {
     const connHandle  = payload.readUIntLE(o, 2); o += 2;
     const encEnabled  = payload.readUIntLE(o, 1); o += 1;
 
-    const event: EncryptionEnabledEvent = { connHandle, encEnabled };
-    debug('enc-enabled', event);
+    const event: EncryptionChangeEvent = { connHandle, encEnabled };
+    debug('enc-change', event);
 
     if (status === HciErrorCode.Success) {
-      this.emit('enc-enabled', null, event);
+      this.emit('enc-change', null, event);
     } else {
-      this.emit('enc-enabled', makeHciError(status), event);
+      this.emit('enc-change', makeHciError(status), event);
     }
   }
 

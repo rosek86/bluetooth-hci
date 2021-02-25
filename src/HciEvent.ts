@@ -19,7 +19,7 @@ export enum HciEvent {
   HardwareError                                       = 0x10, // Hardware Error
   FlushOccurred                                       = 0x11, // Flush Occurred
   RoleChange                                          = 0x12, // Role Change
-  NumberOfCompletedPackets                            = 0x13, // Number Of Completed Packets
+  NumberOfCompletedPackets                            = 0x13, // * Number Of Completed Packets
   ModeChange                                          = 0x14, // Mode Change
   ReturnLinkKeys                                      = 0x15, // Return Link Keys
   PinCodeRequest                                      = 0x16, // Pin Code Request
@@ -93,7 +93,7 @@ export enum EncryptionEnabled {
   OnBrEdrAesCcm = 2,
 }
 
-export interface EncryptionEnabledEvent {
+export interface EncryptionChangeEvent {
   connHandle: number;
   encEnabled: EncryptionEnabled;
 }
