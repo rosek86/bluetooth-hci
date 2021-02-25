@@ -694,33 +694,16 @@ export class Hci extends EventEmitter {
         this.onDisconnectionComplete(payload);
         break;
       case HciEvent.EncryptionChange:
-        console.log('encryption change');
+        this.onEncryptionChange(payload);
         break;
       case HciEvent.CommandComplete:
-        if (payload.length < 4) {
-          debug(`(evt-cmd_complete) invalid payload size: ${payload.length}`);
-          return;
-        }
-        this.cmd.onCmdResult({
-          status:           payload[3],
-          numHciPackets:    payload[0],
-          opcode:           payload.readUInt16LE(1),
-          returnParameters: payload.slice(4),
-        });
+        this.onCommandComplete(payload);
         break;
       case HciEvent.CommandStatus:
-        if (payload.length < 4) {
-          debug(`(evt-cmd_status) invalid payload size: ${payload.length}`);
-          return;
-        }
-        this.cmd.onCmdResult({
-          status:         payload[0],
-          numHciPackets:  payload[1],
-          opcode:         payload.readUInt16LE(2),
-        });
+        this.onCommandStatus(payload);
         break;
       case HciEvent.NumberOfCompletedPackets:
-        console.log('NumberOfCompletedPackets')
+        this.onNumberOfCompletedPackets(payload);
         break;
       case HciEvent.LEMeta:
         this.onLeEvent(payload);
@@ -749,6 +732,63 @@ export class Hci extends EventEmitter {
     }
   }
 
+  private onEncryptionChange(payload: Buffer): void {
+    console.log('encryption change');
+    // TODO
+  }
+
+  private onCommandComplete(payload: Buffer): void {
+    if (payload.length < 4) {
+      debug(`(evt-cmd_complete) invalid payload size: ${payload.length}`);
+      return;
+    }
+    this.cmd.onCmdResult({
+      status:           payload[3],
+      numHciPackets:    payload[0],
+      opcode:           payload.readUInt16LE(1),
+      returnParameters: payload.slice(4),
+    });
+  }
+
+  private onCommandStatus(payload: Buffer): void {
+    if (payload.length < 4) {
+      debug(`(evt-cmd_status) invalid payload size: ${payload.length}`);
+      return;
+    }
+    this.cmd.onCmdResult({
+      status:         payload[0],
+      numHciPackets:  payload[1],
+      opcode:         payload.readUInt16LE(2),
+    });
+  }
+
+  private onNumberOfCompletedPackets(payload: Buffer): void {
+    console.log('NumberOfCompletedPackets');
+
+    let o = 0;
+    const numHandles = payload.readUIntLE(o, 1); o += 1;
+
+    const connHandles: number[] = [];
+    const numCompletedPackets: number[] = [];
+
+    for (let i = 0; i < numHandles; i++, o += 2) {
+      connHandles.push(payload.readUIntLE(o, 2));
+    }
+    for (let i = 0; i < numHandles; i++, o += 2) {
+      numCompletedPackets.push(payload.readUIntLE(o, 2));
+    }
+
+    const event = connHandles.map((connHandle, i) => {
+      const num = numCompletedPackets[i];
+      return {
+        connHandle, numCompletedPackets: num,
+      }
+    });
+
+    console.log(event);
+    // TODO: handle this to send ACL data
+  }
+
   private onLeEvent(data: Buffer): void {
     const eventType = data[0];
     const payload = data.slice(1);
@@ -758,23 +798,23 @@ export class Hci extends EventEmitter {
         // console.log(data);
         break;
       case HciLeEvent.ConnectionComplete:
-        this.parseLeConnectionCreated(payload);
+        this.onLeConnectionCreated(payload);
         break;
       case HciLeEvent.EnhancedConnectionComplete:
-        this.parseLeEnhConnectionCreated(payload);
+        this.onLeEnhConnectionCreated(payload);
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
-        this.parseLeChannelSelAlgo(payload);
+        this.onLeChannelSelAlgo(payload);
         break;
       case HciLeEvent.ExtendedAdvertisingReport:
-        this.parseLeExtAdvertReport(payload);
+        this.onLeExtAdvertReport(payload);
         break;
       default:
         console.log('unknown event');
     }
   }
 
-  private parseLeConnectionCreated(data: Buffer): void {
+  private onLeConnectionCreated(data: Buffer): void {
     const event = LeConnectionCreated.parse(data);
 
     if (event.status !== 0) {
@@ -784,7 +824,7 @@ export class Hci extends EventEmitter {
     }
   }
 
-  private parseLeEnhConnectionCreated(data: Buffer): void {
+  private onLeEnhConnectionCreated(data: Buffer): void {
     const event = LeEnhConnectionCreated.parse(data);
 
     if (event.status === HciErrorCode.Success) {
@@ -794,7 +834,7 @@ export class Hci extends EventEmitter {
     }
   }
 
-  private parseLeChannelSelAlgo(data: Buffer): void {
+  private onLeChannelSelAlgo(data: Buffer): void {
     const event: LeChannelSelAlgoEvent = {
       connHandle: data.readUIntLE(0, 2),
       algorithm:  data.readUIntLE(2, 1),
@@ -802,7 +842,7 @@ export class Hci extends EventEmitter {
     this.emit('ch-sel-algo', event);
   }
 
-  private parseLeExtAdvertReport(data: Buffer): void {
+  private onLeExtAdvertReport(data: Buffer): void {
     const reports = LeExtAdvReport.parse(data);
 
     for (const report of reports) {
