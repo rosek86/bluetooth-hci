@@ -100,7 +100,7 @@ export interface EncryptionChangeEvent {
 
 export enum HciLeEvent {
   ConnectionComplete                                  = 0x01, // * LE Connection Complete
-  AdvertisingReport                                   = 0x02, // LE Advertising Report
+  AdvertisingReport                                   = 0x02, // * LE Advertising Report
   ConnectionUpdateComplete                            = 0x03, // LE Connection Update Complete
   ReadRemoteFeaturesComplete                          = 0x04, // LE Read Remote Features Complete
   LongTermKeyRequest                                  = 0x05, // LE Long Term Key Request

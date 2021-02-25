@@ -806,11 +806,11 @@ export class Hci extends EventEmitter {
     const payload = data.slice(1);
 
     switch  (eventType) {
+      case HciLeEvent.ConnectionComplete:
+        this.onLeConnectionComplete(payload);
+        break;
       case HciLeEvent.AdvertisingReport:
         this.onLeAdvertisingReport(payload);
-        break;
-      case HciLeEvent.ConnectionComplete:
-        this.onLeConnectionCreated(payload);
         break;
       case HciLeEvent.EnhancedConnectionComplete:
         this.onLeEnhConnectionCreated(payload);
@@ -826,21 +826,21 @@ export class Hci extends EventEmitter {
     }
   }
 
-  private onLeAdvertisingReport(data: Buffer): void {
-    const reports = LeAdvReport.parse(data);
-
-    for (const report of reports) {
-      this.emit('adv-report', report);
-    }
-  }
-
-  private onLeConnectionCreated(data: Buffer): void {
+  private onLeConnectionComplete(data: Buffer): void {
     const event = LeConnectionCreated.parse(data);
 
     if (event.status !== 0) {
       this.emit('conn-created', makeHciError(event.status));
     } else {
       this.emit('conn-created', null, event.eventData!);
+    }
+  }
+
+  private onLeAdvertisingReport(data: Buffer): void {
+    const reports = LeAdvReport.parse(data);
+
+    for (const report of reports) {
+      this.emit('adv-report', report);
     }
   }
 
