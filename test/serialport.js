@@ -218,6 +218,9 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     hci.on('ch-sel-algo', (event) => {
       console.log(event);
     });
+    hci.on('disconn-complete', (status, event) => {
+      console.log(event);
+    });
 
     console.log('end');
 

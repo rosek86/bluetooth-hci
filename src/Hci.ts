@@ -3,13 +3,13 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
 
-import { HciErrorCode, makeHciError } from './HciError';
+import { getHciErrorMessage, HciErrorCode, makeHciError } from './HciError';
 import { HciDisconnectReason } from './HciError';
 import { HciParserError, makeParserError } from './HciError';
 
 import { Address } from './Address';
 import { HciCmd } from './HciCmd';
-import { HciEvent, HciLeEvent } from './HciEvent';
+import { DisconnectionCompleteEvent, HciEvent, HciLeEvent } from './HciEvent';
 import {
    HciOcfInformationParameters,
    HciOcfControlAndBasebandCommands,
@@ -68,9 +68,10 @@ enum AclDataBroadcast {
 }
 
 export declare interface Hci {
-  on(event: 'ext-adv-report', listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'conn-created',   listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
-  on(event: 'ch-sel-algo',    listener: (event: LeChannelSelAlgoEvent) => void): this;
+  on(event: 'disconn-complete', listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
+  on(event: 'ext-adv-report',   listener: (report: LeExtAdvReport) => void): this;
+  on(event: 'conn-created',     listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
+  on(event: 'ch-sel-algo',      listener: (event: LeChannelSelAlgoEvent) => void): this;
 
   on(event: string, listener: Function): this;
 }
@@ -690,7 +691,7 @@ export class Hci extends EventEmitter {
 
     switch (eventCode) {
       case HciEvent.DisconnectionComplete:
-        console.log('disconnected');
+        this.onDisconnectionComplete(payload);
         break;
       case HciEvent.EncryptionChange:
         console.log('encryption change');
@@ -724,6 +725,27 @@ export class Hci extends EventEmitter {
       case HciEvent.LEMeta:
         this.onLeEvent(payload);
         break;
+    }
+  }
+
+  private onDisconnectionComplete(payload: Buffer): void {
+    let o = 0;
+    const status     = payload.readUIntLE(o, 1); o += 1;
+    const connHandle = payload.readUIntLE(o, 2); o += 2;
+    const reasonCode = payload.readUIntLE(o, 1); o += 1;
+
+    const event: DisconnectionCompleteEvent = {
+      connHandle,
+      reason: {
+        code: reasonCode,
+        message: getHciErrorMessage(reasonCode),
+      },
+    };
+
+    if (status === HciErrorCode.Success) {
+      this.emit('disconn-complete', null, event);
+    } else {
+      this.emit('disconn-complete', makeHciError(status), event);
     }
   }
 
@@ -765,18 +787,19 @@ export class Hci extends EventEmitter {
   private parseLeEnhConnectionCreated(data: Buffer): void {
     const event = LeEnhConnectionCreated.parse(data);
 
-    if (event.status !== 0) {
-      this.emit('conn-created', makeHciError(event.status));
-    } else {
+    if (event.status === HciErrorCode.Success) {
       this.emit('conn-created', null, event.eventData!);
+    } else {
+      this.emit('conn-created', makeHciError(event.status));
     }
   }
 
   private parseLeChannelSelAlgo(data: Buffer): void {
-    this.emit('ch-sel-algo', {
+    const event: LeChannelSelAlgoEvent = {
       connHandle: data.readUIntLE(0, 2),
       algorithm:  data.readUIntLE(2, 1),
-    });
+    };
+    this.emit('ch-sel-algo', event);
   }
 
   private parseLeExtAdvertReport(data: Buffer): void {

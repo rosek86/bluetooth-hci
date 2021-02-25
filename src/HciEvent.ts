@@ -1,3 +1,4 @@
+import { HciError, HciErrorCode } from "./HciError";
 
 export enum HciEvent {
   InquiryComplete                                     = 0x01, // Inquiry Complete
@@ -76,6 +77,14 @@ export enum HciEvent {
   InquiryResponseNotification                         = 0x56, // Inquiry Response Notification
   AuthenticatedPayloadTimeoutExpired                  = 0x57, // Authenticated Payload Timeout Expired
   SamStatusChange                                     = 0x58, // SAM Status Change
+}
+
+export interface DisconnectionCompleteEvent {
+  connHandle: number;
+  reason: {
+    code: number;
+    message: string;
+  };
 }
 
 export enum HciLeEvent {

@@ -214,3 +214,7 @@ export function makeParserError(code: HciParserError): Error {
   }
   return new Error(`Unexpected error`);
 }
+
+export function getHciErrorMessage(code: HciErrorCode): string {
+  return HciErrorCodeToString[code];
+}
