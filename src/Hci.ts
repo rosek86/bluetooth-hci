@@ -661,12 +661,15 @@ export class Hci extends EventEmitter {
   public onData(packetType: HciPacketType, data: Buffer): void {
     try {
       if (packetType === HciPacketType.HciEvent) {
-        return this.onEvent(data);
+        debug('on-hci-event');
+        return this.onHciEvent(data);
       }
       if (packetType === HciPacketType.HciAclData) {
+        debug('on-data-acl-data');
         return;
       }
       if (packetType === HciPacketType.HciCommand) {
+        debug('on-data-acl-data');
         return;
       }
     } catch (err) {
@@ -674,7 +677,7 @@ export class Hci extends EventEmitter {
     }
   }
 
-  private onEvent(data: Buffer): void {
+  private onHciEvent(data: Buffer): void {
     if (data.length < 2) {
       debug(`hci event - invalid size ${data.length}`);
       return;
@@ -733,7 +736,7 @@ export class Hci extends EventEmitter {
   }
 
   private onEncryptionChange(payload: Buffer): void {
-    console.log('encryption change');
+    debug('encryption-change TODO');
     // TODO
   }
 
@@ -763,8 +766,6 @@ export class Hci extends EventEmitter {
   }
 
   private onNumberOfCompletedPackets(payload: Buffer): void {
-    console.log('NumberOfCompletedPackets');
-
     let o = 0;
     const numHandles = payload.readUIntLE(o, 1); o += 1;
 
@@ -785,7 +786,7 @@ export class Hci extends EventEmitter {
       }
     });
 
-    console.log(event);
+    debug('number of completed packets', event);
     // TODO: handle this to send ACL data
   }
 
@@ -795,7 +796,7 @@ export class Hci extends EventEmitter {
 
     switch  (eventType) {
       case HciLeEvent.AdvertisingReport:
-        // console.log(data);
+        // TODO
         break;
       case HciLeEvent.ConnectionComplete:
         this.onLeConnectionCreated(payload);
@@ -810,7 +811,7 @@ export class Hci extends EventEmitter {
         this.onLeExtAdvertReport(payload);
         break;
       default:
-        console.log('unknown event');
+        debug('on-le-event: unknown event');
     }
   }
 

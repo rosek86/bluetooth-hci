@@ -172,8 +172,12 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       filterDuplicates: LeScanFilterDuplicates.Enabled,
     });
 
+    let connecting = false;
     hci.on('ext-adv-report', async (report) => {
       try {
+        if (connecting === true) {
+          return;
+        }
         // console.log(JSON.stringify(report, null, 2));
         const advData = AdvDataParser.parse(report);
         if (advData.localName) {
@@ -181,7 +185,8 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
         }
         // console.log(JSON.stringify(result))
 
-        if (advData.localName) {
+        if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
+          connecting = true;
           await hci.leSetExtendedScanEnable({ enable: false });
 
           await hci.leExtendedCreateConnection({

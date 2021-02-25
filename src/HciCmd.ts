@@ -21,7 +21,7 @@ const debug = Debug('nble-hci-cmd');
 type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 
 interface Command {
-  opcode: number;
+  opcode: { ogf: number; ocf: number; };
   connHandle?: number;
   payload?: Buffer;
 }
@@ -57,10 +57,10 @@ export class HciCmd {
     payload?: Buffer,
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.LinkControlCommands,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     });
@@ -72,10 +72,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.LinkPolicyCommands,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     });
@@ -87,10 +87,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.ControlAndBasebandCommands,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     });
@@ -101,14 +101,11 @@ export class HciCmd {
     connHandle?: number,
     payload?: Buffer
   }): Promise<void> {
-    await this.sendCommand({
-      opcode: HciOpcode.build({
-        ogf: HciOgf.ControlAndBasebandCommands,
-        ocf: params.ocf,
-      }),
-      payload: params.payload,
-      connHandle: params.connHandle,
+    const opcode = HciOpcode.build({
+      ogf: HciOgf.ControlAndBasebandCommands,
+      ocf: params.ocf,
     });
+    await this.sendCommand(opcode, params.payload);
   }
 
   public async informationParameters(params: {
@@ -117,10 +114,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.InformationParameters,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     })
@@ -132,10 +129,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.StatusParameters,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     })
@@ -147,10 +144,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.TestingCommands,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     });
@@ -162,10 +159,10 @@ export class HciCmd {
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
-      opcode: HciOpcode.build({
+      opcode: {
         ogf: HciOgf.LeControllerCommands,
         ocf: params.ocf,
-      }),
+      },
       payload: params.payload,
       connHandle: params.connHandle,
     });
@@ -173,7 +170,12 @@ export class HciCmd {
 
   private async sendWaitResult(cmd: Command): Promise<HciCmdResult> {
     return new Promise<HciCmdResult>((resolve, reject) => {
+      const opcode = HciOpcode.build({
+        ogf: cmd.opcode.ogf,
+        ocf: cmd.opcode.ocf,
+      });
       if (this.onResult !== null) {
+        debug('cannot start command: ', cmd);
         return reject(makeParserError(HciParserError.Busy));
       }
       const complete = (err?: Error, evt?: HciCmdResult) => {
@@ -185,7 +187,7 @@ export class HciCmd {
         () => complete(makeParserError(HciParserError.Timeout)), this.timeout
       );
       this.onResult = (evt: HciCmdResult) => {
-        if (cmd.opcode !== evt.opcode) {
+        if (opcode !== evt.opcode) {
           return;
         }
         if (cmd.connHandle === undefined) {
@@ -213,12 +215,15 @@ export class HciCmd {
           }
         }
       };
-      this.sendCommand(cmd);
+      this.sendCommand(opcode, cmd.payload);
     });
   }
 
-  private sendCommand(cmd: Command): void {
-    this.sendBuffer(HciPacketType.HciCommand, this.buildCommand(cmd));
+  private sendCommand(opcode: number, payload?: Buffer): void {
+    this.sendBuffer(
+      HciPacketType.HciCommand,
+      this.buildCommand(opcode, payload)
+    );
   }
 
   public onCmdResult(result: HciCmdResult) {
@@ -227,16 +232,16 @@ export class HciCmd {
     }
   }
 
-  private buildCommand(cmd: Command): Buffer {
-    const payloadLength = cmd.payload?.length ?? 0;
+  private buildCommand(opcode: number, payload?: Buffer): Buffer {
+    const payloadLength = payload?.length ?? 0;
     const buffer = Buffer.allocUnsafe(3 + payloadLength);
 
     let o = 0;
-    o = buffer.writeUIntLE(cmd.opcode,    o, 2);
+    o = buffer.writeUIntLE(opcode,        o, 2);
     o = buffer.writeUIntLE(payloadLength, o, 1);
 
-    if (cmd.payload && payloadLength > 0) {
-      cmd.payload.copy(buffer, 3);
+    if (payload && payloadLength > 0) {
+      payload.copy(buffer, 3);
     }
 
     return buffer;
