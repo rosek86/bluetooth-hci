@@ -87,6 +87,17 @@ export interface DisconnectionCompleteEvent {
   };
 }
 
+export enum EncryptionEnabled {
+  Off           = 0,
+  On            = 1,
+  OnBrEdrAesCcm = 2,
+}
+
+export interface EncryptionEnabledEvent {
+  connHandle: number;
+  encEnabled: EncryptionEnabled;
+}
+
 export enum HciLeEvent {
   ConnectionComplete                                  = 0x01, // * LE Connection Complete
   AdvertisingReport                                   = 0x02, // LE Advertising Report
