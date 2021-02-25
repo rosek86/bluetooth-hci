@@ -1744,6 +1744,82 @@ export enum LeSecondaryAdvertiserPhy {
   PhyCoded = 0x03, // Advertiser PHY is LE Coded
 }
 
+export enum LeAdvEventType {
+  Undirected      = 0, // Connectable and scannable undirected advertising (ADV_IND)
+  Directed        = 1, // Connectable directed advertising (ADV_DIRECT_IND)
+  Scannable       = 2, // Scannable undirected advertising (ADV_SCAN_IND)
+  NonConnectable  = 3, // Non connectable undirected advertising (ADV_NONCONN_IND)
+}
+
+export enum LeAdvReportAddrType {
+  PublicDeviceAddress   = 0x00, // Public Device Address
+  RandomDeviceAddress   = 0x01, // Random Device Address
+  PublicIdentityAddress = 0x02, // Public Identity Address
+  RandomIdentityAddress = 0x03, // Random (static) Identity Address
+}
+
+export interface LeAdvReportEvent {
+  eventType: LeAdvEventType;
+  addressType: LeAdvReportAddrType;
+  address: Address;
+  rssi: number|null;
+  data: Buffer|null;
+}
+
+export class LeAdvReport {
+  static parse(data: Buffer): LeAdvReportEvent[] {
+    const numReports = data[0];
+
+    const reportsRaw: Partial<{
+      eventType:            number;
+      addressType:          number;
+      address:              number;
+      dataLength:           number;
+      data:                 Buffer;
+      rssi:                 number;
+    }>[] = [];
+
+    let o = 1;
+
+    for (let i = 0; i < numReports; i++) {
+      reportsRaw.push({});
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].eventType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].addressType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 6) {
+      reportsRaw[i].address = data.readUIntLE(o, 6);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].dataLength = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++) {
+      const dataLength = reportsRaw[i].dataLength!;
+      if (dataLength === 0) {
+        continue;
+      }
+      reportsRaw[i].data = data.slice(o, o + dataLength);
+      o += dataLength;
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].rssi = data.readIntLE(o, 1);
+    }
+
+    const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
+
+    return reportsRaw.map<LeAdvReportEvent>((reportRaw) => ({
+      eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
+      addressType:            reportRaw.addressType!,
+      address:                Address.from(reportRaw.address!),
+      rssi:                   powerOrNull(reportRaw.rssi!),
+      data:                   reportRaw.data ?? null,
+    }));
+  }
+}
+
 export interface LeExtAdvReport {
   eventType: LeExtAdvEventType;
   addressType: LeExtAdvReportAddrType;

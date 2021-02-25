@@ -45,7 +45,7 @@ import {
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
   LeTransmitPower, LeExtendedCreateConnection, LeConnectionCreated, LeEnhConnectionCreated,
-  LeChannelSelAlgoEvent
+  LeChannelSelAlgoEvent, LeAdvReport
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -70,6 +70,7 @@ enum AclDataBroadcast {
 export declare interface Hci {
   on(event: 'disconn-complete', listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
   on(event: 'enc-change',       listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
+  on(event: 'adv-report',       listener: (report: LeAdvReport) => void): this;
   on(event: 'ext-adv-report',   listener: (report: LeExtAdvReport) => void): this;
   on(event: 'conn-created',     listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
   on(event: 'ch-sel-algo',      listener: (event: LeChannelSelAlgoEvent) => void): this;
@@ -806,7 +807,7 @@ export class Hci extends EventEmitter {
 
     switch  (eventType) {
       case HciLeEvent.AdvertisingReport:
-        // TODO
+        this.onLeAdvertisingReport(payload);
         break;
       case HciLeEvent.ConnectionComplete:
         this.onLeConnectionCreated(payload);
@@ -822,6 +823,14 @@ export class Hci extends EventEmitter {
         break;
       default:
         debug('on-le-event: unknown event');
+    }
+  }
+
+  private onLeAdvertisingReport(data: Buffer): void {
+    const reports = LeAdvReport.parse(data);
+
+    for (const report of reports) {
+      this.emit('adv-report', report);
     }
   }
 
