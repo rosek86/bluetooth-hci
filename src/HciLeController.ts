@@ -438,9 +438,9 @@ export class LeWhiteList {
 }
 
 export class LeReadChannelMap {
-  static inParams(connHandle: number): Buffer {
+  static inParams(connectionHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUIntLE(connHandle, 0, 2);
+    payload.writeUIntLE(connectionHandle, 0, 2);
     return payload;
   }
 
@@ -490,14 +490,14 @@ export interface LeEnableEncryption {
 }
 
 export class LeEnableEncryption {
-  static inParams(connHandle: number, params: LeEnableEncryption): Buffer {
+  static inParams(connectionHandle: number, params: LeEnableEncryption): Buffer {
     if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(2+8+2+16);
 
     let o = 0;
-    o  = payload.writeUIntLE(connHandle, o, 2);
+    o  = payload.writeUIntLE(connectionHandle, o, 2);
     o += params.randomNumber.reverse().copy(payload, o);
     o  = payload.writeUIntLE(params.encryptedDiversifier, o, 2);
     o += params.longTermKey.reverse().copy(payload, o);
@@ -507,14 +507,14 @@ export class LeEnableEncryption {
 }
 
 export class LeLongTermKeyRequestReply {
-  static inParams(connHandle: number, longTermKey: Buffer): Buffer {
+  static inParams(connectionHandle: number, longTermKey: Buffer): Buffer {
     if (longTermKey.length !== 16) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
     const payload = Buffer.allocUnsafe(2+16);
 
     let o = 0;
-    o  = payload.writeUIntLE(connHandle, o, 2);
+    o  = payload.writeUIntLE(connectionHandle, o, 2);
     o += longTermKey.reverse().copy(payload, o);
 
     return payload;
@@ -522,9 +522,9 @@ export class LeLongTermKeyRequestReply {
 }
 
 export class LeLongTermKeyRequestNegativeReply {
-  static inParams(connHandle: number): Buffer {
+  static inParams(connectionHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUIntLE(connHandle, 0, 2);
+    payload.writeUIntLE(connectionHandle, 0, 2);
     return payload;
   }
 }
@@ -852,7 +852,7 @@ export interface LeRemoteConnectionParameterRequestReply {
 
 export class LeRemoteConnectionParameterRequestReply extends LeTest {
   static inParams(
-    connHandle: number,
+    connectionHandle: number,
     params: LeRemoteConnectionParameterRequestReply
   ): Buffer {
     const intervalMin   = this.msToValue(params.intervalMinMs, 1.25);
@@ -864,12 +864,12 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
     const payload = Buffer.allocUnsafe(2+2+2+2+2+2);
 
     let o = 0;
-    o = payload.writeUIntLE(connHandle,  o, 2);
-    o = payload.writeUIntLE(intervalMin, o, 2);
-    o = payload.writeUIntLE(intervalMax, o, 2);
-    o = payload.writeUIntLE(timeout,     o, 2);
-    o = payload.writeUIntLE(minCeLength, o, 2);
-    o = payload.writeUIntLE(maxCeLength, o, 2);
+    o = payload.writeUIntLE(connectionHandle, o, 2);
+    o = payload.writeUIntLE(intervalMin,      o, 2);
+    o = payload.writeUIntLE(intervalMax,      o, 2);
+    o = payload.writeUIntLE(timeout,          o, 2);
+    o = payload.writeUIntLE(minCeLength,      o, 2);
+    o = payload.writeUIntLE(maxCeLength,      o, 2);
 
     return payload;
   }
@@ -881,14 +881,14 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
 
 export class LeRemoteConnectionParameterRequestNegativeReply extends LeTest {
   static inParams(
-    connHandle: number,
+    connectionHandle: number,
     reason: HciErrorCode
   ): Buffer {
     const payload = Buffer.allocUnsafe(2+1);
 
     let o = 0;
-    o = payload.writeUIntLE(connHandle, o, 2);
-    o = payload.writeUIntLE(reason,     o, 1);
+    o = payload.writeUIntLE(connectionHandle, o, 2);
+    o = payload.writeUIntLE(reason,           o, 1);
 
     return payload;
   }
@@ -900,11 +900,11 @@ export interface LeDataLength {
 }
 
 export class LeDataLength {
-  static inParams(connHandle: number, params: LeDataLength): Buffer {
+  static inParams(connectionHandle: number, params: LeDataLength): Buffer {
     const payload = Buffer.allocUnsafe(2+2+2);
 
     let o = 0;
-    o = payload.writeUIntLE(connHandle,       o, 2);
+    o = payload.writeUIntLE(connectionHandle, o, 2);
     o = payload.writeUIntLE(params.txOctets,  o, 2);
     o = payload.writeUIntLE(params.txTime,    o, 2);
 
@@ -1045,10 +1045,10 @@ export class LeMaximumDataLength {
   }
 }
 
-export class ConnHandle {
-  static inParams(connHandle: number): Buffer {
+export class ConnectionHandle {
+  static inParams(connectionHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     return payload;
   }
 }
@@ -1115,7 +1115,7 @@ export interface LeSetTxRxPhy {
 }
 
 export class LeSetTxRxPhy {
-  static inParams(connHandle: number, params: Partial<LeSetTxRxPhy>): Buffer {
+  static inParams(connectionHandle: number, params: Partial<LeSetTxRxPhy>): Buffer {
     let allPhys = 0, txPhys = 0, rxPhys = 0;
     let opts = 0;
 
@@ -1137,11 +1137,11 @@ export class LeSetTxRxPhy {
     const payload = Buffer.allocUnsafe(7);
 
     let o = 0;
-    o = payload.writeUIntLE(connHandle, o, 2);
-    o = payload.writeUIntLE(allPhys,    o, 1);
-    o = payload.writeUIntLE(txPhys,     o, 1);
-    o = payload.writeUIntLE(rxPhys,     o, 1);
-    o = payload.writeUIntLE(opts,       o, 2);
+    o = payload.writeUIntLE(connectionHandle, o, 2);
+    o = payload.writeUIntLE(allPhys,          o, 1);
+    o = payload.writeUIntLE(txPhys,           o, 1);
+    o = payload.writeUIntLE(rxPhys,           o, 1);
+    o = payload.writeUIntLE(opts,             o, 2);
 
     return payload;
   }
@@ -1811,7 +1811,7 @@ export class LeAdvReport {
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
     return reportsRaw.map<LeAdvReportEvent>((reportRaw) => ({
-      eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
+      eventType:              reportRaw.eventType!,
       addressType:            reportRaw.addressType!,
       address:                Address.from(reportRaw.address!),
       rssi:                   powerOrNull(reportRaw.rssi!),
@@ -1947,8 +1947,8 @@ export enum LeConnectionRole {
   Slave
 }
 
-export interface LeConnectionCreated {
-  connHandle: number;
+export interface LeConnectionCompleteEvent {
+  connectionHandle: number;
   role: LeConnectionRole;
   peerAddressType: LeEnhPeerAddressType;
   peerAddress: Address;
@@ -1960,7 +1960,7 @@ export interface LeConnectionCreated {
   masterClockAccuracy: LeMasterClockAccuracy;
 }
 
-export class LeConnectionCreated {
+export class LeConnectionComplete {
   static parse(data: Buffer): { status: HciErrorCode, eventData?: LeEnhConnectionCreated } {
     let o = 0;
 
@@ -1970,23 +1970,23 @@ export class LeConnectionCreated {
       return { status };
     }
 
-    const connHandle                    = data.readUIntLE(o, 2); o += 2;
-    const role                          = data.readUIntLE(o, 1); o += 1;
-    const peerAddressType               = data.readUIntLE(o, 1); o += 1;
-    const peerAddress                   = data.readUIntLE(o, 6); o += 6;
-    const connectionInterval            = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency             = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
-    const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle    = data.readUIntLE(o, 2); o += 2;
+    const role                = data.readUIntLE(o, 1); o += 1;
+    const peerAddressType     = data.readUIntLE(o, 1); o += 1;
+    const peerAddress         = data.readUIntLE(o, 6); o += 6;
+    const connectionInterval  = data.readUIntLE(o, 2); o += 2;
+    const connectionLatency   = data.readUIntLE(o, 2); o += 2;
+    const supervisionTimeout  = data.readUIntLE(o, 2); o += 2;
+    const masterClockAccuracy = data.readUIntLE(o, 1); o += 1;
 
-    const eventData: LeConnectionCreated = {
-      connHandle,
+    const eventData: LeConnectionCompleteEvent = {
+      connectionHandle,
       role,
       peerAddressType,
-      peerAddress:                    Address.from(peerAddress),
-      connectionIntervalMs:           connectionInterval * 1.25,
+      peerAddress:          Address.from(peerAddress),
+      connectionIntervalMs: connectionInterval * 1.25,
       connectionLatency,
-      supervisionTimeoutMs:           supervisionTimeout * 10,
+      supervisionTimeoutMs: supervisionTimeout * 10,
       masterClockAccuracy,
     };
 
@@ -2004,7 +2004,7 @@ export class LeEnhConnectionCreated {
       return { status };
     }
 
-    const connHandle                    = data.readUIntLE(o, 2); o += 2;
+    const connectionHandle              = data.readUIntLE(o, 2); o += 2;
     const role                          = data.readUIntLE(o, 1); o += 1;
     const peerAddressType               = data.readUIntLE(o, 1); o += 1;
     const peerAddress                   = data.readUIntLE(o, 6); o += 6;
@@ -2015,8 +2015,8 @@ export class LeEnhConnectionCreated {
     const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
     const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
 
-    const eventData: LeConnectionCreated = {
-      connHandle,
+    const eventData: LeConnectionCompleteEvent = {
+      connectionHandle,
       role,
       peerAddressType,
       peerAddress:                    Address.from(peerAddress),
@@ -2033,6 +2033,68 @@ export class LeEnhConnectionCreated {
 }
 
 export interface LeChannelSelAlgoEvent {
-  connHandle: number;
-  algorithm:  number;
+  connectionHandle: number;
+  algorithm:        number;
+}
+
+export interface LeConnectionUpdateCompleteEvent {
+  connectionHandle:     number;
+  connectionIntervalMs: number;
+  connectionLatency:    number;
+  supervisionTimeoutMs: number;
+}
+
+export class LeConnectionUpdateComplete {
+  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeConnectionUpdateCompleteEvent } {
+    let o = 0;
+
+    const status = data.readUIntLE(o, 1); o += 1;
+
+    if (status !== 0) {
+      return { status };
+    }
+
+    const connectionHandle   = data.readUIntLE(o, 2); o += 2;
+    const connectionInterval = data.readUIntLE(o, 2); o += 2;
+    const connectionLatency  = data.readUIntLE(o, 2); o += 2;
+    const supervisionTimeout = data.readUIntLE(o, 2); o += 2;
+
+    const eventData: LeConnectionUpdateCompleteEvent = {
+      connectionHandle,
+      connectionIntervalMs: connectionInterval * 1.25,
+      connectionLatency,
+      supervisionTimeoutMs: supervisionTimeout * 10,
+    };
+
+    return { status, eventData };
+  }
+}
+
+export interface LeReadRemoteFeaturesCompleteEvent {
+  connectionHandle: number;
+  leFeatures:       bigint;
+}
+
+export class LeReadRemoteFeaturesComplete {
+  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeReadRemoteFeaturesCompleteEvent } {
+    let o = 0;
+
+    const status = data.readUIntLE(o, 1); o += 1;
+
+    if (status !== 0) {
+      return { status };
+    }
+
+    const connectionHandle  = data.readUIntLE(o, 2);  o += 2;
+    const leFeatures        = data.readBigInt64LE(o); o += 8;
+
+    const eventData: LeReadRemoteFeaturesCompleteEvent = {
+      connectionHandle,
+      leFeatures,
+    };
+
+    // TODO: Parse le features
+
+    return { status, eventData };
+  }
 }

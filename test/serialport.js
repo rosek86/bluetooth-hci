@@ -83,9 +83,11 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     await hci.setEventMaskPage2({});
 
     await hci.leSetEventMask({
+      connectionComplete: true,
+      connectionUpdateComplete: true,
+      readRemoteFeaturesComplete: true,
       extendedAdvertisingReport: true,
       enhancedConnectionComplete: true,
-      connectionComplete: true,
       channelSelectionAlgorithm: true,
     });
 
@@ -214,18 +216,23 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
 
-    hci.on('conn-created', (status, event) => {
+    hci.on('conn-complete', async (status, event) => {
       if (status === null) {
         console.log('connected');
         console.log(event);
       }
     });
-    hci.on('ch-sel-algo', (event) => {
+    hci.on('ch-sel-algo', async (event) => {
       console.log(event);
+      await hci.leReadRemoteFeatures(event.connectionHandle);
     });
     hci.on('disconn-complete', (status, event) => {
       console.log(event);
     });
+
+    hci.on('LeReadRemoteFeaturesComplete', (status, event) => {
+      console.log(event);
+    })
 
     console.log('end');
 

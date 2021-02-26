@@ -846,9 +846,9 @@ export class ReadLocalSupportedCommands {
 
 
 export class ReadRssi {
-  static inParams(connHandle: number): Buffer {
+  static inParams(connectionHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     return payload;
   }
 

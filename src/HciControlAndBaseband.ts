@@ -119,9 +119,9 @@ export enum ReadTransmitPowerLevelType {
 }
 
 export class ReadTransmitPowerLevel {
-  static inParams(connHandle: number, type: ReadTransmitPowerLevelType): Buffer {
+  static inParams(connectionHandle: number, type: ReadTransmitPowerLevelType): Buffer {
     const payload = Buffer.allocUnsafe(3);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(type, 2);
     return payload;
   }
@@ -249,7 +249,7 @@ export class HostBufferSize {
 }
 
 export interface CompletedPackets {
-  connHandle: number;
+  connectionHandle: number;
   completedPackets: number;
 }
 
@@ -260,7 +260,7 @@ export class HostNumberOfCompletedPackets {
     let o = payload.writeUInt8(completedPackets.length, 0);
 
     for (const entry of completedPackets) {
-      o = payload.writeUInt16LE(entry.connHandle,       o);
+      o = payload.writeUInt16LE(entry.connectionHandle, o);
       o = payload.writeUInt16LE(entry.completedPackets, o);
     }
 
@@ -271,9 +271,9 @@ export class HostNumberOfCompletedPackets {
 export class ReadAuthenticatedPayloadTimeout {
   private static readonly timeoutFactor = 10;
 
-  static inParams(connHandle: number): Buffer {
+  static inParams(connectionHandle: number): Buffer {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     return payload;
   }
 
@@ -288,9 +288,9 @@ export class ReadAuthenticatedPayloadTimeout {
 export class WriteAuthenticatedPayloadTimeout {
   private static readonly timeoutFactor = 10;
 
-  static inParams(connHandle: number, timeoutMs: number): Buffer {
+  static inParams(connectionHandle: number, timeoutMs: number): Buffer {
     const payload = Buffer.allocUnsafe(4);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt16LE(Math.round(timeoutMs / this.timeoutFactor), 2);
     return payload;
   }

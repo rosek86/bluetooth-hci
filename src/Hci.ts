@@ -41,11 +41,12 @@ import {
   LeRemoteConnectionParameterRequestReply, LeRemoteConnectionParameterRequestNegativeReply,
   LeDataLength, LeSuggestedDefaultDataLength, LeDhKeyV1, LeDhKeyV2, LeAddDeviceToResolvingList,
   LeRemoveDeviceFromResolvingList, LeReadResolvingListSize, LeMaximumDataLength, LeTxRxPhy,
-  ConnHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
+  ConnectionHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection, LeConnectionCreated, LeEnhConnectionCreated,
-  LeChannelSelAlgoEvent, LeAdvReport
+  LeTransmitPower, LeExtendedCreateConnection, LeConnectionComplete, LeConnectionCompleteEvent,
+  LeEnhConnectionCreated, LeChannelSelAlgoEvent, LeAdvReport, LeConnectionUpdateComplete,
+  LeConnectionUpdateCompleteEvent, LeReadRemoteFeaturesComplete
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -68,12 +69,13 @@ enum AclDataBroadcast {
 }
 
 export declare interface Hci {
-  on(event: 'disconn-complete', listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
-  on(event: 'enc-change',       listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
-  on(event: 'adv-report',       listener: (report: LeAdvReport) => void): this;
-  on(event: 'ext-adv-report',   listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'conn-created',     listener: (err: Error|null, event?: LeConnectionCreated) => void): this;
-  on(event: 'ch-sel-algo',      listener: (event: LeChannelSelAlgoEvent) => void): this;
+  on(event: 'disconn-complete',     listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
+  on(event: 'enc-change',           listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
+  on(event: 'adv-report',           listener: (report: LeAdvReport) => void): this;
+  on(event: 'ext-adv-report',       listener: (report: LeExtAdvReport) => void): this;
+  on(event: 'conn-complete',        listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
+  on(event: 'conn-update-complete', listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
+  on(event: 'ch-sel-algo',          listener: (event: LeChannelSelAlgoEvent) => void): this;
 }
 
 export class Hci extends EventEmitter {
@@ -91,17 +93,17 @@ export class Hci extends EventEmitter {
 
   // Link Control
 
-  public async disconnect(connHandle: number, reason: HciDisconnectReason): Promise<void> {
+  public async disconnect(connectionHandle: number, reason: HciDisconnectReason): Promise<void> {
     const payload = Buffer.allocUnsafe(3);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(reason);
     const ocf = HciOcfLinkControlCommands.Disconnect;
     await this.cmd.linkControl({ ocf, payload });
   }
 
-  public async readRemoteVersionInformation(connHandle: number): Promise<void> {
+  public async readRemoteVersionInformation(connectionHandle: number): Promise<void> {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUInt16LE(connHandle, 0);
+    payload.writeUInt16LE(connectionHandle, 0);
     const ocf = HciOcfLinkControlCommands.ReadRemoteVersionInformation;
     await this.cmd.linkControl({ ocf, payload });
   }
@@ -119,10 +121,10 @@ export class Hci extends EventEmitter {
     await this.cmd.controlAndBaseband({ ocf });
   }
 
-  public async readTransmitPowerLevel(connHandle: number, type: ReadTransmitPowerLevelType): Promise<number> {
+  public async readTransmitPowerLevel(connectionHandle: number, type: ReadTransmitPowerLevelType): Promise<number> {
     const ocf = HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel;;
-    const payload = ReadTransmitPowerLevel.inParams(connHandle, type);
-    const result = await this.cmd.controlAndBaseband({ ocf, connHandle, payload });
+    const payload = ReadTransmitPowerLevel.inParams(connectionHandle, type);
+    const result = await this.cmd.controlAndBaseband({ ocf, connectionHandle, payload });
     return ReadTransmitPowerLevel.outParams(result.returnParameters);
   }
 
@@ -162,17 +164,17 @@ export class Hci extends EventEmitter {
     await this.cmd.controlAndBasebandNoResponse({ ocf, payload });
   }
 
-  public async readAuthenticatedPayloadTimeout(connHandle: number): Promise<number> {
+  public async readAuthenticatedPayloadTimeout(connectionHandle: number): Promise<number> {
     const ocf = HciOcfControlAndBasebandCommands.ReadAuthenticatedPayloadTimeout;
-    const payload = ReadAuthenticatedPayloadTimeout.inParams(connHandle);
-    const result = await this.cmd.controlAndBaseband({ ocf, connHandle, payload });
+    const payload = ReadAuthenticatedPayloadTimeout.inParams(connectionHandle);
+    const result = await this.cmd.controlAndBaseband({ ocf, connectionHandle, payload });
     return ReadAuthenticatedPayloadTimeout.outParams(result.returnParameters);
   }
 
-  public async writeAuthenticatedPayloadTimeout(connHandle: number, timeoutMs: number): Promise<void> {
+  public async writeAuthenticatedPayloadTimeout(connectionHandle: number, timeoutMs: number): Promise<void> {
     const ocf = HciOcfControlAndBasebandCommands.WriteAuthenticatedPayloadTimeout;
-    const payload = WriteAuthenticatedPayloadTimeout.inParams(connHandle, timeoutMs);
-    await this.cmd.controlAndBaseband({ ocf, connHandle, payload });
+    const payload = WriteAuthenticatedPayloadTimeout.inParams(connectionHandle, timeoutMs);
+    await this.cmd.controlAndBaseband({ ocf, connectionHandle, payload });
   }
 
   // Information parameters
@@ -207,10 +209,10 @@ export class Hci extends EventEmitter {
     return ReadLocalSupportedCommands.outParams(result.returnParameters);
   }
 
-  public async readRssi(connHandle: number): Promise<number> {
+  public async readRssi(connectionHandle: number): Promise<number> {
     const ocf = HciOcfStatusParameters.ReadRssi;
-    const payload = ReadRssi.inParams(connHandle);
-    const result = await this.cmd.statusParameters({ ocf, connHandle, payload });
+    const payload = ReadRssi.inParams(connectionHandle);
+    const result = await this.cmd.statusParameters({ ocf, connectionHandle, payload });
     return ReadRssi.outParams(result.returnParameters);
   }
 
@@ -335,18 +337,18 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leReadChannelMap(connHandle: number): Promise<number> {
+  public async leReadChannelMap(connectionHandle: number): Promise<number> {
     const ocf = HciOcfLeControllerCommands.ReadChannelMap;
-    const payload = LeReadChannelMap.inParams(connHandle);
-    const result = await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeReadChannelMap.inParams(connectionHandle);
+    const result = await this.cmd.leController({ ocf, connectionHandle, payload });
     return LeReadChannelMap.outParams(result.returnParameters);
   }
 
-  public async leReadRemoteFeatures(connHandle: number): Promise<void> {
+  public async leReadRemoteFeatures(connectionHandle: number): Promise<void> {
     const payload = Buffer.allocUnsafe(2);
-    payload.writeUIntLE(connHandle, 0, 2);
+    payload.writeUIntLE(connectionHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
-    await this.cmd.leController({ ocf, connHandle, payload });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leEncrypt(key: Buffer, plainTextData: Buffer): Promise<Buffer> {
@@ -362,22 +364,22 @@ export class Hci extends EventEmitter {
     return LeRand.outParams(result.returnParameters);
   }
 
-  public async leEnableEncryption(connHandle: number, params: LeEnableEncryption): Promise<void> {
+  public async leEnableEncryption(connectionHandle: number, params: LeEnableEncryption): Promise<void> {
     const ocf = HciOcfLeControllerCommands.EnableEncryption;
-    const payload = LeEnableEncryption.inParams(connHandle, params);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeEnableEncryption.inParams(connectionHandle, params);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
-  public async leLongTermKeyRequestReply(connHandle: number, longTermKey: Buffer): Promise<void> {
+  public async leLongTermKeyRequestReply(connectionHandle: number, longTermKey: Buffer): Promise<void> {
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestReply;
-    const payload = LeLongTermKeyRequestReply.inParams(connHandle, longTermKey);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeLongTermKeyRequestReply.inParams(connectionHandle, longTermKey);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
-  public async leLongTermKeyRequestNegativeReply(connHandle: number): Promise<void> {
+  public async leLongTermKeyRequestNegativeReply(connectionHandle: number): Promise<void> {
     const ocf = HciOcfLeControllerCommands.LongTermKeyRequestNegativeReply;
-    const payload = LeLongTermKeyRequestNegativeReply.inParams(connHandle);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeLongTermKeyRequestNegativeReply.inParams(connectionHandle);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
   public async leReadSupportedStates(): Promise<LeSupportedStates> {
@@ -435,27 +437,27 @@ export class Hci extends EventEmitter {
   }
 
   public async leRemoteConnectionParameterRequestReply(
-    connHandle: number,
+    connectionHandle: number,
     params: LeRemoteConnectionParameterRequestReply
   ): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
-    const payload = LeRemoteConnectionParameterRequestReply.inParams(connHandle, params);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeRemoteConnectionParameterRequestReply.inParams(connectionHandle, params);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
   public async leRemoteConnectionParameterRequestNegativeReply(
-    connHandle: number,
+    connectionHandle: number,
     reason: HciErrorCode
   ): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
-    const payload = LeRemoteConnectionParameterRequestNegativeReply.inParams(connHandle, reason);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeRemoteConnectionParameterRequestNegativeReply.inParams(connectionHandle, reason);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
-  public async leSetDataLength(connHandle: number, params: LeDataLength): Promise<void> {
+  public async leSetDataLength(connectionHandle: number, params: LeDataLength): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetDataLength;
-    const payload = LeDataLength.inParams(connHandle, params);
-    await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = LeDataLength.inParams(connectionHandle, params);
+    await this.cmd.leController({ ocf, connectionHandle, payload });
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<LeSuggestedDefaultDataLength> {
@@ -529,10 +531,10 @@ export class Hci extends EventEmitter {
     return LeMaximumDataLength.outParams(result.returnParameters);
   }
 
-  public async leReadPhy(connHandle: number): Promise<LeTxRxPhy> {
+  public async leReadPhy(connectionHandle: number): Promise<LeTxRxPhy> {
     const ocf = HciOcfLeControllerCommands.ReadPhy;
-    const payload = ConnHandle.inParams(connHandle);
-    const result = await this.cmd.leController({ ocf, connHandle, payload });
+    const payload = ConnectionHandle.inParams(connectionHandle);
+    const result = await this.cmd.leController({ ocf, connectionHandle, payload });
     return LeTxRxPhy.outParams(result.returnParameters);
   }
 
@@ -542,9 +544,9 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetPhy(connHandle: number, params: Partial<LeSetTxRxPhy>): Promise<void> {
+  public async leSetPhy(connectionHandle: number, params: Partial<LeSetTxRxPhy>): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetPhy;
-    const payload = LeSetTxRxPhy.inParams(connHandle, params);
+    const payload = LeSetTxRxPhy.inParams(connectionHandle, params);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -711,17 +713,20 @@ export class Hci extends EventEmitter {
       case HciEvent.LEMeta:
         this.onLeEvent(payload);
         break;
+      default:
+        debug('on-event: unknown event');
+        break;
     }
   }
 
   private onDisconnectionComplete(payload: Buffer): void {
     let o = 0;
-    const status     = payload.readUIntLE(o, 1); o += 1;
-    const connHandle = payload.readUIntLE(o, 2); o += 2;
-    const reasonCode = payload.readUIntLE(o, 1); o += 1;
+    const status            = payload.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
+    const reasonCode        = payload.readUIntLE(o, 1); o += 1;
 
     const event: DisconnectionCompleteEvent = {
-      connHandle,
+      connectionHandle,
       reason: {
         code: reasonCode,
         message: getHciErrorMessage(reasonCode),
@@ -737,11 +742,11 @@ export class Hci extends EventEmitter {
 
   private onEncryptionChange(payload: Buffer): void {
     let o = 0;
-    const status      = payload.readUIntLE(o, 1); o += 1;
-    const connHandle  = payload.readUIntLE(o, 2); o += 2;
-    const encEnabled  = payload.readUIntLE(o, 1); o += 1;
+    const status            = payload.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
+    const encEnabled        = payload.readUIntLE(o, 1); o += 1;
 
-    const event: EncryptionChangeEvent = { connHandle, encEnabled };
+    const event: EncryptionChangeEvent = { connectionHandle, encEnabled };
     debug('enc-change', event);
 
     if (status === HciErrorCode.Success) {
@@ -780,20 +785,20 @@ export class Hci extends EventEmitter {
     let o = 0;
     const numHandles = payload.readUIntLE(o, 1); o += 1;
 
-    const connHandles: number[] = [];
+    const connectionHandles: number[] = [];
     const numCompletedPackets: number[] = [];
 
     for (let i = 0; i < numHandles; i++, o += 2) {
-      connHandles.push(payload.readUIntLE(o, 2));
+      connectionHandles.push(payload.readUIntLE(o, 2));
     }
     for (let i = 0; i < numHandles; i++, o += 2) {
       numCompletedPackets.push(payload.readUIntLE(o, 2));
     }
 
-    const event = connHandles.map((connHandle, i) => {
+    const event = connectionHandles.map((connectionHandle, i) => {
       const num = numCompletedPackets[i];
       return {
-        connHandle, numCompletedPackets: num,
+        connectionHandle, numCompletedPackets: num,
       }
     });
 
@@ -812,6 +817,12 @@ export class Hci extends EventEmitter {
       case HciLeEvent.AdvertisingReport:
         this.onLeAdvertisingReport(payload);
         break;
+      case HciLeEvent.ConnectionUpdateComplete:
+        this.onLeConnectionUpdateComplete(payload);
+        break;
+      case HciLeEvent.ReadRemoteFeaturesComplete:
+        this.onLeReadRemoteFeaturesComplete(payload);
+        break;
       case HciLeEvent.EnhancedConnectionComplete:
         this.onLeEnhConnectionCreated(payload);
         break;
@@ -823,16 +834,17 @@ export class Hci extends EventEmitter {
         break;
       default:
         debug('on-le-event: unknown event');
+        break
     }
   }
 
   private onLeConnectionComplete(data: Buffer): void {
-    const event = LeConnectionCreated.parse(data);
+    const event = LeConnectionComplete.parse(data);
 
     if (event.status !== 0) {
-      this.emit('conn-created', makeHciError(event.status));
+      this.emit('conn-complete', makeHciError(event.status));
     } else {
-      this.emit('conn-created', null, event.eventData!);
+      this.emit('conn-complete', null, event.eventData!);
     }
   }
 
@@ -841,6 +853,26 @@ export class Hci extends EventEmitter {
 
     for (const report of reports) {
       this.emit('adv-report', report);
+    }
+  }
+
+  private onLeConnectionUpdateComplete(data: Buffer): void {
+    const event = LeConnectionUpdateComplete.parse(data);
+
+    if (event.status === HciErrorCode.Success) {
+      this.emit('conn-update-complete', null, event.eventData!);
+    } else {
+      this.emit('conn-update-complete', makeHciError(event.status));
+    }
+  }
+
+  private onLeReadRemoteFeaturesComplete(data: Buffer): void {
+    const event = LeReadRemoteFeaturesComplete.parse(data);
+
+    if (event.status === HciErrorCode.Success) {
+      this.emit('LeReadRemoteFeaturesComplete', null, event.eventData!);
+    } else {
+      this.emit('LeReadRemoteFeaturesComplete', makeHciError(event.status));
     }
   }
 
@@ -856,8 +888,8 @@ export class Hci extends EventEmitter {
 
   private onLeChannelSelAlgo(data: Buffer): void {
     const event: LeChannelSelAlgoEvent = {
-      connHandle: data.readUIntLE(0, 2),
-      algorithm:  data.readUIntLE(2, 1),
+      connectionHandle: data.readUIntLE(0, 2),
+      algorithm:        data.readUIntLE(2, 1),
     };
     this.emit('ch-sel-algo', event);
   }

@@ -80,7 +80,7 @@ export enum HciEvent {
 }
 
 export interface DisconnectionCompleteEvent {
-  connHandle: number;
+  connectionHandle: number;
   reason: {
     code: number;
     message: string;
@@ -94,15 +94,15 @@ export enum EncryptionEnabled {
 }
 
 export interface EncryptionChangeEvent {
-  connHandle: number;
+  connectionHandle: number;
   encEnabled: EncryptionEnabled;
 }
 
 export enum HciLeEvent {
   ConnectionComplete                                  = 0x01, // * LE Connection Complete
   AdvertisingReport                                   = 0x02, // * LE Advertising Report
-  ConnectionUpdateComplete                            = 0x03, // LE Connection Update Complete
-  ReadRemoteFeaturesComplete                          = 0x04, // LE Read Remote Features Complete
+  ConnectionUpdateComplete                            = 0x03, // * LE Connection Update Complete
+  ReadRemoteFeaturesComplete                          = 0x04, // * LE Read Remote Features Complete
   LongTermKeyRequest                                  = 0x05, // LE Long Term Key Request
   RemoteConnectionParameterRequest                    = 0x06, // LE Remote Connection Parameter Request
   DataLengthChange                                    = 0x07, // LE Data Length Change

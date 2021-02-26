@@ -22,7 +22,7 @@ type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 
 interface Command {
   opcode: { ogf: number; ocf: number; };
-  connHandle?: number;
+  connectionHandle?: number;
   payload?: Buffer;
 }
 
@@ -53,7 +53,7 @@ export class HciCmd {
 
   public async linkControl(params: {
     ocf: HciOcfLinkControlCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer,
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -62,13 +62,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     });
   }
 
   public async linkPolicy(params: {
     ocf: HicOcfLinkPolicyCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -77,13 +77,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     });
   }
 
   public async controlAndBaseband(params: {
     ocf: HciOcfControlAndBasebandCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -92,13 +92,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     });
   }
 
   public async controlAndBasebandNoResponse(params: {
     ocf: HciOcfControlAndBasebandCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<void> {
     const opcode = HciOpcode.build({
@@ -110,7 +110,7 @@ export class HciCmd {
 
   public async informationParameters(params: {
     ocf: HciOcfInformationParameters,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -119,13 +119,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     })
   }
 
   public async statusParameters(params: {
     ocf: HciOcfStatusParameters,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -134,13 +134,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     })
   }
 
   public async testing(params: {
     ocf: HciOcfTestingCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -149,13 +149,13 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     });
   }
 
   public async leController(params: {
     ocf: HciOcfLeControllerCommands,
-    connHandle?: number,
+    connectionHandle?: number,
     payload?: Buffer
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
@@ -164,7 +164,7 @@ export class HciCmd {
         ocf: params.ocf,
       },
       payload: params.payload,
-      connHandle: params.connHandle,
+      connectionHandle: params.connectionHandle,
     });
   }
 
@@ -190,7 +190,7 @@ export class HciCmd {
         if (opcode !== evt.opcode) {
           return;
         }
-        if (cmd.connHandle === undefined) {
+        if (cmd.connectionHandle === undefined) {
           if (evt.status !== HciErrorCode.Success) {
             complete(makeHciError(evt.status));
           } else {
@@ -205,7 +205,7 @@ export class HciCmd {
             debug(`Cannot parse connection command complete event`);
             return; // NOTE: can't tell which connection
           }
-          if (cmd.connHandle !== evt.returnParameters.readUInt16LE(0)) {
+          if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
             return;
           }
           if (evt.status !== HciErrorCode.Success) {
