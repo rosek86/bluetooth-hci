@@ -8,6 +8,7 @@ const AdvDataParser = require('../lib/AdvDataParser').AdvDataParser;
 const HciLe = require('../lib/HciLeController');
 
 const LePhy = HciLe.LePhy;
+const LeSetTxRxPhyOpts = HciLe.LeSetTxRxPhyOpts;
 const LeAdvertisingEventProperties = HciLe.LeAdvertisingEventProperties;
 const LeAdvertisingChannelMap = HciLe.LeAdvertisingChannelMap;
 const LeOwnAddressType = HciLe.LeOwnAddressType;
@@ -69,6 +70,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
 
     const localCommands = await hci.readLocalSupportedCommands();
 
+    console.log('Supported commands:')
     for (const [key, value] of Object.entries(localCommands)) {
       if (value === true) {
         console.log(key);
@@ -89,9 +91,15 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       readRemoteFeaturesComplete:       true,
       longTermKeyRequest:               true,
       remoteConnectionParameterRequest: true,
-
+      dataLengthChange:                 true,
+      readLocalP256PublicKeyComplete:   true,
+      generateDhKeyComplete:            true,
       enhancedConnectionComplete:       true,
+      directedAdvertisingReport:        true,
+      phyUpdateComplete:                true,
       extendedAdvertisingReport:        true,
+
+      scanTimeout:                      true,
       channelSelectionAlgorithm:        true,
     });
 
@@ -119,6 +127,17 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       suggestedMaxTxOctets: 27,
       suggestedMaxTxTime: 328,
     });
+
+    // NOTE: command not implemented on the controller:
+    // hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
+    //   console.log('LeReadLocalP256PublicKeyComplete', status, event);
+    // });
+    // await hci.leReadLocalP256PublicKey();
+    // hci.on('LeGenerateDhKeyComplete', (status, event) => {
+    //   console.log('LeGenerateDhKeyComplete', status, event);
+    // });
+    // await hci.leGenerateDhKeyV1({ publicKey: Buffer.alloc(64) });
+    // return;
 
     await hci.leSetDefaultPhy({
       txPhys: LePhy.Phy1M,
@@ -176,6 +195,14 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     await hci.leSetExtendedScanEnable({
       enable: true,
       filterDuplicates: LeScanFilterDuplicates.Enabled,
+      durationMs: 0
+    });
+
+    hci.on('LeDirectedAdvertisingReport', (report) => {
+      console.log('LeDirectedAdvertisingReport', report);
+    });
+    hci.on('LeScanTimeout', () => {
+      console.log('LeScanTimeout');
     });
 
     let connecting = false;
@@ -184,12 +211,11 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
         if (connecting === true) {
           return;
         }
-        // console.log(JSON.stringify(report, null, 2));
         const advData = AdvDataParser.parse(report.data);
         if (advData.localName) {
           console.log({ report, advData });
         }
-        // console.log(JSON.stringify(result))
+        // return;
 
         if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
           connecting = true;
@@ -220,18 +246,15 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
     hci.on('LeEnhancedConnectionComplete', async (status, event) => {
-      console.log('connected');
-      if (status === null) {
-        console.log(event);
-      }
+      console.log('LeEnhancedConnectionComplete', status, event);
     });
     hci.on('LeChannelSelectionAlgorithm', async (event) => {
-      console.log(event);
+      console.log('LeChannelSelectionAlgorithm', event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
     });
     hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
       try {
-        console.log(event);
+        console.log('LeReadRemoteFeaturesComplete', status, event);
         await hci.leConnectionUpdate({
           connectionHandle: event.connectionHandle,
           connectionIntervalMinMs: 40,
@@ -246,11 +269,30 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
     hci.on('LeConnectionUpdateComplete', async (status, event) => {
-      console.log(event);
+      console.log('LeConnectionUpdateComplete', event);
+      // await hci.leSetPhy(event.connectionHandle, {
+      //   txPhys: LePhy.PhyCoded,
+      //   rxPhys: LePhy.PhyCoded,
+      //   opts:   LeSetTxRxPhyOpts.noPreferredCoding,
+      // })
       await hci.disconnect(event.connectionHandle);
     });
+    hci.on('onLePhyUpdateComplete', (status, event) => {
+      console.log(status, event);
+    });
+
     hci.on('DisconnectionComplete', (status, event) => {
-      console.log('disconnected', event);
+      console.log('DisconnectionComplete', event);
+    });
+
+    hci.on('LeLongTermKeyRequest', (event) => {
+      console.log('LeLongTermKeyRequest', event);
+    });
+    hci.on('LeRemoteConnectionParameterRequest', (event) => {
+      console.log('LeRemoteConnectionParameterRequest', event);
+    });
+    hci.on('LeDataLengthChange', (event) => {
+      console.log('LeDataLengthChange', event);
     });
     console.log('end');
 

@@ -51,7 +51,11 @@ import {
   LeReadRemoteFeaturesComplete, LeReadRemoteFeaturesCompleteEvent, LeConnectionUpdateComplete,
   LeConnectionUpdateCompleteEvent, LeChannelSelAlgoEvent, LeChannelSelAlgo, LeLongTermKeyRequest,
   LeConnectionComplete, LeConnectionCompleteEvent,  LeExtAdvReport, LeAdvReport,
-  LeEnhConnectionComplete, LeEnhConnectionCompleteEvent,
+  LeEnhConnectionComplete, LeEnhConnectionCompleteEvent, LeRemoteConnectionParameterRequest,
+  LeLongTermKeyRequestEvent, LeRemoteConnectionParameterRequestEvent, LeDataLengthChange,
+  LeReadLocalP256PublicKeyComplete, LeGenerateDhKeyComplete, LeGenerateDhKeyCompleteEvent,
+  LeDirectedAdvertisingReport, LeDirectedAdvertisingReportEvent, LePhyUpdateComplete,
+  LePhyUpdateCompleteEvent
 } from './HciEvent';
 
 const debug = Debug('nble-hci');
@@ -74,16 +78,25 @@ enum AclDataBroadcast {
 }
 
 export declare interface Hci {
-  on(event: 'DisconnectionComplete',        listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
-  on(event: 'EncryptionChange',             listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
+  on(event: 'DisconnectionComplete',              listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
+  on(event: 'EncryptionChange',                   listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
 
-  on(event: 'LeConnectionComplete',         listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
-  on(event: 'LeAdvertisingReport',          listener: (report: LeAdvReport) => void): this;
-  on(event: 'LeConnectionUpdateComplete',   listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
-  on(event: 'LeReadRemoteFeaturesComplete', listener: (err: Error|null, event?: LeReadRemoteFeaturesCompleteEvent) => void): this;
-  on(event: 'LeEnhancedConnectionComplete', listener: (err: Error|null, event?: LeEnhConnectionCompleteEvent) => void): this;
-  on(event: 'LeExtendedAdvertisingReport',  listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'LeChannelSelectionAlgorithm',  listener: (event: LeChannelSelAlgoEvent) => void): this;
+  on(event: 'LeConnectionComplete',               listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
+  on(event: 'LeAdvertisingReport',                listener: (report: LeAdvReport) => void): this;
+  on(event: 'LeConnectionUpdateComplete',         listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
+  on(event: 'LeReadRemoteFeaturesComplete',       listener: (err: Error|null, event?: LeReadRemoteFeaturesCompleteEvent) => void): this;
+  on(event: 'LeLongTermKeyRequest',               listener: (event: LeLongTermKeyRequestEvent) => void): this;
+  on(event: 'LeRemoteConnectionParameterRequest', listener: (event: LeRemoteConnectionParameterRequestEvent) => void): this;
+  on(event: 'LeReadLocalP256PublicKeyComplete',   listener: (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => void): this;
+  on(event: 'LeGenerateDhKeyComplete',            listener: (err: Error|null, event: LeGenerateDhKeyCompleteEvent) => void): this;
+  on(event: 'LeEnhancedConnectionComplete',       listener: (err: Error|null, event?: LeEnhConnectionCompleteEvent) => void): this;
+  on(event: 'LeDirectedAdvertisingReport',        listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
+  on(event: 'LePhyUpdateComplete',                listener: (err: Error|null, event?: LePhyUpdateCompleteEvent) => void): this;
+  on(event: 'LeExtendedAdvertisingReport',        listener: (report: LeExtAdvReport) => void): this;
+
+  on(event: 'LeScanTimeout',                      listener: () => void): this;
+
+  on(event: 'LeChannelSelectionAlgorithm',        listener: (event: LeChannelSelAlgoEvent) => void): this;
 }
 
 export class Hci extends EventEmitter {
@@ -133,7 +146,7 @@ export class Hci extends EventEmitter {
   }
 
   public async readTransmitPowerLevel(connectionHandle: number, type: ReadTransmitPowerLevelType): Promise<number> {
-    const ocf = HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel;;
+    const ocf = HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel;
     const payload = ReadTransmitPowerLevel.inParams(connectionHandle, type);
     const result = await this.cmd.controlAndBaseband({ ocf, connectionHandle, payload });
     return ReadTransmitPowerLevel.outParams(result.returnParameters);
@@ -674,7 +687,6 @@ export class Hci extends EventEmitter {
   public onData(packetType: HciPacketType, data: Buffer): void {
     try {
       if (packetType === HciPacketType.HciEvent) {
-        debug('on-hci-event');
         return this.onHciEvent(data);
       }
       if (packetType === HciPacketType.HciAclData) {
@@ -705,6 +717,10 @@ export class Hci extends EventEmitter {
       return;
     }
 
+    if (eventCode !== HciEvent.LeMeta) {
+      debug('on-hci-event', HciEvent[eventCode]);
+    }
+
     switch (eventCode) {
       case HciEvent.DisconnectionComplete:
         this.onDisconnectionComplete(payload);
@@ -721,7 +737,7 @@ export class Hci extends EventEmitter {
       case HciEvent.NumberOfCompletedPackets:
         this.onNumberOfCompletedPackets(payload);
         break;
-      case HciEvent.LEMeta:
+      case HciEvent.LeMeta:
         this.onLeEvent(payload);
         break;
       default:
@@ -827,10 +843,14 @@ export class Hci extends EventEmitter {
   }
 
   private onLeEvent(data: Buffer): void {
-    const eventType = data[0];
+    const eventCode = data[0];
     const payload = data.slice(1);
 
-    switch  (eventType) {
+    if (eventCode !== HciEvent.LeMeta) {
+      debug('on-hci-le-event', HciLeEvent[eventCode]);
+    }
+
+    switch  (eventCode) {
       case HciLeEvent.ConnectionComplete:
         this.onLeConnectionComplete(payload);
         break;
@@ -849,11 +869,29 @@ export class Hci extends EventEmitter {
       case HciLeEvent.RemoteConnectionParameterRequest:
         this.onLeRemoteConnectionParameterRequest(payload);
         break;
+      case HciLeEvent.DataLengthChange:
+        this.onLeDataLengthChange(payload);
+        break;
+      case HciLeEvent.ReadLocalP256PublicKeyComplete:
+        this.onLeReadLocalP256PublicKeyComplete(payload);
+        break;
+      case HciLeEvent.GenerateDhKeyComplete:
+        this.onLeGenerateDhKeyComplete(payload);
+        break;
       case HciLeEvent.EnhancedConnectionComplete:
         this.onLeEnhancedConnectionComplete(payload);
         break;
+      case HciLeEvent.DirectedAdvertisingReport:
+        this.onLeDirectedAdvertisingReport(payload);
+        break;
+      case HciLeEvent.PhyUpdateComplete:
+        this.onLePhyUpdateComplete(payload);
+        break;
       case HciLeEvent.ExtendedAdvertisingReport:
         this.onLeExtendedAdvertisingReport(payload);
+        break;
+      case HciLeEvent.ScanTimeout:
+        this.onLeScanTimeout();
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
         this.onLeChannelSelectionAlgorithm(payload);
@@ -893,7 +931,23 @@ export class Hci extends EventEmitter {
   }
 
   private onLeRemoteConnectionParameterRequest(data: Buffer): void {
-    console.log('RemoteConnectionParameterRequest');
+    const event = LeRemoteConnectionParameterRequest.parse(data);
+    this.emit('LeRemoteConnectionParameterRequest', event);
+  }
+
+  private onLeDataLengthChange(data: Buffer): void {
+    const event = LeDataLengthChange.parse(data);
+    this.emit('LeDataLengthChange', event);
+  }
+
+  private onLeReadLocalP256PublicKeyComplete(data: Buffer): void {
+    const { status, event } = LeReadLocalP256PublicKeyComplete.parse(data);
+    this.emitEvent('LeReadLocalP256PublicKeyComplete', status, event);
+  }
+
+  private onLeGenerateDhKeyComplete(data: Buffer): void {
+    const { status, event } = LeGenerateDhKeyComplete.parse(data);
+    this.emitEvent('LeGenerateDhKeyComplete', status, event);
   }
 
   private onLeEnhancedConnectionComplete(data: Buffer): void {
@@ -901,9 +955,17 @@ export class Hci extends EventEmitter {
     this.emitEvent('LeEnhancedConnectionComplete', status, event);
   }
 
-  private onLeChannelSelectionAlgorithm(data: Buffer): void {
-    const event = LeChannelSelAlgo.parse(data);
-    this.emit('LeChannelSelectionAlgorithm', event);
+  private onLeDirectedAdvertisingReport(data: Buffer): void {
+    const reports = LeDirectedAdvertisingReport.parse(data);
+
+    for (const report of reports) {
+      this.emit('LeDirectedAdvertisingReport', report);
+    }
+  }
+
+  private onLePhyUpdateComplete(data: Buffer): void {
+    const { status, event } = LePhyUpdateComplete.parse(data);
+    this.emitEvent('LePhyUpdateComplete', status, event);
   }
 
   private onLeExtendedAdvertisingReport(data: Buffer): void {
@@ -912,5 +974,14 @@ export class Hci extends EventEmitter {
     for (const report of reports) {
       this.emit('LeExtendedAdvertisingReport', report);
     }
+  }
+
+  private onLeScanTimeout(): void {
+    this.emit('LeScanTimeout');
+  }
+
+  private onLeChannelSelectionAlgorithm(data: Buffer): void {
+    const event = LeChannelSelAlgo.parse(data);
+    this.emit('LeChannelSelectionAlgorithm', event);
   }
 }

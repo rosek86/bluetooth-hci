@@ -1,6 +1,7 @@
 import { HciError, HciErrorCode } from "./HciError";
 import Debug from 'debug';
 import { Address } from "./Address";
+import { Hci } from "./Hci";
 
 const debug = Debug('nble-hci-event');
 
@@ -55,7 +56,7 @@ export enum HciEvent {
   UserPasskeyNotification                             = 0x3B, // User Passkey Notification
   KeypressNotification                                = 0x3C, // Keypress Notification
   RemoteHostSupportedFeaturesNotification             = 0x3D, // Remote Host Supported Features Notification
-  LEMeta                                              = 0x3E, // * LE Meta
+  LeMeta                                              = 0x3E, // * LE Meta
   PhysicalLinkComplete                                = 0x40, // Physical Link Complete
   ChannelSelected                                     = 0x41, // Channel Selected
   DisconnectionPhysicalLinkComplete                   = 0x42, // Disconnection Physical Link Complete
@@ -109,19 +110,19 @@ export enum HciLeEvent {
   AdvertisingReport                                   = 0x02, // * LE Advertising Report
   ConnectionUpdateComplete                            = 0x03, // * LE Connection Update Complete
   ReadRemoteFeaturesComplete                          = 0x04, // * LE Read Remote Features Complete
-  LongTermKeyRequest                                  = 0x05, // LE Long Term Key Request
-  RemoteConnectionParameterRequest                    = 0x06, // LE Remote Connection Parameter Request
-  DataLengthChange                                    = 0x07, // LE Data Length Change
-  ReadLocalP256PublicKeyComplete                      = 0x08, // LE Read Local P-256 Public Key Complete
-  GenerateDhKeyComplete                               = 0x09, // LE Generate DHKey Complete
+  LongTermKeyRequest                                  = 0x05, // * LE Long Term Key Request
+  RemoteConnectionParameterRequest                    = 0x06, // * LE Remote Connection Parameter Request
+  DataLengthChange                                    = 0x07, // * LE Data Length Change
+  ReadLocalP256PublicKeyComplete                      = 0x08, // * LE Read Local P-256 Public Key Complete
+  GenerateDhKeyComplete                               = 0x09, // * LE Generate DHKey Complete
   EnhancedConnectionComplete                          = 0x0A, // * LE Enhanced Connection Complete
-  DirectedAdvertisingReport                           = 0x0B, // LE Directed Advertising Report
-  PhyUpdateComplete                                   = 0x0C, // LE PHY Update Complete
+  DirectedAdvertisingReport                           = 0x0B, // * LE Directed Advertising Report
+  PhyUpdateComplete                                   = 0x0C, // * LE PHY Update Complete
   ExtendedAdvertisingReport                           = 0x0D, // * LE Extended Advertising Report
   PeriodicAdvertisingSyncEstablished                  = 0x0E, // LE Periodic Advertising Sync Established
   PeriodicAdvertisingReport                           = 0x0F, // LE Periodic Advertising Report
   PeriodicAdvertisingSyncLost                         = 0x10, // LE Periodic Advertising Sync Lost
-  ScanTimeout                                         = 0x11, // LE Scan Timeout
+  ScanTimeout                                         = 0x11, // * LE Scan Timeout
   AdvertisingSetTerminated                            = 0x12, // LE Advertising Set Terminated
   ScanRequestReceived                                 = 0x13, // LE Scan Request Received
   ChannelSelectionAlgorithm                           = 0x14, // * LE Channel Selection Algorithm
@@ -577,5 +578,202 @@ export class LeLongTermKeyRequest {
     const encryptedDiversifier  = data.readUIntLE(o, 2);    o += 2;
 
     return { connectionHandle, randomNumber, encryptedDiversifier };
+  }
+}
+
+export interface LeRemoteConnectionParameterRequestEvent extends ConnEvent {
+  connectionIntervalMinMs: number;
+  connectionIntervalMaxMs: number;
+  connectionLatency:       number;
+  supervisionTimeoutMs:    number;
+}
+
+export class LeRemoteConnectionParameterRequest {
+  static parse(data: Buffer): LeRemoteConnectionParameterRequestEvent {
+    if (data.length !== 10) {
+      debug(`LeRemoteConnectionParameterRequest: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const connectionHandle      = data.readUIntLE(o, 2); o += 2;
+    const connectionIntervalMin = data.readUIntLE(o, 2); o += 2;
+    const connectionIntervalMax = data.readUIntLE(o, 2); o += 2;
+    const connectionLatency     = data.readUIntLE(o, 2); o += 2;
+    const supervisionTimeout    = data.readUIntLE(o, 2); o += 2;
+
+    return {
+      connectionHandle,
+      connectionIntervalMinMs:  connectionIntervalMin * 1.25,
+      connectionIntervalMaxMs:  connectionIntervalMax * 1.25,
+      connectionLatency,
+      supervisionTimeoutMs:     supervisionTimeout * 10,
+    };
+  }
+}
+
+export interface LeDataLengthChangeEvent extends ConnEvent {
+  maxTxOctets:  number;
+  maxTxTime:    number;
+  maxRxOctets:  number;
+  maxRxTime:    number;
+}
+
+export class LeDataLengthChange {
+  static parse(data: Buffer): LeDataLengthChangeEvent {
+    if (data.length !== 10) {
+      debug(`LeDataLengthChange: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const maxTxOctets       = data.readUIntLE(o, 2); o += 2;
+    const maxTxTime         = data.readUIntLE(o, 2); o += 2;
+    const maxRxOctets       = data.readUIntLE(o, 2); o += 2;
+    const maxRxTime         = data.readUIntLE(o, 2); o += 2;
+
+    return {
+      connectionHandle,
+      maxTxOctets,
+      maxTxTime,
+      maxRxOctets,
+      maxRxTime,
+    };
+  }
+}
+
+export interface LeReadLocalP256PublicKeyCompleteEvent {
+  localP256PublicKey: Buffer;
+}
+
+export class LeReadLocalP256PublicKeyComplete {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: LeReadLocalP256PublicKeyCompleteEvent,
+  } {
+    if (data.length !== 65) {
+      debug(`LeReadLocalP256PublicKeyComplete: invalid size ${data.length}`);
+    }
+
+    const status = data.readUIntLE(0, 1);
+    const localP256PublicKey = data.slice(1, 1 + 64).reverse();
+
+    return { status, event: { localP256PublicKey } };
+  }
+}
+
+export interface LeGenerateDhKeyCompleteEvent {
+  dhKey: Buffer;
+}
+
+export class LeGenerateDhKeyComplete {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: LeGenerateDhKeyCompleteEvent,
+   } {
+    if (data.length !== 33) {
+      debug(`LeGenerateDhKeyComplete: invalid size ${data.length}`);
+    }
+
+    const status = data.readUIntLE(0, 1);
+    const dhKey = data.slice(1, 1 + 32).reverse();
+
+    return { status, event: { dhKey } };
+  }
+}
+
+export enum LeDirectedAdvEventType {
+  Directed = 1, // Connectable directed advertising (ADV_DIRECT_IND)
+}
+
+export enum LeDirectedAdvReportAddrType {
+  RandomDeviceAddress   = 0x01, // Random Device Address
+}
+
+export interface LeDirectedAdvertisingReportEvent {
+  eventType: LeDirectedAdvEventType;
+  addressType: LeAdvReportAddrType;
+  address: Address;
+  directAddressType: LeDirectedAdvReportAddrType;
+  directAddress: Address;
+  rssi: number|null;
+}
+
+export class LeDirectedAdvertisingReport {
+  static parse(data: Buffer): LeDirectedAdvertisingReportEvent[] {
+    const numReports = data[0];
+
+    const reportsRaw: Partial<{
+      eventType:          number;
+      addressType:        number;
+      address:            number;
+      directAddressType:  number;
+      directAddress:      number;
+      rssi:               number;
+    }>[] = [];
+
+    let o = 1;
+
+    for (let i = 0; i < numReports; i++) {
+      reportsRaw.push({});
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].eventType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].addressType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 6) {
+      reportsRaw[i].address = data.readUIntLE(o, 6);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
+    }
+    for (let i = 0; i < numReports; i++, o += 6) {
+      reportsRaw[i].directAddress = data.readUIntLE(o, 6);
+    }
+    for (let i = 0; i < numReports; i++, o += 1) {
+      reportsRaw[i].rssi = data.readIntLE(o, 1);
+    }
+
+    const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
+
+    return reportsRaw.map<LeDirectedAdvertisingReportEvent>((reportRaw) => ({
+      eventType:              reportRaw.eventType!,
+      addressType:            reportRaw.addressType!,
+      address:                Address.from(reportRaw.address!),
+      directAddressType:      reportRaw.directAddressType!,
+      directAddress:          Address.from(reportRaw.directAddress!),
+      rssi:                   powerOrNull(reportRaw.rssi!),
+    }));
+  }
+}
+
+
+
+export interface LePhyUpdateCompleteEvent extends ConnEvent {
+  txPhy: number;
+  rxPhy: number;
+}
+
+export class LePhyUpdateComplete {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: LePhyUpdateCompleteEvent,
+   } {
+    if (data.length !== 5) {
+      debug(`LePhyUpdateComplete: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const status            = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const txPhy             = data.readUIntLE(o, 1); o += 1;
+    const rxPhy             = data.readUIntLE(o, 1); o += 1;
+
+    return {
+      status, event: {
+        connectionHandle, txPhy, rxPhy,
+      }
+    };
   }
 }
