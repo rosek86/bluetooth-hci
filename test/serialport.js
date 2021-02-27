@@ -83,12 +83,16 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     await hci.setEventMaskPage2({});
 
     await hci.leSetEventMask({
-      connectionComplete: true,
-      connectionUpdateComplete: true,
-      readRemoteFeaturesComplete: true,
-      extendedAdvertisingReport: true,
-      enhancedConnectionComplete: true,
-      channelSelectionAlgorithm: true,
+      connectionComplete:               false,
+      advertisingReport:                false,
+      connectionUpdateComplete:         true,
+      readRemoteFeaturesComplete:       true,
+      longTermKeyRequest:               true,
+      remoteConnectionParameterRequest: true,
+
+      enhancedConnectionComplete:       true,
+      extendedAdvertisingReport:        true,
+      channelSelectionAlgorithm:        true,
     });
 
     // const key = Buffer.alloc(16);
@@ -175,7 +179,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     });
 
     let connecting = false;
-    hci.on('ext-adv-report', async (report) => {
+    hci.on('LeExtendedAdvertisingReport', async (report) => {
       try {
         if (connecting === true) {
           return;
@@ -216,23 +220,28 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       }
     });
 
-    hci.on('conn-complete', async (status, event) => {
+    hci.on('LeEnhancedConnectionComplete', async (status, event) => {
+      console.log('connected');
       if (status === null) {
-        console.log('connected');
         console.log(event);
       }
     });
-    hci.on('ch-sel-algo', async (event) => {
+    hci.on('LeChannelSelectionAlgorithm', async (event) => {
       console.log(event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
     });
-    hci.on('disconn-complete', (status, event) => {
-      console.log(event);
+    hci.on('DisconnectionComplete', (status, event) => {
+      console.log('disconnected', event);
     });
 
-    hci.on('LeReadRemoteFeaturesComplete', (status, event) => {
-      console.log(event);
-    })
+    hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
+      try {
+        console.log(event);
+        await hci.disconnect(event.connectionHandle);
+      } catch (err) {
+        console.log(err);
+      }
+    });
 
     console.log('end');
 

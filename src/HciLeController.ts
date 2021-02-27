@@ -1952,8 +1952,6 @@ export interface LeConnectionCompleteEvent {
   role: LeConnectionRole;
   peerAddressType: LeEnhPeerAddressType;
   peerAddress: Address;
-  localResolvablePrivateAddress?: Address;
-  peerResolvablePrivateAddress?: Address;
   connectionIntervalMs: number;
   connectionLatency: number;
   supervisionTimeoutMs: number;
@@ -1961,7 +1959,7 @@ export interface LeConnectionCompleteEvent {
 }
 
 export class LeConnectionComplete {
-  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeEnhConnectionCreated } {
+  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeConnectionCompleteEvent } {
     let o = 0;
 
     const status = data.readUIntLE(o, 1); o += 1;
@@ -1994,8 +1992,13 @@ export class LeConnectionComplete {
   }
 }
 
-export class LeEnhConnectionCreated {
-  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeEnhConnectionCreated } {
+export interface LeEnhConnectionCompleteEvent extends LeConnectionCompleteEvent {
+  localResolvablePrivateAddress: Address;
+  peerResolvablePrivateAddress: Address;
+}
+
+export class LeEnhConnectionComplete {
+  static parse(data: Buffer): { status: HciErrorCode, eventData?: LeEnhConnectionCompleteEvent } {
     let o = 0;
 
     const status = data.readUIntLE(o, 1); o += 1;
@@ -2015,7 +2018,7 @@ export class LeEnhConnectionCreated {
     const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
     const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
 
-    const eventData: LeConnectionCompleteEvent = {
+    const eventData: LeEnhConnectionCompleteEvent = {
       connectionHandle,
       role,
       peerAddressType,

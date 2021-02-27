@@ -45,8 +45,9 @@ import {
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
   LeTransmitPower, LeExtendedCreateConnection, LeConnectionComplete, LeConnectionCompleteEvent,
-  LeEnhConnectionCreated, LeChannelSelAlgoEvent, LeAdvReport, LeConnectionUpdateComplete,
-  LeConnectionUpdateCompleteEvent, LeReadRemoteFeaturesComplete
+  LeEnhConnectionComplete, LeChannelSelAlgoEvent, LeAdvReport, LeConnectionUpdateComplete,
+  LeConnectionUpdateCompleteEvent, LeReadRemoteFeaturesComplete, LeEnhConnectionCompleteEvent,
+  LeReadRemoteFeaturesCompleteEvent
 } from './HciLeController';
 
 const debug = Debug('nble-hci');
@@ -69,13 +70,16 @@ enum AclDataBroadcast {
 }
 
 export declare interface Hci {
-  on(event: 'disconn-complete',     listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
-  on(event: 'enc-change',           listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
-  on(event: 'adv-report',           listener: (report: LeAdvReport) => void): this;
-  on(event: 'ext-adv-report',       listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'conn-complete',        listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
-  on(event: 'conn-update-complete', listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
-  on(event: 'ch-sel-algo',          listener: (event: LeChannelSelAlgoEvent) => void): this;
+  on(event: 'DisconnectionComplete',        listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
+  on(event: 'EncryptionChange',             listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
+
+  on(event: 'LeConnectionComplete',         listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
+  on(event: 'LeAdvertisingReport',          listener: (report: LeAdvReport) => void): this;
+  on(event: 'LeConnectionUpdateComplete',   listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
+  on(event: 'LeReadRemoteFeaturesComplete', listener: (err: Error|null, event?: LeReadRemoteFeaturesCompleteEvent) => void): this;
+  on(event: 'LeEnhancedConnectionComplete', listener: (err: Error|null, event?: LeEnhConnectionCompleteEvent) => void): this;
+  on(event: 'LeExtendedAdvertisingReport',  listener: (report: LeExtAdvReport) => void): this;
+  on(event: 'LeChannelSelectionAlgorithm',  listener: (event: LeChannelSelAlgoEvent) => void): this;
 }
 
 export class Hci extends EventEmitter {
@@ -93,10 +97,13 @@ export class Hci extends EventEmitter {
 
   // Link Control
 
-  public async disconnect(connectionHandle: number, reason: HciDisconnectReason): Promise<void> {
+  public async disconnect(
+    connectionHandle: number,
+    reason: HciDisconnectReason = HciDisconnectReason.ConnTerminatedByRemoteUser
+  ): Promise<void> {
     const payload = Buffer.allocUnsafe(3);
-    payload.writeUInt16LE(connectionHandle, 0);
-    payload.writeUInt8(reason);
+    payload.writeUIntLE(connectionHandle, 0, 2);
+    payload.writeUIntLE(reason,           2, 1);
     const ocf = HciOcfLinkControlCommands.Disconnect;
     await this.cmd.linkControl({ ocf, payload });
   }
@@ -719,7 +726,19 @@ export class Hci extends EventEmitter {
     }
   }
 
+  private emitEvent<T>(label: string, status: HciErrorCode, event: T): void {
+    if (status === HciErrorCode.Success) {
+      this.emit(label, null, event);
+    } else {
+      this.emit(label, makeHciError(status), event);
+    }
+  }
+
   private onDisconnectionComplete(payload: Buffer): void {
+    if (payload.length !== 4) {
+      debug(`onDisconnectionComplete: invalid size ${payload.length}`);
+    }
+
     let o = 0;
     const status            = payload.readUIntLE(o, 1); o += 1;
     const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
@@ -733,34 +752,30 @@ export class Hci extends EventEmitter {
       },
     };
 
-    if (status === HciErrorCode.Success) {
-      this.emit('disconn-complete', null, event);
-    } else {
-      this.emit('disconn-complete', makeHciError(status), event);
-    }
+    this.emitEvent('DisconnectionComplete', status, event);
   }
 
   private onEncryptionChange(payload: Buffer): void {
+    if (payload.length !== 4) {
+      debug(`onEncryptionChange: invalid size ${payload.length}`);
+    }
+
     let o = 0;
     const status            = payload.readUIntLE(o, 1); o += 1;
     const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
     const encEnabled        = payload.readUIntLE(o, 1); o += 1;
 
     const event: EncryptionChangeEvent = { connectionHandle, encEnabled };
-    debug('enc-change', event);
 
-    if (status === HciErrorCode.Success) {
-      this.emit('enc-change', null, event);
-    } else {
-      this.emit('enc-change', makeHciError(status), event);
-    }
+    this.emitEvent('EncryptionChange', status, event);
   }
 
   private onCommandComplete(payload: Buffer): void {
     if (payload.length < 4) {
-      debug(`(evt-cmd_complete) invalid payload size: ${payload.length}`);
+      debug(`onCommandComplete: invalid size ${payload.length}`);
       return;
     }
+
     this.cmd.onCmdResult({
       status:           payload[3],
       numHciPackets:    payload[0],
@@ -771,9 +786,10 @@ export class Hci extends EventEmitter {
 
   private onCommandStatus(payload: Buffer): void {
     if (payload.length < 4) {
-      debug(`(evt-cmd_status) invalid payload size: ${payload.length}`);
+      debug(`onCommandStatus: invalid size ${payload.length}`);
       return;
     }
+
     this.cmd.onCmdResult({
       status:         payload[0],
       numHciPackets:  payload[1],
@@ -824,13 +840,13 @@ export class Hci extends EventEmitter {
         this.onLeReadRemoteFeaturesComplete(payload);
         break;
       case HciLeEvent.EnhancedConnectionComplete:
-        this.onLeEnhConnectionCreated(payload);
+        this.onLeEnhancedConnectionComplete(payload);
         break;
       case HciLeEvent.ExtendedAdvertisingReport:
-        this.onLeExtAdvertReport(payload);
+        this.onLeExtendedAdvertisingReport(payload);
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
-        this.onLeChannelSelAlgo(payload);
+        this.onLeChannelSelectionAlgorithm(payload);
         break;
       default:
         debug('on-le-event: unknown event');
@@ -839,66 +855,46 @@ export class Hci extends EventEmitter {
   }
 
   private onLeConnectionComplete(data: Buffer): void {
-    const event = LeConnectionComplete.parse(data);
-
-    if (event.status !== 0) {
-      this.emit('conn-complete', makeHciError(event.status));
-    } else {
-      this.emit('conn-complete', null, event.eventData!);
-    }
+    const { status, eventData } = LeConnectionComplete.parse(data);
+    this.emitEvent('LeConnectionComplete', status, eventData);
   }
 
   private onLeAdvertisingReport(data: Buffer): void {
     const reports = LeAdvReport.parse(data);
 
     for (const report of reports) {
-      this.emit('adv-report', report);
+      this.emit('LeAdvertisingReport', report);
     }
   }
 
   private onLeConnectionUpdateComplete(data: Buffer): void {
-    const event = LeConnectionUpdateComplete.parse(data);
-
-    if (event.status === HciErrorCode.Success) {
-      this.emit('conn-update-complete', null, event.eventData!);
-    } else {
-      this.emit('conn-update-complete', makeHciError(event.status));
-    }
+    const { status, eventData } = LeConnectionUpdateComplete.parse(data);
+    this.emitEvent('LeConnectionUpdateComplete', status, eventData);
   }
 
   private onLeReadRemoteFeaturesComplete(data: Buffer): void {
-    const event = LeReadRemoteFeaturesComplete.parse(data);
-
-    if (event.status === HciErrorCode.Success) {
-      this.emit('LeReadRemoteFeaturesComplete', null, event.eventData!);
-    } else {
-      this.emit('LeReadRemoteFeaturesComplete', makeHciError(event.status));
-    }
+    const { status, eventData } = LeReadRemoteFeaturesComplete.parse(data);
+    this.emitEvent('LeReadRemoteFeaturesComplete', status, eventData);
   }
 
-  private onLeEnhConnectionCreated(data: Buffer): void {
-    const event = LeEnhConnectionCreated.parse(data);
-
-    if (event.status === HciErrorCode.Success) {
-      this.emit('conn-created', null, event.eventData!);
-    } else {
-      this.emit('conn-created', makeHciError(event.status));
-    }
+  private onLeEnhancedConnectionComplete(data: Buffer): void {
+    const { status, eventData } = LeEnhConnectionComplete.parse(data);
+    this.emitEvent('LeEnhancedConnectionComplete', status, eventData);
   }
 
-  private onLeChannelSelAlgo(data: Buffer): void {
+  private onLeChannelSelectionAlgorithm(data: Buffer): void {
     const event: LeChannelSelAlgoEvent = {
       connectionHandle: data.readUIntLE(0, 2),
       algorithm:        data.readUIntLE(2, 1),
     };
-    this.emit('ch-sel-algo', event);
+    this.emit('LeChannelSelectionAlgorithm', event);
   }
 
-  private onLeExtAdvertReport(data: Buffer): void {
+  private onLeExtendedAdvertisingReport(data: Buffer): void {
     const reports = LeExtAdvReport.parse(data);
 
     for (const report of reports) {
-      this.emit('ext-adv-report', report);
+      this.emit('LeExtendedAdvertisingReport', report);
     }
   }
 }
