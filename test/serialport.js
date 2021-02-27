@@ -219,7 +219,6 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
         console.log(err);
       }
     });
-
     hci.on('LeEnhancedConnectionComplete', async (status, event) => {
       console.log('connected');
       if (status === null) {
@@ -230,19 +229,29 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       console.log(event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
     });
-    hci.on('DisconnectionComplete', (status, event) => {
-      console.log('disconnected', event);
-    });
-
     hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
       try {
         console.log(event);
-        await hci.disconnect(event.connectionHandle);
+        await hci.leConnectionUpdate({
+          connectionHandle: event.connectionHandle,
+          connectionIntervalMinMs: 40,
+          connectionIntervalMaxMs: 90,
+          connectionLatency: 0,
+          supervisionTimeoutMs: 5000,
+          minCeLengthMs: 2.5,
+          maxCeLengthMs: 3.75,
+        });
       } catch (err) {
         console.log(err);
       }
     });
-
+    hci.on('LeConnectionUpdateComplete', async (status, event) => {
+      console.log(event);
+      await hci.disconnect(event.connectionHandle);
+    });
+    hci.on('DisconnectionComplete', (status, event) => {
+      console.log('disconnected', event);
+    });
     console.log('end');
 
   } catch (err) {
