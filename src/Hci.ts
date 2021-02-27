@@ -9,7 +9,6 @@ import { HciParserError, makeParserError } from './HciError';
 
 import { Address } from './Address';
 import { HciCmd } from './HciCmd';
-import { DisconnectionCompleteEvent, EncryptionChangeEvent, HciEvent, HciLeEvent } from './HciEvent';
 import {
    HciOcfInformationParameters,
    HciOcfControlAndBasebandCommands,
@@ -29,7 +28,7 @@ import {
   ReadLocalSupportedCommands, ReadRssi
 } from './HciInformationParameters';
 import {
-  LeSupportedStates, LeExtAdvReport, LeEvents, LeSetEventsMask,
+  LeSupportedStates, LeEvents, LeSetEventsMask,
   LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
   LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
   LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
@@ -44,11 +43,16 @@ import {
   ConnectionHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection, LeConnectionComplete, LeConnectionCompleteEvent,
-  LeEnhConnectionComplete, LeChannelSelAlgoEvent, LeAdvReport, LeConnectionUpdateComplete,
-  LeConnectionUpdateCompleteEvent, LeReadRemoteFeaturesComplete, LeEnhConnectionCompleteEvent,
-  LeReadRemoteFeaturesCompleteEvent
+  LeTransmitPower, LeExtendedCreateConnection,
 } from './HciLeController';
+
+import {
+  DisconnectionCompleteEvent, EncryptionChangeEvent, HciEvent, HciLeEvent,
+  LeReadRemoteFeaturesComplete, LeReadRemoteFeaturesCompleteEvent, LeConnectionUpdateComplete,
+  LeConnectionUpdateCompleteEvent, LeChannelSelAlgoEvent, LeChannelSelAlgo, LeLongTermKeyRequest,
+  LeConnectionComplete, LeConnectionCompleteEvent,  LeExtAdvReport, LeAdvReport,
+  LeEnhConnectionComplete, LeEnhConnectionCompleteEvent,
+} from './HciEvent';
 
 const debug = Debug('nble-hci');
 
@@ -839,6 +843,12 @@ export class Hci extends EventEmitter {
       case HciLeEvent.ReadRemoteFeaturesComplete:
         this.onLeReadRemoteFeaturesComplete(payload);
         break;
+      case HciLeEvent.LongTermKeyRequest:
+        this.onLeLongTermKeyRequest(payload);
+        break;
+      case HciLeEvent.RemoteConnectionParameterRequest:
+        this.onLeRemoteConnectionParameterRequest(payload);
+        break;
       case HciLeEvent.EnhancedConnectionComplete:
         this.onLeEnhancedConnectionComplete(payload);
         break;
@@ -855,8 +865,8 @@ export class Hci extends EventEmitter {
   }
 
   private onLeConnectionComplete(data: Buffer): void {
-    const { status, eventData } = LeConnectionComplete.parse(data);
-    this.emitEvent('LeConnectionComplete', status, eventData);
+    const { status, event } = LeConnectionComplete.parse(data);
+    this.emitEvent('LeConnectionComplete', status, event);
   }
 
   private onLeAdvertisingReport(data: Buffer): void {
@@ -868,25 +878,31 @@ export class Hci extends EventEmitter {
   }
 
   private onLeConnectionUpdateComplete(data: Buffer): void {
-    const { status, eventData } = LeConnectionUpdateComplete.parse(data);
-    this.emitEvent('LeConnectionUpdateComplete', status, eventData);
+    const { status, event } = LeConnectionUpdateComplete.parse(data);
+    this.emitEvent('LeConnectionUpdateComplete', status, event);
   }
 
   private onLeReadRemoteFeaturesComplete(data: Buffer): void {
-    const { status, eventData } = LeReadRemoteFeaturesComplete.parse(data);
-    this.emitEvent('LeReadRemoteFeaturesComplete', status, eventData);
+    const { status, event } = LeReadRemoteFeaturesComplete.parse(data);
+    this.emitEvent('LeReadRemoteFeaturesComplete', status, event);
+  }
+
+  private onLeLongTermKeyRequest(data: Buffer): void {
+    const event = LeLongTermKeyRequest.parse(data);
+    this.emit('LeLongTermKeyRequest', event);
+  }
+
+  private onLeRemoteConnectionParameterRequest(data: Buffer): void {
+    console.log('RemoteConnectionParameterRequest');
   }
 
   private onLeEnhancedConnectionComplete(data: Buffer): void {
-    const { status, eventData } = LeEnhConnectionComplete.parse(data);
-    this.emitEvent('LeEnhancedConnectionComplete', status, eventData);
+    const { status, event } = LeEnhConnectionComplete.parse(data);
+    this.emitEvent('LeEnhancedConnectionComplete', status, event);
   }
 
   private onLeChannelSelectionAlgorithm(data: Buffer): void {
-    const event: LeChannelSelAlgoEvent = {
-      connectionHandle: data.readUIntLE(0, 2),
-      algorithm:        data.readUIntLE(2, 1),
-    };
+    const event = LeChannelSelAlgo.parse(data);
     this.emit('LeChannelSelectionAlgorithm', event);
   }
 

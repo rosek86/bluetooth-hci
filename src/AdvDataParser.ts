@@ -1,7 +1,7 @@
 // NOTE:
 // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
 
-import { LeExtAdvReport } from "./HciLeController";
+import { LeExtAdvReport } from "./HciEvent";
 
 export interface AdvDataField {
   type: number;
@@ -129,26 +129,25 @@ export interface AdvData {
 }
 
 export class AdvDataParser {
-  static parse(advReport: LeExtAdvReport): AdvData {
+  static parse(advData: Buffer): AdvData {
     const ad: AdvData = {};
 
-    const adBuffer = advReport.data;
-    if (!adBuffer) {
+    if (!advData) {
       return ad;
     }
 
     const fields: AdvDataField[] = [];
 
     let o = 0;
-    while (o < adBuffer.length) {
-      const len = adBuffer[o++];
+    while (o < advData.length) {
+      const len = advData[o++];
 
-      if (len === 0 || o >= adBuffer.length) {
+      if (len === 0 || o >= advData.length) {
         continue;
       }
 
-      const type = adBuffer[o++];
-      const data = adBuffer.slice(o, o + (len - 1));
+      const type = advData[o++];
+      const data = advData.slice(o, o + (len - 1));
 
       o += len - 1;
 

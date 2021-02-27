@@ -185,7 +185,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
           return;
         }
         // console.log(JSON.stringify(report, null, 2));
-        const advData = AdvDataParser.parse(report);
+        const advData = AdvDataParser.parse(report.data);
         if (advData.localName) {
           console.log({ report, advData });
         }
