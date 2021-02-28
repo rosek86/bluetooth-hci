@@ -1,7 +1,7 @@
-import { HciError, HciErrorCode } from "./HciError";
 import Debug from 'debug';
-import { Address } from "./Address";
-import { Hci } from "./Hci";
+
+import { Address } from './Address';
+import { HciErrorCode } from './HciError';
 
 const debug = Debug('nble-hci-event');
 
@@ -44,7 +44,7 @@ export enum HciEvent {
   SynchronousConnectionChanged                        = 0x2D, // Synchronous Connection Changed
   SniffSubrating                                      = 0x2E, // Sniff Subrating
   ExtendedInquiryResult                               = 0x2F, // Extended Inquiry Result
-  EncryptionKeyRefreshComplete                        = 0x30, // Encryption Key Refresh Complete
+  EncryptionKeyRefreshComplete                        = 0x30, // * Encryption Key Refresh Complete
   IoCapabilityRequest                                 = 0x31, // IO Capability Request
   IoCapabilityResponse                                = 0x32, // IO Capability Response
   UserConfirmationRequest                             = 0x33, // User Confirmation Request
@@ -153,7 +153,7 @@ export enum HciLeEvent {
   PeriodicAdvertisingReport                           = 0x0F, // LE Periodic Advertising Report
   PeriodicAdvertisingSyncLost                         = 0x10, // LE Periodic Advertising Sync Lost
   ScanTimeout                                         = 0x11, // * LE Scan Timeout
-  AdvertisingSetTerminated                            = 0x12, // LE Advertising Set Terminated
+  AdvertisingSetTerminated                            = 0x12, // * LE Advertising Set Terminated
   ScanRequestReceived                                 = 0x13, // LE Scan Request Received
   ChannelSelectionAlgorithm                           = 0x14, // * LE Channel Selection Algorithm
   ConnectionlessIqReport                              = 0x15, // LE Connectionless IQ Report
