@@ -55,7 +55,8 @@ import {
   LeLongTermKeyRequestEvent, LeRemoteConnectionParameterRequestEvent, LeDataLengthChange,
   LeReadLocalP256PublicKeyComplete, LeGenerateDhKeyComplete, LeGenerateDhKeyCompleteEvent,
   LeDirectedAdvertisingReport, LeDirectedAdvertisingReportEvent, LePhyUpdateComplete,
-  LePhyUpdateCompleteEvent
+  LePhyUpdateCompleteEvent,
+  LeDataLengthChangeEvent
 } from './HciEvent';
 
 const debug = Debug('nble-hci');
@@ -81,17 +82,18 @@ export declare interface Hci {
   on(event: 'DisconnectionComplete',              listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
   on(event: 'EncryptionChange',                   listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
 
-  on(event: 'LeConnectionComplete',               listener: (err: Error|null, event?: LeConnectionCompleteEvent) => void): this;
+  on(event: 'LeConnectionComplete',               listener: (err: Error|null, event: LeConnectionCompleteEvent) => void): this;
   on(event: 'LeAdvertisingReport',                listener: (report: LeAdvReport) => void): this;
-  on(event: 'LeConnectionUpdateComplete',         listener: (err: Error|null, event?: LeConnectionUpdateCompleteEvent) => void): this;
-  on(event: 'LeReadRemoteFeaturesComplete',       listener: (err: Error|null, event?: LeReadRemoteFeaturesCompleteEvent) => void): this;
+  on(event: 'LeConnectionUpdateComplete',         listener: (err: Error|null, event: LeConnectionUpdateCompleteEvent) => void): this;
+  on(event: 'LeReadRemoteFeaturesComplete',       listener: (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => void): this;
   on(event: 'LeLongTermKeyRequest',               listener: (event: LeLongTermKeyRequestEvent) => void): this;
-  on(event: 'LeRemoteConnectionParameterRequest', listener: (event: LeRemoteConnectionParameterRequestEvent) => void): this;
+  on(event: 'LeRemoteConnectionParameterRequest', listener: (event: LeDataLengthChangeEvent) => void): this;
+  on(event: 'LeDataLengthChange',                 listener: (event: LeRemoteConnectionParameterRequestEvent) => void): this;
   on(event: 'LeReadLocalP256PublicKeyComplete',   listener: (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => void): this;
   on(event: 'LeGenerateDhKeyComplete',            listener: (err: Error|null, event: LeGenerateDhKeyCompleteEvent) => void): this;
-  on(event: 'LeEnhancedConnectionComplete',       listener: (err: Error|null, event?: LeEnhConnectionCompleteEvent) => void): this;
+  on(event: 'LeEnhancedConnectionComplete',       listener: (err: Error|null, event: LeEnhConnectionCompleteEvent) => void): this;
   on(event: 'LeDirectedAdvertisingReport',        listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
-  on(event: 'LePhyUpdateComplete',                listener: (err: Error|null, event?: LePhyUpdateCompleteEvent) => void): this;
+  on(event: 'LePhyUpdateComplete',                listener: (err: Error|null, event: LePhyUpdateCompleteEvent) => void): this;
   on(event: 'LeExtendedAdvertisingReport',        listener: (report: LeExtAdvReport) => void): this;
 
   on(event: 'LeScanTimeout',                      listener: () => void): this;
@@ -818,11 +820,11 @@ export class Hci extends EventEmitter {
   }
 
   private onNumberOfCompletedPackets(payload: Buffer): void {
-    let o = 0;
-    const numHandles = payload.readUIntLE(o, 1); o += 1;
-
     const connectionHandles: number[] = [];
     const numCompletedPackets: number[] = [];
+
+    let o = 0;
+    const numHandles = payload.readUIntLE(o, 1); o += 1;
 
     for (let i = 0; i < numHandles; i++, o += 2) {
       connectionHandles.push(payload.readUIntLE(o, 2));
@@ -831,12 +833,10 @@ export class Hci extends EventEmitter {
       numCompletedPackets.push(payload.readUIntLE(o, 2));
     }
 
-    const event = connectionHandles.map((connectionHandle, i) => {
-      const num = numCompletedPackets[i];
-      return {
-        connectionHandle, numCompletedPackets: num,
-      }
-    });
+    const event = connectionHandles.map((connectionHandle, i) => ({
+      connectionHandle,
+      numCompletedPackets: numCompletedPackets[i],
+    }));
 
     debug('number of completed packets', event);
     // TODO: handle this to send ACL data

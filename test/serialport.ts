@@ -1,25 +1,27 @@
-const SerialPort = require('serialport');
+import SerialPort from 'serialport';
 
-const H4 = require('../lib/H4').H4;
-const Hci = require('../lib/Hci').Hci;
-const Address = require('../lib/Address').Address;
-const AdvDataParser = require('../lib/AdvDataParser').AdvDataParser;
+import { H4 } from '../src/H4';
+import { Hci } from '../src/Hci';
+import { Address } from '../src/Address';
+import { AdvDataParser } from '../src/AdvDataParser';
 
-const HciLe = require('../lib/HciLeController');
-
-const LePhy = HciLe.LePhy;
-const LeSetTxRxPhyOpts = HciLe.LeSetTxRxPhyOpts;
-const LeAdvertisingEventProperties = HciLe.LeAdvertisingEventProperties;
-const LeAdvertisingChannelMap = HciLe.LeAdvertisingChannelMap;
-const LeOwnAddressType = HciLe.LeOwnAddressType;
-const LePeerAddressType = HciLe.LePeerAddressType;
-const LeAdvertisingFilterPolicy = HciLe.LeAdvertisingFilterPolicy;
-const LePrimaryAdvertisingPhy = HciLe.LePrimaryAdvertisingPhy;
-const LeSecondaryAdvertisingPhy = HciLe.LeSecondaryAdvertisingPhy;
-const LeScanningFilterPolicy = HciLe.LeScanningFilterPolicy;
-const LeScanType = HciLe.LeScanType;
-const LeScanFilterDuplicates = HciLe.LeScanFilterDuplicates;
-const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
+import {
+  LePhy,
+  LeSetTxRxPhyOpts,
+  LeAdvertisingEventProperties,
+  LeAdvertisingChannelMap,
+  LeOwnAddressType,
+  LePeerAddressType,
+  LeAdvertisingFilterPolicy,
+  LePrimaryAdvertisingPhy,
+  LeSecondaryAdvertisingPhy,
+  LeScanningFilterPolicy,
+  LeScanType,
+  LeScanFilterDuplicates,
+  LeInitiatorFilterPolicy,
+} from '../src/HciLeController';
+import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
+import { LeExtAdvReportAddrType } from '../src/HciEvent';
 
 (async () => {
   try {
@@ -208,23 +210,30 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     let connecting = false;
     hci.on('LeExtendedAdvertisingReport', async (report) => {
       try {
-        if (connecting === true) {
+        if (connecting === true || report.data === null) {
           return;
         }
+
         const advData = AdvDataParser.parse(report.data);
         if (advData.localName) {
           console.log({ report, advData });
         }
-        // return;
 
         if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
           connecting = true;
           await hci.leSetExtendedScanEnable({ enable: false });
 
+          let peerAddressType = LePeerAddressType.PublicDeviceAddress;
+
+          if (report.addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
+              report.addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
+            peerAddressType = LePeerAddressType.RandomDeviceAddress;
+          }
+
           await hci.leExtendedCreateConnection({
             initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
             ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-            peerAddressType: report.addressType,
+            peerAddressType,
             peerAddress: report.address,
             initiatingPhy: {
               Phy1M: {
@@ -270,6 +279,12 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
     });
     hci.on('LeConnectionUpdateComplete', async (status, event) => {
       console.log('LeConnectionUpdateComplete', event);
+
+      const powerLevel = await hci.readTransmitPowerLevel(
+        event.connectionHandle,
+        ReadTransmitPowerLevelType.Current
+      );
+      console.log(`Power Level: ${powerLevel}`);
       // await hci.leSetPhy(event.connectionHandle, {
       //   txPhys: LePhy.PhyCoded,
       //   rxPhys: LePhy.PhyCoded,
@@ -277,7 +292,7 @@ const LeInitiatorFilterPolicy = HciLe.LeInitiatorFilterPolicy;
       // })
       await hci.disconnect(event.connectionHandle);
     });
-    hci.on('onLePhyUpdateComplete', (status, event) => {
+    hci.on('LePhyUpdateComplete', (status, event) => {
       console.log(status, event);
     });
 
@@ -317,7 +332,7 @@ async function findHciPort() {
   return hciPortInfos[0];
 }
 
-async function openHciPort(portInfo) {
+async function openHciPort(portInfo: SerialPort.PortInfo): Promise<SerialPort> {
   const port = new SerialPort(portInfo.path, {
     autoOpen: false,
     baudRate: 1000000,
@@ -327,11 +342,10 @@ async function openHciPort(portInfo) {
     rtscts: true,
   });
 
-  const waitOpen = new Promise((resolve,  reject) => {
-    port.on('open', () => resolve());
+  const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
+    port.on('open', () => resolve(port));
     port.open((err) => reject(err));
   });
-  await waitOpen;
 
-  return port;
+  return await waitOpen;
 }

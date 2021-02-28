@@ -15,6 +15,7 @@
     "@types/crc": "^3.4.0",
     "@types/debug": "^4.1.5",
     "@types/node": "^14.14.31",
+    "@types/serialport": "^8.0.1",
     "mocha": "^8.3.0",
     "serialport": "^9.0.6",
     "typescript": "^4.2.2"
