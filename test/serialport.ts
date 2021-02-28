@@ -116,6 +116,9 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     const result = await hci.leEncrypt(key, data);
     console.log(`Encrypted:`, result);
 
+    const random = await hci.leRand();
+    console.log(`Random:`, random);
+
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
     await hci.leClearWhiteList();
 
@@ -273,6 +276,8 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     });
     hci.on('LeChannelSelectionAlgorithm', async (event) => {
       console.log('LeChannelSelectionAlgorithm', event);
+
+      await hci.writeAuthenticatedPayloadTimeout(event.connectionHandle, 200);
 
       const timeout = await hci.readAuthenticatedPayloadTimeout(event.connectionHandle);
       console.log(`AuthenticatedPayloadTimeout: ${timeout}`);

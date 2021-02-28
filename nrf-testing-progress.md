@@ -34,7 +34,7 @@ leSetHostChannelClassification
 leReadChannelMap
 * leReadRemoteFeatures
 * leEncrypt
-leRand
+* leRand
 leEnableEncryption
 leLongTermKeyRequestReply
 leLongTermKeyRequestNegativeReply
@@ -43,7 +43,7 @@ leReceiverTestV1
 leTransmitterTestV1
 leTestEnd
 * readAuthenticatedPayloadTimeout
-writeAuthenticatedPayloadTimeout
+* writeAuthenticatedPayloadTimeout
 leSetDataLength
 * leReadSuggestedDefaultDataLength
 * leWriteSuggestedDefaultDataLength
