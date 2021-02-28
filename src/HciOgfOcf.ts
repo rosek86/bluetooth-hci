@@ -201,7 +201,7 @@ export enum HciOcfStatusParameters {
   ReadFailedContactCounter                            = 0x0001, // Read Failed Contact Counter
   ResetFailedContactCounter                           = 0x0002, // Reset Failed Contact Counter
   ReadLinkQuality                                     = 0x0003, // Read Link Quality
-  ReadRssi                                            = 0x0004, // * Read RSSI
+  ReadRssi                                            = 0x0005, // * Read RSSI
   ReadAfhChannelMap                                   = 0x0006, // Read AFH Channel Map
   ReadClock                                           = 0x0007, // Read Clock
   ReadEncryptionKeySize                               = 0x0008, // Read Encryption Key Size

@@ -1,0 +1,75 @@
+Supported commands:
+* disconnect
+* readRemoteVersionInformation
+* setEventMask
+* reset
+* readTransmitPowerLevel
+setControllerToHostFlowControl
+hostBufferSize
+hostNumberOfCompletedPackets
+* readLocalVersionInformation
+* readLocalSupportedFeatures
+* readBdAddr
+readRssi (command disallowed?)
+* setEventMaskPage2
+* leSetEventMask
+* leReadBufferSizeV1
+* leReadLocalSupportedFeatures
+* leSetRandomAddress
+leSetAdvertisingParameters
+leReadAdvertisingPhysicalChannelTxPower
+leSetAdvertisingData
+leSetScanResponseData
+leSetAdvertisingEnable
+leSetScanParameters
+leSetScanEnable
+leCreateConnection
+leCreateConnectionCancel
+* leReadWhiteListSize
+* leClearWhiteList
+* leAddDeviceToWhiteList
+* leRemoveDeviceFromWhiteList
+* leConnectionUpdate
+leSetHostChannelClassification
+leReadChannelMap
+* leReadRemoteFeatures
+* leEncrypt
+leRand
+leEnableEncryption
+leLongTermKeyRequestReply
+leLongTermKeyRequestNegativeReply
+* leReadSupportedStates
+leReceiverTestV1
+leTransmitterTestV1
+leTestEnd
+* readAuthenticatedPayloadTimeout
+writeAuthenticatedPayloadTimeout
+leSetDataLength
+* leReadSuggestedDefaultDataLength
+* leWriteSuggestedDefaultDataLength
+leAddDeviceToResolvingList
+leRemoveDeviceFromResolvingList
+* leClearResolvingList
+* leReadResolvingListSize
+leSetAddressResolutionEnable
+leSetResolvablePrivateAddressTimeout
+* leReadMaximumDataLength
+leReadPhy
+* leSetDefaultPhy
+leSetPhy
+leReceiverTestV2
+leTransmitterTestV2
+* leSetAdvertisingSetRandomAddress
+* leSetExtendedAdvertisingParameters
+leSetExtendedAdvertisingData
+leSetExtendedScanResponseData
+leSetExtendedAdvertisingEnable
+leReadMaximumAdvertisingDataLength
+* leReadNumberOfSupportedAdvertisingSets
+leRemoveAdvertisingSet
+leClearAdvertisingSets
+* leSetExtendedScanParameters
+* leSetExtendedScanEnable
+* leExtendedCreateConnection
+* leReadTransmitPower
+leSetPrivacyMode

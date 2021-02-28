@@ -19,6 +19,8 @@ import {
   LeScanType,
   LeScanFilterDuplicates,
   LeInitiatorFilterPolicy,
+  LeWhiteListAddressType,
+  LeWhiteList,
 } from '../src/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/HciEvent';
@@ -61,6 +63,9 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     const bdAddress = await hci.readBdAddr();
     console.log(bdAddress.toString());
 
+    const leTransmitPower = await hci.leReadTransmitPower();
+    console.log(`LE Transmit Power:`, leTransmitPower);
+
     const leBufferSize = await hci.leReadBufferSize();
     console.log(leBufferSize);
 
@@ -80,9 +85,10 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     }
 
     await hci.setEventMask({
-      disconnectionComplete: true,
-      encryptionChange: true,
-      leMeta: true,
+      disconnectionComplete:                true,
+      encryptionChange:                     true,
+      readRemoteVersionInformationComplete: true,
+      leMeta:                               true,
     });
     await hci.setEventMaskPage2({});
 
@@ -105,13 +111,20 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
       channelSelectionAlgorithm:        true,
     });
 
-    // const key = Buffer.alloc(16);
-    // const data = Buffer.alloc(16);
-    // const result = await hci.leEncrypt(key, data);
-    // console.log(result); // <Buffer 66 e9 4b d4 ef 8a 2c 3b 88 4c fa 59 ca 34 2b 2e>
+    const key = Buffer.alloc(16);
+    const data = Buffer.alloc(16);
+    const result = await hci.leEncrypt(key, data);
+    console.log(`Encrypted:`, result);
 
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
     await hci.leClearWhiteList();
+
+    const device: LeWhiteList = {
+      addressType:  LeWhiteListAddressType.Random,
+      address:      Address.from('F5:EF:D9:6E:47:C7'),
+    }
+    await hci.leAddDeviceToWhiteList(device);
+    // await hci.leRemoveDeviceFromWhiteList(device);
 
     console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
     await hci.leClearResolvingList();
@@ -185,7 +198,8 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
 
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: LeScanningFilterPolicy.All,
+      scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
+      // scanningFilterPolicy: LeScanningFilterPolicy.All,
       scanningPhy: {
         Phy1M: {
           type: LeScanType.Active,
@@ -259,6 +273,14 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     });
     hci.on('LeChannelSelectionAlgorithm', async (event) => {
       console.log('LeChannelSelectionAlgorithm', event);
+
+      const timeout = await hci.readAuthenticatedPayloadTimeout(event.connectionHandle);
+      console.log(`AuthenticatedPayloadTimeout: ${timeout}`);
+
+      await hci.readRemoteVersionInformation(event.connectionHandle);
+    });
+    hci.on('ReadRemoteVersionInformationComplete', async (err, event) => {
+      console.log('ReadRemoteVersionInformationComplete', event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
     });
     hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
@@ -278,28 +300,40 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
       }
     });
     hci.on('LeConnectionUpdateComplete', async (status, event) => {
-      console.log('LeConnectionUpdateComplete', event);
+      try {
+        console.log('LeConnectionUpdateComplete', event);
 
-      const powerLevel = await hci.readTransmitPowerLevel(
-        event.connectionHandle,
-        ReadTransmitPowerLevelType.Current
-      );
-      console.log(`Power Level: ${powerLevel}`);
-      // await hci.leSetPhy(event.connectionHandle, {
-      //   txPhys: LePhy.PhyCoded,
-      //   rxPhys: LePhy.PhyCoded,
-      //   opts:   LeSetTxRxPhyOpts.noPreferredCoding,
-      // })
-      await hci.disconnect(event.connectionHandle);
+        const maxPowerLevel = await hci.readTransmitPowerLevel(
+          event.connectionHandle,
+          ReadTransmitPowerLevelType.Maximum
+        );
+        const curPowerLevel = await hci.readTransmitPowerLevel(
+          event.connectionHandle,
+          ReadTransmitPowerLevelType.Maximum
+        );
+        console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
+
+        // await hci.leSetPhy(event.connectionHandle, {
+        //   txPhys: LePhy.PhyCoded,
+        //   rxPhys: LePhy.PhyCoded,
+        //   opts:   LeSetTxRxPhyOpts.noPreferredCoding,
+        // })
+
+        // command disallowed, why?
+        // const rssi = await hci.readRssi(event.connectionHandle);
+        // console.log(`RSSI: ${rssi} dBm`);
+
+        await hci.disconnect(event.connectionHandle);
+      } catch (err) {
+        console.log(err);
+      }
     });
     hci.on('LePhyUpdateComplete', (status, event) => {
       console.log(status, event);
     });
-
     hci.on('DisconnectionComplete', (status, event) => {
       console.log('DisconnectionComplete', event);
     });
-
     hci.on('LeLongTermKeyRequest', (event) => {
       console.log('LeLongTermKeyRequest', event);
     });

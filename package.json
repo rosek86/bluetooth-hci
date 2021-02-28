@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node lib/index.js",
     "build": "tsc",
+    "watch": "tsc -w",
     "test": "mocha"
   },
   "keywords": [],

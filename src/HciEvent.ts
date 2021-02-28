@@ -17,7 +17,7 @@ export enum HciEvent {
   ChangeConnectionLinkKeyComplete                     = 0x09, // Change Connection Link Key Complete
   MasterLinkKeyComplete                               = 0x0A, // Master Link Key Complete
   ReadRemoteSupportedFeaturesComplete                 = 0x0B, // Read Remote Supported Features Complete
-  ReadRemoteVersionInformationComplete                = 0x0C, // Read Remote Version Information Complete
+  ReadRemoteVersionInformationComplete                = 0x0C, // * Read Remote Version Information Complete
   QosSetupComplete                                    = 0x0D, // QoS Setup Complete
   CommandComplete                                     = 0x0E, // * Command Complete
   CommandStatus                                       = 0x0F, // * Command Status
@@ -103,6 +103,36 @@ export enum EncryptionEnabled {
 
 export interface EncryptionChangeEvent extends ConnEvent {
   encEnabled: EncryptionEnabled;
+}
+
+export interface ReadRemoteVersionInformationCompleteEvent extends ConnEvent {
+  version: number;
+  manufacturerName: number;
+  subversion: number;
+}
+
+export class ReadRemoteVersionInformationComplete {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: ReadRemoteVersionInformationCompleteEvent,
+  } {
+    if (data.length !== 8) {
+      debug(`ReadRemoteVersionInformationComplete: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const status            = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const version           = data.readUIntLE(o, 1); o += 1;
+    const manufacturerName  = data.readUIntLE(o, 2); o += 2;
+    const subversion        = data.readUIntLE(o, 2); o += 2;
+
+    const event: ReadRemoteVersionInformationCompleteEvent = {
+      connectionHandle, version, manufacturerName, subversion,
+    };
+
+    return { status, event };
+  }
 }
 
 export enum HciLeEvent {
