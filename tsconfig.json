@@ -19,7 +19,8 @@
     "src/index.ts",
     "src/H4.ts",
     "src/Address.ts",
-    "src/AdvDataParser.ts",
-    "test/serialport.ts"
+    "src/AdvData.ts",
+    "test/serialport.ts",
+    "test/advertising.ts"
   ]
 }

@@ -7,7 +7,6 @@ import { AdvData } from '../src/AdvData';
 
 import {
   LePhy,
-  LeSetTxRxPhyOpts,
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
   LeOwnAddressType,
@@ -15,15 +14,9 @@ import {
   LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates,
-  LeInitiatorFilterPolicy,
-  LeWhiteListAddressType,
-  LeWhiteList,
+  LeAdvertisingDataOperation,
 } from '../src/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
-import { LeExtAdvReportAddrType } from '../src/HciEvent';
 
 (async () => {
   try {
@@ -37,6 +30,7 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     });
 
     const h4 = new H4();
+
     port.on('data', (data) => {
       let result = h4.parse(data);
       do {
@@ -58,22 +52,22 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     }
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log(localVersion);
+    console.log('Local Version', localVersion);
 
     const bdAddress = await hci.readBdAddr();
-    console.log(bdAddress.toString());
+    console.log('BD Address:', bdAddress.toString());
 
     const leTransmitPower = await hci.leReadTransmitPower();
     console.log(`LE Transmit Power:`, leTransmitPower);
 
     const leBufferSize = await hci.leReadBufferSize();
-    console.log(leBufferSize);
+    console.log('LE Buffer Size:', leBufferSize);
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log(leFeatures);
+    console.log('LE Features:', leFeatures);
 
     const leStates = await hci.leReadSupportedStates();
-    console.log(leStates);
+    console.log('LE States:', leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
 
@@ -91,47 +85,26 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
       readRemoteVersionInformationComplete: true,
       leMeta:                               true,
     });
-    await hci.setEventMaskPage2({});
-
-    await hci.leSetEventMask({
-      connectionComplete:               false,
-      advertisingReport:                false,
-      connectionUpdateComplete:         true,
-      readRemoteFeaturesComplete:       true,
-      longTermKeyRequest:               true,
-      remoteConnectionParameterRequest: true,
-      dataLengthChange:                 true,
-      readLocalP256PublicKeyComplete:   true,
-      generateDhKeyComplete:            true,
-      enhancedConnectionComplete:       true,
-      directedAdvertisingReport:        true,
-      phyUpdateComplete:                true,
-      extendedAdvertisingReport:        true,
-
-      scanTimeout:                      true,
-      channelSelectionAlgorithm:        true,
+    await hci.setEventMaskPage2({
     });
-
-    const key = Buffer.alloc(16);
-    const data = Buffer.alloc(16);
-    const result = await hci.leEncrypt(key, data);
-    console.log(`Encrypted:`, result);
-
-    const random = await hci.leRand();
-    console.log(`Random:`, random);
-
-    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
-    await hci.leClearWhiteList();
-
-    const device: LeWhiteList = {
-      addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from('F5:EF:D9:6E:47:C7'),
-    }
-    await hci.leAddDeviceToWhiteList(device);
-    // await hci.leRemoveDeviceFromWhiteList(device);
-
-    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
-    await hci.leClearResolvingList();
+    await hci.leSetEventMask({
+      connectionComplete:                   false,
+      advertisingReport:                    false,
+      connectionUpdateComplete:             true,
+      readRemoteFeaturesComplete:           true,
+      longTermKeyRequest:                   true,
+      remoteConnectionParameterRequest:     true,
+      dataLengthChange:                     true,
+      readLocalP256PublicKeyComplete:       true,
+      generateDhKeyComplete:                true,
+      enhancedConnectionComplete:           true,
+      directedAdvertisingReport:            true,
+      phyUpdateComplete:                    true,
+      extendedAdvertisingReport:            true,
+      scanTimeout:                          true,
+      advertisingSetTerminated:             true,
+      channelSelectionAlgorithm:            true,
+    });
 
     const maxDataLength = await hci.leReadMaximumDataLength();
     console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
@@ -142,33 +115,34 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
     console.log(`Number of supported advertising sets: ${advSets}`);
 
+    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
+    await hci.leClearWhiteList();
+
+    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
+    await hci.leClearResolvingList();
+
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,
       suggestedMaxTxTime:   328,
     });
-
-    // NOTE: command not implemented on the controller:
-    // hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
-    //   console.log('LeReadLocalP256PublicKeyComplete', status, event);
-    // });
-    // await hci.leReadLocalP256PublicKey();
-    // hci.on('LeGenerateDhKeyComplete', (status, event) => {
-    //   console.log('LeGenerateDhKeyComplete', status, event);
-    // });
-    // await hci.leGenerateDhKeyV1({ publicKey: Buffer.alloc(64) });
-    // return;
 
     await hci.leSetDefaultPhy({
       txPhys: LePhy.Phy1M,
       rxPhys: LePhy.Phy1M,
     });
 
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
+
     const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
       advertisingEventProperties: [
-        LeAdvertisingEventProperties.UseLegacyPDUs
+        LeAdvertisingEventProperties.UseLegacyPDUs,
+        LeAdvertisingEventProperties.Connectable,
+        LeAdvertisingEventProperties.Scannable,
       ],
-      primaryAdvertisingIntervalMinMs: 1280,
-      primaryAdvertisingIntervalMaxMs: 1280,
+      primaryAdvertisingIntervalMinMs: 500,
+      primaryAdvertisingIntervalMaxMs: 1000,
       primaryAdvertisingChannelMap: [
         LeAdvertisingChannelMap.Channel37,
         LeAdvertisingChannelMap.Channel38,
@@ -183,95 +157,22 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
       secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
       advertisingSid: 0,
       scanRequestNotificationEnable: false,
-      advertisingTxPower: 0,
+      advertisingTxPower: 8,
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
-
-    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
-
-    // await hci.leSetScanParameters({
-    //   intervalMs: 100,
-    //   windowMs: 100,
-    //   ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-    //   scanningFilterPolicy: LeScanningFilterPolicy.All,
-    //   type: LeScanType.Active,
-    // });
-    // await hci.leSetScanEnable(true, false);
-
-    await hci.leSetExtendedScanParameters({
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
-      // scanningFilterPolicy: LeScanningFilterPolicy.All,
-      scanningPhy: {
-        Phy1M: {
-          type: LeScanType.Active,
-          intervalMs: 11.25,
-          windowMs: 11.25
-        }
-      }
+    await hci.leSetExtendedAdvertisingData(0, {
+      operation: LeAdvertisingDataOperation.Complete,
+      fragment: false,
+      data: AdvData.build({
+        completeLocalName: 'TEST-HCI',
+      }),
     });
-    await hci.leSetExtendedScanEnable({
+    await hci.leSetExtendedAdvertisingEnable({
       enable: true,
-      filterDuplicates: LeScanFilterDuplicates.Enabled,
-      durationMs: 0
+      sets: [{ advertHandle: 0 }],
     });
 
-    hci.on('LeDirectedAdvertisingReport', (report) => {
-      console.log('LeDirectedAdvertisingReport', report);
-    });
-    hci.on('LeScanTimeout', () => {
-      console.log('LeScanTimeout');
-    });
-
-    let connecting = false;
-    hci.on('LeExtendedAdvertisingReport', async (report) => {
-      try {
-        if (connecting === true || report.data === null) {
-          return;
-        }
-
-        const advData = AdvData.parse(report.data);
-        if (advData.localName) {
-          console.log({ report, advData });
-        }
-
-        if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
-          connecting = true;
-          await hci.leSetExtendedScanEnable({ enable: false });
-
-          let peerAddressType = LePeerAddressType.PublicDeviceAddress;
-
-          if (report.addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
-              report.addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
-            peerAddressType = LePeerAddressType.RandomDeviceAddress;
-          }
-
-          await hci.leExtendedCreateConnection({
-            initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-            ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-            peerAddressType,
-            peerAddress: report.address,
-            initiatingPhy: {
-              Phy1M: {
-                scanIntervalMs: 100,
-                scanWindowMs: 100,
-                connectionIntervalMinMs: 7.5,
-                connectionIntervalMaxMs: 100,
-                connectionLatency: 0,
-                supervisionTimeoutMs: 4000,
-                minCeLengthMs: 2.5,
-                maxCeLengthMs: 3.75,
-              },
-            }
-          });
-          console.log('connecting...');
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    });
     hci.on('LeEnhancedConnectionComplete', async (status, event) => {
       console.log('LeEnhancedConnectionComplete', status, event);
     });
@@ -285,39 +186,15 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
 
       await hci.readRemoteVersionInformation(event.connectionHandle);
     });
+    hci.on('LeAdvertisingSetTerminated', async (err, event) => {
+      console.log(event);
+    })
     hci.on('ReadRemoteVersionInformationComplete', async (err, event) => {
-      console.log('ReadRemoteVersionInformationComplete', event);
-      await hci.leReadRemoteFeatures(event.connectionHandle);
-    });
-    hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
       try {
-        console.log('LeReadRemoteFeaturesComplete', status, event);
-
-        // Unsupported Remote Feature / Unsupported LMP Feature
-        // await hci.leSetDataLength(event.connectionHandle, {
-        //   txOctets: 27,
-        //   txTime:   328,
-        // });
+        console.log('ReadRemoteVersionInformationComplete', event);
 
         const phy = await hci.leReadPhy(event.connectionHandle);
         console.log('phy:', phy);
-
-        await hci.leConnectionUpdate({
-          connectionHandle: event.connectionHandle,
-          connectionIntervalMinMs: 40,
-          connectionIntervalMaxMs: 90,
-          connectionLatency: 0,
-          supervisionTimeoutMs: 5000,
-          minCeLengthMs: 2.5,
-          maxCeLengthMs: 3.75,
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    });
-    hci.on('LeConnectionUpdateComplete', async (status, event) => {
-      try {
-        console.log('LeConnectionUpdateComplete', event);
 
         const maxPowerLevel = await hci.readTransmitPowerLevel(
           event.connectionHandle,
@@ -338,8 +215,6 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
         // command disallowed, why?
         // const rssi = await hci.readRssi(event.connectionHandle);
         // console.log(`RSSI: ${rssi} dBm`);
-
-        await hci.disconnect(event.connectionHandle);
       } catch (err) {
         console.log(err);
       }
@@ -347,8 +222,13 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     hci.on('LePhyUpdateComplete', (status, event) => {
       console.log(status, event);
     });
-    hci.on('DisconnectionComplete', (status, event) => {
+    hci.on('DisconnectionComplete', async (status, event) => {
       console.log('DisconnectionComplete', event);
+
+      await hci.leSetExtendedAdvertisingEnable({
+        enable: true,
+        sets: [{ advertHandle: 0 }]
+      });
     });
     hci.on('LeLongTermKeyRequest', (event) => {
       console.log('LeLongTermKeyRequest', event);

@@ -128,7 +128,17 @@ export interface AdvData {
   }[];
 }
 
-export class AdvDataParser {
+export class AdvData {
+  static build(advData: AdvData): Buffer {
+    const data: number[] = [];
+    if (advData.completeLocalName) {
+      data.push(advData.completeLocalName.length + 1);
+      data.push(AdvDataType.CompleteLocalName);
+      data.push(...Buffer.from(advData.completeLocalName, 'ascii'));
+    }
+    return Buffer.from(data);
+  }
+
   static parse(advData: Buffer): AdvData {
     const ad: AdvData = {};
 

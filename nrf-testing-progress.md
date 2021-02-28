@@ -44,7 +44,7 @@ leTransmitterTestV1
 leTestEnd
 * readAuthenticatedPayloadTimeout
 * writeAuthenticatedPayloadTimeout
-leSetDataLength
+* leSetDataLength
 * leReadSuggestedDefaultDataLength
 * leWriteSuggestedDefaultDataLength
 leAddDeviceToResolvingList
@@ -54,16 +54,16 @@ leRemoveDeviceFromResolvingList
 leSetAddressResolutionEnable
 leSetResolvablePrivateAddressTimeout
 * leReadMaximumDataLength
-leReadPhy
+* leReadPhy
 * leSetDefaultPhy
 leSetPhy
 leReceiverTestV2
 leTransmitterTestV2
 * leSetAdvertisingSetRandomAddress
 * leSetExtendedAdvertisingParameters
-leSetExtendedAdvertisingData
+* leSetExtendedAdvertisingData
 leSetExtendedScanResponseData
-leSetExtendedAdvertisingEnable
+* leSetExtendedAdvertisingEnable
 leReadMaximumAdvertisingDataLength
 * leReadNumberOfSupportedAdvertisingSets
 leRemoveAdvertisingSet

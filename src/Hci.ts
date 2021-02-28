@@ -55,7 +55,9 @@ import {
   LeLongTermKeyRequestEvent, LeRemoteConnectionParameterRequestEvent, LeDataLengthChange,
   LeReadLocalP256PublicKeyComplete, LeGenerateDhKeyComplete, LeGenerateDhKeyCompleteEvent,
   LeDirectedAdvertisingReport, LeDirectedAdvertisingReportEvent, LePhyUpdateComplete,
-  LePhyUpdateCompleteEvent, LeDataLengthChangeEvent, ReadRemoteVersionInformationComplete, ReadRemoteVersionInformationCompleteEvent
+  LePhyUpdateCompleteEvent, LeDataLengthChangeEvent, ReadRemoteVersionInformationComplete,
+  ReadRemoteVersionInformationCompleteEvent, LeAdvertisingSetTerminated,
+  LeAdvertisingSetTerminatedEvent
 } from './HciEvent';
 
 const debug = Debug('nble-hci');
@@ -81,6 +83,7 @@ export declare interface Hci {
   on(event: 'DisconnectionComplete',                listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
   on(event: 'EncryptionChange',                     listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
   on(event: 'ReadRemoteVersionInformationComplete', listener: (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => void): this;
+  on(event: 'EncryptionKeyRefreshComplete',         listener: (err: Error|null, connectionHandle: number) => void): this;
 
   on(event: 'LeConnectionComplete',                 listener: (err: Error|null, event: LeConnectionCompleteEvent) => void): this;
   on(event: 'LeAdvertisingReport',                  listener: (report: LeAdvReport) => void): this;
@@ -95,9 +98,8 @@ export declare interface Hci {
   on(event: 'LeDirectedAdvertisingReport',          listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
   on(event: 'LePhyUpdateComplete',                  listener: (err: Error|null, event: LePhyUpdateCompleteEvent) => void): this;
   on(event: 'LeExtendedAdvertisingReport',          listener: (report: LeExtAdvReport) => void): this;
-
   on(event: 'LeScanTimeout',                        listener: () => void): this;
-
+  on(event: 'LeAdvertisingSetTerminated',           listener: (err: Error|null, event: LeAdvertisingSetTerminatedEvent) => void): this;
   on(event: 'LeChannelSelectionAlgorithm',          listener: (event: LeChannelSelAlgoEvent) => void): this;
 }
 
@@ -742,6 +744,9 @@ export class Hci extends EventEmitter {
       case HciEvent.NumberOfCompletedPackets:
         this.onNumberOfCompletedPackets(payload);
         break;
+      case HciEvent.EncryptionKeyRefreshComplete:
+        this.onEncryptionKeyRefreshComplete(payload);
+        break;
       case HciEvent.LeMeta:
         this.onLeEvent(payload);
         break;
@@ -850,6 +855,19 @@ export class Hci extends EventEmitter {
     // TODO: handle this to send ACL data
   }
 
+  private onEncryptionKeyRefreshComplete(data: Buffer): void {
+    if (data.length !== 3) {
+      debug(`onEncryptionKeyRefreshComplete: invalid size ${data.length}`);
+      return;
+    }
+
+    let o = 0;
+    const status            = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+
+    this.emitEvent('EncryptionKeyRefreshComplete', status, connectionHandle);
+  }
+
   private onLeEvent(data: Buffer): void {
     const eventCode = data[0];
     const payload = data.slice(1);
@@ -900,6 +918,9 @@ export class Hci extends EventEmitter {
         break;
       case HciLeEvent.ScanTimeout:
         this.onLeScanTimeout();
+        break;
+      case HciLeEvent.AdvertisingSetTerminated:
+        this.onLeAdvertisingSetTerminated(payload);
         break;
       case HciLeEvent.ChannelSelectionAlgorithm:
         this.onLeChannelSelectionAlgorithm(payload);
@@ -986,6 +1007,11 @@ export class Hci extends EventEmitter {
 
   private onLeScanTimeout(): void {
     this.emit('LeScanTimeout');
+  }
+
+  private onLeAdvertisingSetTerminated(data: Buffer): void {
+    const { status, event } = LeAdvertisingSetTerminated.parse(data);
+    this.emitEvent('LeAdvertisingSetTerminated', status, event);
   }
 
   private onLeChannelSelectionAlgorithm(data: Buffer): void {

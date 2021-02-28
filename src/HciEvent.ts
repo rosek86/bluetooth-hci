@@ -518,6 +518,38 @@ export class LeEnhConnectionComplete {
   }
 }
 
+export interface LeAdvertisingSetTerminatedEvent {
+  advertisingHandle: number;
+  connectionHandle: number;
+  numCompletedExtendedAdvertisingEvents: number;
+}
+
+export class LeAdvertisingSetTerminated {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: LeAdvertisingSetTerminatedEvent,
+  } {
+    if (data.length !== 5) {
+      debug(`LeAdvertisingSetTerminated: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const status            = data.readUIntLE(o, 1); o += 1;
+    const advertisingHandle = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const numEvents         = data.readUIntLE(o, 1); o += 1;
+
+    return {
+      status,
+      event: {
+        advertisingHandle,
+        connectionHandle,
+        numCompletedExtendedAdvertisingEvents: numEvents,
+      },
+    };
+  }
+}
+
 export interface LeChannelSelAlgoEvent extends ConnEvent {
   algorithm: number;
 }

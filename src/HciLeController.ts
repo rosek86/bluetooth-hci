@@ -1192,8 +1192,8 @@ export interface LeExtendedAdvertisingEnable {
   enable: boolean;
   sets: {
     advertHandle: number;
-    durationMs: number;
-    maxExtendedAdvertisingEvents: number;
+    durationMs?: number;
+    maxExtendedAdvertisingEvents?: number;
   }[];
 }
 
@@ -1206,10 +1206,12 @@ export class LeExtendedAdvertisingEnable {
     o = payload.writeUInt8(params.sets.length,    o);
 
     for (const set of params.sets) {
-      const duration = Math.floor(set.durationMs / 10);
-      o = payload.writeUIntLE(set.advertHandle,                 o, 1);
-      o = payload.writeUIntLE(duration,                         o, 2);
-      o = payload.writeUIntLE(set.maxExtendedAdvertisingEvents, o, 1);
+      const advertHandle = set.advertHandle;
+      const duration = Math.floor((set.durationMs ?? 0) / 10);
+      const maxEvents = set.maxExtendedAdvertisingEvents ?? 0;
+      o = payload.writeUIntLE(advertHandle, o, 1);
+      o = payload.writeUIntLE(duration,     o, 2);
+      o = payload.writeUIntLE(maxEvents,    o, 1);
     }
 
     return payload;
