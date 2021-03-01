@@ -214,7 +214,7 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     });
     await hci.leSetExtendedScanEnable({
       enable: true,
-      filterDuplicates: LeScanFilterDuplicates.Enabled,
+      filterDuplicates: LeScanFilterDuplicates.Disabled,
       durationMs: 0
     });
 
@@ -233,9 +233,8 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
         }
 
         const advData = AdvData.parse(report.data);
-        if (advData.localName) {
-          console.log({ report, advData });
-        }
+        console.log(report);
+        console.log(JSON.stringify(advData, null, 2));
 
         if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
           connecting = true;

@@ -161,12 +161,17 @@ import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
+    const advertisingData = AdvData.build({
+      completeLocalName: 'HCI-ADV',
+      manufacturerData: {
+        ident: 0xABCD,
+        data: Buffer.from('test'),
+      }
+    });
     await hci.leSetExtendedAdvertisingData(0, {
       operation: LeAdvertisingDataOperation.Complete,
       fragment: false,
-      data: AdvData.build({
-        completeLocalName: 'TEST-HCI',
-      }),
+      data: advertisingData,
     });
     await hci.leSetExtendedAdvertisingEnable({
       enable: true,

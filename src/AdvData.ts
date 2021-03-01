@@ -130,13 +130,39 @@ export interface AdvData {
 
 export class AdvData {
   static build(advData: AdvData): Buffer {
-    const data: number[] = [];
+    let buffer = Buffer.allocUnsafe(0);
+
     if (advData.completeLocalName) {
-      data.push(advData.completeLocalName.length + 1);
-      data.push(AdvDataType.CompleteLocalName);
-      data.push(...Buffer.from(advData.completeLocalName, 'ascii'));
+      const name = this.buildName(AdvDataType.CompleteLocalName, advData.completeLocalName);
+      buffer = Buffer.concat([buffer, name]);
     }
-    return Buffer.from(data);
+    if (advData.shortenedLocalName) {
+      const name = this.buildName(AdvDataType.ShortenedLocalName, advData.shortenedLocalName);
+      buffer = Buffer.concat([buffer, name]);
+    }
+    if (advData.manufacturerData) {
+      buffer = Buffer.concat([buffer, this.buildManufData(advData.manufacturerData)]);
+    }
+
+    return buffer;
+  }
+
+  private static buildName(type: AdvDataType, name: string): Buffer {
+    const nameBuffer = Buffer.from(name, 'utf8');
+    const buffer = Buffer.allocUnsafe(2 + nameBuffer.length);
+    buffer.writeUIntLE(buffer.length - 1, 0, 1);
+    buffer.writeUIntLE(type,              1, 1);
+    nameBuffer.copy(buffer, 2);
+    return buffer;
+  }
+
+  private static buildManufData(manufData: Required<AdvData>['manufacturerData']): Buffer {
+    const buffer = Buffer.allocUnsafe(2 + 2 + manufData.data.length);
+    buffer.writeUIntLE(buffer.length - 1,                     0, 1);
+    buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
+    buffer.writeUIntLE(manufData.ident,                       2, 2);
+    manufData.data.copy(buffer, 4);
+    return buffer;
   }
 
   static parse(advData: Buffer): AdvData {
