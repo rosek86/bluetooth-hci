@@ -195,7 +195,10 @@ export class AdvData {
       const name = this.buildName(AdvDataType.ShortenedLocalName, advData.shortenedLocalName);
       buffer = Buffer.concat([buffer, name]);
     }
-    // TODO: TxPowerLevel
+    if (advData.txPowerLevel) {
+      const power = this.buildTxPowerLevel(advData.txPowerLevel);
+      buffer = Buffer.concat([buffer, power]);
+    }
     if (advData.listOf16bitServiceSolicitationUuids) {
       const list = this.buildListOfServiceClassUuids(
         AdvDataType.ListOf16bitServiceSolicitationUuids, 16,
@@ -250,33 +253,6 @@ export class AdvData {
     return buffer;
   }
 
-  private static buildName(type: AdvDataType, name: string): Buffer {
-    const nameBuffer = Buffer.from(name, 'utf8');
-    const buffer = Buffer.allocUnsafe(2 + nameBuffer.length);
-    buffer.writeUIntLE(buffer.length - 1, 0, 1);
-    buffer.writeUIntLE(type,              1, 1);
-    nameBuffer.copy(buffer, 2);
-    return buffer;
-  }
-
-  private static buildManufData(manufData: Required<AdvData>['manufacturerData']): Buffer {
-    const buffer = Buffer.allocUnsafe(2 + 2 + manufData.data.length);
-    buffer.writeUIntLE(buffer.length - 1,                     0, 1);
-    buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
-    buffer.writeUIntLE(manufData.ident,                       2, 2);
-    manufData.data.copy(buffer, 4);
-    return buffer;
-  }
-
-  private static buildServiceData(type: AdvDataType, serviceData: AdvDataServcieData, uuidBits: number): Buffer {
-    const buffer = Buffer.allocUnsafe(2 + 2 + serviceData.data.length);
-    buffer[0] = buffer.length - 1;
-    buffer[1] = type;
-    UUID.from(serviceData.uuid).copy(buffer, 2);
-    serviceData.data.copy(buffer, 2 + uuidBits / 8);
-    return buffer;
-  }
-
   private static buildListOfServiceClassUuids(type: AdvDataType, bits: number, list: string[]): Buffer {
     const bytes = bits / 8;
     const buffer = Buffer.allocUnsafe(2 + list.length * bytes);
@@ -290,6 +266,41 @@ export class AdvData {
       o += bytes;
     }
 
+    return buffer;
+  }
+
+  private static buildName(type: AdvDataType, name: string): Buffer {
+    const nameBuffer = Buffer.from(name, 'utf8');
+    const buffer = Buffer.allocUnsafe(2 + nameBuffer.length);
+    buffer.writeUIntLE(buffer.length - 1, 0, 1);
+    buffer.writeUIntLE(type,              1, 1);
+    nameBuffer.copy(buffer, 2);
+    return buffer;
+  }
+
+  private static buildTxPowerLevel(txPowerLevel: number): Buffer {
+    const buffer = Buffer.allocUnsafe(3);
+    buffer[0] = 2;
+    buffer[1] = AdvDataType.TxPowerLevel;
+    buffer[2] = txPowerLevel;
+    return buffer;
+  }
+
+  private static buildServiceData(type: AdvDataType, serviceData: AdvDataServcieData, uuidBits: number): Buffer {
+    const buffer = Buffer.allocUnsafe(2 + 2 + serviceData.data.length);
+    buffer[0] = buffer.length - 1;
+    buffer[1] = type;
+    UUID.from(serviceData.uuid).copy(buffer, 2);
+    serviceData.data.copy(buffer, 2 + uuidBits / 8);
+    return buffer;
+  }
+
+  private static buildManufData(manufData: Required<AdvData>['manufacturerData']): Buffer {
+    const buffer = Buffer.allocUnsafe(2 + 2 + manufData.data.length);
+    buffer.writeUIntLE(buffer.length - 1,                     0, 1);
+    buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
+    buffer.writeUIntLE(manufData.ident,                       2, 2);
+    manufData.data.copy(buffer, 4);
     return buffer;
   }
 
