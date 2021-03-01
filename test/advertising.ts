@@ -15,6 +15,7 @@ import {
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
+  LeScanResponseDataOperation,
 } from '../src/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
 
@@ -162,10 +163,11 @@ import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
     console.log(`TX Power: ${selectedTxPower}`);
 
     const advertisingData = AdvData.build({
-      completeLocalName: 'HCI-ADV',
+      flags: 6,
+      completeLocalName: 'Tacx Flux 39756',
       manufacturerData: {
-        ident: 0xABCD,
-        data: Buffer.from('test'),
+        ident: 0x0689,
+        data: Buffer.from([41, 0]),
       }
     });
     await hci.leSetExtendedAdvertisingData(0, {
@@ -173,6 +175,20 @@ import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
       fragment: false,
       data: advertisingData,
     });
+
+    const scanResponseData = AdvData.build({
+      completeListOf16bitSeviceClassUuids: [ '1826', '1818' ],
+      serviceData: [{
+        uuid: '1826',
+        data: Buffer.from([ 1, 0, 32 ]),
+      }],
+    });
+    await hci.leSetExtendedScanResponseData(0, {
+      operation: LeScanResponseDataOperation.FragmentLast,
+      fragment: false,
+      data: scanResponseData,
+    });
+
     await hci.leSetExtendedAdvertisingEnable({
       enable: true,
       sets: [{ advertHandle: 0 }],

@@ -62,7 +62,7 @@ leTransmitterTestV2
 * leSetAdvertisingSetRandomAddress
 * leSetExtendedAdvertisingParameters
 * leSetExtendedAdvertisingData
-leSetExtendedScanResponseData
+* leSetExtendedScanResponseData
 * leSetExtendedAdvertisingEnable
 leReadMaximumAdvertisingDataLength
 * leReadNumberOfSupportedAdvertisingSets
