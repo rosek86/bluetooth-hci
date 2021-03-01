@@ -178,13 +178,13 @@ import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
 
     const scanResponseData = AdvData.build({
       completeListOf16bitSeviceClassUuids: [ '1826', '1818' ],
-      serviceData: [{
+      serviceData16bitUuid: [{
         uuid: '1826',
         data: Buffer.from([ 1, 0, 32 ]),
       }],
     });
     await hci.leSetExtendedScanResponseData(0, {
-      operation: LeScanResponseDataOperation.FragmentLast,
+      operation: LeScanResponseDataOperation.Complete,
       fragment: false,
       data: scanResponseData,
     });

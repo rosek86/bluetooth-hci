@@ -1,8 +1,6 @@
 // NOTE:
 // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
 
-import { LeExtAdvReport } from "./HciEvent";
-
 export interface AdvDataField {
   type: number;
   data: Buffer;
@@ -110,6 +108,11 @@ export const AdvDataTypeLabel = [
   'Manufacturer Specific Data',
 ];
 
+interface AdvDataServcieData {
+  uuid: string;
+  data: Buffer;
+}
+
 export interface AdvData {
   flags?: number;
   incompleteListOf16bitServiceClassUuids?: string[];
@@ -126,10 +129,9 @@ export interface AdvData {
     ident: number;
     data: Buffer;
   };
-  serviceData?: {
-    uuid: string;
-    data: Buffer;
-  }[];
+  serviceData16bitUuid?: AdvDataServcieData[];
+  serviceData32bitUuid?: AdvDataServcieData[];
+  serviceData128bitUuid?: AdvDataServcieData[];
 }
 
 export class AdvData {
@@ -307,24 +309,24 @@ export class AdvData {
         break;
       }
       case AdvDataType.ServiceData16bitUuid: {
-        advData.serviceData = advData.serviceData ?? [];
-        advData.serviceData.push({
+        advData.serviceData16bitUuid = advData.serviceData16bitUuid ?? [];
+        advData.serviceData16bitUuid.push({
           uuid: field.data.slice(0, 2).reverse().toString('hex'),
           data: field.data.slice(2, field.data.length),
         });
         break;
       }
       case AdvDataType.ServiceData32bitUuid: {
-        advData.serviceData = advData.serviceData ?? [];
-        advData.serviceData.push({
+        advData.serviceData32bitUuid = advData.serviceData32bitUuid ?? [];
+        advData.serviceData32bitUuid.push({
           uuid: field.data.slice(0, 4).reverse().toString('hex'),
           data: field.data.slice(4, field.data.length),
         });
         break;
       }
       case AdvDataType.ServiceData128bitUuid: {
-        advData.serviceData = advData.serviceData ?? [];
-        advData.serviceData.push({
+        advData.serviceData128bitUuid = advData.serviceData128bitUuid ?? [];
+        advData.serviceData128bitUuid.push({
           uuid: field.data.slice(0, 16).reverse().toString('hex'),
           data: field.data.slice(16, field.data.length),
         });

@@ -1367,6 +1367,7 @@ export enum LeScanResponseDataOperation {
   FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
   FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
   FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
+  Complete              = 0x03, // Complete scan response data
 }
 
 export interface LeExtendedScanResponseData {
