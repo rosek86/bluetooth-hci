@@ -195,6 +195,7 @@ export class AdvData {
       const name = this.buildName(AdvDataType.ShortenedLocalName, advData.shortenedLocalName);
       buffer = Buffer.concat([buffer, name]);
     }
+    // TODO: TxPowerLevel
     if (advData.listOf16bitServiceSolicitationUuids) {
       const list = this.buildListOfServiceClassUuids(
         AdvDataType.ListOf16bitServiceSolicitationUuids, 16,
@@ -215,6 +216,24 @@ export class AdvData {
         advData.listOf128bitServiceSolicitationUuids
       );
       buffer = Buffer.concat([buffer, list]);
+    }
+    if (advData.serviceData16bitUuid) {
+      for (const serviceData of advData.serviceData16bitUuid) {
+        const data = this.buildServiceData(AdvDataType.ServiceData16bitUuid, serviceData, 16);
+        buffer = Buffer.concat([buffer, data]);
+      }
+    }
+    if (advData.serviceData32bitUuid) {
+      for (const serviceData of advData.serviceData32bitUuid) {
+        const data = this.buildServiceData(AdvDataType.ServiceData32bitUuid, serviceData, 32);
+        buffer = Buffer.concat([buffer, data]);
+      }
+    }
+    if (advData.serviceData128bitUuid) {
+      for (const serviceData of advData.serviceData128bitUuid) {
+        const data = this.buildServiceData(AdvDataType.ServiceData128bitUuid, serviceData, 128);
+        buffer = Buffer.concat([buffer, data]);
+      }
     }
     if (advData.manufacturerData) {
       buffer = Buffer.concat([buffer, this.buildManufData(advData.manufacturerData)]);
@@ -246,6 +265,15 @@ export class AdvData {
     buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
     buffer.writeUIntLE(manufData.ident,                       2, 2);
     manufData.data.copy(buffer, 4);
+    return buffer;
+  }
+
+  private static buildServiceData(type: AdvDataType, serviceData: AdvDataServcieData, uuidBits: number): Buffer {
+    const buffer = Buffer.allocUnsafe(2 + 2 + serviceData.data.length);
+    buffer[0] = buffer.length - 1;
+    buffer[1] = type;
+    UUID.from(serviceData.uuid).copy(buffer, 2);
+    serviceData.data.copy(buffer, 2 + uuidBits / 8);
     return buffer;
   }
 
