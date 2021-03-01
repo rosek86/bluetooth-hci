@@ -21,6 +21,7 @@
     "src/Address.ts",
     "src/AdvData.ts",
     "test/serialport.ts",
-    "test/advertising.ts"
+    "test/advertising.ts",
+    "test/scanning.ts"
   ]
 }

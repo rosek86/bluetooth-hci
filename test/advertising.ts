@@ -177,7 +177,10 @@ import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
     });
 
     const scanResponseData = AdvData.build({
-      completeListOf16bitSeviceClassUuids: [ '1826', '1818' ],
+      completeListOf16bitServiceClassUuids: [ '1826', '1818' ],
+      completeListOf128bitServiceClassUuids: [
+        '669aa6050c08969ee21186ad5062675f'
+      ],
       serviceData16bitUuid: [{
         uuid: '1826',
         data: Buffer.from([ 1, 0, 32 ]),

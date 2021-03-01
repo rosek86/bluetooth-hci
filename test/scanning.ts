@@ -1,0 +1,222 @@
+import SerialPort from 'serialport';
+
+import { H4 } from '../src/H4';
+import { Hci } from '../src/Hci';
+import { Address } from '../src/Address';
+import { AdvData } from '../src/AdvData';
+
+import {
+  LePhy,
+  LeSetTxRxPhyOpts,
+  LeAdvertisingEventProperties,
+  LeAdvertisingChannelMap,
+  LeOwnAddressType,
+  LePeerAddressType,
+  LeAdvertisingFilterPolicy,
+  LePrimaryAdvertisingPhy,
+  LeSecondaryAdvertisingPhy,
+  LeScanningFilterPolicy,
+  LeScanType,
+  LeScanFilterDuplicates,
+  LeInitiatorFilterPolicy,
+  LeWhiteListAddressType,
+  LeWhiteList,
+} from '../src/HciLeController';
+import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
+import { LeExtAdvReportAddrType } from '../src/HciEvent';
+
+(async () => {
+  try {
+    const portInfo = await findHciPort();
+    const port = await openHciPort(portInfo);
+
+    const hci = new Hci({
+      send: (packetType, data) => {
+        port.write([packetType, ...data]);
+      },
+    });
+
+    const h4 = new H4();
+    port.on('data', (data) => {
+      let result = h4.parse(data);
+      do {
+        if (result) {
+          hci.onData(result.type, result.packet);
+          result = h4.parse(Buffer.allocUnsafe(0));
+        }
+      } while (result);
+    });
+    port.on('error', (err) => {
+      console.log(err);
+    });
+
+    await hci.reset();
+
+    const localFeatures = await hci.readLocalSupportedFeatures();
+    if (localFeatures.leSupported === false) {
+      throw new Error('LE not supported');
+    }
+
+    const localVersion = await hci.readLocalVersionInformation();
+    console.log(localVersion);
+
+    const bdAddress = await hci.readBdAddr();
+    console.log(bdAddress.toString());
+
+    const leTransmitPower = await hci.leReadTransmitPower();
+    console.log(`LE Transmit Power:`, leTransmitPower);
+
+    const leBufferSize = await hci.leReadBufferSize();
+    console.log(leBufferSize);
+
+    const leFeatures = await hci.leReadLocalSupportedFeatures();
+    console.log(leFeatures);
+
+    const leStates = await hci.leReadSupportedStates();
+    console.log(leStates);
+
+    const localCommands = await hci.readLocalSupportedCommands();
+
+    console.log('Supported commands:')
+    for (const [key, value] of Object.entries(localCommands)) {
+      if (value === true) {
+        console.log(key);
+      }
+    }
+
+    await hci.setEventMask({
+      disconnectionComplete:                true,
+      encryptionChange:                     true,
+      encryptionKeyRefreshComplete:         true,
+      readRemoteVersionInformationComplete: true,
+      leMeta:                               true,
+    });
+    await hci.setEventMaskPage2({});
+
+    await hci.leSetEventMask({
+      connectionComplete:               false,
+      advertisingReport:                false,
+      connectionUpdateComplete:         true,
+      readRemoteFeaturesComplete:       true,
+      longTermKeyRequest:               true,
+      remoteConnectionParameterRequest: true,
+      dataLengthChange:                 true,
+      readLocalP256PublicKeyComplete:   true,
+      generateDhKeyComplete:            true,
+      enhancedConnectionComplete:       true,
+      directedAdvertisingReport:        true,
+      phyUpdateComplete:                true,
+      extendedAdvertisingReport:        true,
+
+      scanTimeout:                      true,
+      channelSelectionAlgorithm:        true,
+    });
+
+    const key = Buffer.alloc(16);
+    const data = Buffer.alloc(16);
+    const result = await hci.leEncrypt(key, data);
+    console.log(`Encrypted:`, result);
+
+    const random = await hci.leRand();
+    console.log(`Random:`, random);
+
+    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
+    await hci.leClearWhiteList();
+
+    const device: LeWhiteList = {
+      addressType:  LeWhiteListAddressType.Random,
+      address:      Address.from('F5:EF:D9:6E:47:C7'),
+    }
+    await hci.leAddDeviceToWhiteList(device);
+    // await hci.leRemoveDeviceFromWhiteList(device);
+
+    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
+    await hci.leClearResolvingList();
+
+    const maxDataLength = await hci.leReadMaximumDataLength();
+    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
+
+    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
+
+    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+    console.log(`Number of supported advertising sets: ${advSets}`);
+
+    await hci.leWriteSuggestedDefaultDataLength({
+      suggestedMaxTxOctets: 27,
+      suggestedMaxTxTime:   328,
+    });
+
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
+
+    await hci.leSetExtendedScanParameters({
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
+      // scanningFilterPolicy: LeScanningFilterPolicy.All,
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 11.25,
+          windowMs: 11.25
+        }
+      }
+    });
+    await hci.leSetExtendedScanEnable({
+      enable: true,
+      filterDuplicates: LeScanFilterDuplicates.Disabled,
+      durationMs: 0
+    });
+
+    hci.on('LeExtendedAdvertisingReport', async (report) => {
+      try {
+        console.log(report);
+
+        if (report.data) {
+          const advData = AdvData.parse(report.data);
+          console.log(JSON.stringify(advData, null, 2));
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    });
+
+    console.log('end');
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+    // port.close();
+  }
+})();
+
+async function findHciPort() {
+  const portInfos = await SerialPort.list();
+
+  const hciPortInfos = portInfos.filter(
+    (port) => port.manufacturer === 'SEGGER'
+  );
+
+  if (hciPortInfos.length === 0) {
+    throw new Error(`Cannot find appropriate port`);
+  }
+
+  return hciPortInfos[0];
+}
+
+async function openHciPort(portInfo: SerialPort.PortInfo): Promise<SerialPort> {
+  const port = new SerialPort(portInfo.path, {
+    autoOpen: false,
+    baudRate: 1000000,
+    dataBits: 8,
+    parity: 'none',
+    stopBits: 1,
+    rtscts: true,
+  });
+
+  const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
+    port.on('open', () => resolve(port));
+    port.open((err) => reject(err));
+  });
+
+  return await waitOpen;
+}
