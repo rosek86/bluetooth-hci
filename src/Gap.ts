@@ -11,8 +11,18 @@ type GapScanOptions = Partial<LeExtendedScanParameters> & Partial<Omit<LeExtende
 // TODO check if extended commands are enabled
 
 export class Gap extends EventEmitter {
+  private scanning = false;
+
   constructor(private hci: Hci) {
     super();
+
+    hci.on('LeScanTimeout', () => {
+      this.scanning = false;
+    });
+  }
+
+  public isScanning(): boolean {
+    return this.scanning;
   }
 
   public async startScanning(opts?: GapScanOptions): Promise<void> {
@@ -39,24 +49,18 @@ export class Gap extends EventEmitter {
     await this.hci.leSetExtendedScanParameters({
       ownAddressType, scanningFilterPolicy, scanningPhy,
     });
-
     await this.hci.leSetExtendedScanEnable({
       enable: true, filterDuplicates, durationMs, periodSec,
     });
+
+    this.scanning = true;
   }
 
   public async stopScanning(): Promise<void> {
-    try {
-      await this.hci.leSetExtendedScanEnable({ enable: false });
-    } catch (err) {
-      if (err instanceof HciError) {
-        // Scanning not started
-        if (err.errno !== HciErrorCode.CommandDisallowed) {
-          throw err;
-        }
-      } else {
-        throw err;
-      }
+    if (this.scanning === false) {
+      return;
     }
+    await this.hci.leSetExtendedScanEnable({ enable: false });
+    this.scanning = false;
   }
 }
