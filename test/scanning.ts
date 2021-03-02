@@ -5,25 +5,16 @@ import { Hci } from '../src/Hci';
 import { Address } from '../src/Address';
 import { AdvData } from '../src/AdvData';
 
+import { Gap } from '../src/Gap';
+
 import {
-  LePhy,
-  LeSetTxRxPhyOpts,
-  LeAdvertisingEventProperties,
-  LeAdvertisingChannelMap,
   LeOwnAddressType,
-  LePeerAddressType,
-  LeAdvertisingFilterPolicy,
-  LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy,
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
-  LeInitiatorFilterPolicy,
   LeWhiteListAddressType,
   LeWhiteList,
 } from '../src/HciLeController';
-import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
-import { LeExtAdvReportAddrType } from '../src/HciEvent';
 
 (async () => {
   try {
@@ -150,22 +141,20 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
-    await hci.leSetExtendedScanParameters({
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+    const gap = new Gap(hci);
+
+    await gap.startScanning({
+      ownAddressType:       LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
-      // scanningFilterPolicy: LeScanningFilterPolicy.All,
       scanningPhy: {
         Phy1M: {
-          type: LeScanType.Active,
-          intervalMs: 11.25,
-          windowMs: 11.25
+          type:       LeScanType.Active,
+          intervalMs: 100,
+          windowMs:   100,
         }
-      }
-    });
-    await hci.leSetExtendedScanEnable({
-      enable: true,
-      filterDuplicates: LeScanFilterDuplicates.Disabled,
-      durationMs: 0
+      },
+      filterDuplicates: LeScanFilterDuplicates.Enabled,
+      durationMs: 0,
     });
 
     hci.on('LeExtendedAdvertisingReport', async (report) => {
