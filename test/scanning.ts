@@ -15,6 +15,7 @@ import {
   LeWhiteListAddressType,
   LeWhiteList,
 } from '../src/HciLeController';
+import { LeExtAdvReport } from '../src/HciEvent';
 
 (async () => {
   try {
@@ -143,7 +144,7 @@ import {
 
     const gap = new Gap(hci);
 
-    await gap.startScanning({
+    await gap.setScanParameters({
       ownAddressType:       LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
       scanningPhy: {
@@ -153,21 +154,14 @@ import {
           windowMs:   100,
         }
       },
+    });
+    await gap.startScanning({
       filterDuplicates: LeScanFilterDuplicates.Enabled,
       durationMs: 0,
     });
 
-    hci.on('LeExtendedAdvertisingReport', async (report) => {
-      try {
-        console.log(report);
-
-        if (report.data) {
-          const advData = AdvData.parse(report.data);
-          console.log(JSON.stringify(advData, null, 2));
-        }
-      } catch (err) {
-        console.log(err);
-      }
+    gap.on('adv-report', (report: LeExtAdvReport, data: AdvData) => {
+      console.log(report, data);
     });
 
     console.log('end');
