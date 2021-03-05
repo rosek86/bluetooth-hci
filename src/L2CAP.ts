@@ -1,10 +1,10 @@
 import Debug from 'debug';
 
 import { Hci } from "./Hci";
+import { HciError } from './HciError';
+import { DisconnectionCompleteEvent } from './HciEvent';
 import { LeBufferSize } from "./HciLeController";
-
 import { AclDataBoundary, AclDataBroadcast, NumberOfCompletedPacketsEntry } from "./Hci";
-import { DisconnectionCompleteEvent, LeConnectionCompleteEvent, LeEnhConnectionCompleteEvent } from './HciEvent';
 
 const debug = Debug('nble-l2cap');
 
@@ -51,8 +51,8 @@ export enum L2capSignalingCommand {
 }
 
 interface AclQueueEntry {
-  handle: number;
-  frag: Buffer;
+  connectionHandle: number;
+  fragment: Buffer;
   boundary: AclDataBoundary;
   broadcast: AclDataBroadcast;
 }
@@ -82,52 +82,52 @@ export class L2CAP {
 
     this.aclSize = aclSize;
 
-    this.hci.on('LeEnhancedConnectionComplete',   this.onLeEnhancedConnectionComplete);
+    this.hci.on('LeEnhancedConnectionComplete',   this.onLeConnectionComplete);
     this.hci.on('LeConnectionComplete',           this.onLeConnectionComplete);
     this.hci.on('DisconnectionComplete',          this.onDisconnectionComplete);
     this.hci.on('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
   }
 
   public destroy(): void {
-    this.hci.removeListener('LeEnhancedConnectionComplete',   this.onLeEnhancedConnectionComplete);
+    this.hci.removeListener('LeEnhancedConnectionComplete',   this.onLeConnectionComplete);
     this.hci.removeListener('LeConnectionComplete',           this.onLeConnectionComplete);
     this.hci.removeListener('DisconnectionComplete',          this.onDisconnectionComplete);
     this.hci.removeListener('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
   }
 
-  public async writeAclDataPkt(handle: number, channelId: number, payload: Buffer): Promise<void> {
+  public async writeAclDataPkt(connectionHandle: number, channelId: number, payload: Buffer): Promise<void> {
     const l2capLength = 4 /* l2cap header */ + payload.length;
 
     const aclLength = Math.min(l2capLength, this.aclSize.leAclDataPacketLength);
 
-    let frag = Buffer.allocUnsafe(aclLength);
+    const fragment = Buffer.allocUnsafe(aclLength);
 
     // l2cap header
-    frag.writeUIntLE(payload.length,  0, 2);
-    frag.writeUIntLE(channelId,       2, 2);
-    payload.copy(frag, 4);
+    fragment.writeUIntLE(payload.length,  0, 2);
+    fragment.writeUIntLE(channelId,       2, 2);
+    payload.copy(fragment, 4);
 
-    payload = payload.slice(frag.length - 4);
+    payload = payload.slice(fragment.length - 4);
 
-    debug(`push to acl queue: ${frag.toString('hex')}`);
+    debug(`push to acl queue: ${fragment.toString('hex')}`);
 
     this.aclQueue.push({
-      handle, frag,
+      connectionHandle, fragment,
       boundary: AclDataBoundary.FirstNoFlushFrag,
       broadcast: AclDataBroadcast.PointToPoint,
     });
 
     while (payload.length > 0) {
       const fragAclLength = Math.min(payload.length, this.aclSize.leAclDataPacketLength);
-      let frag = Buffer.alloc(fragAclLength);
+      const fragment = Buffer.alloc(fragAclLength);
 
-      payload.copy(frag, 0);
-      payload = payload.slice(frag.length);
+      payload.copy(fragment, 0);
+      payload = payload.slice(fragment.length);
 
-      debug(`push fragment to acl queue: ${frag.toString('hex')}`);
+      debug(`push fragment to acl queue: ${fragment.toString('hex')}`);
 
       this.aclQueue.push({
-        handle, frag,
+        connectionHandle, fragment,
         boundary: AclDataBoundary.NextFrag,
         broadcast: AclDataBroadcast.PointToPoint,
       });
@@ -140,16 +140,26 @@ export class L2CAP {
     debug(`flush - pending: ${this.pendingPackets()} queue length: ${this.aclQueue.length}`);
 
     while (this.aclQueue.length > 0 && !this.isControllerBusy()) {
-      const { handle, frag } = this.aclQueue.shift();
+      const aclEntry = this.aclQueue.shift();
+      if (!aclEntry) {
+        continue;
+      }
 
-      this.aclConnections.get(handle).pending++;
+      const { connectionHandle, fragment } = aclEntry;
 
-      debug(`write acl data packet - writing: ${frag.toString('hex')}`);
+      const connection = this.aclConnections.get(connectionHandle);
+      if (!connection) {
+        continue;
+      }
 
-      await this.hci.sendAclData(handle, {
+      connection.pending++;
+
+      debug(`write acl data packet - writing: ${fragment.toString('hex')}`);
+
+      await this.hci.sendAclData(connectionHandle, {
         boundary:   AclDataBoundary.FirstNoFlushFrag,
         broadcast:  AclDataBroadcast.PointToPoint,
-        data:       frag,
+        data:       fragment,
       });
     }
   }
@@ -160,36 +170,40 @@ export class L2CAP {
 
   private pendingPackets(): number {
     let totalPending = 0;
-    for (const { pending } of this.aclConnections.values()) { totalPending += pending; }
+    for (const { pending } of this.aclConnections.values()) {
+      totalPending += pending;
+    }
     return totalPending;
   }
 
-  private onLeEnhancedConnectionComplete = (err: Error, event: LeEnhConnectionCompleteEvent): void => {
+  private onLeConnectionComplete = (err: HciError|null, event: { connectionHandle: number }): void => {
+    if (err !== null) {
+      debug(`Can't connect ${err.code}`);
+      return;
+    }
+
     this.aclConnections.set(event.connectionHandle, { pending: 0 });
   }
 
-  private onLeConnectionComplete = (err: Error, event: LeConnectionCompleteEvent): void => {
-    this.aclConnections.set(event.connectionHandle, { pending: 0 });
-  }
+  private onDisconnectionComplete = (err: HciError|null, event: DisconnectionCompleteEvent): void => {
+    if (err !== null) {
+      debug(`Can't disconnect ${err.code}`);
+      return;
+    }
 
-  private onDisconnectionComplete = (err: Error, event: DisconnectionCompleteEvent): void => {
-    this.aclQueue = this.aclQueue.filter(acl => acl.handle !== event.connectionHandle);
+    this.aclQueue = this.aclQueue.filter(acl => acl.connectionHandle !== event.connectionHandle);
     this.aclConnections.delete(event.connectionHandle);
     this.flushAcl();
   }
 
   private onNumberOfCompletedPackets = (event: NumberOfCompletedPacketsEntry[]): void => {
-    for (const entry of event) {
-      const handle = entry.connectionHandle
-      const pkts = entry.numCompletedPackets;
-
-      if (!this.aclConnections.has(handle)) {
+    for (const { connectionHandle, numCompletedPackets } of event) {
+      const connection = this.aclConnections.get(connectionHandle);
+      if (!connection) {
         continue;
       }
 
-      const connection = this.aclConnections.get(handle);
-
-      connection.pending -= pkts;
+      connection.pending -= numCompletedPackets;
 
       if (connection.pending < 0) {
         connection.pending = 0;

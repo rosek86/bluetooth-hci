@@ -6,6 +6,7 @@ import { Address } from '../src/Address';
 import { AdvData } from '../src/AdvData';
 
 import { Gap } from '../src/Gap';
+import { L2CAP } from '../src/L2CAP';
 
 import {
   LeOwnAddressType,
