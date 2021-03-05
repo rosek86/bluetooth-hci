@@ -58,11 +58,12 @@ interface AclQueueEntry {
 }
 
 export class L2CAP {
+  private readonly l2capHeader = 4;
+
   private aclSize: LeBufferSize = {
     leAclDataPacketLength: 0,
     totalNumLeAclDataPackets: 0,
   };
-
   private aclQueue: AclQueueEntry[] = [];
   private aclConnections: Map<number, { pending: number }> = new Map();
 
@@ -95,21 +96,17 @@ export class L2CAP {
     this.hci.removeListener('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
   }
 
-  public async writeAclDataPkt(connectionHandle: number, channelId: number, payload: Buffer): Promise<void> {
-    const l2capLength = 4 /* l2cap header */ + payload.length;
+  public async writeAclData(connectionHandle: number, channelId: number, payload: Buffer): Promise<void> {
+    const l2capLength = this.l2capHeader + payload.length;
 
     const aclLength = Math.min(l2capLength, this.aclSize.leAclDataPacketLength);
 
     const fragment = Buffer.allocUnsafe(aclLength);
-
-    // l2cap header
     fragment.writeUIntLE(payload.length,  0, 2);
     fragment.writeUIntLE(channelId,       2, 2);
     payload.copy(fragment, 4);
 
     payload = payload.slice(fragment.length - 4);
-
-    debug(`push to acl queue: ${fragment.toString('hex')}`);
 
     this.aclQueue.push({
       connectionHandle, fragment,
@@ -118,13 +115,12 @@ export class L2CAP {
     });
 
     while (payload.length > 0) {
-      const fragAclLength = Math.min(payload.length, this.aclSize.leAclDataPacketLength);
-      const fragment = Buffer.alloc(fragAclLength);
+      const aclLength = Math.min(payload.length, this.aclSize.leAclDataPacketLength);
 
+      const fragment = Buffer.alloc(aclLength);
       payload.copy(fragment, 0);
-      payload = payload.slice(fragment.length);
 
-      debug(`push fragment to acl queue: ${fragment.toString('hex')}`);
+      payload = payload.slice(fragment.length);
 
       this.aclQueue.push({
         connectionHandle, fragment,
@@ -137,7 +133,7 @@ export class L2CAP {
   }
 
   private async flushAcl(): Promise<void> {
-    debug(`flush - pending: ${this.pendingPackets()} queue length: ${this.aclQueue.length}`);
+    debug(`flush - pending: ${this.pendingPackets()}, queue length: ${this.aclQueue.length}`);
 
     while (this.aclQueue.length > 0 && !this.isControllerBusy()) {
       const aclEntry = this.aclQueue.shift();
@@ -154,9 +150,7 @@ export class L2CAP {
 
       connection.pending++;
 
-      debug(`write acl data packet - writing: ${fragment.toString('hex')}`);
-
-      await this.hci.sendAclData(connectionHandle, {
+      await this.hci.writeAclData(connectionHandle, {
         boundary:   AclDataBoundary.FirstNoFlushFrag,
         broadcast:  AclDataBroadcast.PointToPoint,
         data:       fragment,

@@ -675,7 +675,7 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async sendAclData(handle: number, params: {
+  public async writeAclData(handle: number, params: {
     boundary: AclDataBoundary,
     broadcast: AclDataBroadcast,
     data: Buffer,
