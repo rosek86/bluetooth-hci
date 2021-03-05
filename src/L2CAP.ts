@@ -96,7 +96,7 @@ export class L2CAP {
     this.hci.removeListener('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
   }
 
-  public async writeAclData(connectionHandle: number, channelId: number, payload: Buffer): Promise<void> {
+  public async writeAclData(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): Promise<void> {
     const l2capLength = this.l2capHeader + payload.length;
 
     const aclLength = Math.min(l2capLength, this.aclSize.leAclDataPacketLength);
@@ -129,7 +129,7 @@ export class L2CAP {
       });
     }
 
-    this.flushAcl();
+    await this.flushAcl();
   }
 
   private async flushAcl(): Promise<void> {

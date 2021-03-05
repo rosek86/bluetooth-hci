@@ -24,6 +24,8 @@ import {
 } from '../src/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/HciEvent';
+import { L2CAP } from '../src/L2CAP';
+import { ATT } from '../src/ATT';
 
 (async () => {
   try {
@@ -200,6 +202,10 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
     // });
     // await hci.leSetScanEnable(true, false);
 
+    const l2cap = new L2CAP(hci);
+    await l2cap.init();
+
+
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
@@ -328,6 +334,11 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
         );
         console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
 
+        const att = new ATT(l2cap, event.connectionHandle);
+        await att.mtuExchangeRequest(230);
+
+        // l2cap.destroy();
+
         // await hci.leSetPhy(event.connectionHandle, {
         //   txPhys: LePhy.PhyCoded,
         //   rxPhys: LePhy.PhyCoded,
@@ -338,7 +349,9 @@ import { LeExtAdvReportAddrType } from '../src/HciEvent';
         // const rssi = await hci.readRssi(event.connectionHandle);
         // console.log(`RSSI: ${rssi} dBm`);
 
-        await hci.disconnect(event.connectionHandle);
+        setTimeout(async () => {
+          await hci.disconnect(event.connectionHandle);
+        }, 2000);
       } catch (err) {
         console.log(err);
       }
