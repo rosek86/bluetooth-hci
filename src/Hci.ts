@@ -67,14 +67,19 @@ interface HciInit {
   send: (pt: HciPacketType, data: Buffer) => void;
 }
 
-enum AclDataBoundary {
+export interface NumberOfCompletedPacketsEntry {
+  connectionHandle: number;
+  numCompletedPackets: number;
+}
+
+export enum AclDataBoundary {
   FirstNoFlushFrag,
   NextFrag,
   FirstFrag,
   Complete
 }
 
-enum AclDataBroadcast {
+export enum AclDataBroadcast {
   PointToPoint,
   Broadcast,
 }
@@ -82,8 +87,9 @@ enum AclDataBroadcast {
 export declare interface Hci {
   on(event: 'DisconnectionComplete',                listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
   on(event: 'EncryptionChange',                     listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
-  on(event: 'ReadRemoteVersionInformationComplete', listener: (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => void): this;
   on(event: 'EncryptionKeyRefreshComplete',         listener: (err: Error|null, connectionHandle: number) => void): this;
+  on(event: 'ReadRemoteVersionInformationComplete', listener: (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => void): this;
+  on(event: 'NumberOfCompletedPacketsEntry',        listener: (event: NumberOfCompletedPacketsEntry[]) => void): this;
 
   on(event: 'LeConnectionComplete',                 listener: (err: Error|null, event: LeConnectionCompleteEvent) => void): this;
   on(event: 'LeAdvertisingReport',                  listener: (report: LeAdvReport) => void): this;
@@ -846,13 +852,14 @@ export class Hci extends EventEmitter {
       numCompletedPackets.push(payload.readUIntLE(o, 2));
     }
 
-    const event = connectionHandles.map((connectionHandle, i) => ({
-      connectionHandle,
-      numCompletedPackets: numCompletedPackets[i],
-    }));
+    const event = connectionHandles.map<NumberOfCompletedPacketsEntry>(
+      (connectionHandle, i) => ({
+        connectionHandle,
+        numCompletedPackets: numCompletedPackets[i],
+      })
+    );
 
-    debug('number of completed packets', event);
-    // TODO: handle this to send ACL data
+    this.emit('NumberOfCompletedPackets', event);
   }
 
   private onEncryptionKeyRefreshComplete(data: Buffer): void {
