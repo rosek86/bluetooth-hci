@@ -25,7 +25,7 @@ import {
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
 import { L2CAP } from '../src/l2cap/L2CAP';
-import { ATT } from '../src/att/ATT';
+import { ATT } from '../src/att/Att';
 
 (async () => {
   try {
@@ -335,7 +335,15 @@ import { ATT } from '../src/att/ATT';
         console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
 
         const att = new ATT(l2cap, event.connectionHandle);
-        await att.mtuExchangeRequest(40);
+        await att.mtuExchangeReq(40);
+
+
+        setTimeout(async () => {
+          await att.findInformationReq({
+            startingHandle: 0x0001, endingHandle: 0xFFFF,
+          });
+        }, 300);
+
 
         // l2cap.destroy();
 
