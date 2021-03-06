@@ -335,7 +335,7 @@ import { ATT } from '../src/ATT';
         console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
 
         const att = new ATT(l2cap, event.connectionHandle);
-        await att.mtuExchangeRequest(230);
+        await att.mtuExchangeRequest(40);
 
         // l2cap.destroy();
 

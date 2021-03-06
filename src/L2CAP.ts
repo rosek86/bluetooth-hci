@@ -1,10 +1,11 @@
 import Debug from 'debug';
+import { EventEmitter } from 'events';
 
-import { Hci } from "./Hci";
+import { Hci, NumberOfCompletedPacketsEntry } from './Hci';
 import { HciError } from './HciError';
 import { DisconnectionCompleteEvent } from './HciEvent';
 import { LeBufferSize } from "./HciLeController";
-import { AclDataBoundary, AclDataBroadcast, NumberOfCompletedPacketsEntry } from "./Hci";
+import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from './Acl';
 
 const debug = Debug('nble-l2cap');
 
@@ -57,7 +58,13 @@ interface AclQueueEntry {
   broadcast: AclDataBroadcast;
 }
 
-export class L2CAP {
+interface AclFragments {
+  channelId: L2capChannelId;
+  length: number;
+  payload: Buffer;
+}
+
+export class L2CAP extends EventEmitter {
   private readonly l2capHeader = 4;
 
   private aclSize: LeBufferSize = {
@@ -66,8 +73,10 @@ export class L2CAP {
   };
   private aclQueue: AclQueueEntry[] = [];
   private aclConnections: Map<number, { pending: number }> = new Map();
+  private aclFragments: Map<number, AclFragments> = new Map();
 
   constructor(private hci: Hci) {
+    super();
   }
 
   public async init(): Promise<void> {
@@ -87,6 +96,7 @@ export class L2CAP {
     this.hci.on('LeConnectionComplete',           this.onLeConnectionComplete);
     this.hci.on('DisconnectionComplete',          this.onDisconnectionComplete);
     this.hci.on('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
+    this.hci.on('AclData',                        this.onAclData);
   }
 
   public destroy(): void {
@@ -94,6 +104,7 @@ export class L2CAP {
     this.hci.removeListener('LeConnectionComplete',           this.onLeConnectionComplete);
     this.hci.removeListener('DisconnectionComplete',          this.onDisconnectionComplete);
     this.hci.removeListener('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
+    this.hci.removeListener('AclData',                        this.onAclData);
   }
 
   public async writeAclData(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): Promise<void> {
@@ -205,5 +216,53 @@ export class L2CAP {
     }
 
     this.flushAcl();
+  }
+
+  private onAclData = (connectionHandle: number, event: AclDataPacket): void => {
+    debug('acl-data', connectionHandle, event);
+
+    if (event.boundary === AclDataBoundary.FirstFrag) {
+      const length    = event.data.readUIntLE(0, 2);
+      const channelId = event.data.readUIntLE(2, 2);
+      const payload   = event.data.slice(4);
+
+      if (length === payload.length) {
+        this.onAclDataComplete(connectionHandle, channelId, payload);
+      } else {
+        if (length < payload.length) {
+          return debug('acl: data length error');
+        }
+
+        this.aclFragments.set(connectionHandle, {
+          length, channelId, payload,
+        });
+      }
+      return;
+    }
+    if (event.boundary === AclDataBoundary.NextFrag) {
+      const fragments = this.aclFragments.get(connectionHandle);
+      if (!fragments) {
+        return;
+      }
+
+      fragments.payload = Buffer.concat([ fragments.payload, event.data ]);
+
+      if (fragments.payload.length === fragments.length) {
+        const { channelId, payload } = fragments;
+        this.onAclDataComplete(connectionHandle, channelId, payload);
+        this.aclFragments.delete(connectionHandle);
+      }
+      if (fragments.payload.length > fragments.length) {
+        this.aclFragments.delete(connectionHandle);
+      }
+    }
+  }
+
+  private onAclDataComplete(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): void {
+    debug('acl', connectionHandle, channelId, payload);
+
+    if (channelId === L2capChannelId.LeAttributeProtocol) {
+      this.emit('AttData', connectionHandle, payload);
+    }
   }
 }

@@ -60,6 +60,8 @@ import {
   LeAdvertisingSetTerminatedEvent
 } from './HciEvent';
 
+import { AclDataPacket } from './Acl';
+
 const debug = Debug('nble-hci');
 
 interface HciInit {
@@ -70,18 +72,6 @@ interface HciInit {
 export interface NumberOfCompletedPacketsEntry {
   connectionHandle: number;
   numCompletedPackets: number;
-}
-
-export enum AclDataBoundary {
-  FirstNoFlushFrag,
-  NextFrag,
-  FirstFrag,
-  Complete
-}
-
-export enum AclDataBroadcast {
-  PointToPoint,
-  Broadcast,
 }
 
 export declare interface Hci {
@@ -107,6 +97,8 @@ export declare interface Hci {
   on(event: 'LeScanTimeout',                        listener: () => void): this;
   on(event: 'LeAdvertisingSetTerminated',           listener: (err: Error|null, event: LeAdvertisingSetTerminatedEvent) => void): this;
   on(event: 'LeChannelSelectionAlgorithm',          listener: (event: LeChannelSelAlgoEvent) => void): this;
+
+  on(event: 'AclData',                              listener: (connectionHandle: number, event: AclDataPacket) => void): this;
 }
 
 export class Hci extends EventEmitter {
@@ -675,21 +667,17 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async writeAclData(handle: number, params: {
-    boundary: AclDataBoundary,
-    broadcast: AclDataBroadcast,
-    data: Buffer,
-  }): Promise<void> {
+  public async writeAclData(connectionHandle: number, packet: AclDataPacket): Promise<void> {
     const aclHdrSize = 4;
-    const hdr = handle            <<  0 |
-                params.boundary   << 12 |
-                params.broadcast  << 14;
+    const hdr = connectionHandle <<  0 |
+                packet.boundary  << 12 |
+                packet.broadcast << 14;
 
-    const totalSize = aclHdrSize + params.data.length;
+    const totalSize = aclHdrSize + packet.data.length;
     const buffer = Buffer.allocUnsafe(totalSize);
     buffer.writeUInt16LE(hdr, 0);
-    buffer.writeUInt16LE(params.data.length, 2);
-    params.data.copy(buffer, aclHdrSize);
+    buffer.writeUInt16LE(packet.data.length, 2);
+    packet.data.copy(buffer, aclHdrSize);
 
     await this.send(HciPacketType.HciAclData, buffer);
   }
@@ -700,11 +688,10 @@ export class Hci extends EventEmitter {
         return this.onHciEvent(data);
       }
       if (packetType === HciPacketType.HciAclData) {
-        debug('on-data-acl-data');
-        return;
+        return this.onAclData(data);
       }
       if (packetType === HciPacketType.HciCommand) {
-        debug('on-data-acl-data');
+        debug('on-data-hci-cmd');
         return;
       }
     } catch (err) {
@@ -1024,5 +1011,30 @@ export class Hci extends EventEmitter {
   private onLeChannelSelectionAlgorithm(data: Buffer): void {
     const event = LeChannelSelAlgo.parse(data);
     this.emit('LeChannelSelectionAlgorithm', event);
+  }
+
+  private onAclData(data: Buffer): void {
+    const aclHdrSize = 4;
+
+    const hdr  = data.readUIntLE(0, 2);
+    const size = data.readUIntLE(2, 2);
+
+    const rxSize = data.length - aclHdrSize;
+
+    if (size !== rxSize) {
+      debug(`acl-data: invalid size ${size} vs ${rxSize}`);
+    }
+
+    const connectionHandle  = (hdr >>  0) & 0x0FFF;
+    const boundary          = (hdr >> 12) & 0x0003;
+    const broadcast         = (hdr >> 14) & 0x0003;
+
+    const result: AclDataPacket = {
+      boundary,
+      broadcast,
+      data: data.slice(aclHdrSize),
+    };
+
+    this.emit('AclData', connectionHandle, result);
   }
 }
