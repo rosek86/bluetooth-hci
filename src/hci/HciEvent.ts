@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-import { Address } from './Address';
+import { Address } from '../utils/Address';
 import { HciErrorCode } from './HciError';
 
 const debug = Debug('nble-hci-event');

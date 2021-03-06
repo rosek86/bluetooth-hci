@@ -16,10 +16,7 @@
     "declaration": true
   },
   "files": [
-    "src/index.ts",
-    "src/H4.ts",
-    "src/Address.ts",
-    "src/AdvData.ts",
+    "test/index.ts",
     "test/serialport.ts",
     "test/advertising.ts",
     "test/scanning.ts"

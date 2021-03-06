@@ -1,5 +1,5 @@
 import { HciParserError, makeParserError } from "./HciError";
-import { bitSet } from "./Utils";
+import { bitSet } from "../utils/Utils";
 
 export interface EventMask {
   inquiryComplete: boolean;

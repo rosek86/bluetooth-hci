@@ -1,9 +1,9 @@
 import SerialPort from 'serialport';
 
-import { H4 } from '../src/H4';
-import { Hci } from '../src/Hci';
-import { Address } from '../src/Address';
-import { AdvData } from '../src/AdvData';
+import { H4 } from '../src/transport/H4';
+import { Hci } from '../src/hci/Hci';
+import { Address } from '../src/utils/Address';
+import { AdvData } from '../src/gap/AdvData';
 
 import {
   LePhy,
@@ -21,11 +21,11 @@ import {
   LeInitiatorFilterPolicy,
   LeWhiteListAddressType,
   LeWhiteList,
-} from '../src/HciLeController';
-import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
-import { LeExtAdvReportAddrType } from '../src/HciEvent';
-import { L2CAP } from '../src/L2CAP';
-import { ATT } from '../src/ATT';
+} from '../src/hci/HciLeController';
+import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
+import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
+import { L2CAP } from '../src/l2cap/L2CAP';
+import { ATT } from '../src/att/ATT';
 
 (async () => {
   try {

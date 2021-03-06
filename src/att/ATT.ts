@@ -1,4 +1,4 @@
-import { L2CAP, L2capChannelId } from "./L2CAP";
+import { L2CAP, L2capChannelId } from "../l2cap/L2CAP";
 
 enum AttOpcode {
   ErrorRsp                = 0x01, // Request Opcode in Error, Attribute Handle In Error, Error Code

@@ -1,9 +1,9 @@
 import SerialPort from 'serialport';
 
-import { H4 } from '../src/H4';
-import { Hci } from '../src/Hci';
-import { Address } from '../src/Address';
-import { AdvData } from '../src/AdvData';
+import { H4 } from '../src/transport/H4';
+import { Hci } from '../src/hci/Hci';
+import { Address } from '../src/utils/Address';
+import { AdvData } from '../src/gap/AdvData';
 
 import {
   LePhy,
@@ -16,8 +16,8 @@ import {
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
-} from '../src/HciLeController';
-import { ReadTransmitPowerLevelType } from '../src/HciControlAndBaseband';
+} from '../src/hci/HciLeController';
+import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 
 (async () => {
   try {

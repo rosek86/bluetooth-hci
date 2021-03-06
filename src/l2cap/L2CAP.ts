@@ -1,11 +1,11 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 
-import { Hci, NumberOfCompletedPacketsEntry } from './Hci';
-import { HciError } from './HciError';
-import { DisconnectionCompleteEvent } from './HciEvent';
-import { LeBufferSize } from "./HciLeController";
-import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from './Acl';
+import { Hci, NumberOfCompletedPacketsEntry } from '../hci/Hci';
+import { HciError } from '../hci/HciError';
+import { DisconnectionCompleteEvent } from '../hci/HciEvent';
+import { LeBufferSize } from '../hci/HciLeController';
+import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from '../acl/Acl';
 
 const debug = Debug('nble-l2cap');
 

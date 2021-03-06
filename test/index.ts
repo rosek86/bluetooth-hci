@@ -1,12 +1,12 @@
-import { Hci } from './Hci';
-import { HciPacketType } from './HciPacketType';
+import { Hci } from '../src/hci/Hci';
+import { HciPacketType } from '../src/hci/HciPacketType';
 import {
   LeAdvertisingChannelMap, LeAdvertisingEventProperties,
   LeAdvertisingFilterPolicy, LeOwnAddressType, LePeerAddressType, LePhy,
   LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeScanningFilterPolicy,
   LeScanType,
-  LeScanFilterDuplicates } from './HciLeController';
-import { Address } from './Address';
+  LeScanFilterDuplicates } from '../src/hci/HciLeController';
+import { Address } from '../src/utils/Address';
 
 let hci: Hci | null = null;
 let txBuffer: Buffer | null = null;

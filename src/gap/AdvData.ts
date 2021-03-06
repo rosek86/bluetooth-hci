@@ -1,7 +1,7 @@
 // NOTE:
 // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
 
-import { UUID } from "./UUID";
+import { UUID } from "../utils/UUID";
 
 export interface AdvDataField {
   type: number;

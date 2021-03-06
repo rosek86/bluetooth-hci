@@ -7,7 +7,7 @@ import { getHciErrorMessage, HciErrorCode, makeHciError } from './HciError';
 import { HciDisconnectReason } from './HciError';
 import { HciParserError, makeParserError } from './HciError';
 
-import { Address } from './Address';
+import { Address } from '../utils/Address';
 import { HciCmd } from './HciCmd';
 import {
    HciOcfInformationParameters,
@@ -60,7 +60,7 @@ import {
   LeAdvertisingSetTerminatedEvent
 } from './HciEvent';
 
-import { AclDataPacket } from './Acl';
+import { AclDataPacket } from '../acl/Acl';
 
 const debug = Debug('nble-hci');
 

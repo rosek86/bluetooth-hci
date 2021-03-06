@@ -1,11 +1,11 @@
 import { EventEmitter } from 'events';
 import { AdvData } from './AdvData';
-import { Hci } from './Hci';
-import { LeAdvReport, LeExtAdvReport } from './HciEvent';
+import { Hci } from '../hci/Hci';
+import { LeAdvReport, LeExtAdvReport } from '../hci/HciEvent';
 import {
   LeExtendedScanEnabled, LeExtendedScanParameters, LeOwnAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType
-} from './HciLeController';
+} from '../hci/HciLeController';
 
 type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;

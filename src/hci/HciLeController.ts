@@ -1,9 +1,9 @@
-import { Address } from "./Address";
+import { Address } from '../utils/Address';
 import {
   HciErrorCode, HciParserError,
   makeHciError, makeParserError
-} from "./HciError";
-import { bitGet, bitSet, buildBitfield } from "./Utils";
+} from './HciError';
+import { bitGet, bitSet, buildBitfield } from '../utils/Utils';
 
 export interface LeEvents {
   connectionComplete:                      boolean;
