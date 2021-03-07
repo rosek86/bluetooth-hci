@@ -1,5 +1,5 @@
-import { AttErrorCode } from './Att';
 import { AttOpcode } from './AttOpcode';
+import { AttErrorCode } from './AttError';
 
 export interface AttErrorRspMsg {
   requestOpcodeInError:   number;       // s:1, The request that generated this ATT_ERROR_RSP PDU
@@ -111,12 +111,54 @@ export type AttFindInformationRspMsg = AttFindInformationRspEntry[];
 
 export class AttFindInformationRsp {
   private static readonly minSize = 6;
-  private static readonly uuidSizes = [ undefined, 2, 16 ];
+  private static readonly uuidFormatToSize: Record<number, number> = { 1: 2, 2: 16 };
+  private static readonly uuidSizeToFormat: Record<number, number> = { 2: 1, 16: 2 };
 
   static serialize(data: AttFindInformationRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.minSize);
-    // TODO
+    const uuidSize = this.getUuidSize(data);
+    if (uuidSize === null) {
+      throw new Error('Invalid ATT response data');
+    }
+
+    const format = this.uuidSizeToFormat[uuidSize];
+    if (!format) {
+      throw new Error('Invalid ATT response data');
+    }
+
+    const buffer = Buffer.allocUnsafe(2 + (2 + uuidSize) * data.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.FindInformationRsp,  o, 1);
+    o = buffer.writeUIntLE(format,                        o, 1);
+
+    for (const entry of data) {
+      o  = buffer.writeUIntLE(entry.handle, o, 2);
+      o += entry.uuid.copy(buffer, o);
+    }
+
     return buffer;
+  }
+
+  private static getUuidSize(data: AttFindInformationRspMsg): number|null {
+    let uuidSize: number|null = null;
+
+    for (const entry of data) {
+      const length = entry.uuid.length;
+
+      if (uuidSize === null) {
+        uuidSize = length;
+
+        if (uuidSize !== 2 && uuidSize !== 16) {
+          return null;
+        }
+      }
+
+      if (uuidSize !== length) {
+        return null;
+      }
+    }
+
+    return uuidSize;
   }
 
   static deserialize(buffer: Buffer): AttFindInformationRspMsg|null {
@@ -127,7 +169,7 @@ export class AttFindInformationRsp {
 
     // check uuid size
     const format = buffer.readUInt8(1);
-    const uuidSize = this.uuidSizes[format];
+    const uuidSize = this.uuidFormatToSize[format];
     if (!uuidSize) {
       return null;
     }
