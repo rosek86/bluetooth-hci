@@ -75,13 +75,15 @@ export class Att extends EventEmitter {
   }
 
   public async mtuExchangeReq(clientRxMtu: number): Promise<number> {
-    const waitAttRsp = this.waitAttEvent<number>('ExchangeMtuRsp');
+    const waitAttRsp = this.waitAttEvent<number>('ExchangeMtuRsp', AttOpcode.ExchangeMtuReq);
     await this.writeAtt(AttMtuExchangeReq.serialize(clientRxMtu));
     return await waitAttRsp;
   }
 
   public async findInformationReq(info: AttFindInformationReqMsg): Promise<AttFindInformationRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttFindInformationRspMsg>('FindInformationRsp');
+    const waitAttRsp = this.waitAttEvent<AttFindInformationRspMsg>(
+      'FindInformationRsp', AttOpcode.FindInformationReq
+    );
     await this.writeAtt(AttFindInformationReq.serialize(info));
     return await waitAttRsp;
   }
@@ -94,18 +96,20 @@ export class Att extends EventEmitter {
     );
   }
 
-  private waitAttEvent<T>(eventType: AttEvents): Promise<T> {
+  private waitAttEvent<T>(eventType: AttEvents, opcode: AttOpcode): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const cleanup = () => {
         this.off(eventType,  onSuccess);
         this.off('ErrorRsp', onFailure);
       };
       const onFailure = (event: AttErrorRspMsg) => {
-        // TODO make sure that this is error to this request
+        if (event.requestOpcodeInError !== opcode) {
+          return;
+        }
         cleanup();
         reject(new Error(
-          `ATT Error ${event.errorCode}, ` +
-          `${event.attributeHandleInError}, ${event.requestOpcodeInError}`
+          `ATT request (${AttOpcode[opcode]}) failed due to ${AttErrorCode[event.errorCode]}` +
+          `attribute handle: ${event.attributeHandleInError}`
         ));
       };
       const onSuccess = (event: T) => {
