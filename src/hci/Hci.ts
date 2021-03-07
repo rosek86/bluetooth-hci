@@ -79,7 +79,7 @@ export declare interface Hci {
   on(event: 'EncryptionChange',                     listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
   on(event: 'EncryptionKeyRefreshComplete',         listener: (err: Error|null, connectionHandle: number) => void): this;
   on(event: 'ReadRemoteVersionInformationComplete', listener: (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => void): this;
-  on(event: 'NumberOfCompletedPacketsEntry',        listener: (event: NumberOfCompletedPacketsEntry[]) => void): this;
+  on(event: 'NumberOfCompletedPackets',             listener: (event: NumberOfCompletedPacketsEntry[]) => void): this;
 
   on(event: 'LeConnectionComplete',                 listener: (err: Error|null, event: LeConnectionCompleteEvent) => void): this;
   on(event: 'LeAdvertisingReport',                  listener: (report: LeAdvReport) => void): this;
@@ -1014,6 +1014,7 @@ export class Hci extends EventEmitter {
   }
 
   private onAclData(data: Buffer): void {
+    debug(`acl-data`);
     const aclHdrSize = 4;
 
     const hdr  = data.readUIntLE(0, 2);

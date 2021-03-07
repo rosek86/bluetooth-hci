@@ -6,6 +6,8 @@ enum ParserState {
 
 type PacketHdrSize = Partial<Record<number, number>>;
 
+export interface H4Packet { type: number; packet: Buffer; }
+
 export class H4 {
   private readonly headerSize: PacketHdrSize = {};
 
@@ -24,7 +26,7 @@ export class H4 {
     this.headerSize[HciPacketType.HciIsoData]  = 4;
   }
 
-  public parse(data: Buffer): { type: number, packet: Buffer } | null {
+  public parse(data: Buffer): H4Packet | null {
     this.parserPacketData = Buffer.concat([ this.parserPacketData, data ]);
 
     if (this.parserState === ParserState.Type) {
@@ -47,7 +49,6 @@ export class H4 {
 
     if (this.parserState === ParserState.Payload) {
       if (this.parserPacketData.length >= this.parserPacketSize) {
-
         const packet = this.parserPacketData.slice(0, this.parserPacketSize);
         this.parserPacketData = this.parserPacketData.slice(this.parserPacketSize);
 

@@ -92,19 +92,21 @@ export class L2CAP extends EventEmitter {
 
     this.aclSize = aclSize;
 
-    this.hci.on('LeEnhancedConnectionComplete',   this.onLeConnectionComplete);
-    this.hci.on('LeConnectionComplete',           this.onLeConnectionComplete);
-    this.hci.on('DisconnectionComplete',          this.onDisconnectionComplete);
-    this.hci.on('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
-    this.hci.on('AclData',                        this.onAclData);
+    debug(`ACL Size: ${JSON.stringify(aclSize)}`);
+
+    this.hci.on('LeEnhancedConnectionComplete', this.onLeConnectionComplete);
+    this.hci.on('LeConnectionComplete',         this.onLeConnectionComplete);
+    this.hci.on('DisconnectionComplete',        this.onDisconnectionComplete);
+    this.hci.on('NumberOfCompletedPackets',     this.onNumberOfCompletedPackets);
+    this.hci.on('AclData',                      this.onAclData);
   }
 
   public destroy(): void {
-    this.hci.removeListener('LeEnhancedConnectionComplete',   this.onLeConnectionComplete);
-    this.hci.removeListener('LeConnectionComplete',           this.onLeConnectionComplete);
-    this.hci.removeListener('DisconnectionComplete',          this.onDisconnectionComplete);
-    this.hci.removeListener('NumberOfCompletedPacketsEntry',  this.onNumberOfCompletedPackets);
-    this.hci.removeListener('AclData',                        this.onAclData);
+    this.hci.removeListener('LeEnhancedConnectionComplete', this.onLeConnectionComplete);
+    this.hci.removeListener('LeConnectionComplete',         this.onLeConnectionComplete);
+    this.hci.removeListener('DisconnectionComplete',        this.onDisconnectionComplete);
+    this.hci.removeListener('NumberOfCompletedPackets',     this.onNumberOfCompletedPackets);
+    this.hci.removeListener('AclData',                      this.onAclData);
   }
 
   public async writeAclData(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): Promise<void> {
@@ -166,6 +168,8 @@ export class L2CAP extends EventEmitter {
         broadcast:  AclDataBroadcast.PointToPoint,
         data:       fragment,
       });
+
+      debug(`Write ACL fragment, pending ${connection.pending}`);
     }
   }
 
@@ -259,7 +263,7 @@ export class L2CAP extends EventEmitter {
   }
 
   private onAclDataComplete(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): void {
-    debug('acl', connectionHandle, channelId, payload);
+    debug('acl', connectionHandle, L2capChannelId[channelId], payload);
 
     if (channelId === L2capChannelId.LeAttributeProtocol) {
       this.emit('AttData', connectionHandle, payload);

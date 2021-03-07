@@ -113,7 +113,7 @@ export class AttFindInformationRsp {
   private static readonly minSize = 6;
   private static readonly uuidSizes = [ undefined, 2, 16 ];
 
-  static serialize(req: unknown): Buffer {
+  static serialize(data: AttFindInformationRspMsg): Buffer {
     const buffer = Buffer.allocUnsafe(this.minSize);
     // TODO
     return buffer;

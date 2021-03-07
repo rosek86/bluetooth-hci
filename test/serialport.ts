@@ -1,6 +1,7 @@
 import SerialPort from 'serialport';
+import Debug from 'debug';
 
-import { H4 } from '../src/transport/H4';
+import { H4, H4Packet } from '../src/transport/H4';
 import { Hci } from '../src/hci/Hci';
 import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
@@ -25,7 +26,9 @@ import {
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
 import { L2CAP } from '../src/l2cap/L2CAP';
-import { ATT } from '../src/att/Att';
+import { Att } from '../src/att/Att';
+
+const debug = Debug('nble-main');
 
 (async () => {
   try {
@@ -40,13 +43,15 @@ import { ATT } from '../src/att/Att';
 
     const h4 = new H4();
     port.on('data', (data) => {
-      let result = h4.parse(data);
-      do {
-        if (result) {
-          hci.onData(result.type, result.packet);
-          result = h4.parse(Buffer.allocUnsafe(0));
-        }
-      } while (result);
+      let result: H4Packet | null = null;
+
+      // debug(`h4-data-beg`);
+      while ((result = h4.parse(data)) !== null) {
+        // debug(`h4-data: ${result.type}`);
+        hci.onData(result.type, result.packet);
+        data = Buffer.allocUnsafe(0);
+      }
+      // debug(`h4-data-end`);
     });
     port.on('error', (err) => {
       console.log(err);
@@ -334,18 +339,16 @@ import { ATT } from '../src/att/Att';
         );
         console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
 
-        const att = new ATT(l2cap, event.connectionHandle);
-        await att.mtuExchangeReq(40);
+        const att = new Att(l2cap, event.connectionHandle);
 
+        const mtu = await att.mtuExchangeReq(40);
+        console.log(mtu);
 
-        setTimeout(async () => {
-          await att.findInformationReq({
-            startingHandle: 0x0001, endingHandle: 0xFFFF,
-          });
-        }, 300);
+        const info = await att.findInformationReq({
+          startingHandle: 0x0001, endingHandle: 0xFFFF,
+        });
+        console.log(info);
 
-
-        // l2cap.destroy();
 
         // await hci.leSetPhy(event.connectionHandle, {
         //   txPhys: LePhy.PhyCoded,
