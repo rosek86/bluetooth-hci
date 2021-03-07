@@ -11,7 +11,7 @@ export enum AttOpcode {
   ReadReq                 = 0x0A, // Attribute Handle
   ReadRsp                 = 0x0B, // Attribute Value
   ReadBlobReq             = 0x0C, // Attribute Handle, Value Offset
-  ReadBlopRsp             = 0x0D, // Part Attribute Value
+  ReadBlobRsp             = 0x0D, // Part Attribute Value
   ReadMultipleReq         = 0x0E, // Handle Set
   ReadMultipleRsp         = 0x0F, // Value Set
   ReadByGroupTypeReq      = 0x10, // Start Handle, Ending Handle, UUID

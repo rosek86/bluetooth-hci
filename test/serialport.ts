@@ -341,7 +341,7 @@ const debug = Debug('nble-main');
 
         const att = new Att(l2cap, event.connectionHandle);
 
-        const mtu = await att.mtuExchangeReq(40);
+        const mtu = await att.exchangeMtuReq({ mtu: 40 });
         console.log(mtu);
 
         const info = await att.findInformationReq({

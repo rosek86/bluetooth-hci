@@ -33,43 +33,51 @@ export class AttErrorRsp {
   }
 }
 
-export class AttMtuExchangeReq {
+export interface AttExchangeMtuReqMsg {
+  mtu: number;
+}
+
+export class AttExchangeMtuReq {
   private static readonly size = 3;
 
-  static serialize(mtu: number): Buffer {
+  static serialize(req: AttExchangeMtuReqMsg): Buffer {
     const buffer = Buffer.allocUnsafe(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuReq, o, 1);
-    o = buffer.writeUIntLE(mtu,                      o, 2);
+    o = buffer.writeUIntLE(req.mtu,                  o, 2);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): number|null {
+  static deserialize(buffer: Buffer): AttExchangeMtuReqMsg|null {
     if (buffer.readUInt8(0) !== AttOpcode.ExchangeMtuReq ||
         buffer.length       !== this.size) {
       return null;
     }
-    return buffer.readUIntLE(1, 2);
+    return { mtu: buffer.readUIntLE(1, 2) };
   }
 }
 
-export class AttMtuExchangeRsp {
+export interface AttExchangeMtuRspMsg {
+  mtu: number;
+}
+
+export class AttExchangeMtuRsp {
   private static readonly size = 3;
 
-  static serialize(mtu: number): Buffer {
+  static serialize(req: AttExchangeMtuRspMsg): Buffer {
     const buffer = Buffer.allocUnsafe(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuRsp, o, 1);
-    o = buffer.writeUIntLE(mtu,                      o, 2);
+    o = buffer.writeUIntLE(req.mtu,                  o, 2);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): number|null {
+  static deserialize(buffer: Buffer): AttExchangeMtuRspMsg|null {
     if (buffer.readUInt8(0) !== AttOpcode.ExchangeMtuRsp ||
         buffer.length       !== this.size) {
       return null;
     }
-    return buffer.readUIntLE(1, 2);
+    return { mtu: buffer.readUIntLE(1, 2) };
   }
 }
 
@@ -188,5 +196,265 @@ export class AttFindInformationRsp {
     }
 
     return result;
+  }
+}
+
+export interface AttFindByTypeValueReqMsg {
+}
+
+export class AttFindByTypeValueReq {
+  static serialize(data: AttFindByTypeValueReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttFindByTypeValueReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttFindByTypeValueRspMsg {
+}
+
+export class AttFindByTypeValueRsp {
+  static serialize(data: AttFindByTypeValueRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttFindByTypeValueRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadByTypeReqMsg {
+}
+
+export class AttReadByTypeReq {
+  static serialize(data: AttReadByTypeReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadByTypeReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadByTypeRspMsg {
+}
+
+export class AttReadByTypeRsp {
+  static serialize(data: AttReadByTypeRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadByTypeRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadReqMsg {
+}
+
+export class AttReadReq {
+  static serialize(data: AttReadReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadRspMsg {
+}
+
+export class AttReadRsp {
+  static serialize(data: AttReadRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadBlobReqMsg {
+}
+
+export class AttReadBlobReq {
+  static serialize(data: AttReadBlobReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadBlobReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadBlobRspMsg {
+}
+
+export class AttReadBlobRsp {
+  static serialize(data: AttReadBlobRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadBlobRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadMultipleReqMsg {
+}
+
+export class AttReadMultipleReq {
+  static serialize(data: AttReadMultipleReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadMultipleReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadMultipleRspMsg {
+}
+
+export class AttReadMultipleRsp {
+  static serialize(data: AttReadMultipleRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadMultipleRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadByGroupTypeReqMsg {
+}
+
+export class AttReadByGroupTypeReq {
+  static serialize(data: AttReadByGroupTypeReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadByGroupTypeReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadByGroupTypeRspMsg {
+}
+
+export class AttReadByGroupTypeRsp {
+  static serialize(data: AttReadByGroupTypeRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadByGroupTypeRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttWriteReqMsg {
+}
+
+export class AttWriteReq {
+  static serialize(data: AttWriteReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttWriteReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttWriteRspMsg {
+}
+
+export class AttWriteRsp {
+  static serialize(data: AttWriteRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttWriteRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttPrepareWriteReqMsg {
+}
+
+export class AttPrepareWriteReq {
+  static serialize(data: AttPrepareWriteReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttPrepareWriteReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttPrepareWriteRspMsg {
+}
+
+export class AttPrepareWriteRsp {
+  static serialize(data: AttPrepareWriteRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttPrepareWriteRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttExecuteWriteReqMsg {
+}
+
+export class AttExecuteWriteReq {
+  static serialize(data: AttExecuteWriteReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttExecuteWriteReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttExecuteWriteRspMsg {
+}
+
+export class AttExecuteWriteRsp {
+  static serialize(data: AttExecuteWriteRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttExecuteWriteRspMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadMultipleVariableReqMsg {
+}
+
+export class AttReadMultipleVariableReq {
+  static serialize(data: AttReadMultipleVariableReqMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadMultipleVariableReqMsg|null {
+    return null;
+  }
+}
+
+export interface AttReadMultipleVariableRspMsg {
+}
+
+export class AttReadMultipleVariableRsp {
+  static serialize(data: AttReadMultipleVariableRspMsg): Buffer {
+    return Buffer.allocUnsafe(0);
+  }
+
+  static deserialize(buffer: Buffer): AttReadMultipleVariableRspMsg|null {
+    return null;
   }
 }
