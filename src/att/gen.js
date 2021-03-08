@@ -123,8 +123,24 @@ function genEventCases() {
   }
 }
 
+function genEventProto(name) {
+  const spacesLength = 20 - name.length;
+  const spaces = [...new Array(spacesLength)].map(() => ' ').join('');
+
+  return `
+  on(event: '${name}Req', ${spaces}listener: (event: Att${name}ReqMsg) => void): this;
+  on(event: '${name}Rsp', ${spaces}listener: (event: Att${name}RspMsg) => void): this;`
+}
+
+function genEventProtos() {
+  for (const msg of messages) {
+    console.log(genEventProto(msg));
+  }
+}
+
 genRequests();
 genResponses();
 genImports();
 genSerDeses();
 genEventCases();
+genEventProtos();

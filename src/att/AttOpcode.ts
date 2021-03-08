@@ -4,9 +4,9 @@ export enum AttOpcode {
   ExchangeMtuRsp          = 0x03, // * Server Rx MTU
   FindInformationReq      = 0x04, // * Starting Handle, Ending Handle
   FindInformationRsp      = 0x05, // * Format, Information Data
-  FindByTypeValueReq      = 0x06, // Starting Handle, Ending Handle, Attribute Type, Attribute Value
-  FindByTypeValueRsp      = 0x07, // Handles Information List
-  ReadByTypeReq           = 0x08, // Starting Handle, Ending Handle, UUID
+  FindByTypeValueReq      = 0x06, // * Starting Handle, Ending Handle, Attribute Type, Attribute Value
+  FindByTypeValueRsp      = 0x07, // * Handles Information List
+  ReadByTypeReq           = 0x08, // * Starting Handle, Ending Handle, UUID
   ReadByTypeRsp           = 0x09, // Length, Attribute Data List
   ReadReq                 = 0x0A, // Attribute Handle
   ReadRsp                 = 0x0B, // Attribute Value

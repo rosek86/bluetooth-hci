@@ -39,11 +39,31 @@ type AttEvents =              'ErrorRsp'                |
   'ReadMultipleVariableReq' | 'ReadMultipleVariableRsp';
 
 export declare interface Att {
-  on(event: 'ErrorRsp',             listener: (event: AttErrorRspMsg) => void): this;
-  on(event: 'ExchangeMtuReq',       listener: (event: AttExchangeMtuReqMsg) => void): this;
-  on(event: 'ExchangeMtuRsp',       listener: (event: AttExchangeMtuRspMsg) => void): this;
-  on(event: 'FindInformationReq',   listener: (event: AttFindInformationReqMsg) => void): this;
-  on(event: 'FindInformationRsp',   listener: (event: AttFindInformationRspMsg) => void): this;
+  on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
+  on(event: 'ExchangeMtuReq',          listener: (event: AttExchangeMtuReqMsg) => void): this;
+  on(event: 'ExchangeMtuRsp',          listener: (event: AttExchangeMtuRspMsg) => void): this;
+  on(event: 'FindInformationReq',      listener: (event: AttFindInformationReqMsg) => void): this;
+  on(event: 'FindInformationRsp',      listener: (event: AttFindInformationRspMsg) => void): this;
+  on(event: 'FindByTypeValueReq',      listener: (event: AttFindByTypeValueReqMsg) => void): this;
+  on(event: 'FindByTypeValueRsp',      listener: (event: AttFindByTypeValueRspMsg) => void): this;
+  on(event: 'ReadByTypeReq',           listener: (event: AttReadByTypeReqMsg) => void): this;
+  on(event: 'ReadByTypeRsp',           listener: (event: AttReadByTypeRspMsg) => void): this;
+  on(event: 'ReadReq',                 listener: (event: AttReadReqMsg) => void): this;
+  on(event: 'ReadRsp',                 listener: (event: AttReadRspMsg) => void): this;
+  on(event: 'ReadBlobReq',             listener: (event: AttReadBlobReqMsg) => void): this;
+  on(event: 'ReadBlobRsp',             listener: (event: AttReadBlobRspMsg) => void): this;
+  on(event: 'ReadMultipleReq',         listener: (event: AttReadMultipleReqMsg) => void): this;
+  on(event: 'ReadMultipleRsp',         listener: (event: AttReadMultipleRspMsg) => void): this;
+  on(event: 'ReadByGroupTypeReq',      listener: (event: AttReadByGroupTypeReqMsg) => void): this;
+  on(event: 'ReadByGroupTypeRsp',      listener: (event: AttReadByGroupTypeRspMsg) => void): this;
+  on(event: 'WriteReq',                listener: (event: AttWriteReqMsg) => void): this;
+  on(event: 'WriteRsp',                listener: (event: AttWriteRspMsg) => void): this;
+  on(event: 'PrepareWriteReq',         listener: (event: AttPrepareWriteReqMsg) => void): this;
+  on(event: 'PrepareWriteRsp',         listener: (event: AttPrepareWriteRspMsg) => void): this;
+  on(event: 'ExecuteWriteReq',         listener: (event: AttExecuteWriteReqMsg) => void): this;
+  on(event: 'ExecuteWriteRsp',         listener: (event: AttExecuteWriteRspMsg) => void): this;
+  on(event: 'ReadMultipleVariableReq', listener: (event: AttReadMultipleVariableReqMsg) => void): this;
+  on(event: 'ReadMultipleVariableRsp', listener: (event: AttReadMultipleVariableRspMsg) => void): this;
 
   on<T>(event: AttEvents, listener: (event: T) => void): this;
 }
