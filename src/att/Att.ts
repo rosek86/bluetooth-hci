@@ -230,6 +230,7 @@ export class Att extends EventEmitter {
     return await waitAttRsp;
   }
 
+  // TODO
   // WriteCmd
   // MultipleHandleValueNtf
   // HandleValueNtf

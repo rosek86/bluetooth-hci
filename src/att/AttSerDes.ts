@@ -316,21 +316,78 @@ export class AttReadByTypeReq {
   }
 }
 
-// start here
+export interface AttAttributeDataEntry {
+  handle: number;
+  value: Buffer;
+}
 
 export interface AttReadByTypeRspMsg {
-  attributeDataList: number[]; // A list of Attribute Data
+  attributeDataList: AttAttributeDataEntry[]; // A list of Attribute Data
 }
 
 export class AttReadByTypeRsp {
+  private static readonly hdrSize = 2;
+  private static readonly handleSize = 2;
+
   static serialize(data: AttReadByTypeRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const attributeDataList = data.attributeDataList;
+
+    if (data.attributeDataList.length === 0) {
+      throw new Error('Invalid ATT response data');
+    }
+
+    const attributeValueSize = attributeDataList[0].value.length;
+
+    for (const attributeData of attributeDataList) {
+      if (attributeData.value.length !== attributeValueSize) {
+        throw new Error('Invalid ATT response data');
+      }
+    }
+
+    const payloadSize = attributeDataList.length * (this.handleSize + attributeValueSize);
+    const buffer = Buffer.allocUnsafe(this.hdrSize + payloadSize);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadByTypeRsp,               o, 1);
+    o = buffer.writeUIntLE(this.handleSize + attributeValueSize,  o, 1);
+
+    for (const attributeData of attributeDataList) {
+      o  = buffer.writeUIntLE(attributeData.handle, o, 2);
+      o += attributeData.value.copy(buffer, o);
+    }
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadByTypeRspMsg|null {
-    return null;
+    if (buffer.length        <  2 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadByTypeRsp) {
+      return null;
+    }
+
+    const result: AttReadByTypeRspMsg = { attributeDataList: [] };
+
+    let o = 1;
+
+    const attributeValueSize = buffer.readUIntLE(o, 1) - this.handleSize;
+    o += 1;
+
+    while (o < buffer.length) {
+      const handle = buffer.readUIntLE(o, this.handleSize);
+      o += this.handleSize;
+
+      const value = Buffer.allocUnsafe(attributeValueSize);
+      buffer.copy(value, 0, o, attributeValueSize);
+      o += attributeValueSize;
+
+      result.attributeDataList.push({ handle, value });
+    }
+
+    return result;
   }
 }
+
+// start here
 
 export interface AttReadReqMsg {
 }
