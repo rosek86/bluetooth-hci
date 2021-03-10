@@ -387,33 +387,54 @@ export class AttReadByTypeRsp {
   }
 }
 
-// start here
-
 export interface AttReadReqMsg {
+  attributeHandle: number;
 }
 
 export class AttReadReq {
   static serialize(data: AttReadReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(3);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadReq,     o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadReqMsg|null {
-    return null;
+    if (buffer.length        <  3 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadReq) {
+      return null;
+    }
+
+    return { attributeHandle: buffer.readUIntLE(1, 2) };
   }
 }
 
 export interface AttReadRspMsg {
+  attributeValue: Buffer;
 }
 
 export class AttReadRsp {
   static serialize(data: AttReadRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(1 + data.attributeValue.length);
+    buffer.writeUInt8(AttOpcode.ReadRsp, 0);
+    data.attributeValue.copy(buffer, 1);
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadRsp) {
+      return null;
+    }
+
+    return { attributeValue: buffer.slice(1) };
   }
 }
+
+// start here
 
 export interface AttReadBlobReqMsg {
 }
