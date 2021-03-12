@@ -24,19 +24,7 @@ import {
 
 const debug = Debug('nble-att');
 
-type AttEvents =              'ErrorRsp'                |
-  'ExchangeMtuReq'          | 'ExchangeMtuRsp'          |
-  'FindInformationReq'      | 'FindInformationRsp'      |
-  'FindByTypeValueReq'      | 'FindByTypeValueRsp'      |
-  'ReadByTypeReq'           | 'ReadByTypeRsp'           |
-  'ReadReq'                 | 'ReadRsp'                 |
-  'ReadBlobReq'             | 'ReadBlobRsp'             |
-  'ReadMultipleReq'         | 'ReadMultipleRsp'         |
-  'ReadByGroupTypeReq'      | 'ReadByGroupTypeRsp'      |
-  'WriteReq'                | 'WriteRsp'                |
-  'PrepareWriteReq'         | 'PrepareWriteRsp'         |
-  'ExecuteWriteReq'         | 'ExecuteWriteRsp'         |
-  'ReadMultipleVariableReq' | 'ReadMultipleVariableRsp';
+type AttEvents = keyof typeof AttOpcode;
 
 export declare interface Att {
   on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
@@ -135,99 +123,75 @@ export class Att extends EventEmitter {
 
   // Requests
   public async exchangeMtuReq(req: AttExchangeMtuReqMsg): Promise<AttExchangeMtuRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttExchangeMtuRspMsg>(
-      'ExchangeMtuRsp', AttOpcode.ExchangeMtuReq
+    return await this.writeAttWaitEvent<AttExchangeMtuRspMsg>(
+      AttOpcode.ExchangeMtuReq, AttOpcode.ExchangeMtuRsp, AttExchangeMtuReq.serialize(req)
     );
-    await this.writeAtt(AttExchangeMtuReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async findInformationReq(req: AttFindInformationReqMsg): Promise<AttFindInformationRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttFindInformationRspMsg>(
-      'FindInformationRsp', AttOpcode.FindInformationReq
+    return await this.writeAttWaitEvent<AttFindInformationRspMsg>(
+      AttOpcode.FindInformationReq, AttOpcode.FindInformationRsp, AttFindInformationReq.serialize(req)
     );
-    await this.writeAtt(AttFindInformationReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async findByTypeValueReq(req: AttFindByTypeValueReqMsg): Promise<AttFindByTypeValueRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttFindByTypeValueRspMsg>(
-      'FindByTypeValueRsp', AttOpcode.FindByTypeValueReq
+    return await this.writeAttWaitEvent<AttFindByTypeValueRspMsg>(
+      AttOpcode.FindByTypeValueReq, AttOpcode.FindByTypeValueRsp, AttFindByTypeValueReq.serialize(req)
     );
-    await this.writeAtt(AttFindByTypeValueReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readByTypeReq(req: AttReadByTypeReqMsg): Promise<AttReadByTypeRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadByTypeRspMsg>(
-      'ReadByTypeRsp', AttOpcode.ReadByTypeReq
+    return await this.writeAttWaitEvent<AttReadByTypeRspMsg>(
+      AttOpcode.ReadByTypeReq, AttOpcode.ReadByTypeRsp, AttReadByTypeReq.serialize(req)
     );
-    await this.writeAtt(AttReadByTypeReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readReq(req: AttReadReqMsg): Promise<AttReadRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadRspMsg>(
-      'ReadRsp', AttOpcode.ReadReq
+    return await this.writeAttWaitEvent<AttReadRspMsg>(
+      AttOpcode.ReadReq, AttOpcode.ReadRsp, AttReadReq.serialize(req)
     );
-    await this.writeAtt(AttReadReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readBlobReq(req: AttReadBlobReqMsg): Promise<AttReadBlobRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadBlobRspMsg>(
-      'ReadBlobRsp', AttOpcode.ReadBlobReq
+    return await this.writeAttWaitEvent<AttReadBlobRspMsg>(
+      AttOpcode.ReadBlobReq, AttOpcode.ReadBlobRsp, AttReadBlobReq.serialize(req)
     );
-    await this.writeAtt(AttReadBlobReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readMultipleReq(req: AttReadMultipleReqMsg): Promise<AttReadMultipleRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadMultipleRspMsg>(
-      'ReadMultipleRsp', AttOpcode.ReadMultipleReq
+    return await this.writeAttWaitEvent<AttReadMultipleRspMsg>(
+      AttOpcode.ReadMultipleReq, AttOpcode.ReadMultipleRsp, AttReadMultipleReq.serialize(req)
     );
-    await this.writeAtt(AttReadMultipleReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readByGroupTypeReq(req: AttReadByGroupTypeReqMsg): Promise<AttReadByGroupTypeRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadByGroupTypeRspMsg>(
-      'ReadByGroupTypeRsp', AttOpcode.ReadByGroupTypeReq
+    return await this.writeAttWaitEvent<AttReadByGroupTypeRspMsg>(
+      AttOpcode.ReadByGroupTypeReq, AttOpcode.ReadByGroupTypeRsp, AttReadByGroupTypeReq.serialize(req)
     );
-    await this.writeAtt(AttReadByGroupTypeReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async writeReq(req: AttWriteReqMsg): Promise<AttWriteRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttWriteRspMsg>(
-      'WriteRsp', AttOpcode.WriteReq
+    return await this.writeAttWaitEvent<AttWriteRspMsg>(
+      AttOpcode.WriteReq, AttOpcode.WriteRsp, AttWriteReq.serialize(req)
     );
-    await this.writeAtt(AttWriteReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async prepareWriteReq(req: AttPrepareWriteReqMsg): Promise<AttPrepareWriteRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttPrepareWriteRspMsg>(
-      'PrepareWriteRsp', AttOpcode.PrepareWriteReq
+    return await this.writeAttWaitEvent<AttPrepareWriteRspMsg>(
+      AttOpcode.PrepareWriteReq, AttOpcode.PrepareWriteRsp, AttPrepareWriteReq.serialize(req)
     );
-    await this.writeAtt(AttPrepareWriteReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async executeWriteReq(req: AttExecuteWriteReqMsg): Promise<AttExecuteWriteRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttExecuteWriteRspMsg>(
-      'ExecuteWriteRsp', AttOpcode.ExecuteWriteReq
+    return await this.writeAttWaitEvent<AttExecuteWriteRspMsg>(
+      AttOpcode.ExecuteWriteReq, AttOpcode.ExecuteWriteRsp, AttExecuteWriteReq.serialize(req)
     );
-    await this.writeAtt(AttExecuteWriteReq.serialize(req));
-    return await waitAttRsp;
   }
 
   public async readMultipleVariableReq(req: AttReadMultipleVariableReqMsg): Promise<AttReadMultipleVariableRspMsg> {
-    const waitAttRsp = this.waitAttEvent<AttReadMultipleVariableRspMsg>(
-      'ReadMultipleVariableRsp', AttOpcode.ReadMultipleVariableReq
+    return await this.writeAttWaitEvent<AttReadMultipleVariableRspMsg>(
+      AttOpcode.ReadMultipleVariableReq, AttOpcode.ReadMultipleVariableRsp, AttReadMultipleVariableReq.serialize(req)
     );
-    await this.writeAtt(AttReadMultipleVariableReq.serialize(req));
-    return await waitAttRsp;
   }
 
   // TODO
@@ -513,6 +477,14 @@ export class Att extends EventEmitter {
   }
 
   // Utils
+  public async writeAttWaitEvent<T>(req: AttOpcode, res: AttOpcode, data: Buffer): Promise<T> {
+    // NOTE: cast necessary due to https://github.com/microsoft/TypeScript/issues/38806
+    const resEventType = AttOpcode[res] as AttEvents;
+    const waitAttRsp = this.waitAttEvent<T>(req, resEventType);
+    await this.writeAtt(data);
+    return await waitAttRsp;
+  }
+
   private async writeAtt(data: Buffer): Promise<void> {
     await this.l2cap.writeAclData(
       this.connectionHandle,
@@ -521,24 +493,24 @@ export class Att extends EventEmitter {
     );
   }
 
-  private waitAttEvent<T>(eventType: AttEvents, opcode: AttOpcode): Promise<T> {
+  private waitAttEvent<T>(reqOpcode: AttOpcode, resEventType: AttEvents): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const cleanup = () => {
-        this.off(eventType,  onSuccess);
-        this.off('ErrorRsp', onFailure);
+        this.off(resEventType, onSuccess);
+        this.off('ErrorRsp',   onFailure);
         clearTimeout(timerHandle);
       };
       const onTimeout = () => {
         cleanup();
-        reject(new Error(`ATT request (${AttOpcode[opcode]}) timeout`));
+        reject(new Error(`ATT request (${AttOpcode[reqOpcode]}) timeout`));
       };
       const onFailure = (event: AttErrorRspMsg) => {
-        if (event.requestOpcodeInError !== opcode) {
+        if (event.requestOpcodeInError !== reqOpcode) {
           return;
         }
         cleanup();
         reject(new Error(
-          `ATT request (${AttOpcode[opcode]}) failed due to ${AttErrorCode[event.errorCode]}` +
+          `ATT request (${AttOpcode[reqOpcode]}) failed due to ${AttErrorCode[event.errorCode]}` +
           `attribute handle: ${event.attributeHandleInError}`
         ));
       };
@@ -546,8 +518,8 @@ export class Att extends EventEmitter {
         cleanup();
         resolve(event);
       };
-      this.on('ErrorRsp', onFailure);
-      this.on(eventType,  onSuccess);
+      this.on('ErrorRsp',   onFailure);
+      this.on(resEventType, onSuccess);
       const timerTimeout = 30 * 1000;
       const timerHandle = setTimeout(onTimeout, timerTimeout);
     });

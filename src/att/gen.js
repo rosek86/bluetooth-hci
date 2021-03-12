@@ -17,11 +17,9 @@ function genRequest(Name) {
   const name = Name.charAt(0).toLowerCase() + Name.slice(1);
   return `
     public async ${name}Req(req: Att${Name}ReqMsg): Promise<Att${Name}RspMsg> {
-      const waitAttRsp = this.waitAttEvent<Att${Name}RspMsg>(
-        '${Name}Rsp', AttOpcode.${Name}Req
+      return await this.writeAttWaitEvent<Att${Name}RspMsg>(
+        AttOpcode.${Name}Req, AttOpcode.${Name}Rsp, Att${Name}Req.serialize(req)
       );
-      await this.writeAtt(Att${Name}Req.serialize(req));
-      return await waitAttRsp;
     }`;
 }
 
@@ -139,8 +137,8 @@ function genEventProtos() {
 }
 
 genRequests();
-genResponses();
-genImports();
-genSerDeses();
-genEventCases();
-genEventProtos();
+// genResponses();
+// genImports();
+// genSerDeses();
+// genEventCases();
+// genEventProtos();
