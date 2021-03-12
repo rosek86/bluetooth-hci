@@ -210,15 +210,11 @@ export class Att extends EventEmitter {
 
     const opcode: AttOpcode = data[0];
 
+    // TODO: make table from this switch
     switch (opcode) {
       case AttOpcode.ErrorRsp: {
-        const errorRspMsg = AttErrorRsp.deserialize(data);
-        if (!errorRspMsg) {
-          return debug('cannot parse ErrorRsp');
-        }
-        debug(`errorRsp: ${errorRspMsg}`);
-
-        this.emit('ErrorRsp', errorRspMsg);
+        const process = this.processEvent.bind(this, AttErrorRsp.deserialize);
+        process(opcode, data);
         break;
       }
 
@@ -523,5 +519,17 @@ export class Att extends EventEmitter {
       const timerTimeout = 30 * 1000;
       const timerHandle = setTimeout(onTimeout, timerTimeout);
     });
+  }
+
+  public processEvent<T>(deserialize: (data: Buffer) => T | null, eventType: AttOpcode, data: Buffer): void {
+    const eventTypeName = AttOpcode[eventType];
+
+    const msg = deserialize(data);
+    if (!msg) {
+      return debug(`Cannot parse ${eventTypeName}`);
+    }
+
+    debug(`${eventTypeName}: ${msg}`);
+    this.emit(eventTypeName, msg);
   }
 }
