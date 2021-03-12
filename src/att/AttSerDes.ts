@@ -434,72 +434,156 @@ export class AttReadRsp {
   }
 }
 
-// start here
-
 export interface AttReadBlobReqMsg {
+  attributeHandle: number;
+  valueOffset: number;
 }
 
 export class AttReadBlobReq {
   static serialize(data: AttReadBlobReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(5);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadBlobReq, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o = buffer.writeUIntLE(data.valueOffset,      o, 2);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadBlobReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadBlobReq) {
+      return null;
+    }
+
+    return {
+      attributeHandle:  buffer.readUIntLE(1, 2),
+      valueOffset:      buffer.readUIntLE(3, 2),
+    };
   }
 }
 
 export interface AttReadBlobRspMsg {
+  partAttributeValue: Buffer;
 }
 
 export class AttReadBlobRsp {
   static serialize(data: AttReadBlobRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(1 + data.partAttributeValue.length);
+    buffer.writeUIntLE(AttOpcode.ReadBlobRsp, 0, 1);
+    data.partAttributeValue.copy(buffer, 1);
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadBlobRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadBlobRsp) {
+      return null;
+    }
+
+    return { partAttributeValue: buffer.slice(1) };
   }
 }
 
 export interface AttReadMultipleReqMsg {
+  setOfHandles: number[];
 }
 
 export class AttReadMultipleReq {
   static serialize(data: AttReadMultipleReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(1 + 2 * data.setOfHandles.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadMultipleReq, o, 1);
+    for (const handle of data.setOfHandles) {
+      o = buffer.writeUIntLE(handle, o, 2);
+    }
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadMultipleReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadMultipleReq) {
+      return null;
+    }
+
+    const data: AttReadMultipleReqMsg = { setOfHandles: [] };
+
+    let o = 1;
+    while (o < buffer.length) {
+      data.setOfHandles.push(buffer.readUIntLE(o, 2));
+      o += 2;
+    }
+
+    return data;
   }
 }
 
 export interface AttReadMultipleRspMsg {
+  setOfValues: Buffer;
 }
 
 export class AttReadMultipleRsp {
   static serialize(data: AttReadMultipleRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(1 + data.setOfValues.length);
+    buffer.writeUInt8(AttOpcode.ReadMultipleRsp, 0);
+    data.setOfValues.copy(buffer, 1);
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadMultipleRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadMultipleRsp) {
+      return null;
+    }
+
+    return { setOfValues: buffer.slice(1) };
   }
 }
 
 export interface AttReadByGroupTypeReqMsg {
+  startingHandle: number;
+  endingHandle: number;
+  attributeGroupType: Buffer;
 }
 
 export class AttReadByGroupTypeReq {
   static serialize(data: AttReadByGroupTypeReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    if ([2, 16].includes(data.attributeGroupType.length) === false) {
+      throw new Error('Invalid ATT data');
+    }
+
+    const buffer = Buffer.allocUnsafe(5 + data.attributeGroupType.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeReq, o, 1);
+    o = buffer.writeUIntLE(data.startingHandle,          o, 2);
+    o = buffer.writeUIntLE(data.endingHandle,            o, 2);
+    data.attributeGroupType.reverse().copy(buffer, o);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadByGroupTypeReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeReq) {
+      return null;
+    }
+    if ([5 + 2, 5 + 16].includes(buffer.length) === false) {
+      return null;
+    }
+
+    return {
+      startingHandle:     buffer.readUIntLE(1, 2),
+      endingHandle:       buffer.readUIntLE(3, 2),
+      attributeGroupType: buffer.slice(5),
+    };
   }
 }
+
+// start here
 
 export interface AttReadByGroupTypeRspMsg {
 }
