@@ -606,7 +606,7 @@ export class AttReadByGroupTypeRsp {
   static serialize(data: AttReadByGroupTypeRspMsg): Buffer {
     const { total, entry } = this.getSize(data);
 
-    const buffer = Buffer.allocUnsafe(2 + total);
+    const buffer = Buffer.allocUnsafe(total);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeRsp, o, 1);
@@ -656,7 +656,7 @@ export class AttReadByGroupTypeRsp {
     while (o < buffer.length) {
       const attributeHandle = buffer.readUInt16LE(o); o += 2;
       const endGroupHandle  = buffer.readUInt16LE(o); o += 2;
-      const attributeValue  = buffer.slice(o, o + length);
+      const attributeValue  = buffer.slice(o, o + length).reverse();
       o += length;
 
       result.attributeDataList.push({
@@ -668,18 +668,37 @@ export class AttReadByGroupTypeRsp {
   }
 }
 
-// start here
-
 export interface AttWriteReqMsg {
+  attributeHandle: number;
+  attributeValue: Buffer;
 }
 
 export class AttWriteReq {
+  private static readonly hdrSize = 3;
+
   static serialize(data: AttWriteReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeValue.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.WriteReq,    o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o += data.attributeValue.copy(buffer, o);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttWriteReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.WriteReq) {
+      return null;
+    }
+
+    const result: AttWriteReqMsg = {
+      attributeHandle: buffer.readUInt16LE(1),
+      attributeValue:  buffer.slice(3),
+    };
+
+    return result;
   }
 }
 
@@ -687,14 +706,20 @@ export interface AttWriteRspMsg {
 }
 
 export class AttWriteRsp {
-  static serialize(data: AttWriteRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+  static serialize(_: AttWriteRspMsg): Buffer {
+    return Buffer.from([ AttOpcode.WriteRsp ]);
   }
 
   static deserialize(buffer: Buffer): AttWriteRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.WriteRsp) {
+      return null;
+    }
+    return {};
   }
 }
+
+// start here
 
 export interface AttPrepareWriteReqMsg {
 }
