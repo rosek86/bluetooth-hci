@@ -719,44 +719,104 @@ export class AttWriteRsp {
   }
 }
 
-// start here
-
 export interface AttPrepareWriteReqMsg {
+  attributeHandle: number;
+  valueOffset: number;
+  partAttributeValue: Buffer;
 }
 
 export class AttPrepareWriteReq {
+  private static readonly hdrSize = 5;
+
   static serialize(data: AttPrepareWriteReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(this.hdrSize + data.partAttributeValue.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.PrepareWriteReq, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
+    o = buffer.writeUIntLE(data.valueOffset,          o, 2);
+    o += data.partAttributeValue.copy(buffer, o);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttPrepareWriteReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.PrepareWriteReq) {
+      return null;
+    }
+
+    const result: AttPrepareWriteReqMsg = {
+      attributeHandle:    buffer.readUInt16LE(1),
+      valueOffset:        buffer.readUInt16LE(3),
+      partAttributeValue: buffer.slice(this.hdrSize),
+    };
+
+    return result;
   }
 }
 
 export interface AttPrepareWriteRspMsg {
+  attributeHandle: number;
+  valueOffset: number;
+  partAttributeValue: Buffer;
 }
 
 export class AttPrepareWriteRsp {
+  private static readonly hdrSize = 5;
+
   static serialize(data: AttPrepareWriteRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(this.hdrSize + data.partAttributeValue.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.PrepareWriteRsp, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
+    o = buffer.writeUIntLE(data.valueOffset,          o, 2);
+    o += data.partAttributeValue.copy(buffer, o);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttPrepareWriteRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.PrepareWriteRsp) {
+      return null;
+    }
+
+    const result: AttPrepareWriteRspMsg = {
+      attributeHandle:    buffer.readUInt16LE(1),
+      valueOffset:        buffer.readUInt16LE(3),
+      partAttributeValue: buffer.slice(this.hdrSize),
+    };
+
+    return result;
   }
 }
 
+export enum AttExecuteWriteReqFlags {
+  Cancel = 0,
+  Write = 1,
+}
+
 export interface AttExecuteWriteReqMsg {
+  flags: AttExecuteWriteReqFlags;
 }
 
 export class AttExecuteWriteReq {
   static serialize(data: AttExecuteWriteReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    return Buffer.from([
+      AttOpcode.ExecuteWriteReq,
+      data.flags
+    ]);
   }
 
   static deserialize(buffer: Buffer): AttExecuteWriteReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ExecuteWriteReq) {
+      return null;
+    }
+
+    return { flags: buffer.readUInt8(1) };
   }
 }
 
@@ -765,13 +825,19 @@ export interface AttExecuteWriteRspMsg {
 
 export class AttExecuteWriteRsp {
   static serialize(data: AttExecuteWriteRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    return Buffer.from([ AttOpcode.ExecuteWriteRsp ]);
   }
 
   static deserialize(buffer: Buffer): AttExecuteWriteRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ExecuteWriteRsp) {
+      return null;
+    }
+    return {};
   }
 }
+
+// start here
 
 export interface AttReadMultipleVariableReqMsg {
 }
