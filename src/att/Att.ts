@@ -19,7 +19,7 @@ import {
   AttWriteReq, AttWriteReqMsg, AttWriteRsp, AttWriteRspMsg,
   AttPrepareWriteReq, AttPrepareWriteReqMsg, AttPrepareWriteRsp, AttPrepareWriteRspMsg,
   AttExecuteWriteReq, AttExecuteWriteReqMsg, AttExecuteWriteRsp, AttExecuteWriteRspMsg,
-  AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg,
+  AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg, AttSerDes,
 } from './AttSerDes';
 
 const debug = Debug('nble-att');
@@ -57,8 +57,35 @@ export declare interface Att {
 }
 
 export class Att extends EventEmitter {
-  // TODO: l2cap can be moved away from this class
+  private readonly handlers: Record<number, (data: Buffer) => void> = {
+    [AttOpcode.ErrorRsp]:                this.handleEvent.bind(this, AttOpcode.ErrorRsp,                AttErrorRsp),
+    [AttOpcode.ExchangeMtuReq]:          this.handleEvent.bind(this, AttOpcode.ExchangeMtuReq,          AttExchangeMtuReq),
+    [AttOpcode.ExchangeMtuRsp]:          this.handleEvent.bind(this, AttOpcode.ExchangeMtuRsp,          AttExchangeMtuRsp),
+    [AttOpcode.FindInformationReq]:      this.handleEvent.bind(this, AttOpcode.FindInformationReq,      AttFindInformationReq),
+    [AttOpcode.FindInformationRsp]:      this.handleEvent.bind(this, AttOpcode.FindInformationRsp,      AttFindInformationRsp),
+    [AttOpcode.FindByTypeValueReq]:      this.handleEvent.bind(this, AttOpcode.FindByTypeValueReq,      AttFindByTypeValueReq),
+    [AttOpcode.FindByTypeValueRsp]:      this.handleEvent.bind(this, AttOpcode.FindByTypeValueRsp,      AttFindByTypeValueRsp),
+    [AttOpcode.ReadByTypeReq]:           this.handleEvent.bind(this, AttOpcode.ReadByTypeReq,           AttReadByTypeReq),
+    [AttOpcode.ReadByTypeRsp]:           this.handleEvent.bind(this, AttOpcode.ReadByTypeRsp,           AttReadByTypeRsp),
+    [AttOpcode.ReadReq]:                 this.handleEvent.bind(this, AttOpcode.ReadReq,                 AttReadReq),
+    [AttOpcode.ReadRsp]:                 this.handleEvent.bind(this, AttOpcode.ReadRsp,                 AttReadRsp),
+    [AttOpcode.ReadBlobReq]:             this.handleEvent.bind(this, AttOpcode.ReadBlobReq,             AttReadBlobReq),
+    [AttOpcode.ReadBlobRsp]:             this.handleEvent.bind(this, AttOpcode.ReadBlobRsp,             AttReadBlobRsp),
+    [AttOpcode.ReadMultipleReq]:         this.handleEvent.bind(this, AttOpcode.ReadMultipleReq,         AttReadMultipleReq),
+    [AttOpcode.ReadMultipleRsp]:         this.handleEvent.bind(this, AttOpcode.ReadMultipleRsp,         AttReadMultipleRsp),
+    [AttOpcode.ReadByGroupTypeReq]:      this.handleEvent.bind(this, AttOpcode.ReadByGroupTypeReq,      AttReadByGroupTypeReq),
+    [AttOpcode.ReadByGroupTypeRsp]:      this.handleEvent.bind(this, AttOpcode.ReadByGroupTypeRsp,      AttReadByGroupTypeRsp),
+    [AttOpcode.WriteReq]:                this.handleEvent.bind(this, AttOpcode.WriteReq,                AttWriteReq),
+    [AttOpcode.WriteRsp]:                this.handleEvent.bind(this, AttOpcode.WriteRsp,                AttWriteRsp),
+    [AttOpcode.PrepareWriteReq]:         this.handleEvent.bind(this, AttOpcode.PrepareWriteReq,         AttPrepareWriteReq),
+    [AttOpcode.PrepareWriteRsp]:         this.handleEvent.bind(this, AttOpcode.PrepareWriteRsp,         AttPrepareWriteRsp),
+    [AttOpcode.ExecuteWriteReq]:         this.handleEvent.bind(this, AttOpcode.ExecuteWriteReq,         AttExecuteWriteReq),
+    [AttOpcode.ExecuteWriteRsp]:         this.handleEvent.bind(this, AttOpcode.ExecuteWriteRsp,         AttExecuteWriteRsp),
+    [AttOpcode.ReadMultipleVariableReq]: this.handleEvent.bind(this, AttOpcode.ReadMultipleVariableReq, AttReadMultipleVariableReq),
+    [AttOpcode.ReadMultipleVariableRsp]: this.handleEvent.bind(this, AttOpcode.ReadMultipleVariableRsp, AttReadMultipleVariableRsp),
+  };
 
+  // TODO: l2cap can be moved away from this class
   constructor (private l2cap: L2CAP, private connectionHandle: number) {
     super();
     l2cap.on('AttData', this.onAttData);
@@ -210,270 +237,13 @@ export class Att extends EventEmitter {
 
     const opcode: AttOpcode = data[0];
 
-    // TODO: make table from this switch
-    switch (opcode) {
-      case AttOpcode.ErrorRsp: {
-        const process = this.processEvent.bind(this, AttErrorRsp.deserialize);
-        process(opcode, data);
-        break;
-      }
-
-      case AttOpcode.ExchangeMtuReq: {
-        const result = AttExchangeMtuReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ExchangeMtuReq');
-        }
-        debug(`ExchangeMtuReq: ${result}`);
-
-        this.emit('ExchangeMtuReq', result);
-        break;
-      }
-      case AttOpcode.ExchangeMtuRsp: {
-        const result = AttExchangeMtuRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ExchangeMtuRsp');
-        }
-        debug(`ExchangeMtuRsp: ${result}`);
-
-        this.emit('ExchangeMtuRsp', result);
-        break;
-      }
-
-      case AttOpcode.FindInformationReq: {
-        const result = AttFindInformationReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse FindInformationReq');
-        }
-        debug(`FindInformationReq: ${result}`);
-
-        this.emit('FindInformationReq', result);
-        break;
-      }
-      case AttOpcode.FindInformationRsp: {
-        const result = AttFindInformationRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse FindInformationRsp');
-        }
-        debug(`FindInformationRsp: ${result}`);
-
-        this.emit('FindInformationRsp', result);
-        break;
-      }
-
-      case AttOpcode.FindByTypeValueReq: {
-        const result = AttFindByTypeValueReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse FindByTypeValueReq');
-        }
-        debug(`FindByTypeValueReq: ${result}`);
-
-        this.emit('FindByTypeValueReq', result);
-        break;
-      }
-      case AttOpcode.FindByTypeValueRsp: {
-        const result = AttFindByTypeValueRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse FindByTypeValueRsp');
-        }
-        debug(`FindByTypeValueRsp: ${result}`);
-
-        this.emit('FindByTypeValueRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadByTypeReq: {
-        const result = AttReadByTypeReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadByTypeReq');
-        }
-        debug(`ReadByTypeReq: ${result}`);
-
-        this.emit('ReadByTypeReq', result);
-        break;
-      }
-      case AttOpcode.ReadByTypeRsp: {
-        const result = AttReadByTypeRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadByTypeRsp');
-        }
-        debug(`ReadByTypeRsp: ${result}`);
-
-        this.emit('ReadByTypeRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadReq: {
-        const result = AttReadReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadReq');
-        }
-        debug(`ReadReq: ${result}`);
-
-        this.emit('ReadReq', result);
-        break;
-      }
-      case AttOpcode.ReadRsp: {
-        const result = AttReadRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadRsp');
-        }
-        debug(`ReadRsp: ${result}`);
-
-        this.emit('ReadRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadBlobReq: {
-        const result = AttReadBlobReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadBlobReq');
-        }
-        debug(`ReadBlobReq: ${result}`);
-
-        this.emit('ReadBlobReq', result);
-        break;
-      }
-      case AttOpcode.ReadBlobRsp: {
-        const result = AttReadBlobRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadBlobRsp');
-        }
-        debug(`ReadBlobRsp: ${result}`);
-
-        this.emit('ReadBlobRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadMultipleReq: {
-        const result = AttReadMultipleReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadMultipleReq');
-        }
-        debug(`ReadMultipleReq: ${result}`);
-
-        this.emit('ReadMultipleReq', result);
-        break;
-      }
-      case AttOpcode.ReadMultipleRsp: {
-        const result = AttReadMultipleRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadMultipleRsp');
-        }
-        debug(`ReadMultipleRsp: ${result}`);
-
-        this.emit('ReadMultipleRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadByGroupTypeReq: {
-        const result = AttReadByGroupTypeReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadByGroupTypeReq');
-        }
-        debug(`ReadByGroupTypeReq: ${result}`);
-
-        this.emit('ReadByGroupTypeReq', result);
-        break;
-      }
-      case AttOpcode.ReadByGroupTypeRsp: {
-        const result = AttReadByGroupTypeRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadByGroupTypeRsp');
-        }
-        debug(`ReadByGroupTypeRsp: ${result}`);
-
-        this.emit('ReadByGroupTypeRsp', result);
-        break;
-      }
-
-      case AttOpcode.WriteReq: {
-        const result = AttWriteReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse WriteReq');
-        }
-        debug(`WriteReq: ${result}`);
-
-        this.emit('WriteReq', result);
-        break;
-      }
-      case AttOpcode.WriteRsp: {
-        const result = AttWriteRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse WriteRsp');
-        }
-        debug(`WriteRsp: ${result}`);
-
-        this.emit('WriteRsp', result);
-        break;
-      }
-
-      case AttOpcode.PrepareWriteReq: {
-        const result = AttPrepareWriteReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse PrepareWriteReq');
-        }
-        debug(`PrepareWriteReq: ${result}`);
-
-        this.emit('PrepareWriteReq', result);
-        break;
-      }
-      case AttOpcode.PrepareWriteRsp: {
-        const result = AttPrepareWriteRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse PrepareWriteRsp');
-        }
-        debug(`PrepareWriteRsp: ${result}`);
-
-        this.emit('PrepareWriteRsp', result);
-        break;
-      }
-
-      case AttOpcode.ExecuteWriteReq: {
-        const result = AttExecuteWriteReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ExecuteWriteReq');
-        }
-        debug(`ExecuteWriteReq: ${result}`);
-
-        this.emit('ExecuteWriteReq', result);
-        break;
-      }
-      case AttOpcode.ExecuteWriteRsp: {
-        const result = AttExecuteWriteRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ExecuteWriteRsp');
-        }
-        debug(`ExecuteWriteRsp: ${result}`);
-
-        this.emit('ExecuteWriteRsp', result);
-        break;
-      }
-
-      case AttOpcode.ReadMultipleVariableReq: {
-        const result = AttReadMultipleVariableReq.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadMultipleVariableReq');
-        }
-        debug(`ReadMultipleVariableReq: ${result}`);
-
-        this.emit('ReadMultipleVariableReq', result);
-        break;
-      }
-      case AttOpcode.ReadMultipleVariableRsp: {
-        const result = AttReadMultipleVariableRsp.deserialize(data);
-        if (!result) {
-          return debug('Cannot parse ReadMultipleVariableRsp');
-        }
-        debug(`ReadMultipleVariableRsp: ${result}`);
-
-        this.emit('ReadMultipleVariableRsp', result);
-        break;
-      }
+    if (this.handlers[opcode]) {
+      this.handlers[opcode](data);
     }
   }
 
   // Utils
-  public async writeAttWaitEvent<T>(req: AttOpcode, res: AttOpcode, data: Buffer): Promise<T> {
+  private async writeAttWaitEvent<T>(req: AttOpcode, res: AttOpcode, data: Buffer): Promise<T> {
     // NOTE: cast necessary due to https://github.com/microsoft/TypeScript/issues/38806
     const resEventType = AttOpcode[res] as AttEvents;
     const waitAttRsp = this.waitAttEvent<T>(req, resEventType);
@@ -521,15 +291,15 @@ export class Att extends EventEmitter {
     });
   }
 
-  public processEvent<T>(deserialize: (data: Buffer) => T | null, eventType: AttOpcode, data: Buffer): void {
-    const eventTypeName = AttOpcode[eventType];
+  private handleEvent<T>(opcode: AttOpcode, serDes: AttSerDes<T>, data: Buffer): void {
+    const name = AttOpcode[opcode];
 
-    const msg = deserialize(data);
+    const msg = serDes.deserialize(data);
     if (!msg) {
-      return debug(`Cannot parse ${eventTypeName}`);
+      return debug(`Cannot parse ${name}`);
     }
 
-    debug(`${eventTypeName}: ${msg}`);
-    this.emit(eventTypeName, msg);
+    debug(`${name}: ${msg}`);
+    this.emit(name, msg);
   }
 }

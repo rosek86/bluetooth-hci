@@ -136,9 +136,25 @@ function genEventProtos() {
   }
 }
 
-genRequests();
+function getEventHandler(name) {
+  const spacesLength = 20 - name.length;
+  const spaces = [...new Array(spacesLength)].map(() => ' ').join('');
+
+  return `[AttOpcode.${name}Req]: ${spaces}this.handleEvent.bind(this, AttOpcode.${name}Req, ${spaces}Att${name}Req),
+[AttOpcode.${name}Rsp]: ${spaces}this.handleEvent.bind(this, AttOpcode.${name}Rsp, ${spaces}Att${name}Rsp),`
+}
+
+function getEventHandlers() {
+  for (const msg of messages) {
+    console.log(getEventHandler(msg));
+  }
+}
+
+
+// genRequests();
 // genResponses();
 // genImports();
 // genSerDeses();
 // genEventCases();
 // genEventProtos();
+getEventHandlers();

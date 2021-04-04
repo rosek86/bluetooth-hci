@@ -1,6 +1,11 @@
 import { AttOpcode } from './AttOpcode';
 import { AttErrorCode } from './AttError';
 
+export interface AttSerDes<T> {
+  serialize(data: T): Buffer;
+  deserialize(buffer: Buffer): T|null;
+}
+
 export interface AttErrorRspMsg {
   requestOpcodeInError:   number;       // s:1, The request that generated this ATT_ERROR_RSP PDU
   attributeHandleInError: number;       // s:2, The attribute handle that generated this ATT_ERROR_RSP PDU
@@ -550,12 +555,14 @@ export interface AttReadByGroupTypeReqMsg {
 }
 
 export class AttReadByGroupTypeReq {
+  private static readonly hdrSize = 5;
+
   static serialize(data: AttReadByGroupTypeReqMsg): Buffer {
     if ([2, 16].includes(data.attributeGroupType.length) === false) {
       throw new Error('Invalid ATT data');
     }
 
-    const buffer = Buffer.allocUnsafe(5 + data.attributeGroupType.length);
+    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeGroupType.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeReq, o, 1);
@@ -571,32 +578,97 @@ export class AttReadByGroupTypeReq {
         buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeReq) {
       return null;
     }
-    if ([5 + 2, 5 + 16].includes(buffer.length) === false) {
+    const availableSize = [this.hdrSize + 2, this.hdrSize + 16];
+    if (availableSize.includes(buffer.length) === false) {
       return null;
     }
 
     return {
       startingHandle:     buffer.readUIntLE(1, 2),
       endingHandle:       buffer.readUIntLE(3, 2),
-      attributeGroupType: buffer.slice(5),
+      attributeGroupType: buffer.slice(this.hdrSize),
     };
   }
 }
 
-// start here
-
 export interface AttReadByGroupTypeRspMsg {
+  attributeDataList: {
+    attributeHandle: number;
+    endGroupHandle: number;
+    attributeValue: Buffer;
+  }[];
 }
 
 export class AttReadByGroupTypeRsp {
+  private static readonly hdrSize = 2;
+  private static readonly entryHdrSize = 4;
+
   static serialize(data: AttReadByGroupTypeRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const { total, entry } = this.getSize(data);
+
+    const buffer = Buffer.allocUnsafe(2 + total);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeRsp, o, 1);
+    o = buffer.writeUIntLE(entry,                        o, 1);
+
+    for (const entry of data.attributeDataList) {
+      o  = buffer.writeUIntLE(entry.attributeHandle, o, 2);
+      o  = buffer.writeUIntLE(entry.endGroupHandle,  o, 2);
+      o += entry.attributeValue.reverse().copy(buffer, o);
+    }
+
+    return buffer;
+  }
+
+  private static getSize(data: AttReadByGroupTypeRspMsg): { total: number, entry: number } {
+    let totalSize = this.hdrSize;
+    let entrySize: number|null = null;
+    for (const entry of data.attributeDataList) {
+      const es = this.entryHdrSize + entry.attributeValue.length;
+
+      totalSize += es;
+
+      if (entrySize === null) {
+        entrySize = es;
+      }
+      if (entrySize !== es) {
+        throw new Error('Invalid ATT data');
+      }
+    }
+    if (entrySize === null) {
+      throw new Error('Invalid ATT data');
+    }
+    return { total: totalSize, entry: entrySize };
   }
 
   static deserialize(buffer: Buffer): AttReadByGroupTypeRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeRsp) {
+      return null;
+    }
+
+    const length = buffer.readUInt8(1);
+
+    const result: AttReadByGroupTypeRspMsg = { attributeDataList: [] };
+
+    let o = 2;
+    while (o < buffer.length) {
+      const attributeHandle = buffer.readUInt16LE(o); o += 2;
+      const endGroupHandle  = buffer.readUInt16LE(o); o += 2;
+      const attributeValue  = buffer.slice(o, o + length);
+      o += length;
+
+      result.attributeDataList.push({
+        attributeHandle, endGroupHandle, attributeValue,
+      });
+    }
+
+    return result;
   }
 }
+
+// start here
 
 export interface AttWriteReqMsg {
 }
