@@ -7,7 +7,7 @@ import { L2CAP, L2capChannelId } from '../l2cap/L2CAP';
 import { AttOpcode } from './AttOpcode';
 import { AttErrorCode } from './AttError';
 import {
-  AttErrorRsp, AttErrorRspMsg,
+  AttSerDes, AttErrorRsp, AttErrorRspMsg,
   AttExchangeMtuReq, AttExchangeMtuReqMsg, AttExchangeMtuRsp, AttExchangeMtuRspMsg,
   AttFindInformationReq, AttFindInformationReqMsg, AttFindInformationRsp, AttFindInformationRspMsg,
   AttFindByTypeValueReq, AttFindByTypeValueReqMsg, AttFindByTypeValueRsp, AttFindByTypeValueRspMsg,
@@ -20,7 +20,9 @@ import {
   AttPrepareWriteReq, AttPrepareWriteReqMsg, AttPrepareWriteRsp, AttPrepareWriteRspMsg,
   AttExecuteWriteReq, AttExecuteWriteReqMsg, AttExecuteWriteRsp, AttExecuteWriteRspMsg,
   AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg,
-  AttSerDes, AttWriteCmd, AttWriteCmdMsg, AttSignedWriteCmd, AttSignedWriteCmdMsg
+  AttWriteCmd, AttWriteCmdMsg, AttSignedWriteCmd, AttSignedWriteCmdMsg,
+  AttHandleValueNtf, AttHandleValueNtfMsg, AttHandleValueInd, AttHandleValueIndMsg,
+  AttHandleValueCfm, AttHandleValueCfmMsg, AttMultipleHandleValueNtf, AttMultipleHandleValueNtfMsg
 } from './AttSerDes';
 
 const debug = Debug('nble-att');
@@ -84,6 +86,11 @@ export class Att extends EventEmitter {
     [AttOpcode.ExecuteWriteRsp]:         this.handleEvent.bind(this, AttOpcode.ExecuteWriteRsp,         AttExecuteWriteRsp),
     [AttOpcode.ReadMultipleVariableReq]: this.handleEvent.bind(this, AttOpcode.ReadMultipleVariableReq, AttReadMultipleVariableReq),
     [AttOpcode.ReadMultipleVariableRsp]: this.handleEvent.bind(this, AttOpcode.ReadMultipleVariableRsp, AttReadMultipleVariableRsp),
+  
+    [AttOpcode.HandleValueNtf]:          this.handleEvent.bind(this, AttOpcode.HandleValueNtf,          AttHandleValueNtf),
+    [AttOpcode.HandleValueInd]:          this.handleEvent.bind(this, AttOpcode.HandleValueInd,          AttHandleValueInd),
+    [AttOpcode.HandleValueCfm]:          this.handleEvent.bind(this, AttOpcode.HandleValueCfm,          AttHandleValueCfm),
+    [AttOpcode.MultipleHandleValueNtf]:  this.handleEvent.bind(this, AttOpcode.MultipleHandleValueNtf,  AttMultipleHandleValueNtf),
   };
 
   // TODO: l2cap can be moved away from this class
@@ -227,14 +234,25 @@ export class Att extends EventEmitter {
     return await this.writeAtt(AttWriteCmd.serialize(cmd));
   }
 
-  public async signedWriteCmdw(cmd: AttSignedWriteCmdMsg): Promise<void> {
+  public async signedWriteCmd(cmd: AttSignedWriteCmdMsg): Promise<void> {
     return await this.writeAtt(AttSignedWriteCmd.serialize(cmd));
   }
 
-  // TODO HandleValueNtf
-  // TODO HandleValueInd
-  // TODO HandleValueCfm
-  // TODO MultipleHandleValueNtf
+  public async handleValueNtf(ntf: AttHandleValueNtfMsg): Promise<void> {
+    return await this.writeAtt(AttHandleValueNtf.serialize(ntf));
+  }
+
+  public async handleValueInd(ind: AttHandleValueIndMsg): Promise<void> {
+    return await this.writeAtt(AttHandleValueInd.serialize(ind));
+  }
+
+  public async handleValueCfm(): Promise<void> {
+    return await this.writeAtt(AttHandleValueCfm.serialize({}));
+  }
+
+  public async multipleHandleValueNtf(ntfs: AttMultipleHandleValueNtfMsg): Promise<void> {
+    return await this.writeAtt(AttMultipleHandleValueNtf.serialize(ntfs));
+  }
 
   // Events
   private onAttData = (connectionHandle: number, data: Buffer): void => {

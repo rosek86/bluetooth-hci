@@ -221,7 +221,7 @@ export class AttFindByTypeValueReq {
     o = buffer.writeUIntLE(data.startingHandle,           o, 2);
     o = buffer.writeUIntLE(data.endingHandle,             o, 2);
     o = buffer.writeUIntLE(data.attributeType,            o, 2);
-    data.attributeValue.copy(buffer, o); // TODO should be reversed?
+    data.attributeValue.copy(buffer, o);
     return buffer;
   }
 
@@ -234,7 +234,7 @@ export class AttFindByTypeValueReq {
       startingHandle: buffer.readUIntLE(1, 2),
       endingHandle:   buffer.readUIntLE(3, 2),
       attributeType:  buffer.readUIntLE(5, 2),
-      attributeValue: buffer.slice(this.hdrSize), // TODO should be reversed?
+      attributeValue: buffer.slice(this.hdrSize),
     };
   }
 }
@@ -872,7 +872,7 @@ export interface AttReadMultipleVariableRspMsg {
 
 export class AttReadMultipleVariableRsp {
   static serialize(data: AttReadMultipleVariableRspMsg): Buffer {
-    const size = data.values.reduce((sum, entry) => sum + entry.length, 0);
+    const size = 1 + data.values.reduce((sum, entry) => sum + (2 + entry.length), 0);
     const buffer = Buffer.allocUnsafe(size);
 
     let o = 0;
@@ -962,5 +962,130 @@ export class AttSignedWriteCmd {
       attributeHandle: buffer.readUIntLE(1, 2),
       attributeValue: buffer.slice(3),
     };
+  }
+}
+
+export interface AttHandleValueNtfMsg {
+  attributeHandle: number;
+  attributeValue: Buffer;
+}
+
+export class AttHandleValueNtf {
+  static serialize(data: AttHandleValueNtfMsg): Buffer {
+    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+
+    let o = 0;
+    o  = buffer.writeUIntLE(AttOpcode.HandleValueNtf, o, 1);
+    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o += data.attributeValue.copy(buffer, o);
+
+    return buffer;
+  }
+
+  static deserialize(buffer: Buffer): AttHandleValueNtfMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.HandleValueNtf) {
+      return null;
+    }
+
+    return {
+      attributeHandle: buffer.readUIntLE(1, 2),
+      attributeValue: buffer.slice(3),
+    };
+  }
+}
+
+export interface AttHandleValueIndMsg {
+  attributeHandle: number;
+  attributeValue: Buffer;
+}
+
+export class AttHandleValueInd {
+  static serialize(data: AttHandleValueIndMsg): Buffer {
+    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+
+    let o = 0;
+    o  = buffer.writeUIntLE(AttOpcode.HandleValueInd, o, 1);
+    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o += data.attributeValue.copy(buffer, o);
+
+    return buffer;
+  }
+
+  static deserialize(buffer: Buffer): AttHandleValueIndMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.HandleValueInd) {
+      return null;
+    }
+
+    return {
+      attributeHandle: buffer.readUIntLE(1, 2),
+      attributeValue: buffer.slice(3),
+    };
+  }
+}
+
+export interface AttHandleValueCfmMsg {
+}
+
+export class AttHandleValueCfm {
+  static serialize(_: AttHandleValueCfmMsg): Buffer {
+    return Buffer.from([AttOpcode.HandleValueCfm]);
+  }
+
+  static deserialize(buffer: Buffer): AttHandleValueCfmMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.HandleValueCfm) {
+      return null;
+    }
+
+    return {};
+  }
+}
+
+export interface AttMultipleHandleValueNtfMsg {
+  values: {
+    attributeHandle: number;
+    attributeValue: Buffer;
+  }[];
+}
+
+export class AttMultipleHandleValueNtf {
+  static serialize(data: AttMultipleHandleValueNtfMsg): Buffer {
+    const size = 1 + data.values.reduce((sum, entry) => sum + (4 + entry.attributeValue.length), 0);
+    const buffer = Buffer.allocUnsafe(size);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.MultipleHandleValueNtf, o, 1);
+
+    for (const entry of data.values) {
+      o  = buffer.writeUIntLE(entry.attributeHandle,        o, 2);
+      o  = buffer.writeUIntLE(entry.attributeValue.length,  o, 2);
+      o += entry.attributeValue.copy(buffer, o);
+    }
+
+    return buffer;
+  }
+
+  static deserialize(buffer: Buffer): AttMultipleHandleValueNtfMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.MultipleHandleValueNtf) {
+      return null;
+    }
+
+    const result: AttMultipleHandleValueNtfMsg = { values: [] };
+
+    let o = 1;
+    while (o < buffer.length) {
+      const handle = buffer.readUIntLE(o, 2); o += 2;
+      const length = buffer.readUIntLE(o, 2); o += 2;
+      result.values.push({
+        attributeHandle: handle,
+        attributeValue: buffer.slice(o, o + length),
+      });
+      o += length;
+    }
+
+    return result;
   }
 }
