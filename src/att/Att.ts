@@ -56,6 +56,11 @@ export declare interface Att {
   on(event: 'ReadMultipleVariableReq', listener: (event: AttReadMultipleVariableReqMsg) => void): this;
   on(event: 'ReadMultipleVariableRsp', listener: (event: AttReadMultipleVariableRspMsg) => void): this;
 
+  on(event: 'HandleValueNtf',          listener: (event: AttHandleValueNtfMsg) => void): this;
+  on(event: 'HandleValueInd',          listener: (event: AttHandleValueIndMsg) => void): this;
+  on(event: 'HandleValueCfm',          listener: (event: AttHandleValueCfmMsg) => void): this;
+  on(event: 'MultipleHandleValueNtf',  listener: (event: AttMultipleHandleValueNtfMsg) => void): this;
+
   on<T>(event: AttEvents, listener: (event: T) => void): this;
 }
 
