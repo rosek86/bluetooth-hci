@@ -19,7 +19,8 @@ import {
   AttWriteReq, AttWriteReqMsg, AttWriteRsp, AttWriteRspMsg,
   AttPrepareWriteReq, AttPrepareWriteReqMsg, AttPrepareWriteRsp, AttPrepareWriteRspMsg,
   AttExecuteWriteReq, AttExecuteWriteReqMsg, AttExecuteWriteRsp, AttExecuteWriteRspMsg,
-  AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg, AttSerDes,
+  AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg,
+  AttSerDes, AttWriteCmd, AttWriteCmdMsg, AttSignedWriteCmd, AttSignedWriteCmdMsg
 } from './AttSerDes';
 
 const debug = Debug('nble-att');
@@ -221,13 +222,19 @@ export class Att extends EventEmitter {
     );
   }
 
-  // TODO
-  // WriteCmd
-  // MultipleHandleValueNtf
-  // HandleValueNtf
-  // HandleValueInd
-  // HandleValueCfm
-  // SignedWriteCmd
+  // Other
+  public async writeCmd(cmd: AttWriteCmdMsg): Promise<void> {
+    return await this.writeAtt(AttWriteCmd.serialize(cmd));
+  }
+
+  public async signedWriteCmdw(cmd: AttSignedWriteCmdMsg): Promise<void> {
+    return await this.writeAtt(AttSignedWriteCmd.serialize(cmd));
+  }
+
+  // TODO HandleValueNtf
+  // TODO HandleValueInd
+  // TODO HandleValueCfm
+  // TODO MultipleHandleValueNtf
 
   // Events
   private onAttData = (connectionHandle: number, data: Buffer): void => {

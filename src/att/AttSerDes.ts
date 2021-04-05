@@ -904,3 +904,63 @@ export class AttReadMultipleVariableRsp {
     return result;
   }
 }
+
+export interface AttWriteCmdMsg {
+  attributeHandle: number;
+  attributeValue: Buffer;
+}
+
+export class AttWriteCmd {
+  static serialize(data: AttWriteCmdMsg): Buffer {
+    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+
+    let o = 0;
+    o  = buffer.writeUIntLE(AttOpcode.WriteCmd,    o, 1);
+    o  = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o += data.attributeValue.copy(buffer, o);
+
+    return buffer;
+  }
+
+  static deserialize(buffer: Buffer): AttWriteCmdMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.WriteCmd) {
+      return null;
+    }
+
+    return {
+      attributeHandle: buffer.readUIntLE(1, 2),
+      attributeValue: buffer.slice(3),
+    };
+  }
+}
+
+export interface AttSignedWriteCmdMsg {
+  attributeHandle: number;
+  attributeValue: Buffer;
+}
+
+export class AttSignedWriteCmd {
+  static serialize(data: AttSignedWriteCmdMsg): Buffer {
+    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+
+    let o = 0;
+    o  = buffer.writeUIntLE(AttOpcode.SignedWriteCmd, o, 1);
+    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o += data.attributeValue.copy(buffer, o);
+
+    return buffer;
+  }
+
+  static deserialize(buffer: Buffer): AttSignedWriteCmdMsg|null {
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.SignedWriteCmd) {
+      return null;
+    }
+
+    return {
+      attributeHandle: buffer.readUIntLE(1, 2),
+      attributeValue: buffer.slice(3),
+    };
+  }
+}
