@@ -824,7 +824,7 @@ export interface AttExecuteWriteRspMsg {
 }
 
 export class AttExecuteWriteRsp {
-  static serialize(data: AttExecuteWriteRspMsg): Buffer {
+  static serialize(_: AttExecuteWriteRspMsg): Buffer {
     return Buffer.from([ AttOpcode.ExecuteWriteRsp ]);
   }
 
@@ -837,30 +837,70 @@ export class AttExecuteWriteRsp {
   }
 }
 
-// start here
-
 export interface AttReadMultipleVariableReqMsg {
+  setOfHandles: Buffer;
 }
 
 export class AttReadMultipleVariableReq {
   static serialize(data: AttReadMultipleVariableReqMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const buffer = Buffer.allocUnsafe(1 + data.setOfHandles.length);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableReq, o, 1);
+    o += data.setOfHandles.copy(buffer, o);
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadMultipleVariableReqMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableReq) {
+      return null;
+    }
+
+    const result: AttReadMultipleVariableReqMsg = {
+      setOfHandles: buffer.slice(1),
+    };
+
+    return result;
   }
 }
 
 export interface AttReadMultipleVariableRspMsg {
+  values: Buffer[];
 }
 
 export class AttReadMultipleVariableRsp {
   static serialize(data: AttReadMultipleVariableRspMsg): Buffer {
-    return Buffer.allocUnsafe(0);
+    const size = data.values.reduce((sum, entry) => sum + entry.length, 0);
+    const buffer = Buffer.allocUnsafe(size);
+
+    let o = 0;
+    o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableRsp, o, 1);
+
+    for (const entry of data.values) {
+      o  = buffer.writeUIntLE(entry.length, o, 2);
+      o += entry.copy(buffer, o);
+    }
+
+    return buffer;
   }
 
   static deserialize(buffer: Buffer): AttReadMultipleVariableRspMsg|null {
-    return null;
+    if (buffer.length        <  1 ||
+        buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableRsp) {
+      return null;
+    }
+
+    const result: AttReadMultipleVariableRspMsg = { values: [] };
+
+    let o = 1;
+    while (o < buffer.length) {
+      const len = buffer.readUIntLE(o, 2); o += 2;
+      result.values.push(buffer.slice(o, o + len));
+      o += len;
+    }
+
+    return result;
   }
 }
