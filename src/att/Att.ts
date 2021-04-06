@@ -2,7 +2,7 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 
-import { L2CAP, L2capChannelId } from '../l2cap/L2CAP';
+import { L2capChannelId } from '../l2cap/L2capChannelId';
 
 import { AttOpcode } from './AttOpcode';
 import { AttErrorCode } from './AttError';
@@ -28,6 +28,11 @@ import {
 const debug = Debug('nble-att');
 
 type AttEvents = keyof typeof AttOpcode;
+
+interface L2cap extends EventEmitter {
+  on(event: 'AttData', listener: (connectionHandle: number, payload: Buffer) => void): this;
+  writeAclData: (connectionHandle: number, channelId: L2capChannelId, data: Buffer) => void;
+}
 
 export declare interface Att {
   on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
@@ -98,14 +103,13 @@ export class Att extends EventEmitter {
     [AttOpcode.MultipleHandleValueNtf]:  this.handleEvent.bind(this, AttOpcode.MultipleHandleValueNtf,  AttMultipleHandleValueNtf),
   };
 
-  // TODO: l2cap can be moved away from this class
-  constructor (private l2cap: L2CAP, private connectionHandle: number) {
+  constructor (private l2cap: L2cap, private connectionHandle: number) {
     super();
     l2cap.on('AttData', this.onAttData);
   }
 
   public destroy(): void {
-    this.l2cap.removeListener('AttData', this.onAttData);
+    this.l2cap.off('AttData', this.onAttData);
   }
 
   // Responses
