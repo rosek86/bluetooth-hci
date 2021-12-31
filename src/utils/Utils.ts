@@ -4,7 +4,7 @@ export function bitGet(field: unknown, bit: unknown): boolean {
   if (typeof field === 'number') {
     return ((field >> Number(bit)) & 1) === 1;
   }
-  if (typeof field === 'bigint') {
+  if (typeof field === 'bigint' && (typeof bit === 'number' || typeof bit === 'bigint')) {
     return ((field >> BigInt(bit)) & 1n) === 1n;
   }
   throw new Error('Invalid params');
@@ -20,7 +20,7 @@ export function bitSet(field: unknown, bit: unknown, set?: boolean): unknown {
     field |= 1 << Number(bit);
     return field;
   }
-  if (typeof field === 'bigint') {
+  if (typeof field === 'bigint' && (typeof bit === 'number' || typeof bit === 'bigint')) {
     field |= 1n << BigInt(bit);
     return field;
   }

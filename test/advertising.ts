@@ -265,7 +265,8 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
     });
     console.log('end');
 
-  } catch (err) {
+  } catch (e) {
+    const err = e as Error;
     console.log(err.message);
   } finally {
     // port.close();

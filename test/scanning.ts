@@ -165,7 +165,8 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
     });
 
     console.log('end');
-  } catch (err) {
+  } catch (e) {
+    const err = e as Error;
     console.log(err.message);
   } finally {
     // port.close();
