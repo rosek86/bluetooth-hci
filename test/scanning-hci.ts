@@ -1,6 +1,4 @@
-process.env.BLUETOOTH_HCI_SOCKET_FORCE_USB = '1';
-import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
-
+import { Adapter, AdapterParams, HciAdapterFactory } from './HciAdapterFactory';
 import { H4 } from '../src/transport/H4';
 import { Hci } from '../src/hci/Hci';
 import { Address } from '../src/utils/Address';
@@ -21,16 +19,16 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
 
 (async () => {
   try {
-    const port = await openHciPort();
+    const adapter = await createHciAdapter();
 
     const hci = new Hci({
       send: (packetType, data) => {
-        port.write(Buffer.from([packetType, ...data]));
+        adapter.write(Buffer.from([packetType, ...data]));
       },
     });
 
     const h4 = new H4();
-    port.on('data', (data) => {
+    adapter.on('data', (data) => {
       let result = h4.parse(data);
       do {
         if (result) {
@@ -39,7 +37,7 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
         }
       } while (result);
     });
-    port.on('error', (err) => {
+    adapter.on('error', (err) => {
       console.log(err);
     });
 
@@ -173,14 +171,25 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
   }
 })();
 
-async function openHciPort() {
-  const bluetoothHciSocket = new BluetoothHciSocket();
-  bluetoothHciSocket.bindRaw(0, {
+async function createHciAdapter(): Promise<Adapter> {
+  // const adapterOptions: AdapterParams = {
+  //   type: 'serial',
+  //   serial: {
+  //     autoOpen: false,
+  //     baudRate: 1000000,
+  //     dataBits: 8,
+  //     parity: 'none',
+  //     stopBits: 1,
+  //     rtscts: true,
+  //   },
+  // };
+  const adapterOptions: AdapterParams = {
+    type: 'usb',
     usb: {
       vid: 0x2fe3,
       pid: 0x000d,
     }
-  });
-  bluetoothHciSocket.start();
-  return bluetoothHciSocket;
+  };
+
+  return HciAdapterFactory.create(adapterOptions);
 }
