@@ -1,8 +1,5 @@
-process.env.BLUETOOTH_HCI_SOCKET_USB_VID = 0x2fe3.toString();
-process.env.BLUETOOTH_HCI_SOCKET_USB_PID = 0x000b.toString();
 process.env.BLUETOOTH_HCI_SOCKET_FORCE_USB = '1';
-
-import BluetoothHciSocket from '@abandonware/bluetooth-hci-socket';
+import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
 
 import { H4 } from '../src/transport/H4';
 import { Hci } from '../src/hci/Hci';
@@ -178,7 +175,12 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
 
 async function openHciPort() {
   const bluetoothHciSocket = new BluetoothHciSocket();
-  bluetoothHciSocket.bindRaw(0);
+  bluetoothHciSocket.bindRaw(0, {
+    usb: {
+      vid: 0x2fe3,
+      pid: 0x000d,
+    }
+  });
   bluetoothHciSocket.start();
   return bluetoothHciSocket;
 }
