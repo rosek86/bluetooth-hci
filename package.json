@@ -13,7 +13,7 @@
   "author": "Krzysztof Rosinski",
   "license": "ISC",
   "devDependencies": {
-    "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#e380e09078a99a3675ac6862d234adc3cd47cd9f",
+    "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d4bab75c2c041d5b568e8a6fdd892ef6f32c35b5",
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.17",
     "@types/serialport": "^8.0.2",
