@@ -1,5 +1,4 @@
-import SerialPort from 'serialport';
-
+import { Adapter, AdapterParams, HciAdapterFactory } from './HciAdapterFactory';
 import { H4 } from '../src/transport/H4';
 import { Hci } from '../src/hci/Hci';
 import { Address } from '../src/utils/Address';
@@ -21,18 +20,17 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 
 (async () => {
   try {
-    const portInfo = await findHciPort();
-    const port = await openHciPort(portInfo);
+    const adapter = await createHciAdapter();
 
     const hci = new Hci({
       send: (packetType, data) => {
-        port.write([packetType, ...data]);
+        adapter.write(Buffer.from([packetType, ...data]));
       },
     });
 
     const h4 = new H4();
 
-    port.on('data', (data) => {
+    adapter.on('data', (data) => {
       let result = h4.parse(data);
       do {
         if (result) {
@@ -41,7 +39,7 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
         }
       } while (result);
     });
-    port.on('error', (err) => {
+    adapter.on('error', (err) => {
       console.log(err);
     });
 
@@ -132,8 +130,6 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
       rxPhys: LePhy.Phy1M,
     });
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
-
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
@@ -162,9 +158,11 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Tacx Flux 39756',
+      completeLocalName: 'Tacx Flux 39757',
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -237,8 +235,8 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
         // })
 
         // command disallowed, why?
-        // const rssi = await hci.readRssi(event.connectionHandle);
-        // console.log(`RSSI: ${rssi} dBm`);
+        const rssi = await hci.readRssi(event.connectionHandle);
+        console.log(`RSSI: ${rssi} dBm`);
       } catch (err) {
         console.log(err);
       }
@@ -273,34 +271,25 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
   }
 })();
 
-async function findHciPort() {
-  const portInfos = await SerialPort.list();
+async function createHciAdapter(): Promise<Adapter> {
+  // const adapterOptions: AdapterParams = {
+  //   type: 'serial',
+  //   serial: {
+  //     autoOpen: false,
+  //     baudRate: 1000000,
+  //     dataBits: 8,
+  //     parity: 'none',
+  //     stopBits: 1,
+  //     rtscts: true,
+  //   },
+  // };
+  const adapterOptions: AdapterParams = {
+    type: 'usb',
+    usb: {
+      vid: 0x2fe3,
+      pid: 0x000d,
+    }
+  };
 
-  const hciPortInfos = portInfos.filter(
-    (port) => port.manufacturer === 'SEGGER'
-  );
-
-  if (hciPortInfos.length === 0) {
-    throw new Error(`Cannot find appropriate port`);
-  }
-
-  return hciPortInfos[0];
-}
-
-async function openHciPort(portInfo: SerialPort.PortInfo): Promise<SerialPort> {
-  const port = new SerialPort(portInfo.path, {
-    autoOpen: false,
-    baudRate: 1000000,
-    dataBits: 8,
-    parity: 'none',
-    stopBits: 1,
-    rtscts: true,
-  });
-
-  const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
-    port.on('open', () => resolve(port));
-    port.open((err) => reject(err));
-  });
-
-  return await waitOpen;
+  return HciAdapterFactory.create(adapterOptions);
 }

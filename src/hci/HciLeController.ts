@@ -1024,6 +1024,54 @@ export class LeReadResolvingListSize {
   }
 }
 
+export interface LeReadPeerResolvableAddress {
+  peerIdentityAddressType: LePeerAddressType;
+  peerIdentityAddress: Address;
+}
+
+export class LeReadPeerResolvableAddress {
+  static inParams(params: LeReadPeerResolvableAddress): Buffer {
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+
+    return payload;
+  }
+
+  static outParams(params?: Buffer): Address {
+    if (!params|| params.length < 6) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return Address.from(params.readUIntLE(0, 6));
+  }
+}
+
+export interface LeLocalPeerResolvableAddress {
+  peerIdentityAddressType: LePeerAddressType;
+  peerIdentityAddress: Address;
+}
+
+export class LeLocalPeerResolvableAddress {
+  static inParams(params: LeLocalPeerResolvableAddress): Buffer {
+    const payload = Buffer.allocUnsafe(7);
+
+    let o = 0;
+    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+
+    return payload;
+  }
+
+  static outParams(params?: Buffer): Address {
+    if (!params|| params.length < 6) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return Address.from(params.readUIntLE(0, 6));
+  }
+}
+
 export interface LeMaximumDataLength {
   supportedMaxTxOctets: number;
   supportedMaxTxTime: number;

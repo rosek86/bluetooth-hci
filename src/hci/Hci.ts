@@ -43,7 +43,7 @@ import {
   ConnectionHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection,
+  LeTransmitPower, LeExtendedCreateConnection, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
 } from './HciLeController';
 
 import {
@@ -536,6 +536,20 @@ export class Hci extends EventEmitter {
     const ocf = HciOcfLeControllerCommands.ReadResolvingListSize;
     const result = await this.cmd.leController({ ocf });
     return LeReadResolvingListSize.outParams(result.returnParameters);
+  }
+
+  public async leReadPeerResolvableAddress(params: LeReadPeerResolvableAddress): Promise<Address> {
+    const ocf = HciOcfLeControllerCommands.ReadPeerResolvableAddress;
+    const payload = LeReadPeerResolvableAddress.inParams(params);
+    const result = await this.cmd.leController({ ocf, payload });
+    return LeReadPeerResolvableAddress.outParams(result.returnParameters);
+  }
+
+  public async leReadLocalResolvableAddress(params: LeLocalPeerResolvableAddress): Promise<Address> {
+    const ocf = HciOcfLeControllerCommands.ReadLocalResolvableAddress;
+    const payload = LeLocalPeerResolvableAddress.inParams(params);
+    const result = await this.cmd.leController({ ocf, payload });
+    return LeLocalPeerResolvableAddress.outParams(result.returnParameters);
   }
 
   public async leSetAddressResolutionEnable(enable: boolean): Promise<void> {
