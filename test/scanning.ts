@@ -116,7 +116,7 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
 
     const device: LeWhiteList = {
       addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from('F5:EF:D9:6E:47:C7'),
+      address:      Address.from(0x1429c386d3a9),
     }
     await hci.leAddDeviceToWhiteList(device);
     // await hci.leRemoveDeviceFromWhiteList(device);
@@ -186,7 +186,7 @@ async function createHciAdapter(): Promise<Adapter> {
     type: 'usb',
     usb: {
       vid: 0x2fe3,
-      pid: 0x000d,
+      pid: 0x000e,
     }
   };
 

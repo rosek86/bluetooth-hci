@@ -1,4 +1,4 @@
-import SerialPort from 'serialport';
+import { Adapter, AdapterParams, HciAdapterFactory } from './HciAdapterFactory';
 import Debug from 'debug';
 
 import { H4, H4Packet } from '../src/transport/H4';
@@ -32,17 +32,16 @@ const debug = Debug('nble-main');
 
 (async () => {
   try {
-    const portInfo = await findHciPort();
-    const port = await openHciPort(portInfo);
+    const adapter = await createHciAdapter();
 
     const hci = new Hci({
       send: (packetType, data) => {
-        port.write([packetType, ...data]);
+        adapter.write(Buffer.from([packetType, ...data]));
       },
     });
 
     const h4 = new H4();
-    port.on('data', (data) => {
+    adapter.on('data', (data) => {
       let result: H4Packet | null = null;
 
       // debug(`h4-data-beg`);
@@ -53,7 +52,7 @@ const debug = Debug('nble-main');
       }
       // debug(`h4-data-end`);
     });
-    port.on('error', (err) => {
+    adapter.on('error', (err) => {
       console.log(err);
     });
 
@@ -132,7 +131,7 @@ const debug = Debug('nble-main');
 
     const device: LeWhiteList = {
       addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from('F5:EF:D9:6E:47:C7'),
+      address:      Address.from(0x1429c386d3a9),
     }
     await hci.leAddDeviceToWhiteList(device);
     // await hci.leRemoveDeviceFromWhiteList(device);
@@ -392,34 +391,25 @@ const debug = Debug('nble-main');
   }
 })();
 
-async function findHciPort() {
-  const portInfos = await SerialPort.list();
+async function createHciAdapter(): Promise<Adapter> {
+  // const adapterOptions: AdapterParams = {
+  //   type: 'serial',
+  //   serial: {
+  //     autoOpen: false,
+  //     baudRate: 1000000,
+  //     dataBits: 8,
+  //     parity: 'none',
+  //     stopBits: 1,
+  //     rtscts: true,
+  //   },
+  // };
+  const adapterOptions: AdapterParams = {
+    type: 'usb',
+    usb: {
+      vid: 0x2fe3,
+      pid: 0x000e,
+    }
+  };
 
-  const hciPortInfos = portInfos.filter(
-    (port) => port.manufacturer === 'SEGGER'
-  );
-
-  if (hciPortInfos.length === 0) {
-    throw new Error(`Cannot find appropriate port`);
-  }
-
-  return hciPortInfos[0];
-}
-
-async function openHciPort(portInfo: SerialPort.PortInfo): Promise<SerialPort> {
-  const port = new SerialPort(portInfo.path, {
-    autoOpen: false,
-    baudRate: 1000000,
-    dataBits: 8,
-    parity: 'none',
-    stopBits: 1,
-    rtscts: true,
-  });
-
-  const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
-    port.on('open', () => resolve(port));
-    port.open((err) => reject(err));
-  });
-
-  return await waitOpen;
+  return HciAdapterFactory.create(adapterOptions);
 }

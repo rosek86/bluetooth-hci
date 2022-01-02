@@ -272,8 +272,8 @@ export enum HciOcfLeControllerCommands {
   RemoveDeviceFromResolvingList                       = 0x0028, // * LE Remove Device From Resolving List
   ClearResolvingList                                  = 0x0029, // * LE Clear Resolving List
   ReadResolvingListSize                               = 0x002A, // * LE Read Resolving List Size
-  ReadPeerResolvableAddress                           = 0x002B, // LE Read Peer Resolvable Address
-  ReadLocalResolvableAddress                          = 0x002C, // LE Read Local Resolvable Address
+  ReadPeerResolvableAddress                           = 0x002B, // * LE Read Peer Resolvable Address
+  ReadLocalResolvableAddress                          = 0x002C, // * LE Read Local Resolvable Address
   SetAddressResolutionEnable                          = 0x002D, // * LE Set Address Resolution Enable
   SetResolvablePrivateAddressTimeout                  = 0x002E, // * LE Set Resolvable Private Address Timeout
   ReadMaximumDataLength                               = 0x002F, // * LE Read Maximum Data Length

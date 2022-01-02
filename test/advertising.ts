@@ -162,7 +162,7 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Tacx Flux 39756',
+      completeLocalName: 'Tacx Flux 39757',
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -235,8 +235,8 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
         // })
 
         // command disallowed, why?
-        // const rssi = await hci.readRssi(event.connectionHandle);
-        // console.log(`RSSI: ${rssi} dBm`);
+        const rssi = await hci.readRssi(event.connectionHandle);
+        console.log(`RSSI: ${rssi} dBm`);
       } catch (err) {
         console.log(err);
       }
