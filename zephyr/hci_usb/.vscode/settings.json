@@ -2,6 +2,7 @@
   "nrf-connect.topdir": "/opt/nordic/ncs/v1.8.0",
   "nrf-connect.toolchain.path": "/opt/nordic/ncs/v1.8.0/toolchain",
   "nrf-connect.applications": [
-    "/Users/krzysiek/Documents/my/zephyr-ble-hci/hci_usb"
+    "/Users/krzysiek/Documents/my/zephyr-ble-hci/hci_usb",
+    "${workspaceFolder}"
   ]
 }
