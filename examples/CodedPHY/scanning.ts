@@ -29,22 +29,22 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
     }
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log(localVersion);
+    console.log('Local Version', localVersion);
 
     const bdAddress = await hci.readBdAddr();
-    console.log(bdAddress.toString());
+    console.log('BD Address:', bdAddress.toString());
 
     const leTransmitPower = await hci.leReadTransmitPower();
     console.log(`LE Transmit Power:`, leTransmitPower);
 
     const leBufferSize = await hci.leReadBufferSize();
-    console.log(leBufferSize);
+    console.log('LE Buffer Size:', leBufferSize);
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log(leFeatures);
+    console.log('LE Features:', leFeatures);
 
     const leStates = await hci.leReadSupportedStates();
-    console.log(leStates);
+    console.log('LE States:', leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
 
@@ -63,24 +63,23 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
       leMeta:                               true,
     });
     await hci.setEventMaskPage2({});
-
     await hci.leSetEventMask({
-      connectionComplete:               false,
-      advertisingReport:                false,
-      connectionUpdateComplete:         true,
-      readRemoteFeaturesComplete:       true,
-      longTermKeyRequest:               true,
-      remoteConnectionParameterRequest: true,
-      dataLengthChange:                 true,
-      readLocalP256PublicKeyComplete:   true,
-      generateDhKeyComplete:            true,
-      enhancedConnectionComplete:       true,
-      directedAdvertisingReport:        true,
-      phyUpdateComplete:                true,
-      extendedAdvertisingReport:        true,
-
-      scanTimeout:                      true,
-      channelSelectionAlgorithm:        true,
+      connectionComplete:                   false,
+      advertisingReport:                    false,
+      connectionUpdateComplete:             true,
+      readRemoteFeaturesComplete:           true,
+      longTermKeyRequest:                   true,
+      remoteConnectionParameterRequest:     true,
+      dataLengthChange:                     true,
+      readLocalP256PublicKeyComplete:       true,
+      generateDhKeyComplete:                true,
+      enhancedConnectionComplete:           true,
+      directedAdvertisingReport:            true,
+      phyUpdateComplete:                    true,
+      extendedAdvertisingReport:            true,
+      scanTimeout:                          true,
+      advertisingSetTerminated:             true,
+      channelSelectionAlgorithm:            true,
     });
 
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
@@ -107,7 +106,7 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
           type:       LeScanType.Active,
           intervalMs: 100,
           windowMs:   100,
-        }
+        },
       },
     });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });

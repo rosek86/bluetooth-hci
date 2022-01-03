@@ -29,22 +29,22 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
     }
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log(localVersion);
+    console.log('Local Version', localVersion);
 
     const bdAddress = await hci.readBdAddr();
-    console.log(bdAddress.toString());
+    console.log('BD Address:', bdAddress.toString());
 
     const leTransmitPower = await hci.leReadTransmitPower();
     console.log(`LE Transmit Power:`, leTransmitPower);
 
     const leBufferSize = await hci.leReadBufferSize();
-    console.log(leBufferSize);
+    console.log('LE Buffer Size:', leBufferSize);
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log(leFeatures);
+    console.log('LE Features:', leFeatures);
 
     const leStates = await hci.leReadSupportedStates();
-    console.log(leStates);
+    console.log('LE States:', leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
 
@@ -63,33 +63,24 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
       leMeta:                               true,
     });
     await hci.setEventMaskPage2({});
-
     await hci.leSetEventMask({
-      connectionComplete:               false,
-      advertisingReport:                false,
-      connectionUpdateComplete:         true,
-      readRemoteFeaturesComplete:       true,
-      longTermKeyRequest:               true,
-      remoteConnectionParameterRequest: true,
-      dataLengthChange:                 true,
-      readLocalP256PublicKeyComplete:   true,
-      generateDhKeyComplete:            true,
-      enhancedConnectionComplete:       true,
-      directedAdvertisingReport:        true,
-      phyUpdateComplete:                true,
-      extendedAdvertisingReport:        true,
-
-      scanTimeout:                      true,
-      channelSelectionAlgorithm:        true,
+      connectionComplete:                   false,
+      advertisingReport:                    false,
+      connectionUpdateComplete:             true,
+      readRemoteFeaturesComplete:           true,
+      longTermKeyRequest:                   true,
+      remoteConnectionParameterRequest:     true,
+      dataLengthChange:                     true,
+      readLocalP256PublicKeyComplete:       true,
+      generateDhKeyComplete:                true,
+      enhancedConnectionComplete:           true,
+      directedAdvertisingReport:            true,
+      phyUpdateComplete:                    true,
+      extendedAdvertisingReport:            true,
+      scanTimeout:                          true,
+      advertisingSetTerminated:             true,
+      channelSelectionAlgorithm:            true,
     });
-
-    const key = Buffer.alloc(16);
-    const data = Buffer.alloc(16);
-    const result = await hci.leEncrypt(key, data);
-    console.log(`Encrypted:`, result);
-
-    const random = await hci.leRand();
-    console.log(`Random:`, random);
 
     console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
     await hci.leClearWhiteList();
@@ -99,24 +90,9 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
       address:      Address.from(0x1429c386d3a9),
     }
     await hci.leAddDeviceToWhiteList(device);
-    // await hci.leRemoveDeviceFromWhiteList(device);
 
     console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
     await hci.leClearResolvingList();
-
-    const maxDataLength = await hci.leReadMaximumDataLength();
-    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
-
-    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
-    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
-
-    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    console.log(`Number of supported advertising sets: ${advSets}`);
-
-    await hci.leWriteSuggestedDefaultDataLength({
-      suggestedMaxTxOctets: 27,
-      suggestedMaxTxTime:   328,
-    });
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
@@ -130,12 +106,10 @@ import { LeExtAdvReport } from '../src/hci/HciEvent';
           type:       LeScanType.Active,
           intervalMs: 100,
           windowMs:   100,
-        }
+        },
       },
     });
-    await gap.startScanning({
-      filterDuplicates: LeScanFilterDuplicates.Enabled,
-    });
+    await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
 
     gap.on('adv-report', (report: LeExtAdvReport, data: AdvData) => {
       console.log(report, data);

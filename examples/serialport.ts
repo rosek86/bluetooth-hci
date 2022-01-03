@@ -43,22 +43,22 @@ const debug = Debug('nble-main');
     }
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log(localVersion);
+    console.log('Local Version', localVersion);
 
     const bdAddress = await hci.readBdAddr();
-    console.log(bdAddress.toString());
+    console.log('BD Address:', bdAddress.toString());
 
     const leTransmitPower = await hci.leReadTransmitPower();
     console.log(`LE Transmit Power:`, leTransmitPower);
 
     const leBufferSize = await hci.leReadBufferSize();
-    console.log(leBufferSize);
+    console.log('LE Buffer Size:', leBufferSize);
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log(leFeatures);
+    console.log('LE Features:', leFeatures);
 
     const leStates = await hci.leReadSupportedStates();
-    console.log(leStates);
+    console.log('LE States:', leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
 
@@ -77,24 +77,23 @@ const debug = Debug('nble-main');
       leMeta:                               true,
     });
     await hci.setEventMaskPage2({});
-
     await hci.leSetEventMask({
-      connectionComplete:               false,
-      advertisingReport:                false,
-      connectionUpdateComplete:         true,
-      readRemoteFeaturesComplete:       true,
-      longTermKeyRequest:               true,
-      remoteConnectionParameterRequest: true,
-      dataLengthChange:                 true,
-      readLocalP256PublicKeyComplete:   true,
-      generateDhKeyComplete:            true,
-      enhancedConnectionComplete:       true,
-      directedAdvertisingReport:        true,
-      phyUpdateComplete:                true,
-      extendedAdvertisingReport:        true,
-
-      scanTimeout:                      true,
-      channelSelectionAlgorithm:        true,
+      connectionComplete:                   false,
+      advertisingReport:                    false,
+      connectionUpdateComplete:             true,
+      readRemoteFeaturesComplete:           true,
+      longTermKeyRequest:                   true,
+      remoteConnectionParameterRequest:     true,
+      dataLengthChange:                     true,
+      readLocalP256PublicKeyComplete:       true,
+      generateDhKeyComplete:                true,
+      enhancedConnectionComplete:           true,
+      directedAdvertisingReport:            true,
+      phyUpdateComplete:                    true,
+      extendedAdvertisingReport:            true,
+      scanTimeout:                          true,
+      advertisingSetTerminated:             true,
+      channelSelectionAlgorithm:            true,
     });
 
     const key = Buffer.alloc(16);
@@ -252,7 +251,7 @@ const debug = Debug('nble-main');
                 minCeLengthMs: 2.5,
                 maxCeLengthMs: 3.75,
               },
-            }
+            },
           });
           console.log('connecting...');
         }
@@ -361,7 +360,6 @@ const debug = Debug('nble-main');
       console.log('LeDataLengthChange', event);
     });
     console.log('end');
-
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

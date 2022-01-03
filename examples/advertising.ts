@@ -3,7 +3,6 @@ import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
 
 import {
-  LePhy,
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
   LeOwnAddressType,
@@ -14,7 +13,6 @@ import {
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
 } from '../src/hci/HciLeController';
-import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 
 (async () => {
   try {
@@ -64,8 +62,7 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
       readRemoteVersionInformationComplete: true,
       leMeta:                               true,
     });
-    await hci.setEventMaskPage2({
-    });
+    await hci.setEventMaskPage2({});
     await hci.leSetEventMask({
       connectionComplete:                   false,
       advertisingReport:                    false,
@@ -85,30 +82,8 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
       channelSelectionAlgorithm:            true,
     });
 
-    const maxDataLength = await hci.leReadMaximumDataLength();
-    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
-
-    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
-    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
-
     const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
     console.log(`Number of supported advertising sets: ${advSets}`);
-
-    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
-    await hci.leClearWhiteList();
-
-    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
-    await hci.leClearResolvingList();
-
-    await hci.leWriteSuggestedDefaultDataLength({
-      suggestedMaxTxOctets: 27,
-      suggestedMaxTxTime:   328,
-    });
-
-    await hci.leSetDefaultPhy({
-      txPhys: LePhy.Phy1M,
-      rxPhys: LePhy.Phy1M,
-    });
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
@@ -142,11 +117,11 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Tacx Flux 39757',
+      completeLocalName: 'Zephyr Ctrl',
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
-      }
+      },
     });
     await hci.leSetExtendedAdvertisingData(0, {
       operation: LeAdvertisingDataOperation.Complete,
@@ -175,74 +150,7 @@ import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
       sets: [{ advertHandle: 0 }],
     });
 
-    hci.on('LeEnhancedConnectionComplete', async (status, event) => {
-      console.log('LeEnhancedConnectionComplete', status, event);
-    });
-    hci.on('LeChannelSelectionAlgorithm', async (event) => {
-      console.log('LeChannelSelectionAlgorithm', event);
-
-      await hci.writeAuthenticatedPayloadTimeout(event.connectionHandle, 200);
-
-      const timeout = await hci.readAuthenticatedPayloadTimeout(event.connectionHandle);
-      console.log(`AuthenticatedPayloadTimeout: ${timeout}`);
-
-      await hci.readRemoteVersionInformation(event.connectionHandle);
-    });
-    hci.on('LeAdvertisingSetTerminated', async (err, event) => {
-      console.log(event);
-    })
-    hci.on('ReadRemoteVersionInformationComplete', async (err, event) => {
-      try {
-        console.log('ReadRemoteVersionInformationComplete', event);
-
-        const phy = await hci.leReadPhy(event.connectionHandle);
-        console.log('phy:', phy);
-
-        const maxPowerLevel = await hci.readTransmitPowerLevel(
-          event.connectionHandle,
-          ReadTransmitPowerLevelType.Maximum
-        );
-        const curPowerLevel = await hci.readTransmitPowerLevel(
-          event.connectionHandle,
-          ReadTransmitPowerLevelType.Maximum
-        );
-        console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
-
-        // await hci.leSetPhy(event.connectionHandle, {
-        //   txPhys: LePhy.PhyCoded,
-        //   rxPhys: LePhy.PhyCoded,
-        //   opts:   LeSetTxRxPhyOpts.noPreferredCoding,
-        // })
-
-        // command disallowed, why?
-        const rssi = await hci.readRssi(event.connectionHandle);
-        console.log(`RSSI: ${rssi} dBm`);
-      } catch (err) {
-        console.log(err);
-      }
-    });
-    hci.on('LePhyUpdateComplete', (status, event) => {
-      console.log(status, event);
-    });
-    hci.on('DisconnectionComplete', async (status, event) => {
-      console.log('DisconnectionComplete', event);
-
-      await hci.leSetExtendedAdvertisingEnable({
-        enable: true,
-        sets: [{ advertHandle: 0 }]
-      });
-    });
-    hci.on('LeLongTermKeyRequest', (event) => {
-      console.log('LeLongTermKeyRequest', event);
-    });
-    hci.on('LeRemoteConnectionParameterRequest', (event) => {
-      console.log('LeRemoteConnectionParameterRequest', event);
-    });
-    hci.on('LeDataLengthChange', (event) => {
-      console.log('LeDataLengthChange', event);
-    });
     console.log('end');
-
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

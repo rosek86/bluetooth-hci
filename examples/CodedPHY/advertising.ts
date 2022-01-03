@@ -61,8 +61,7 @@ import {
       readRemoteVersionInformationComplete: true,
       leMeta:                               true,
     });
-    await hci.setEventMaskPage2({
-    });
+    await hci.setEventMaskPage2({});
     await hci.leSetEventMask({
       connectionComplete:                   false,
       advertisingReport:                    false,
@@ -119,7 +118,7 @@ import {
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
-      }
+      },
     });
     await hci.leSetExtendedAdvertisingData(0, {
       operation: LeAdvertisingDataOperation.Complete,
@@ -133,8 +132,8 @@ import {
       enable: true,
       sets: [{ advertHandle: 0 }],
     });
-    console.log('end');
 
+    console.log('end');
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
