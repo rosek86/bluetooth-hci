@@ -2,8 +2,8 @@ process.env.BLUETOOTH_HCI_SOCKET_FORCE_USB = '1';
 import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
 import SerialPort from 'serialport';
 import { EventEmitter } from 'stream';
-import { Hci } from '../src/hci/Hci';
-import { H4 } from '../src/transport/H4';
+import { Hci } from '../../src/hci/Hci';
+import { H4 } from '../../src/transport/H4';
 
 export interface AdapterSerialParams {
   type: 'serial';

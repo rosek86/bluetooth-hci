@@ -1,4 +1,4 @@
-import { Adapter, AdapterParams, HciAdapterFactory } from '../HciAdapterFactory';
+import { Adapter, AdapterParams, HciAdapterFactory } from '../utils/HciAdapterFactory';
 import { Address } from '../../src/utils/Address';
 import { AdvData } from '../../src/gap/AdvData';
 

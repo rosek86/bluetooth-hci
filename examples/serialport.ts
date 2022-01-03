@@ -1,4 +1,4 @@
-import { Adapter, AdapterParams, HciAdapterFactory } from './HciAdapterFactory';
+import { Adapter, AdapterParams, HciAdapterFactory } from './utils/HciAdapterFactory';
 import Debug from 'debug';
 
 import { Address } from '../src/utils/Address';
