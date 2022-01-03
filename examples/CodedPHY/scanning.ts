@@ -127,7 +127,6 @@ async function createHciAdapter(): Promise<Adapter> {
   // const adapterOptions: AdapterParams = {
   //   type: 'serial',
   //   serial: {
-  //     autoOpen: false,
   //     baudRate: 1000000,
   //     dataBits: 8,
   //     parity: 'none',

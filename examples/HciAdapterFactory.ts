@@ -132,6 +132,7 @@ export abstract class HciAdapterFactory {
   }
 
   private static async openHciSerialPort(portInfo: SerialPort.PortInfo, options: SerialPort.OpenOptions): Promise<SerialPort> {
+    options.autoOpen = false;
     const port = new SerialPort(portInfo.path, options);
 
     const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
