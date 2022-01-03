@@ -17,8 +17,10 @@
   },
   "files": [
     "test/index.ts",
-    "test/serialport.ts",
-    "test/advertising.ts",
-    "test/scanning.ts"
+    "examples/serialport.ts",
+    "examples/advertising.ts",
+    "examples/scanning.ts",
+    "examples/CodedPHY/scanning.ts",
+    "examples/CodedPHY/advertising.ts"
   ]
 }
