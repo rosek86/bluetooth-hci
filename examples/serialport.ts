@@ -18,8 +18,7 @@ import {
   LeScanType,
   LeScanFilterDuplicates,
   LeInitiatorFilterPolicy,
-  LeWhiteListAddressType,
-  LeWhiteList,
+  LeWhiteListAddressType
 } from '../src/hci/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
@@ -45,32 +44,11 @@ const debug = Debug('nble-main');
     const random = await hci.leRand();
     console.log(`Random:`, random);
 
-    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
-    await hci.leClearWhiteList();
-
-    const device: LeWhiteList = {
+    await hci.leAddDeviceToWhiteList({
       addressType:  LeWhiteListAddressType.Random,
       address:      Address.from(0x1429c386d3a9),
-    }
-    await hci.leAddDeviceToWhiteList(device);
-    // await hci.leRemoveDeviceFromWhiteList(device);
-
-    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
-    await hci.leClearResolvingList();
-
-    const maxDataLength = await hci.leReadMaximumDataLength();
-    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
-
-    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
-    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
-
-    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    console.log(`Number of supported advertising sets: ${advSets}`);
-
-    await hci.leWriteSuggestedDefaultDataLength({
-      suggestedMaxTxOctets: 27,
-      suggestedMaxTxTime:   328,
     });
+    // await hci.leRemoveDeviceFromWhiteList(device);
 
     // NOTE: command not implemented on the controller:
     // hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {

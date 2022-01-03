@@ -80,5 +80,25 @@ export class Utils {
       advertisingSetTerminated:             true,
       channelSelectionAlgorithm:            true,
     });
+
+    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
+    await hci.leClearWhiteList();
+
+    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
+    await hci.leClearResolvingList();
+
+    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+    console.log(`Number of supported advertising sets: ${advSets}`);
+
+    const maxDataLength = await hci.leReadMaximumDataLength();
+    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
+
+    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
+
+    await hci.leWriteSuggestedDefaultDataLength({
+      suggestedMaxTxOctets: 27,
+      suggestedMaxTxTime:   328,
+    });
   }
 }

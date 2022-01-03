@@ -10,7 +10,7 @@ import {
   LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
-  LeAdvertisingDataOperation,
+  LeAdvertisingDataOperation
 } from '../../src/hci/HciLeController';
 
 (async () => {
@@ -21,9 +21,6 @@ import {
     const hci = adapter.Hci;
 
     await Utils.defaultAdapterSetup(hci);
-
-    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    console.log(`Number of supported advertising sets: ${advSets}`);
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 

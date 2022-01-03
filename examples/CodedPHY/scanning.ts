@@ -9,8 +9,7 @@ import {
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
-  LeWhiteListAddressType,
-  LeWhiteList,
+  LeWhiteListAddressType
 } from '../../src/hci/HciLeController';
 import { LeExtAdvReport } from '../../src/hci/HciEvent';
 
@@ -23,17 +22,10 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
 
     await Utils.defaultAdapterSetup(hci);
 
-    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
-    await hci.leClearWhiteList();
-
-    const device: LeWhiteList = {
+    await hci.leAddDeviceToWhiteList({
       addressType:  LeWhiteListAddressType.Random,
       address:      Address.from(0x1429c386d3a9),
-    }
-    await hci.leAddDeviceToWhiteList(device);
-
-    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
-    await hci.leClearResolvingList();
+    });
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
