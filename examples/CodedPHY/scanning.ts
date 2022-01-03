@@ -1,6 +1,4 @@
 import { Adapter, AdapterParams, HciAdapterFactory } from '../HciAdapterFactory';
-import { H4 } from '../../src/transport/H4';
-import { Hci } from '../../src/hci/Hci';
 import { Address } from '../../src/utils/Address';
 import { AdvData } from '../../src/gap/AdvData';
 
@@ -19,26 +17,7 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
 (async () => {
   try {
     const adapter = await createHciAdapter();
-
-    const hci = new Hci({
-      send: (packetType, data) => {
-        adapter.write(Buffer.from([packetType, ...data]));
-      },
-    });
-
-    const h4 = new H4();
-    adapter.on('data', (data) => {
-      let result = h4.parse(data);
-      do {
-        if (result) {
-          hci.onData(result.type, result.packet);
-          result = h4.parse(Buffer.allocUnsafe(0));
-        }
-      } while (result);
-    });
-    adapter.on('error', (err) => {
-      console.log(err);
-    });
+    const hci = adapter.Hci;
 
     await hci.reset();
 

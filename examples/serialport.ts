@@ -1,8 +1,6 @@
 import { Adapter, AdapterParams, HciAdapterFactory } from './HciAdapterFactory';
 import Debug from 'debug';
 
-import { H4, H4Packet } from '../src/transport/H4';
-import { Hci } from '../src/hci/Hci';
 import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
 
@@ -33,28 +31,7 @@ const debug = Debug('nble-main');
 (async () => {
   try {
     const adapter = await createHciAdapter();
-
-    const hci = new Hci({
-      send: (packetType, data) => {
-        adapter.write(Buffer.from([packetType, ...data]));
-      },
-    });
-
-    const h4 = new H4();
-    adapter.on('data', (data) => {
-      let result: H4Packet | null = null;
-
-      // debug(`h4-data-beg`);
-      while ((result = h4.parse(data)) !== null) {
-        // debug(`h4-data: ${result.type}`);
-        hci.onData(result.type, result.packet);
-        data = Buffer.allocUnsafe(0);
-      }
-      // debug(`h4-data-end`);
-    });
-    adapter.on('error', (err) => {
-      console.log(err);
-    });
+    const hci = adapter.Hci;
 
     await hci.reset();
 

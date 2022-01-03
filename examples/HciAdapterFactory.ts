@@ -1,6 +1,9 @@
 process.env.BLUETOOTH_HCI_SOCKET_FORCE_USB = '1';
 import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
 import SerialPort from 'serialport';
+import { EventEmitter } from 'stream';
+import { Hci } from '../src/hci/Hci';
+import { H4 } from '../src/transport/H4';
 
 export interface AdapterSerialParams {
   type: 'serial';
@@ -20,13 +23,13 @@ export interface AdapterUsbParams {
 
 export type AdapterParams = AdapterSerialParams | AdapterUsbParams;
 
-export interface Adapter {
+export interface HciDevice {
   write: (data: Buffer) => void;
   on(evt: 'data', listener: (data: Buffer) => void): void;
   on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
 }
 
-export class SerialAdapter implements Adapter {
+export class SerialHciDevice implements HciDevice {
   constructor(private port: SerialPort) {
   }
 
@@ -41,7 +44,7 @@ export class SerialAdapter implements Adapter {
   }
 }
 
-export class UsbAdapter implements Adapter {
+export class UsbHciDevice implements HciDevice {
   constructor(private port: BluetoothHciSocket) {
   }
 
@@ -56,18 +59,60 @@ export class UsbAdapter implements Adapter {
   }
 }
 
+export class Adapter extends EventEmitter {
+  private readonly hci: Hci;
+  private readonly h4: H4;
+
+  constructor(private device: HciDevice) {
+    super();
+
+    this.hci = new Hci({
+      send: (packetType, data) => {
+        device.write(Buffer.from([packetType, ...data]));
+      },
+    });
+
+    this.h4 = new H4();
+
+    device.on('data', (data) => {
+      let result = this.h4.parse(data);
+      do {
+        if (result) {
+          this.hci.onData(result.type, result.packet);
+          result = this.h4.parse(Buffer.allocUnsafe(0));
+        }
+      } while (result);
+    });
+
+    device.on('error', (err) => this.emit('error', err));
+  }
+
+  public write(data: Buffer) {
+    this.device.write(data);
+  }
+
+  public get Hci(): Hci {
+    return this.hci;
+  }
+}
+
 export abstract class HciAdapterFactory {
 
   public static async create(params: AdapterParams): Promise<Adapter> {
+    const device = await this.createDevice(params);
+    return new Adapter(device);
+  }
+
+  private static async createDevice(params: AdapterParams): Promise<HciDevice> {
     if (params.type === 'serial') {
       const portInfo = await this.findHciSerialPort();
       const port = await this.openHciSerialPort(portInfo, params.serial);
-      return new SerialAdapter(port);
+      return new SerialHciDevice(port);
     }
     if (params.type === 'usb') {
       const deviceId = params.usb.devId ?? 0;
       const device = await this.openHciUsbDevice(deviceId, params.usb);
-      return new UsbAdapter(device);
+      return new UsbHciDevice(device);
     }
     throw new Error('Unknown adapter interface');
   }
