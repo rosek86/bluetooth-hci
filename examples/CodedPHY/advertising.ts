@@ -1,4 +1,4 @@
-import { Adapter, AdapterParams, HciAdapterFactory } from '../utils/HciAdapterFactory';
+import { Utils } from '../utils/Utils';
 import { Address } from '../../src/utils/Address';
 import { AdvData } from '../../src/gap/AdvData';
 
@@ -15,7 +15,9 @@ import {
 
 (async () => {
   try {
-    const adapter = await createHciAdapter();
+    const adapter = await Utils.createHciAdapter({
+      usb: { vid: 0x2fe3, pid: 0x000d },
+    });
     const hci = adapter.Hci;
 
     await hci.reset();
@@ -140,25 +142,3 @@ import {
     // port.close();
   }
 })();
-
-async function createHciAdapter(): Promise<Adapter> {
-  // const adapterOptions: AdapterParams = {
-  //   type: 'serial',
-  //   serial: {
-  //     baudRate: 1000000,
-  //     dataBits: 8,
-  //     parity: 'none',
-  //     stopBits: 1,
-  //     rtscts: true,
-  //   },
-  // };
-  const adapterOptions: AdapterParams = {
-    type: 'usb',
-    usb: {
-      vid: 0x2fe3,
-      pid: 0x000d,
-    }
-  };
-
-  return HciAdapterFactory.create(adapterOptions);
-}
