@@ -23,6 +23,8 @@ export class Utils {
     await hci.reset();
 
     const localFeatures = await hci.readLocalSupportedFeatures();
+    console.log('Local Supported Features', localFeatures);
+
     if (localFeatures.leSupported === false) {
       throw new Error('LE not supported');
     }
@@ -47,7 +49,7 @@ export class Utils {
 
     const localCommands = await hci.readLocalSupportedCommands();
 
-    console.log('Supported commands:')
+    console.log('Local Supported Commands:')
     for (const [key, value] of Object.entries(localCommands)) {
       if (value === true) {
         console.log(key);
