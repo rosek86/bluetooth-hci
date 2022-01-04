@@ -24,13 +24,31 @@ export interface AdapterUsbParams {
 export type AdapterParams = AdapterSerialParams | AdapterUsbParams;
 
 export interface HciDevice {
-  write: (data: Buffer) => void;
+  open(): Promise<void>;
+  close(): Promise<void>;
+  write(data: Buffer): void;
   on(evt: 'data', listener: (data: Buffer) => void): void;
   on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
 }
 
 export class SerialHciDevice implements HciDevice {
-  constructor(private port: SerialPort) {
+  private port: SerialPort;
+  constructor(path: string, options: SerialPort.OpenOptions) {
+    options.autoOpen = false;
+    this.port = new SerialPort(path, options);
+  }
+
+  async open() {
+    await new Promise<void>((resolve,  reject) => {
+      this.port.once('open', () => resolve());
+      this.port.open((err) => reject(err));
+    });
+  }
+
+  async close() {
+    await new Promise<void>((resolve,  reject) => {
+      this.port.close((err) => err ? reject(err) : resolve());
+    });
   }
 
   write(data: Buffer): void {
@@ -45,16 +63,30 @@ export class SerialHciDevice implements HciDevice {
 }
 
 export class UsbHciDevice implements HciDevice {
-  constructor(private port: BluetoothHciSocket) {
+  private port: BluetoothHciSocket;
+
+  constructor(private devId: number, private usbParams: AdapterUsbParams['usb']) {
+    this.port = new BluetoothHciSocket();
   }
 
-  write(data: Buffer): void {
+  public async open() {
+    this.port.bindRaw(this.devId, { usb: this.usbParams });
+    this.port.start();
+  }
+
+  public async close() {
+    this.port.stop();
+    this.port.removeAllListeners('data');
+    this.port.removeAllListeners('error');
+  }
+
+  public write(data: Buffer): void {
     this.port.write(data);
   }
 
-  on(evt: 'data', listener: (data: Buffer) => void): void;
-  on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
-  on(evt: any, listener: (data: any) => void): void {
+  public on(evt: 'data', listener: (data: Buffer) => void): void;
+  public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  public on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
   }
 }
@@ -87,6 +119,14 @@ export class Adapter extends EventEmitter {
     device.on('error', (err) => this.emit('error', err));
   }
 
+  public async open() {
+    await this.device.open();
+  }
+
+  public async close() {
+    await this.device.close();
+  }
+
   public write(data: Buffer) {
     this.device.write(data);
   }
@@ -106,13 +146,10 @@ export abstract class HciAdapterFactory {
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {
     if (params.type === 'serial') {
       const portInfo = await this.findHciSerialPort();
-      const port = await this.openHciSerialPort(portInfo, params.serial);
-      return new SerialHciDevice(port);
+      return new SerialHciDevice(portInfo.path, params.serial);
     }
     if (params.type === 'usb') {
-      const deviceId = params.usb.devId ?? 0;
-      const device = await this.openHciUsbDevice(deviceId, params.usb);
-      return new UsbHciDevice(device);
+      return new UsbHciDevice(params.usb.devId ?? 0, params.usb);
     }
     throw new Error('Unknown adapter interface');
   }
@@ -129,24 +166,5 @@ export abstract class HciAdapterFactory {
     }
 
     return hciPortInfos[0];
-  }
-
-  private static async openHciSerialPort(portInfo: SerialPort.PortInfo, options: SerialPort.OpenOptions): Promise<SerialPort> {
-    options.autoOpen = false;
-    const port = new SerialPort(portInfo.path, options);
-
-    const waitOpen = new Promise<SerialPort>((resolve,  reject) => {
-      port.on('open', () => resolve(port));
-      port.open((err) => reject(err));
-    });
-
-    return await waitOpen;
-  }
-
-  public static async openHciUsbDevice(usbDevId: number, usbParams: AdapterUsbParams['usb']) {
-    const bluetoothHciSocket = new BluetoothHciSocket();
-    bluetoothHciSocket.bindRaw(usbDevId, { usb: usbParams });
-    bluetoothHciSocket.start();
-    return bluetoothHciSocket;
   }
 }

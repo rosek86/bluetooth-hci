@@ -16,7 +16,10 @@ export class Utils {
       throw new Error('Invalid input parameters');
     }
 
-    return HciAdapterFactory.create(adapterOptions);
+    const adapter = await HciAdapterFactory.create(adapterOptions);
+    await adapter.open();
+
+    return adapter;
   }
 
   public static async defaultAdapterSetup(hci: Hci): Promise<void> {

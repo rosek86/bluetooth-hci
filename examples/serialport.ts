@@ -36,35 +36,12 @@ const debug = Debug('nble-main');
 
     await Utils.defaultAdapterSetup(hci);
 
-    const key = Buffer.alloc(16);
-    const data = Buffer.alloc(16);
-    const result = await hci.leEncrypt(key, data);
-    console.log(`Encrypted:`, result);
-
-    const random = await hci.leRand();
-    console.log(`Random:`, random);
-
     await hci.leAddDeviceToWhiteList({
       addressType:  LeWhiteListAddressType.Random,
       address:      Address.from(0x1429c386d3a9),
     });
-    // await hci.leRemoveDeviceFromWhiteList(device);
 
-    // NOTE: command not implemented on the controller:
-    // hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
-    //   console.log('LeReadLocalP256PublicKeyComplete', status, event);
-    // });
-    // await hci.leReadLocalP256PublicKey();
-    // hci.on('LeGenerateDhKeyComplete', (status, event) => {
-    //   console.log('LeGenerateDhKeyComplete', status, event);
-    // });
-    // await hci.leGenerateDhKeyV1({ publicKey: Buffer.alloc(64) });
-    // return;
-
-    await hci.leSetDefaultPhy({
-      txPhys: LePhy.Phy1M,
-      rxPhys: LePhy.Phy1M,
-    });
+    await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
       advertisingEventProperties: [
@@ -105,7 +82,6 @@ const debug = Debug('nble-main');
 
     const l2cap = new L2CAP(hci);
     await l2cap.init();
-
 
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
