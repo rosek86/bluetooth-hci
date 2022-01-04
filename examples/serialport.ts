@@ -30,44 +30,18 @@ const debug = Debug('nble-main');
 (async () => {
   try {
     const adapter = await Utils.createHciAdapter({
-      usb: { vid: 0x2fe3, pid: 0x000e },
+      usb: { vid: 0x2fe3, pid: 0x000d },
     });
     const hci = adapter.Hci;
 
     await Utils.defaultAdapterSetup(hci);
 
-    await hci.leAddDeviceToWhiteList({
-      addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from(0x1429c386d3a9),
-    });
+    // await hci.leAddDeviceToWhiteList({
+    //   addressType:  LeWhiteListAddressType.Random,
+    //   address:      Address.from(0x1429c386d3a9),
+    // });
 
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
-
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
-      advertisingEventProperties: [
-        LeAdvertisingEventProperties.UseLegacyPDUs
-      ],
-      primaryAdvertisingIntervalMinMs: 1280,
-      primaryAdvertisingIntervalMaxMs: 1280,
-      primaryAdvertisingChannelMap: [
-        LeAdvertisingChannelMap.Channel37,
-        LeAdvertisingChannelMap.Channel38,
-        LeAdvertisingChannelMap.Channel39,
-      ],
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: Address.from(0x000000000000),
-      advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
-      primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
-      secondaryAdvertisingMaxSkip: 0,
-      secondaryAdvertisingPhy: LeSecondaryAdvertisingPhy.Phy1M,
-      advertisingSid: 0,
-      scanRequestNotificationEnable: false,
-      advertisingTxPower: 0,
-    });
-    console.log(`TX Power: ${selectedTxPower}`);
-
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
@@ -85,8 +59,8 @@ const debug = Debug('nble-main');
 
     await hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
-      // scanningFilterPolicy: LeScanningFilterPolicy.All,
+      // scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
+      scanningFilterPolicy: LeScanningFilterPolicy.All,
       scanningPhy: {
         Phy1M: {
           type: LeScanType.Active,
@@ -116,10 +90,12 @@ const debug = Debug('nble-main');
         }
 
         const advData = AdvData.parse(report.data);
-        console.log(report);
-        console.log(JSON.stringify(advData, null, 2));
+        // console.log(report);
+        // console.log(JSON.stringify(advData, null, 2));
 
         if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
+          console.log(report.address.toString());
+
           connecting = true;
           await hci.leSetExtendedScanEnable({ enable: false });
 
@@ -221,7 +197,6 @@ const debug = Debug('nble-main');
         });
         console.log(info);
 
-
         // await hci.leSetPhy(event.connectionHandle, {
         //   txPhys: LePhy.PhyCoded,
         //   rxPhys: LePhy.PhyCoded,
@@ -242,8 +217,9 @@ const debug = Debug('nble-main');
     hci.on('LePhyUpdateComplete', (status, event) => {
       console.log(status, event);
     });
-    hci.on('DisconnectionComplete', (status, event) => {
+    hci.on('DisconnectionComplete', async (status, event) => {
       console.log('DisconnectionComplete', event);
+      // await hci.leSetExtendedScanEnable({ enable: true });
     });
     hci.on('LeLongTermKeyRequest', (event) => {
       console.log('LeLongTermKeyRequest', event);
