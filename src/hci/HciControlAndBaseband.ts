@@ -1,5 +1,6 @@
 import { HciParserError, makeParserError } from "./HciError";
 import { bitSet } from "../utils/Utils";
+import { HciOcfControlAndBasebandCommands } from "./HciOgfOcf";
 
 export interface EventMask {
   inquiryComplete: boolean;
@@ -53,8 +54,19 @@ export interface EventMask {
   leMeta: boolean;
 }
 
+interface InParams<T> {
+  ocf: T;
+  payload: Buffer;
+}
+
+interface InParamsConn<T> {
+  ocf: T;
+  payload: Buffer;
+  connectionHandle: number;
+}
+
 export class SetEventMask {
-  static inParams(events: Partial<EventMask>): Buffer {
+  static inParams(events: Partial<EventMask>): InParams<HciOcfControlAndBasebandCommands.SetEventMask> {
     let mask = 0n;
 
     mask = bitSet(mask, 0n,  events.inquiryComplete);
@@ -109,7 +121,8 @@ export class SetEventMask {
 
     const payload = Buffer.allocUnsafe(8);
     payload.writeBigUInt64LE(mask, 0);
-    return payload;
+
+    return { ocf: HciOcfControlAndBasebandCommands.SetEventMask, payload };
   }
 }
 
@@ -119,11 +132,11 @@ export enum ReadTransmitPowerLevelType {
 }
 
 export class ReadTransmitPowerLevel {
-  static inParams(connectionHandle: number, type: ReadTransmitPowerLevelType): Buffer {
+  static inParams(connectionHandle: number, type: ReadTransmitPowerLevelType): InParamsConn<HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
     const payload = Buffer.allocUnsafe(3);
     payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(type, 2);
-    return payload;
+    return { ocf: HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel, payload, connectionHandle };
   }
 
   static outParams(params?: Buffer): number {

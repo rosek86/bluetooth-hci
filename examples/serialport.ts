@@ -38,21 +38,12 @@ const debug = Debug('nble-main');
 
     // await hci.leAddDeviceToWhiteList({
     //   addressType:  LeWhiteListAddressType.Random,
-    //   address:      Address.from(0x1429c386d3a9),
+    //   address:      Address.from('F5:EF:D9:6E:47:C7'),
     // });
 
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
-
-    // await hci.leSetScanParameters({
-    //   intervalMs: 100,
-    //   windowMs: 100,
-    //   ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-    //   scanningFilterPolicy: LeScanningFilterPolicy.All,
-    //   type: LeScanType.Active,
-    // });
-    // await hci.leSetScanEnable(true, false);
 
     const l2cap = new L2CAP(hci);
     await l2cap.init();
@@ -90,50 +81,52 @@ const debug = Debug('nble-main');
         }
 
         const advData = AdvData.parse(report.data);
-        // console.log(report);
-        // console.log(JSON.stringify(advData, null, 2));
+        console.log(report);
+        console.log(JSON.stringify(advData, null, 2));
 
-        if (report.address.toString() === 'F5:EF:D9:6E:47:C7') {
-          console.log(report.address.toString());
-
-          connecting = true;
-          await hci.leSetExtendedScanEnable({ enable: false });
-
-          let peerAddressType = LePeerAddressType.PublicDeviceAddress;
-
-          if (report.addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
-              report.addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
-            peerAddressType = LePeerAddressType.RandomDeviceAddress;
-          }
-
-          await hci.leExtendedCreateConnection({
-            initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-            ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-            peerAddressType,
-            peerAddress: report.address,
-            initiatingPhy: {
-              Phy1M: {
-                scanIntervalMs: 100,
-                scanWindowMs: 100,
-                connectionIntervalMinMs: 7.5,
-                connectionIntervalMaxMs: 100,
-                connectionLatency: 0,
-                supervisionTimeoutMs: 4000,
-                minCeLengthMs: 2.5,
-                maxCeLengthMs: 3.75,
-              },
-            },
-          });
-          console.log('connecting...');
+        if (report.address.toString() !== 'F5:EF:D9:6E:47:C7') {
+          return;
         }
+
+        connecting = true;
+        await hci.leSetExtendedScanEnable({ enable: false });
+
+        let peerAddressType = LePeerAddressType.PublicDeviceAddress;
+
+        if (report.addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
+            report.addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
+          peerAddressType = LePeerAddressType.RandomDeviceAddress;
+        }
+
+        await hci.leExtendedCreateConnection({
+          initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
+          ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+          peerAddressType,
+          peerAddress: report.address,
+          initiatingPhy: {
+            Phy1M: {
+              scanIntervalMs: 100,
+              scanWindowMs: 100,
+              connectionIntervalMinMs: 7.5,
+              connectionIntervalMaxMs: 100,
+              connectionLatency: 0,
+              supervisionTimeoutMs: 4000,
+              minCeLengthMs: 2.5,
+              maxCeLengthMs: 3.75,
+            },
+          },
+        });
+        console.log('connecting...');
       } catch (err) {
         console.log(err);
       }
     });
+
     hci.on('LeEnhancedConnectionComplete', async (status, event) => {
       console.log('LeEnhancedConnectionComplete', status, event);
     });
-    hci.on('LeChannelSelectionAlgorithm', async (event) => {
+
+    hci.on('LeChannelSelectionAlgorithm', async (status, event) => {
       console.log('LeChannelSelectionAlgorithm', event);
 
       await hci.writeAuthenticatedPayloadTimeout(event.connectionHandle, 200);
@@ -143,10 +136,12 @@ const debug = Debug('nble-main');
 
       await hci.readRemoteVersionInformation(event.connectionHandle);
     });
+
     hci.on('ReadRemoteVersionInformationComplete', async (err, event) => {
       console.log('ReadRemoteVersionInformationComplete', event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
     });
+
     hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
       try {
         console.log('LeReadRemoteFeaturesComplete', status, event);

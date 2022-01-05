@@ -3,9 +3,9 @@ import { EventEmitter } from 'events';
 
 import { L2capChannelId } from './L2capChannelId';
 
-import { Hci, NumberOfCompletedPacketsEntry } from '../hci/Hci';
+import { Hci } from '../hci/Hci';
 import { HciError } from '../hci/HciError';
-import { DisconnectionCompleteEvent } from '../hci/HciEvent';
+import { DisconnectionCompleteEvent, NumberOfCompletedPacketsEntry } from '../hci/HciEvent';
 import { LeBufferSize } from '../hci/HciLeController';
 import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from '../acl/Acl';
 
@@ -169,18 +169,18 @@ export class L2CAP extends EventEmitter {
     this.flushAcl();
   }
 
-  private onNumberOfCompletedPackets = (event: NumberOfCompletedPacketsEntry[]): void => {
-    for (const { connectionHandle, numCompletedPackets } of event) {
-      const connection = this.aclConnections.get(connectionHandle);
-      if (!connection) {
-        continue;
-      }
+  private onNumberOfCompletedPackets = (_: Error|null, event: NumberOfCompletedPacketsEntry): void => {
+    const { connectionHandle, numCompletedPackets } = event;
 
-      connection.pending -= numCompletedPackets;
+    const connection = this.aclConnections.get(connectionHandle);
+    if (!connection) {
+      return;
+    }
 
-      if (connection.pending < 0) {
-        connection.pending = 0;
-      }
+    connection.pending -= numCompletedPackets;
+
+    if (connection.pending < 0) {
+      connection.pending = 0;
     }
 
     this.flushAcl();

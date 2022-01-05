@@ -84,7 +84,7 @@ export enum HciEvent {
   SamStatusChange                                     = 0x58, // SAM Status Change
 }
 
-interface ConnEvent {
+export interface ConnEvent {
   connectionHandle: number;
 }
 
@@ -103,6 +103,13 @@ export enum EncryptionEnabled {
 
 export interface EncryptionChangeEvent extends ConnEvent {
   encEnabled: EncryptionEnabled;
+}
+
+export interface EncryptionKeyRefreshComplete extends ConnEvent {
+}
+
+export interface NumberOfCompletedPacketsEntry extends ConnEvent {
+  numCompletedPackets: number;
 }
 
 export interface ReadRemoteVersionInformationCompleteEvent extends ConnEvent {
