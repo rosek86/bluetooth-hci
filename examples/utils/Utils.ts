@@ -98,12 +98,15 @@ export class Utils {
     const maxDataLength = await hci.leReadMaximumDataLength();
     console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
 
-    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    let suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
     console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
 
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,
-      suggestedMaxTxTime:   328,
+      suggestedMaxTxTime: 328,
     });
+
+    suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
   }
 }
