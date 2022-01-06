@@ -6,19 +6,12 @@ import { AdvData } from '../src/gap/AdvData';
 
 import {
   LePhy,
-  LeSetTxRxPhyOpts,
-  LeAdvertisingEventProperties,
-  LeAdvertisingChannelMap,
   LeOwnAddressType,
   LePeerAddressType,
-  LeAdvertisingFilterPolicy,
-  LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy,
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
-  LeInitiatorFilterPolicy,
-  LeWhiteListAddressType
+  LeInitiatorFilterPolicy
 } from '../src/hci/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
@@ -115,102 +108,87 @@ const debug = Debug('nble-main');
       }
     });
 
-    hci.on('LeEnhancedConnectionComplete', async (status, event) => {
-      console.log('LeEnhancedConnectionComplete', status, event);
+    hci.on('LeEnhancedConnectionComplete', async (err, event) => {
+      console.log('LeEnhancedConnectionComplete', err, event);
     });
 
-    hci.on('LeChannelSelectionAlgorithm', async (status, event) => {
-      console.log('LeChannelSelectionAlgorithm', event);
-
-      await hci.writeAuthenticatedPayloadTimeout(event.connectionHandle, 200);
-
-      const timeout = await hci.readAuthenticatedPayloadTimeout(event.connectionHandle);
-      console.log(`AuthenticatedPayloadTimeout: ${timeout}`);
+    hci.on('LeChannelSelectionAlgorithm', async (err, event) => {
+      connecting = false;
+      console.log('LeChannelSelectionAlgorithm', err, event);
 
       await hci.readRemoteVersionInformation(event.connectionHandle);
-    });
 
-    hci.on('ReadRemoteVersionInformationComplete', async (err, event) => {
-      console.log('ReadRemoteVersionInformationComplete', event);
       await hci.leReadRemoteFeatures(event.connectionHandle);
+
+      await hci.leSetDataLength(event.connectionHandle, {
+        txOctets: 200,
+        txTime:   2000,
+      });
+
+      const phy = await hci.leReadPhy(event.connectionHandle);
+      console.log('PHY:', phy);
+
+      await hci.leConnectionUpdate({
+        connectionHandle: event.connectionHandle,
+        connectionIntervalMinMs: 40,
+        connectionIntervalMaxMs: 90,
+        connectionLatency: 0,
+        supervisionTimeoutMs: 5000,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      });
+
+      const maxPowerLevel = await hci.readTransmitPowerLevel(
+        event.connectionHandle,
+        ReadTransmitPowerLevelType.Maximum
+      );
+      const curPowerLevel = await hci.readTransmitPowerLevel(
+        event.connectionHandle,
+        ReadTransmitPowerLevelType.Current
+      );
+      console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
+
+      const att = new Att(l2cap, event.connectionHandle);
+
+      const mtu = await att.exchangeMtuReq({ mtu: 200 });
+      console.log('MTU', mtu);
+
+      const info = await att.findInformationReq({
+        startingHandle: 0x0001, endingHandle: 0xFFFF,
+      });
+      console.log(info);
+
+      const rssi = await hci.readRssi(event.connectionHandle);
+      console.log(`RSSI: ${rssi} dBm`);
+
+      setTimeout(async () => {
+        att.destroy();
+        await hci.disconnect(event.connectionHandle);
+      }, 2000);
     });
 
-    hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
-      try {
-        console.log('LeReadRemoteFeaturesComplete', status, event);
-
-        await hci.leSetDataLength(event.connectionHandle, {
-          txOctets: 200,
-          txTime:   2000,
-        });
-
-        const phy = await hci.leReadPhy(event.connectionHandle);
-        console.log('phy:', phy);
-
-        await hci.leConnectionUpdate({
-          connectionHandle: event.connectionHandle,
-          connectionIntervalMinMs: 40,
-          connectionIntervalMaxMs: 90,
-          connectionLatency: 0,
-          supervisionTimeoutMs: 5000,
-          minCeLengthMs: 2.5,
-          maxCeLengthMs: 3.75,
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    });
-    hci.on('LeConnectionUpdateComplete', async (err, event) => {
-      try {
-        console.log('LeConnectionUpdateComplete', err, event);
-
-        const maxPowerLevel = await hci.readTransmitPowerLevel(
-          event.connectionHandle,
-          ReadTransmitPowerLevelType.Maximum
-        );
-        const curPowerLevel = await hci.readTransmitPowerLevel(
-          event.connectionHandle,
-          ReadTransmitPowerLevelType.Current
-        );
-        console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
-
-        const att = new Att(l2cap, event.connectionHandle);
-
-        const mtu = await att.exchangeMtuReq({ mtu: 40 });
-        console.log(mtu);
-
-        const info = await att.findInformationReq({
-          startingHandle: 0x0001, endingHandle: 0xFFFF,
-        });
-        console.log(info);
-
-        const rssi = await hci.readRssi(event.connectionHandle);
-        console.log(`RSSI: ${rssi} dBm`);
-
-        setTimeout(async () => {
-          await hci.disconnect(event.connectionHandle);
-        }, 2000);
-      } catch (err) {
-        console.log(err);
-      }
-    });
     hci.on('LePhyUpdateComplete', (err, event) => {
-      console.log(err, event);
-    });
-    hci.on('DisconnectionComplete', async (err, event) => {
-      console.log('DisconnectionComplete', err, event);
-      // await hci.leSetExtendedScanEnable({ enable: true });
-    });
-    hci.on('LeLongTermKeyRequest', (err, event) => {
-      console.log('LeLongTermKeyRequest', err, event);
+      console.log('LePhyUpdateComplete', err, event);
     });
     hci.on('LeRemoteConnectionParameterRequest', (err, event) => {
       console.log('LeRemoteConnectionParameterRequest', err, event);
     });
+
+    hci.on('LeConnectionUpdateComplete', async (err, event) => {
+      console.log('LeConnectionUpdateComplete', err, event);
+    });
+    hci.on('LeReadRemoteFeaturesComplete', (status, event) => {
+      console.log('LeReadRemoteFeaturesComplete', status, event);
+    });
+    hci.on('ReadRemoteVersionInformationComplete', (err, event) => {
+      console.log('ReadRemoteVersionInformationComplete', err, event);
+    });
     hci.on('LeDataLengthChange', (err, event) => {
       console.log('LeDataLengthChange', err, event);
     });
-    console.log('end');
+    hci.on('DisconnectionComplete', (err, event) => {
+      console.log('DisconnectionComplete', err, event);
+    });
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

@@ -110,6 +110,7 @@ export class Att extends EventEmitter {
 
   public destroy(): void {
     this.l2cap.off('AttData', this.onAttData);
+    this.removeAllListeners();
   }
 
   // Responses

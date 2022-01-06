@@ -105,8 +105,5 @@ export class Utils {
       suggestedMaxTxOctets: 27,
       suggestedMaxTxTime: 328,
     });
-
-    suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
-    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
   }
 }

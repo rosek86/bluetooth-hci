@@ -94,19 +94,8 @@ import { Att } from '../src/att/Att';
     hci.on('LeEnhancedConnectionComplete', async (status, event) => {
       console.log('LeEnhancedConnectionComplete', status, event);
     });
-    hci.on('LeDataLengthChange', (err, event) => {
-      console.log('LeDataLengthChange', err, event);
-    })
-
-    hci.on('LeChannelSelectionAlgorithm', async (status, event) => {
+    hci.on('LeChannelSelectionAlgorithm', (status, event) => {
       console.log('LeChannelSelectionAlgorithm', status, event);
-    });
-
-    hci.on('LeAdvertisingSetTerminated', async (status, event) => {
-      console.log('LeAdvertisingSetTerminated', status, event);
-    });
-    hci.on('LeConnectionUpdateComplete', async (status, event) => {
-      console.log('LeConnectionUpdateComplete', status, event);
 
       const att = new Att(l2cap, event.connectionHandle);
 
@@ -123,8 +112,27 @@ import { Att } from '../src/att/Att';
           { handle: 4, uuid: Buffer.from([11,2]) },
         ]);
       });
+
+      const onDisconnectionComplete = () => {
+        att.destroy();
+        hci.off('DisconnectionComplete', onDisconnectionComplete);
+      };
+      hci.on('DisconnectionComplete', onDisconnectionComplete);
+    });
+    hci.on('LeAdvertisingSetTerminated', (status, event) => {
+      console.log('LeAdvertisingSetTerminated', status, event);
+    });
+    hci.on('LeConnectionUpdateComplete', async (status, event) => {
+      console.log('LeConnectionUpdateComplete', status, event);
     });
 
+    hci.on('DisconnectionComplete', async (err, event) => {
+      console.log('DisconnectionComplete', err, event);
+      await hci.leSetExtendedAdvertisingEnable({
+        enable: true,
+        sets: [{ advertHandle: 0 }],
+      });
+    });
 
     console.log('end');
   } catch (e) {

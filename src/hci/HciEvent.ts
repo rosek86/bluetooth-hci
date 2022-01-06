@@ -244,6 +244,7 @@ export enum LeAdvEventType {
   Directed        = 1, // Connectable directed advertising (ADV_DIRECT_IND)
   Scannable       = 2, // Scannable undirected advertising (ADV_SCAN_IND)
   NonConnectable  = 3, // Non connectable undirected advertising (ADV_NONCONN_IND)
+  ScanResponse    = 4, // Scan Response (SCAN_RSP)
 }
 
 export enum LeAdvReportAddrType {
@@ -253,7 +254,7 @@ export enum LeAdvReportAddrType {
   RandomIdentityAddress = 0x03, // Random (static) Identity Address
 }
 
-export interface LeAdvReportEvent {
+export interface LeAdvReport {
   eventType: LeAdvEventType;
   addressType: LeAdvReportAddrType;
   address: Address;
@@ -262,7 +263,7 @@ export interface LeAdvReportEvent {
 }
 
 export class LeAdvReport {
-  static parse(data: Buffer): LeAdvReportEvent[] {
+  static parse(data: Buffer): LeAdvReport[] {
     const numReports = data[0];
 
     const reportsRaw: Partial<{
@@ -305,7 +306,7 @@ export class LeAdvReport {
 
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
-    return reportsRaw.map<LeAdvReportEvent>((reportRaw) => ({
+    return reportsRaw.map<LeAdvReport>((reportRaw) => ({
       eventType:              reportRaw.eventType!,
       addressType:            reportRaw.addressType!,
       address:                Address.from(reportRaw.address!),
