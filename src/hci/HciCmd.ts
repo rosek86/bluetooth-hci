@@ -176,6 +176,7 @@ export class HciCmd {
       });
       if (this.onResult !== null) {
         debug('cannot start command: ', cmd);
+        console.log('cannot start command: ', cmd);
         return reject(makeParserError(HciParserError.Busy));
       }
       const complete = (err?: Error, evt?: HciCmdResult) => {

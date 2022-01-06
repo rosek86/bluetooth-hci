@@ -1,10 +1,15 @@
+export enum AddressType {
+  Public, // Public Device Address or Public Identity Address
+  Random, // Random Device Address or Random (static) Identity Address
+}
+
 export class Address {
-  constructor(private address: number) {
+  constructor(private address: number, private type = AddressType.Random) {
   }
 
-  static from(address: string|number): Address {
+  static from(address: string|number, type = AddressType.Random): Address {
     if (typeof address === 'number') {
-      return new Address(address);
+      return new Address(address, type);
     }
 
     const num = address
@@ -12,10 +17,10 @@ export class Address {
       .match(/.{1,2}/g)?.join('');
 
     if (!num) {
-      return new Address(0);
+      return new Address(0, type);
     }
 
-    return new Address(parseInt(num, 16));
+    return new Address(parseInt(num, 16), type);
   }
 
   public toId(): string {
@@ -32,11 +37,16 @@ export class Address {
   public toObject() {
     return {
       address: this.toString(),
+      type: this.addressTypeToString(),
     };
   }
 
+  private addressTypeToString(): 'public' | 'random' {
+    return this.type === AddressType.Public ? 'public' : 'random';
+  }
+
   public toJSON(): string {
-    return this.toString();
+    return JSON.stringify(this.toObject(), null, 2);
   }
 
   public toString(): string {

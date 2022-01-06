@@ -267,12 +267,12 @@ export class LeAdvReport {
     const numReports = data[0];
 
     const reportsRaw: Partial<{
-      eventType:            number;
-      addressType:          number;
-      address:              number;
-      dataLength:           number;
-      data:                 Buffer;
-      rssi:                 number;
+      eventType:   LeAdvEventType;
+      addressType: LeAdvReportAddrType;
+      address:     number;
+      dataLength:  number;
+      data:        Buffer;
+      rssi:        number;
     }>[] = [];
 
     let o = 1;
@@ -306,13 +306,15 @@ export class LeAdvReport {
 
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
-    return reportsRaw.map<LeAdvReport>((reportRaw) => ({
-      eventType:              reportRaw.eventType!,
-      addressType:            reportRaw.addressType!,
-      address:                Address.from(reportRaw.address!),
-      rssi:                   powerOrNull(reportRaw.rssi!),
-      data:                   reportRaw.data ?? null,
-    }));
+    return reportsRaw.map<LeAdvReport>((reportRaw) => {
+      return {
+        eventType:              reportRaw.eventType!,
+        addressType:            reportRaw.addressType!,
+        address:                Address.from(reportRaw.address!),
+        rssi:                   powerOrNull(reportRaw.rssi!),
+        data:                   reportRaw.data ?? null,
+      };
+    });
   }
 }
 

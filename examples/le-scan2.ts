@@ -3,10 +3,7 @@ import { Address } from '../src/utils/Address';
 
 import { Gap } from '../src/gap/Gap';
 
-import {
-  LeScanFilterDuplicates,
-  LeScanType,
-} from '../src/hci/HciLeController';
+import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
 (async () => {
   try {
@@ -19,33 +16,56 @@ import {
     const gap = new Gap(adapter.Hci);
     await gap.init();
 
-
     gap.on('GapLeScanState', (scanning) => {
       console.log('scanning', scanning);
     });
-    gap.on('GapLeAdvReport', (report, raw) => {
-      if (report.data.completeLocalName) {
-        console.log(report.data.completeLocalName, report.rssi, report.scanResponse);
-      }
+
+    gap.on('GapConnected', async (event) => {
+      connecting = false;
+      console.log('LeChannelSelectionAlgorithm', event);
+      await adapter.Hci.leReadRemoteFeatures(event.connectionHandle);
     });
 
-    await gap.setScanParameters({
-      scanningPhy: {
-        Phy1M: {
-          type: LeScanType.Active,
-          intervalMs: 100,
-          windowMs: 100,
-        },
-      },
+    adapter.Hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
+      console.log('LeReadRemoteFeaturesComplete', status, event);
+
+      const rssi = await adapter.Hci.readRssi(event.connectionHandle);
+      console.log(`RSSI: ${rssi} dBm`);
+
+      setTimeout(async () => {
+        await gap.disconnect(event.connectionHandle);
+      }, 500);
     });
-    await gap.startScanning({
-      filterDuplicates: LeScanFilterDuplicates.Enabled,
-      durationMs: 5000,
+
+    gap.on('GapDisconnected', async (reason) => {
+      connecting = false;
+      console.log('DisconnectionComplete', reason);
+
+      await gap.setScanParameters();
+      await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
     });
+
+    let connecting = false;
+    gap.on('GapLeAdvReport', async (report, raw) => {
+      if (connecting) { return; }
+      if (report.data.completeLocalName) {
+        console.log(report.address, report.data.completeLocalName, report.rssi, report.scanResponse);
+      }
+      if (report.data.completeLocalName !== 'Cycling Speed and Cadence') {
+        return;
+      }
+
+      connecting = true;
+      console.log('connecting...');
+      await gap.stopScanning();
+      await gap.connect(report.address);
+    });
+
+    await gap.setScanParameters();
+    await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
+    console.log('scanning...');
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
-  } finally {
-    // port.close();
   }
 })();
