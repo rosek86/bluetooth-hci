@@ -4,13 +4,17 @@ import { Hci } from '../hci/Hci';
 import {
   DisconnectionCompleteEvent,
   LeAdvEventType, LeAdvReport, LeChannelSelAlgoEvent, LeConnectionCompleteEvent,
-  LeEnhConnectionCompleteEvent, LeExtAdvReport
+  LeConnectionRole,
+  LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy, LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
 } from '../hci/HciEvent';
 import {
-  LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy, LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
+  LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
+  LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType
 } from '../hci/HciLeController';
 import { Address } from '../utils/Address';
+import { Att } from '../att/Att';
+import { L2CAP } from '../l2cap/L2CAP';
 
 type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
@@ -22,6 +26,25 @@ export interface GapAdvertReport {
   data: AdvData;
 }
 
+export interface GapConnectEvent {
+  connectionHandle: number;
+  address: Address;
+  connectionParams: {
+    connectionIntervalMs: number;
+    supervisionTimeoutMs: number;
+    connectionLatency: number;
+  }
+  role: LeConnectionRole;
+  masterClockAccuracy: LeMasterClockAccuracy;
+  localResolvablePrivateAddress?: Address;
+  peerResolvablePrivateAddress?: Address;
+  versionInfo: {
+    manufacturerName: number;
+    version: number;
+    subversion: number;
+  };
+};
+
 export declare interface Gap {
   on(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
   once(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
@@ -31,9 +54,9 @@ export declare interface Gap {
   once(event: 'GapLeScanState', listener: (scanning: boolean) => void): this;
   removeListener(event: 'GapLeScanState', listener: (scanning: boolean) => void): this;
 
-  on(event: 'GapConnected', listener: (event: { connectionHandle: number }) => void): this;
-  once(event: 'GapConnected', listener: (event: { connectionHandle: number }) => void): this;
-  removeListener(event: 'GapConnected', listener: (event: { connectionHandle: number }) => void): this;
+  on(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
+  once(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
+  removeListener(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
 
   on(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
   once(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
@@ -46,16 +69,31 @@ export class Gap extends EventEmitter {
   private scanning = false;
   private connecting = false;
 
+  private l2cap: L2CAP;
+
+  private connectedDevices: Map<number, {
+    connComplete?: LeConnectionCompleteEvent;
+    enhConnComplete?: LeEnhConnectionCompleteEvent;
+    channelSelectionAlgorithm?: LeChannelSelAlgoEvent;
+    versionInformation?: ReadRemoteVersionInformationCompleteEvent;
+    leRemoteFeatures?: LeReadRemoteFeaturesCompleteEvent;
+    att?: Att;
+  }> = new Map();
+
   constructor(private hci: Hci) {
     super();
 
-    this.hci.on('LeAdvertisingReport',           this.onLeAdvertisingReport);
-    this.hci.on('LeExtendedAdvertisingReport',   this.onLeExtendedAdvertisingReport);
-    this.hci.on('LeScanTimeout',                 this.onLeScanTimeout);
-    this.hci.on('LeConnectionComplete',          this.onLeConnectionComplete);
-    this.hci.on('LeEnhancedConnectionComplete',  this.onLeEnhancedConnectionComplete);
-    this.hci.on('LeChannelSelectionAlgorithm',   this.onLeChannelSelectionAlgorithm);
-    this.hci.on('DisconnectionComplete',         this.onDisconnectionComplete);
+    this.l2cap = new L2CAP(this.hci);
+
+    this.hci.on('LeAdvertisingReport',                  this.onLeAdvertisingReport);
+    this.hci.on('LeExtendedAdvertisingReport',          this.onLeExtendedAdvertisingReport);
+    this.hci.on('LeScanTimeout',                        this.onLeScanTimeout);
+    this.hci.on('LeConnectionComplete',                 this.onLeConnectionComplete);
+    this.hci.on('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
+    this.hci.on('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
+    this.hci.on('ReadRemoteVersionInformationComplete', this.onReadRemoteVersionInformationComplete);
+    this.hci.on('LeReadRemoteFeaturesComplete',         this.onLeReadRemoteFeaturesComplete);
+    this.hci.on('DisconnectionComplete',                this.onDisconnectionComplete);
   }
 
   public async init() {
@@ -64,16 +102,20 @@ export class Gap extends EventEmitter {
     if (commands.leSetExtendedScanParameters && commands.leSetExtendedScanEnable) {
       this.extended = true;
     }
+
+    await this.l2cap.init();
   }
 
   public destroy(): void {
-    this.hci.removeListener('LeAdvertisingReport',          this.onLeAdvertisingReport);
-    this.hci.removeListener('LeExtendedAdvertisingReport',  this.onLeExtendedAdvertisingReport);
-    this.hci.removeListener('LeScanTimeout',                this.onLeScanTimeout);
-    this.hci.removeListener('LeConnectionComplete',         this.onLeConnectionComplete);
-    this.hci.removeListener('LeEnhancedConnectionComplete', this.onLeEnhancedConnectionComplete);
-    this.hci.removeListener('LeChannelSelectionAlgorithm',  this.onLeChannelSelectionAlgorithm);
-    this.hci.removeListener('DisconnectionComplete',        this.onDisconnectionComplete);
+    this.hci.removeListener('LeAdvertisingReport',                  this.onLeAdvertisingReport);
+    this.hci.removeListener('LeExtendedAdvertisingReport',          this.onLeExtendedAdvertisingReport);
+    this.hci.removeListener('LeScanTimeout',                        this.onLeScanTimeout);
+    this.hci.removeListener('LeConnectionComplete',                 this.onLeConnectionComplete);
+    this.hci.removeListener('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
+    this.hci.removeListener('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
+    this.hci.removeListener('ReadRemoteVersionInformationComplete', this.onReadRemoteVersionInformationComplete);
+    this.hci.removeListener('LeReadRemoteFeaturesComplete',         this.onLeReadRemoteFeaturesComplete);
+    this.hci.removeListener('DisconnectionComplete',                this.onDisconnectionComplete);
     this.removeAllListeners();
   }
 
@@ -178,6 +220,13 @@ export class Gap extends EventEmitter {
     await this.hci.disconnect(connectionHandle);
   }
 
+  public getATT(connectionHandle: number): Att | undefined {
+    const device = this.connectedDevices.get(connectionHandle);
+    if (device) {
+      return device.att;
+    }
+  }
+
   private onLeScanTimeout = () => {
     this.scanning = false;
     this.emit('GapLeScanState', false);
@@ -213,23 +262,104 @@ export class Gap extends EventEmitter {
     }
   };
 
-  private onLeConnectionComplete = (_err: Error|null, _event: LeConnectionCompleteEvent) => {
+  private onLeConnectionComplete = (_err: Error|null, event: LeConnectionCompleteEvent) => {
     this.scanning = false;
+    this.connectedDevices.set(event.connectionHandle, {
+      connComplete: event,
+      att: new Att(this.l2cap, event.connectionHandle),
+    });
   };
 
   private onLeEnhancedConnectionComplete = (_err: Error|null, event: LeEnhConnectionCompleteEvent) => {
     this.scanning = false;
+    this.connectedDevices.set(event.connectionHandle, {
+      enhConnComplete: event,
+      att: new Att(this.l2cap, event.connectionHandle),
+    });
   };
 
-  private onLeChannelSelectionAlgorithm = (_err: Error|null, event: LeChannelSelAlgoEvent) => {
-    console.log('LeChannelSelectionAlgorithm', event);
+  private onLeChannelSelectionAlgorithm = async (_err: Error|null, event: LeChannelSelAlgoEvent) => {
     this.connecting = false;
     this.scanning = false;
-    this.emit('GapConnected', event);
+
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.channelSelectionAlgorithm = event;
+    }
+
+    await this.hci.readRemoteVersionInformation(event.connectionHandle);
   };
+
+  private onReadRemoteVersionInformationComplete = async (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => {
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.versionInformation = event;
+    }
+
+    await this.hci.leReadRemoteFeatures(event.connectionHandle);
+  };
+
+  private onLeReadRemoteFeaturesComplete = (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => {
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.leRemoteFeatures = event;
+    }
+
+    const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
+    if (!gapEvent) {
+      return;
+    }
+
+    this.emit('GapConnected', gapEvent);
+  };
+
+  private createGapConnectedEvent(connectionHandle: number): GapConnectEvent | null {
+    const device = this.connectedDevices.get(connectionHandle);
+    if (!device) {
+      return null;
+    }
+
+    const conn = device.connComplete ?? device.enhConnComplete;
+    if (!conn) {
+      return null;
+    }
+
+    const version = device.versionInformation;
+
+    const event: GapConnectEvent = {
+      connectionHandle: conn.connectionHandle,
+      address: conn.peerAddress,
+      connectionParams: {
+        connectionIntervalMs: conn.connectionIntervalMs,
+        connectionLatency: conn.connectionLatency,
+        supervisionTimeoutMs: conn.supervisionTimeoutMs,
+      },
+      role: conn.role,
+      masterClockAccuracy: conn.masterClockAccuracy,
+      versionInfo: {
+        manufacturerName: version?.manufacturerName ?? 0,
+        version: version?.version ?? 0,
+        subversion: version?.subversion ?? 0,
+      },
+    };
+
+    if (this.extended) {
+      event.localResolvablePrivateAddress = device.enhConnComplete?.localResolvablePrivateAddress;
+      event.peerResolvablePrivateAddress = device.enhConnComplete?.peerResolvablePrivateAddress;
+    }
+
+    return event;
+  }
 
   private onDisconnectionComplete = (_err: Error|null, event: DisconnectionCompleteEvent) => {
     this.scanning = false;
+
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.att?.destroy();
+      this.connectedDevices.delete(event.connectionHandle);
+    }
+
     this.emit('GapDisconnected', event);
   };
 }

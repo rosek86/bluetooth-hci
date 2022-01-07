@@ -21,20 +21,13 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     });
 
     gap.on('GapConnected', async (event) => {
+      console.log('connected', event);
       connecting = false;
-      console.log('LeChannelSelectionAlgorithm', event);
-      await adapter.Hci.leReadRemoteFeatures(event.connectionHandle);
-    });
-
-    adapter.Hci.on('LeReadRemoteFeaturesComplete', async (status, event) => {
-      console.log('LeReadRemoteFeaturesComplete', status, event);
 
       const rssi = await adapter.Hci.readRssi(event.connectionHandle);
       console.log(`RSSI: ${rssi} dBm`);
 
-      setTimeout(async () => {
-        await gap.disconnect(event.connectionHandle);
-      }, 500);
+      await gap.disconnect(event.connectionHandle);
     });
 
     gap.on('GapDisconnected', async (reason) => {
@@ -51,7 +44,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       if (report.data.completeLocalName) {
         console.log(report.address, report.data.completeLocalName, report.rssi, report.scanResponse);
       }
-      if (report.data.completeLocalName !== 'Cycling Speed and Cadence') {
+      if (report.data.completeLocalName !== 'Tacx Flux 39756') {
         return;
       }
 
