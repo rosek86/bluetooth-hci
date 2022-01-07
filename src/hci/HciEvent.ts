@@ -308,10 +308,10 @@ export class LeAdvReport {
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
     return reportsRaw.map<LeAdvReport>((reportRaw) => {
-      assert(reportRaw.eventType);
-      assert(reportRaw.address);
-      assert(reportRaw.addressType);
-      assert(reportRaw.rssi);
+      assert(reportRaw.eventType   !== undefined);
+      assert(reportRaw.address     !== undefined);
+      assert(reportRaw.addressType !== undefined);
+      assert(reportRaw.rssi        !== undefined);
       let addressType = AddressType.Public;
       if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
           reportRaw.addressType === LeAdvReportAddrType.RandomIdentityAddress) {
@@ -416,17 +416,17 @@ export class LeExtAdvReport {
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
     return reportsRaw.map<LeExtAdvReport>((reportRaw) => {
-      assert(reportRaw.eventType);
-      assert(reportRaw.address);
-      assert(reportRaw.addressType);
-      assert(reportRaw.primaryPhy);
-      assert(reportRaw.secondaryPhy);
-      assert(reportRaw.advertisingSid);
-      assert(reportRaw.rssi);
-      assert(reportRaw.txPower);
-      assert(reportRaw.periodicAdvInterval);
-      assert(reportRaw.directAddress);
-      assert(reportRaw.directAddressType);
+      assert(reportRaw.eventType           !== undefined);
+      assert(reportRaw.address             !== undefined);
+      assert(reportRaw.addressType         !== undefined);
+      assert(reportRaw.primaryPhy          !== undefined);
+      assert(reportRaw.secondaryPhy        !== undefined);
+      assert(reportRaw.advertisingSid      !== undefined);
+      assert(reportRaw.rssi                !== undefined);
+      assert(reportRaw.txPower             !== undefined);
+      assert(reportRaw.periodicAdvInterval !== undefined);
+      assert(reportRaw.directAddress       !== undefined);
+      assert(reportRaw.directAddressType   !== undefined);
 
       let addressType = AddressType.Public;
       if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
