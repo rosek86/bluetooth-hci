@@ -1,3 +1,5 @@
+import { LePeerAddressType } from "../hci/HciLeController";
+
 export enum AddressType {
   Public, // Public Device Address or Public Identity Address
   Random, // Random Device Address or Random (static) Identity Address
@@ -32,6 +34,17 @@ export class Address {
 
   public toNumeric(): number {
     return this.address;
+  }
+
+  public get Type(): AddressType {
+    return this.type;
+  }
+
+  public get LePeerAddressType(): LePeerAddressType {
+    if (this.type === AddressType.Public) {
+      return LePeerAddressType.PublicDeviceAddress;
+    }
+    return LePeerAddressType.RandomDeviceAddress;
   }
 
   public toObject() {

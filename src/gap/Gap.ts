@@ -9,7 +9,7 @@ import {
 } from '../hci/HciEvent';
 import {
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
-  LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
+  LeOwnAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType
 } from '../hci/HciLeController';
 import { Address } from '../utils/Address';
@@ -155,9 +155,9 @@ export class Gap extends EventEmitter {
       return;
     }
 
-    const filterDuplicates     = opts?.filterDuplicates     ?? LeScanFilterDuplicates.Disabled;
-    const durationMs           = opts?.durationMs           ?? 0;
-    const periodSec            = opts?.periodSec            ?? 0;
+    const filterDuplicates = opts?.filterDuplicates ?? LeScanFilterDuplicates.Disabled;
+    const durationMs       = opts?.durationMs       ?? 0;
+    const periodSec        = opts?.periodSec        ?? 0;
 
     if (this.extended) {
       await this.hci.leSetExtendedScanEnable({
@@ -190,30 +190,46 @@ export class Gap extends EventEmitter {
     this.emit('GapLeScanState', false);
   }
 
-  public async connect(address: Address) {
+  public async connect(peerAddress: Address): Promise<void> {
+    // TODO: add params
     if (this.connecting === true) {
       return;
     }
     this.connecting = true;
 
-    await this.hci.leExtendedCreateConnection({
-      initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      peerAddressType: LePeerAddressType.RandomDeviceAddress, // TODO
-      peerAddress: address,
-      initiatingPhy: {
-        Phy1M: {
-          scanIntervalMs: 100,
-          scanWindowMs: 100,
-          connectionIntervalMinMs: 7.5,
-          connectionIntervalMaxMs: 100,
-          connectionLatency: 0,
-          supervisionTimeoutMs: 4000,
-          minCeLengthMs: 2.5,
-          maxCeLengthMs: 3.75,
+    if (this.extended) {
+      await this.hci.leExtendedCreateConnection({
+        initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
+        ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+        peerAddress: peerAddress,
+        initiatingPhy: {
+          Phy1M: {
+            scanIntervalMs: 100,
+            scanWindowMs: 100,
+            connectionIntervalMinMs: 7.5,
+            connectionIntervalMaxMs: 100,
+            connectionLatency: 0,
+            supervisionTimeoutMs: 4000,
+            minCeLengthMs: 2.5,
+            maxCeLengthMs: 3.75,
+          },
         },
-      },
-    });
+      });
+    } else {
+      await this.hci.leCreateConnection({
+        ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+        initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
+        peerAddress: peerAddress,
+        scanIntervalMs: 100,
+        scanWindowMs: 100,
+        connectionIntervalMinMs: 7.5,
+        connectionIntervalMaxMs: 100,
+        connectionLatency: 0,
+        supervisionTimeoutMs: 4000,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      });
+    }
   }
 
   public async disconnect(connectionHandle: number): Promise<void> {

@@ -39,7 +39,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     });
 
     let connecting = false;
-    gap.on('GapLeAdvReport', async (report, raw) => {
+    gap.on('GapLeAdvReport', async (report) => {
       if (connecting) { return; }
       if (report.data.completeLocalName) {
         console.log(report.address, report.data.completeLocalName, report.rssi, report.scanResponse);

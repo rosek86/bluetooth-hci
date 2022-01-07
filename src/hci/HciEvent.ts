@@ -1,6 +1,7 @@
+import assert from 'assert';
 import Debug from 'debug';
 
-import { Address } from '../utils/Address';
+import { Address, AddressType } from '../utils/Address';
 import { HciErrorCode } from './HciError';
 
 const debug = Debug('nble-hci-event');
@@ -307,12 +308,21 @@ export class LeAdvReport {
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
     return reportsRaw.map<LeAdvReport>((reportRaw) => {
+      assert(reportRaw.eventType);
+      assert(reportRaw.address);
+      assert(reportRaw.addressType);
+      assert(reportRaw.rssi);
+      let addressType = AddressType.Public;
+      if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
+          reportRaw.addressType === LeAdvReportAddrType.RandomIdentityAddress) {
+        addressType = AddressType.Random;
+      }
       return {
-        eventType:              reportRaw.eventType!,
-        addressType:            reportRaw.addressType!,
-        address:                Address.from(reportRaw.address!),
-        rssi:                   powerOrNull(reportRaw.rssi!),
-        data:                   reportRaw.data ?? null,
+        eventType:   reportRaw.eventType,
+        addressType: reportRaw.addressType,
+        address:     Address.from(reportRaw.address, addressType),
+        rssi:        powerOrNull(reportRaw.rssi),
+        data:        reportRaw.data ?? null,
       };
     });
   }
@@ -405,28 +415,47 @@ export class LeExtAdvReport {
 
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
-    return reportsRaw.map<LeExtAdvReport>((reportRaw) => ({
-      eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType!),
-      addressType:            reportRaw.addressType!,
-      address:                Address.from(reportRaw.address!),
-      primaryPhy:             reportRaw.primaryPhy!,
-      secondaryPhy:           reportRaw.secondaryPhy!,
-      advertisingSid:         reportRaw.advertisingSid!,
-      txPower:                powerOrNull(reportRaw.txPower!),
-      rssi:                   powerOrNull(reportRaw.rssi!),
-      periodicAdvIntervalMs:  reportRaw.periodicAdvInterval! * 1.25,
-      directAddressType:      reportRaw.directAddressType!,
-      directAddress:          reportRaw.directAddress!,
-      data:                   reportRaw.data ?? null,
-    }));
+    return reportsRaw.map<LeExtAdvReport>((reportRaw) => {
+      assert(reportRaw.eventType);
+      assert(reportRaw.address);
+      assert(reportRaw.addressType);
+      assert(reportRaw.primaryPhy);
+      assert(reportRaw.secondaryPhy);
+      assert(reportRaw.advertisingSid);
+      assert(reportRaw.rssi);
+      assert(reportRaw.txPower);
+      assert(reportRaw.periodicAdvInterval);
+      assert(reportRaw.directAddress);
+      assert(reportRaw.directAddressType);
+
+      let addressType = AddressType.Public;
+      if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
+          reportRaw.addressType === LeAdvReportAddrType.RandomIdentityAddress) {
+        addressType = AddressType.Random;
+      }
+      return {
+        eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType),
+        addressType:            reportRaw.addressType,
+        address:                Address.from(reportRaw.address, reportRaw.addressType),
+        primaryPhy:             reportRaw.primaryPhy,
+        secondaryPhy:           reportRaw.secondaryPhy,
+        advertisingSid:         reportRaw.advertisingSid,
+        txPower:                powerOrNull(reportRaw.txPower),
+        rssi:                   powerOrNull(reportRaw.rssi),
+        periodicAdvIntervalMs:  reportRaw.periodicAdvInterval * 1.25,
+        directAddressType:      reportRaw.directAddressType,
+        directAddress:          reportRaw.directAddress,
+        data:                   reportRaw.data ?? null,
+      };
+    });
   }
 }
 
-export enum LePeerAddressType {
+export enum LeConnPeerAddressType {
   PublicDeviceAddress,
   RandomDeviceAddress,
   PublicIdentityAddress,
-  RandomIdentyAddress,
+  RandomIdentityAddress,
 }
 
 export enum LeMasterClockAccuracy {
@@ -447,7 +476,7 @@ export enum LeConnectionRole {
 
 export interface LeConnectionCompleteEvent extends ConnEvent {
   role: LeConnectionRole;
-  peerAddressType: LePeerAddressType;
+  peerAddressType: LeConnPeerAddressType;
   peerAddress: Address;
   connectionIntervalMs: number;
   connectionLatency: number;
