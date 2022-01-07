@@ -101,7 +101,6 @@ const debug = Debug('nble-main');
         await hci.leExtendedCreateConnection({
           initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
           ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-          peerAddressType,
           peerAddress: report.address,
           initiatingPhy: {
             Phy1M: {

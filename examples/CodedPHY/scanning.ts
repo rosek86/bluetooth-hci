@@ -44,8 +44,8 @@ import { LeExtAdvReport } from '../../src/hci/HciEvent';
     });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
 
-    gap.on('adv-report', (report: LeExtAdvReport, data: AdvData) => {
-      console.log(report, data);
+    gap.on('GapLeAdvReport', (report) => {
+      console.log(report);
     });
 
     console.log('end');

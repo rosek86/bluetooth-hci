@@ -1,20 +1,18 @@
 import Debug from 'debug';
 
 import { Utils } from './utils/Utils';
-import { Address } from '../src/utils/Address';
+import { Address, AddressType } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
 
 import {
   LePhy,
   LeOwnAddressType,
-  LePeerAddressType,
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
   LeInitiatorFilterPolicy
 } from '../src/hci/HciLeController';
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
-import { LeExtAdvReportAddrType } from '../src/hci/HciEvent';
 import { L2CAP } from '../src/l2cap/L2CAP';
 import { Att } from '../src/att/Att';
 
@@ -28,7 +26,7 @@ const debug = Debug('nble-main');
     const hci = adapter.Hci;
 
     await Utils.defaultAdapterSetup(hci);
-    await hci.leSetRandomAddress(Address.from('aa:ab:ac:de:df:ff'));
+    await hci.leSetRandomAddress(Address.from('aa:ab:ac:de:df:ff', AddressType.Random));
 
     const l2cap = new L2CAP(hci);
     await l2cap.init();
@@ -77,17 +75,9 @@ const debug = Debug('nble-main');
         connecting = true;
         await hci.leSetExtendedScanEnable({ enable: false });
 
-        let peerAddressType = LePeerAddressType.PublicDeviceAddress;
-
-        if (report.addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
-            report.addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
-          peerAddressType = LePeerAddressType.RandomDeviceAddress;
-        }
-
         await hci.leExtendedCreateConnection({
           initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
           ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-          peerAddressType,
           peerAddress: report.address,
           initiatingPhy: {
             Phy1M: {

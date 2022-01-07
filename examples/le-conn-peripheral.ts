@@ -138,7 +138,5 @@ import { Att } from '../src/att/Att';
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
-  } finally {
-    // port.close();
   }
 })();
