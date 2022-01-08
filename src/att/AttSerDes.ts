@@ -1,6 +1,10 @@
 import { AttOpcode } from './AttOpcode';
 import { AttErrorCode } from './AttError';
 
+import Debug from 'debug';
+
+const debug = Debug('nble-att-serdes');
+
 export interface AttSerDes<T> {
   serialize(data: T): Buffer;
   deserialize(buffer: Buffer): T|null;
@@ -31,9 +35,9 @@ export class AttErrorRsp {
       return null;
     }
     return {
-       requestOpcodeInError:   buffer.readUIntLE(0, 1),
-       attributeHandleInError: buffer.readUIntLE(1, 2),
-       errorCode:              buffer.readUIntLE(3, 1),
+       requestOpcodeInError:   buffer.readUIntLE(1, 1),
+       attributeHandleInError: buffer.readUIntLE(2, 2),
+       errorCode:              buffer.readUIntLE(4, 1),
     };
   }
 }
@@ -197,7 +201,7 @@ export class AttFindInformationRsp {
       const handle = buffer.readUIntLE(o, 2);       o += 2;
       const uuid   = buffer.slice(o, o + uuidSize); o += uuidSize;
 
-      result.push({ handle, uuid: uuid.reverse(), });
+      result.push({ handle, uuid, });
     }
 
     return result;
@@ -303,7 +307,7 @@ export class AttReadByTypeReq {
     o = buffer.writeUIntLE(AttOpcode.ReadByTypeReq, o, 1);
     o = buffer.writeUIntLE(data.startingHandle,     o, 2);
     o = buffer.writeUIntLE(data.endingHandle,       o, 2);
-    data.attributeType.reverse().copy(buffer, o);
+    data.attributeType.copy(buffer, o);
     return buffer;
   }
 
@@ -316,7 +320,7 @@ export class AttReadByTypeReq {
     return {
       startingHandle: buffer.readUIntLE(1, 2),
       endingHandle:   buffer.readUIntLE(3, 2),
-      attributeType:  buffer.slice(this.hdrSize).reverse(),
+      attributeType:  buffer.slice(this.hdrSize),
     };
   }
 }
@@ -568,7 +572,7 @@ export class AttReadByGroupTypeReq {
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeReq, o, 1);
     o = buffer.writeUIntLE(data.startingHandle,          o, 2);
     o = buffer.writeUIntLE(data.endingHandle,            o, 2);
-    data.attributeGroupType.reverse().copy(buffer, o);
+    data.attributeGroupType.copy(buffer, o);
 
     return buffer;
   }
@@ -615,7 +619,7 @@ export class AttReadByGroupTypeRsp {
     for (const entry of data.attributeDataList) {
       o  = buffer.writeUIntLE(entry.attributeHandle, o, 2);
       o  = buffer.writeUIntLE(entry.endGroupHandle,  o, 2);
-      o += entry.attributeValue.reverse().copy(buffer, o);
+      o += entry.attributeValue.copy(buffer, o);
     }
 
     return buffer;
@@ -625,9 +629,9 @@ export class AttReadByGroupTypeRsp {
     let totalSize = this.hdrSize;
     let entrySize: number|null = null;
     for (const entry of data.attributeDataList) {
-      const es = this.entryHdrSize + entry.attributeValue.length;
+      const es = entry.attributeValue.length;
 
-      totalSize += es;
+      totalSize += this.entryHdrSize + es;
 
       if (entrySize === null) {
         entrySize = es;
@@ -648,7 +652,8 @@ export class AttReadByGroupTypeRsp {
       return null;
     }
 
-    const length = buffer.readUInt8(1);
+    const length = buffer.readUInt8(1) - this.entryHdrSize;
+    debug(buffer, length);
 
     const result: AttReadByGroupTypeRspMsg = { attributeDataList: [] };
 
@@ -656,7 +661,7 @@ export class AttReadByGroupTypeRsp {
     while (o < buffer.length) {
       const attributeHandle = buffer.readUInt16LE(o); o += 2;
       const endGroupHandle  = buffer.readUInt16LE(o); o += 2;
-      const attributeValue  = buffer.slice(o, o + length).reverse();
+      const attributeValue  = buffer.slice(o, o + length);
       o += length;
 
       result.attributeDataList.push({

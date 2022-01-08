@@ -34,3 +34,37 @@ export function buildBitfield(bits: number[]): number {
   }
   return bitfield;
 }
+
+export function readBigUInt128LE(buffer: Buffer, offset = 0): bigint {
+  const first = buffer[offset];
+  const last = buffer[offset + 15];
+  if (first === undefined || last === undefined)
+    throw new Error('Out of range')
+
+  let value = 0n;
+
+  for (let shift = 0n; shift < 128n; shift += 32n) {
+    value += BigInt(
+      buffer[offset++] +
+      buffer[offset++] * 2 ** 8 +
+      buffer[offset++] * 2 ** 16 +
+      buffer[offset++] * 2 ** 24
+    ) << shift;
+  }
+
+  return value;
+}
+
+export function writeBigUInt128LE(buf: Buffer, value: bigint, offset: number): number {
+  for (let shift = 0n; shift < 128n; shift += 32n) {
+    let dw = Number((value >> shift) & 0xffffffffn);
+    buf[offset++] = dw;
+    dw = dw >> 8;
+    buf[offset++] = dw;
+    dw = dw >> 8;
+    buf[offset++] = dw;
+    dw = dw >> 8;
+    buf[offset++] = dw;
+  }
+  return offset;
+}

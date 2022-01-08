@@ -306,6 +306,7 @@ export class Att extends EventEmitter {
         reject(new Error(`ATT request (${AttOpcode[reqOpcode]}) timeout`));
       };
       const onFailure = (event: AttErrorRspMsg) => {
+        debug('onFailure', reqOpcode, resEventType, event);
         if (event.requestOpcodeInError !== reqOpcode) {
           return;
         }

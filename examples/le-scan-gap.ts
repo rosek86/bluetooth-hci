@@ -2,7 +2,7 @@ import { Utils } from './utils/Utils';
 import { Address } from '../src/utils/Address';
 
 import { Gap } from '../src/gap/Gap';
-
+import { Gatt } from '../src/gatt/Gatt';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
 (async () => {
@@ -26,6 +26,19 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
       const rssi = await adapter.Hci.readRssi(event.connectionHandle);
       console.log(`RSSI: ${rssi} dBm`);
+
+      const att = gap.getATT(event.connectionHandle);
+      if (!att) {
+        throw new Error('ATT layer not exists');
+      }
+
+      const gatt = new Gatt(att);
+      const attributeData = await gatt.discoverServices();
+      console.log(attributeData);
+
+      for (const data of attributeData.attributeDataList) {
+        await gatt.discoverIncludedServices(data);
+      }
 
       await gap.disconnect(event.connectionHandle);
     });
