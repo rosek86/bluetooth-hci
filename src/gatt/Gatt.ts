@@ -58,6 +58,8 @@ export interface CharacteristicProperties {
 }
 
 export class GattService {
+  private handle: number;
+  private endingHandle: number;
   private uuid: string;
 
   public get Handle(): number { return this.handle; }
@@ -65,11 +67,13 @@ export class GattService {
   public get UUID(): string { return this.uuid; }
 
   public static fromAttData(data: AttDataEntry): GattService {
-    return new GattService(data.handle, data.value, data.endingHandle);
+    return new GattService(data);
   }
 
-  private constructor(private handle: number, private uuidBuffer: Buffer, private endingHandle: number) {
-    this.uuid = UUID.toString(this.uuidBuffer);
+  private constructor(private data: AttDataEntry) {
+    this.handle = data.handle;
+    this.endingHandle = data.endingHandle;
+    this.uuid = UUID.toString(this.data.value);
   }
 
   public toObject() {
@@ -78,6 +82,10 @@ export class GattService {
       endingHandle: this.EndingHandle,
       uuid: this.UUID,
     };
+  }
+
+  get [Symbol.toStringTag]() {
+    return `${this.UUID}@${this.Handle}`;
   }
 }
 
@@ -106,6 +114,10 @@ export class GattIncService {
       endingHandle: this.EndingHandle,
       uuid: this.UUID,
     };
+  }
+
+  get [Symbol.toStringTag]() {
+    return `${this.UUID}@${this.Handle}`;
   }
 }
 
@@ -160,8 +172,11 @@ export class GattCharacteristic {
       extendedProperties:         bitGet(bitsfield, CharacteristicPropertiesBits.ExtendedProperties),
     };
   }
-}
 
+  get [Symbol.toStringTag]() {
+    return `${this.UUID}@${this.Handle} <-> ${this.ValueHandle}`;
+  }
+}
 
 export class GattDescriptor {
   private handle: number;
@@ -188,6 +203,10 @@ export class GattDescriptor {
       endingHandle: this.EndingHandle,
       uuid: this.UUID,
     };
+  }
+
+  get [Symbol.toStringTag]() {
+    return `${this.UUID}@${this.Handle}`;
   }
 }
 

@@ -37,15 +37,15 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
       for (const service of services) {
         console.log('');
-        console.log('service', service.toObject());
+        console.log('service', service);
 
         const characteristics = await gatt.discoverCharacteristics(service);
         for (const characteristic of characteristics) {
-          console.log('characteristics', characteristic.toObject());
+          console.log('characteristics', characteristic);
 
           const descriptors = await gatt.discoverDescriptors(characteristic);
           for (const descriptor of descriptors) {
-            console.log('descriptors', descriptor.toObject());
+            console.log('descriptors', descriptor);
           }
         }
       }
