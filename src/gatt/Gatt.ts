@@ -1,7 +1,12 @@
 import { Att } from '../att/Att';
-import { AttAttributeDataEntry, AttReadByGroupTypeRspMsg, AttReadByTypeRspMsg } from '../att/AttSerDes';
 import { UUID } from '../utils/UUID';
 import { bitGet } from '../utils/Utils';
+
+export interface AttDataEntry {
+  handle: number;
+  value: Buffer;
+  endingHandle: number;
+}
 
 export enum CharacteristicPropertiesBits {
   // If set, permits broadcasts of the Characteristic Value using
@@ -48,7 +53,7 @@ export interface CharacteristicProperties {
   write: boolean;
   notify: boolean;
   indicate: boolean;
-  AuthenticatedSignedWrites: boolean;
+  authenticatedSignedWrites: boolean;
   extendedProperties: boolean;
 }
 
@@ -56,90 +61,132 @@ export class GattService {
   private uuid: string;
 
   public get Handle(): number { return this.handle; }
+  public get EndingHandle(): number { return this.endingHandle; }
   public get UUID(): string { return this.uuid; }
-  public get EndHandle(): number { return this.endGroupHandle; }
 
-  public static fromAttData(data: AttReadByGroupTypeRspMsg['attributeDataList'][0]): GattService {
-    return new GattService(data.attributeHandle, data.attributeValue, data.endGroupHandle);
+  public static fromAttData(data: AttDataEntry): GattService {
+    return new GattService(data.handle, data.value, data.endingHandle);
   }
 
-  private constructor(private handle: number, private uuidBuffer: Buffer, private endGroupHandle: number) {
+  private constructor(private handle: number, private uuidBuffer: Buffer, private endingHandle: number) {
     this.uuid = UUID.toString(this.uuidBuffer);
   }
 
   public toObject() {
     return {
       handle: this.Handle,
+      endingHandle: this.EndingHandle,
       uuid: this.UUID,
-      endGroupHandle: this.endGroupHandle,
     };
   }
 }
 
 export class GattIncService {
+  private handle: number;
+  private endingHandle: number;
   private uuid: string;
 
   public get Handle(): number { return this.handle; }
+  public get EndingHandle(): number { return this.endingHandle; }
   public get UUID(): string { return this.uuid; }
 
-  public static fromAttData(data: AttAttributeDataEntry): GattIncService {
-    return new GattIncService(data.handle, data.value);
+  public static fromAttData(data: AttDataEntry): GattIncService {
+    return new GattIncService(data);
   }
 
-  private constructor(private handle: number, private uuidBuffer: Buffer) {
-    this.uuid = UUID.toString(this.uuidBuffer);
+  private constructor(private data: AttDataEntry) {
+    this.handle = data.handle;
+    this.endingHandle = data.endingHandle;
+    this.uuid = UUID.toString(this.data.value);
   }
 
   public toObject() {
-    return { handle: this.Handle, uuid: this.UUID };
+    return {
+      handle: this.Handle,
+      endingHandle: this.EndingHandle,
+      uuid: this.UUID,
+    };
   }
 }
 
 export class GattCharacteristic {
+  private handle: number;
+  private endingHandle: number;
+  private valueHandle: number;
   private properties: CharacteristicProperties;
   private uuid: string;
 
   public get Handle(): number { return this.handle; }
+  public get EndingHandle(): number { return this.endingHandle; }
   public get ValueHandle(): number { return this.valueHandle; }
   public get UUID(): string { return this.uuid; }
   public get Properties(): CharacteristicProperties { return this.properties; }
 
-  public static fromAttData(data: AttAttributeDataEntry): GattCharacteristic {
-    const handle      = data.handle;
-    const properties  = data.value.readUInt8(0);
-    const valueHandle = data.value.readUInt16LE(1);
-    const uuidBuffer  = data.value.slice(3);
-    return new GattCharacteristic(handle, properties, uuidBuffer, valueHandle);
+  public static fromAttData(data: AttDataEntry): GattCharacteristic {
+    return new GattCharacteristic(data);
   }
 
-  private constructor(
-      private handle: number,
-      private propertiesBitsfield: number,
-      private uuidBuffer: Buffer,
-      private valueHandle: number) {
-    this.uuid = UUID.toString(this.uuidBuffer);
-    this.properties = this.parseProperties();
+  private constructor(private data: AttDataEntry) {
+    const properties  = this.data.value.readUInt8(0);
+    const valueHandle = this.data.value.readUInt16LE(1);
+    const uuid        = this.data.value.slice(3);
+
+    this.handle       = this.data.handle;
+    this.endingHandle = this.data.endingHandle;
+    this.properties   = this.parseProperties(properties);
+    this.valueHandle  = valueHandle;
+    this.uuid         = UUID.toString(uuid);
   }
 
   public toObject() {
     return {
-      handle: this.handle,
-      valueHandle: this.valueHandle,
-      uuid: this.uuid,
-      properties: this.properties,
+      handle: this.Handle,
+      endingHandle: this.EndingHandle,
+      valueHandle: this.ValueHandle,
+      uuid: this.UUID,
+      properties: this.Properties,
     };
   }
 
-  private parseProperties(): CharacteristicProperties {
+  private parseProperties(bitsfield: number): CharacteristicProperties {
     return {
-      broadcast:                  bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.Broadcast),
-      read:                       bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.Read),
-      writeWithoutResponse:       bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.WriteWithoutResponse),
-      write:                      bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.Write),
-      notify:                     bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.Notify),
-      indicate:                   bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.Indicate),
-      AuthenticatedSignedWrites:  bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.AuthenticatedSignedWrites),
-      extendedProperties:         bitGet(this.propertiesBitsfield, CharacteristicPropertiesBits.ExtendedProperties),
+      broadcast:                  bitGet(bitsfield, CharacteristicPropertiesBits.Broadcast),
+      read:                       bitGet(bitsfield, CharacteristicPropertiesBits.Read),
+      writeWithoutResponse:       bitGet(bitsfield, CharacteristicPropertiesBits.WriteWithoutResponse),
+      write:                      bitGet(bitsfield, CharacteristicPropertiesBits.Write),
+      notify:                     bitGet(bitsfield, CharacteristicPropertiesBits.Notify),
+      indicate:                   bitGet(bitsfield, CharacteristicPropertiesBits.Indicate),
+      authenticatedSignedWrites:  bitGet(bitsfield, CharacteristicPropertiesBits.AuthenticatedSignedWrites),
+      extendedProperties:         bitGet(bitsfield, CharacteristicPropertiesBits.ExtendedProperties),
+    };
+  }
+}
+
+
+export class GattDescriptor {
+  private handle: number;
+  private endingHandle: number;
+  private uuid: string;
+
+  public get Handle(): number { return this.handle; }
+  public get EndingHandle(): number { return this.endingHandle; }
+  public get UUID(): string { return this.uuid; }
+
+  public static fromAttData(data: AttDataEntry): GattDescriptor {
+    return new GattDescriptor(data);
+  }
+
+  private constructor(private data: AttDataEntry) {
+    this.handle       = this.data.handle;
+    this.endingHandle = this.data.endingHandle;
+    this.uuid         = UUID.toString(this.data.value);
+  }
+
+  public toObject() {
+    return {
+      handle: this.Handle,
+      endingHandle: this.EndingHandle,
+      uuid: this.UUID,
     };
   }
 }
@@ -151,23 +198,28 @@ export class Gatt {
 
   constructor(private att: Att) {}
 
-  async discoverServices(): Promise<GattService[]> {
+  public async discoverServices(): Promise<GattService[]> {
     const entries = await this.readByGroupTypeReq(this.GATT_PRIM_SVC_UUID, 1, 0xFFFF);
     return entries.map((e) => GattService.fromAttData(e));
   }
 
-  async discoverIncludedServices(service: GattService): Promise<GattIncService[]> {
-    const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndHandle);
+  public async discoverIncludedServices(service: GattService): Promise<GattIncService[]> {
+    const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndingHandle);
     return entries.map((e) => GattIncService.fromAttData(e));
   }
 
-  async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
-    const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle, service.EndHandle);
+  public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
+    const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle, service.EndingHandle);
     return entries.map((e) => GattCharacteristic.fromAttData(e));
   }
 
-  private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttReadByGroupTypeRspMsg['attributeDataList']> {
-    const attributeData: AttReadByGroupTypeRspMsg = { attributeDataList: [] };
+  public async discoverDescriptors(characteristic: GattCharacteristic) {
+    const entries = await this.findInformation(characteristic.Handle, characteristic.EndingHandle);
+    return entries.map((e) => GattDescriptor.fromAttData(e));
+  }
+
+  private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+    const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
@@ -177,7 +229,11 @@ export class Gatt {
           attributeGroupType,
         });
         for (const entry of data?.attributeDataList ?? []) {
-          attributeData.attributeDataList.push(entry);
+          attributeData.push({
+            handle: entry.attributeHandle,
+            value: entry.attributeValue,
+            endingHandle: entry.endGroupHandle,
+          });
         }
         startingHandle = data?.attributeDataList.at(-1)?.endGroupHandle ?? endingHandle;
       }
@@ -187,11 +243,11 @@ export class Gatt {
         throw err;
       }
     }
-    return attributeData.attributeDataList;
+    return attributeData;
   }
 
-  private async readByType(attributeType: Buffer, startingHandle: number, endingHandle: number): Promise<AttReadByTypeRspMsg['attributeDataList']> {
-    const attributeData: AttReadByTypeRspMsg = { attributeDataList: [] };
+  private async readByType(attributeType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+    const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
@@ -201,7 +257,11 @@ export class Gatt {
           attributeType,
         });
         for (const entry of data?.attributeDataList ?? []) {
-          attributeData.attributeDataList.push(entry);
+          const previous = attributeData.at(-1);
+          if (previous) {
+            previous.endingHandle = entry.handle - 1;
+          }
+          attributeData.push({ handle: entry.handle, value: entry.value, endingHandle });
         }
         startingHandle = data?.attributeDataList.at(-1)?.handle ?? endingHandle;
       }
@@ -211,6 +271,32 @@ export class Gatt {
         throw err;
       }
     }
-    return attributeData.attributeDataList;
+    return attributeData;
+  }
+
+  private async findInformation(startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+    const attributeData: AttDataEntry[] = [];
+    try {
+      while (startingHandle < endingHandle) {
+        const data = await this.att.findInformationReq({
+          startingHandle: startingHandle + 1,
+          endingHandle: endingHandle,
+        });
+        for (const entry of data) {
+          const previous = attributeData.at(-1);
+          if (previous) {
+            previous.endingHandle = entry.handle - 1;
+          }
+          attributeData.push({ handle: entry.handle, value: entry.uuid, endingHandle });
+        }
+        startingHandle = data.at(-1)?.handle ?? endingHandle;
+      }
+    } catch (e) {
+      const err = e as NodeJS.ErrnoException;
+      if (err.code !== 'AttributeNotFound') {
+        throw err;
+      }
+    }
+    return attributeData;
   }
 }
