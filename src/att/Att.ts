@@ -311,10 +311,13 @@ export class Att extends EventEmitter {
           return;
         }
         cleanup();
-        reject(new Error(
-          `ATT request (${AttOpcode[reqOpcode]}) failed due to ${AttErrorCode[event.errorCode]}` +
+        const err: NodeJS.ErrnoException = new Error(
+          `ATT request (${AttOpcode[reqOpcode]}) failed due to ${AttErrorCode[event.errorCode]} ` +
           `attribute handle: ${event.attributeHandleInError}`
-        ));
+        );
+        err.code = AttErrorCode[event.errorCode];
+        err.errno = event.errorCode;
+        reject(err);
       };
       const onSuccess = (event: T) => {
         cleanup();

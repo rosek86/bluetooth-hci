@@ -33,11 +33,14 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       }
 
       const gatt = new Gatt(att);
-      const attributeData = await gatt.discoverServices();
-      console.log(attributeData);
+      const services = await gatt.discoverServices();
 
-      for (const data of attributeData.attributeDataList) {
-        await gatt.discoverIncludedServices(data);
+      for (const service of services) {
+        console.log('');
+        console.log('service', service);
+
+        const characteristics = await gatt.discoverCharacteristics(service);
+        console.log('characteristics', characteristics);
       }
 
       await gap.disconnect(event.connectionHandle);

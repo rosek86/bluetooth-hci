@@ -300,7 +300,7 @@ export class AttReadByTypeReq {
 
   static serialize(data: AttReadByTypeReqMsg): Buffer {
     if ([2, 16].includes(data.attributeType.length) === false) {
-      throw new Error('');
+      throw new Error('Invalid attribute type length');
     }
     const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeType.length);
     let o = 0;
