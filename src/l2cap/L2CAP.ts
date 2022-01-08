@@ -79,7 +79,7 @@ export class L2CAP extends EventEmitter {
 
     const aclLength = Math.min(l2capLength, this.aclSize.leAclDataPacketLength);
 
-    const fragment = Buffer.allocUnsafe(aclLength);
+    const fragment = Buffer.alloc(aclLength);
     fragment.writeUIntLE(payload.length,  0, 2);
     fragment.writeUIntLE(channelId,       2, 2);
     payload.copy(fragment, 4);

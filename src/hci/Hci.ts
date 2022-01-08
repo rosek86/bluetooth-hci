@@ -118,7 +118,7 @@ export class Hci extends EventEmitter {
     connectionHandle: number,
     reason: HciDisconnectReason = HciDisconnectReason.ConnTerminatedByRemoteUser
   ): Promise<void> {
-    const payload = Buffer.allocUnsafe(3);
+    const payload = Buffer.alloc(3);
     payload.writeUIntLE(connectionHandle, 0, 2);
     payload.writeUIntLE(reason,           2, 1);
     const ocf = HciOcfLinkControlCommands.Disconnect;
@@ -126,7 +126,7 @@ export class Hci extends EventEmitter {
   }
 
   public async readRemoteVersionInformation(connectionHandle: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt16LE(connectionHandle, 0);
     const ocf = HciOcfLinkControlCommands.ReadRemoteVersionInformation;
     await this.cmd.linkControl({ ocf, payload });
@@ -352,7 +352,7 @@ export class Hci extends EventEmitter {
   }
 
   public async leSetHostChannelClassification(channelMap: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(5);
+    const payload = Buffer.alloc(5);
     payload.writeUIntLE(channelMap, 0, 5);
     const ocf = HciOcfLeControllerCommands.SetHostChannelClassification;
     await this.cmd.leController({ ocf, payload });
@@ -366,7 +366,7 @@ export class Hci extends EventEmitter {
   }
 
   public async leReadRemoteFeatures(connectionHandle: number): Promise<void> {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUIntLE(connectionHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
     await this.cmd.leController({ ocf, payload });
@@ -555,7 +555,7 @@ export class Hci extends EventEmitter {
 
   public async leSetResolvablePrivateAddressTimeout(seconds: number): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetResolvablePrivateAddressTimeout;
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt16LE(seconds);
     await this.cmd.leController({ ocf, payload });
   }
@@ -683,7 +683,7 @@ export class Hci extends EventEmitter {
                 packet.broadcast << 14;
 
     const totalSize = aclHdrSize + packet.data.length;
-    const buffer = Buffer.allocUnsafe(totalSize);
+    const buffer = Buffer.alloc(totalSize);
     buffer.writeUInt16LE(hdr, 0);
     buffer.writeUInt16LE(packet.data.length, 2);
     packet.data.copy(buffer, aclHdrSize);

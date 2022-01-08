@@ -235,7 +235,7 @@ export class HciCmd {
 
   private buildCommand(opcode: number, payload?: Buffer): Buffer {
     const payloadLength = payload?.length ?? 0;
-    const buffer = Buffer.allocUnsafe(3 + payloadLength);
+    const buffer = Buffer.alloc(3 + payloadLength);
 
     let o = 0;
     o = buffer.writeUIntLE(opcode,        o, 2);

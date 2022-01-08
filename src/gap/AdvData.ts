@@ -140,7 +140,7 @@ export interface AdvData {
 
 export class AdvData {
   static build(advData: AdvData): Buffer {
-    let buffer = Buffer.allocUnsafe(0);
+    let buffer = Buffer.alloc(0);
 
     if (advData.flags) {
       buffer = Buffer.concat([buffer, this.buildFlags(advData.flags)]);
@@ -246,7 +246,7 @@ export class AdvData {
   }
 
   private static buildFlags(flags: number): Buffer {
-    const buffer = Buffer.allocUnsafe(3);
+    const buffer = Buffer.alloc(3);
     buffer[0] = 2;
     buffer[1] = AdvDataType.Flags;
     buffer[2] = flags;
@@ -255,7 +255,7 @@ export class AdvData {
 
   private static buildListOfServiceClassUuids(type: AdvDataType, bits: number, list: string[]): Buffer {
     const bytes = bits / 8;
-    const buffer = Buffer.allocUnsafe(2 + list.length * bytes);
+    const buffer = Buffer.alloc(2 + list.length * bytes);
 
     buffer[0] = buffer.length - 1;
     buffer[1] = type;
@@ -271,7 +271,7 @@ export class AdvData {
 
   private static buildName(type: AdvDataType, name: string): Buffer {
     const nameBuffer = Buffer.from(name, 'utf8');
-    const buffer = Buffer.allocUnsafe(2 + nameBuffer.length);
+    const buffer = Buffer.alloc(2 + nameBuffer.length);
     buffer.writeUIntLE(buffer.length - 1, 0, 1);
     buffer.writeUIntLE(type,              1, 1);
     nameBuffer.copy(buffer, 2);
@@ -279,7 +279,7 @@ export class AdvData {
   }
 
   private static buildTxPowerLevel(txPowerLevel: number): Buffer {
-    const buffer = Buffer.allocUnsafe(3);
+    const buffer = Buffer.alloc(3);
     buffer[0] = 2;
     buffer[1] = AdvDataType.TxPowerLevel;
     buffer[2] = txPowerLevel;
@@ -287,7 +287,7 @@ export class AdvData {
   }
 
   private static buildServiceData(type: AdvDataType, serviceData: AdvDataServcieData, uuidBits: number): Buffer {
-    const buffer = Buffer.allocUnsafe(2 + 2 + serviceData.data.length);
+    const buffer = Buffer.alloc(2 + 2 + serviceData.data.length);
     buffer[0] = buffer.length - 1;
     buffer[1] = type;
     UUID.from(serviceData.uuid).copy(buffer, 2);
@@ -296,7 +296,7 @@ export class AdvData {
   }
 
   private static buildManufData(manufData: Required<AdvData>['manufacturerData']): Buffer {
-    const buffer = Buffer.allocUnsafe(2 + 2 + manufData.data.length);
+    const buffer = Buffer.alloc(2 + 2 + manufData.data.length);
     buffer.writeUIntLE(buffer.length - 1,                     0, 1);
     buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
     buffer.writeUIntLE(manufData.ident,                       2, 2);

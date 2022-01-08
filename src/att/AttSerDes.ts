@@ -20,7 +20,7 @@ export class AttErrorRsp {
   private static readonly size = 5;
 
   static serialize(data: AttErrorRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.size);
+    const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ErrorRsp,          o, 1);
     o = buffer.writeUIntLE(data.requestOpcodeInError,   o, 1);
@@ -50,7 +50,7 @@ export class AttExchangeMtuReq {
   private static readonly size = 3;
 
   static serialize(req: AttExchangeMtuReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.size);
+    const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuReq, o, 1);
     o = buffer.writeUIntLE(req.mtu,                  o, 2);
@@ -74,7 +74,7 @@ export class AttExchangeMtuRsp {
   private static readonly size = 3;
 
   static serialize(req: AttExchangeMtuRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.size);
+    const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuRsp, o, 1);
     o = buffer.writeUIntLE(req.mtu,                  o, 2);
@@ -99,7 +99,7 @@ export class AttFindInformationReq {
   private static readonly size = 5;
 
   static serialize(req: AttFindInformationReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.size);
+    const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.FindInformationReq,  o, 1);
     o = buffer.writeUIntLE(req.startingHandle,            o, 2);
@@ -142,7 +142,7 @@ export class AttFindInformationRsp {
       throw new Error('Invalid ATT response data');
     }
 
-    const buffer = Buffer.allocUnsafe(2 + (2 + uuidSize) * data.length);
+    const buffer = Buffer.alloc(2 + (2 + uuidSize) * data.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.FindInformationRsp,  o, 1);
@@ -219,7 +219,7 @@ export class AttFindByTypeValueReq {
   private static readonly hdrSize = 7;
 
   static serialize(data: AttFindByTypeValueReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeValue.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.attributeValue.length);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.FindByTypeValueReq,  o, 1);
     o = buffer.writeUIntLE(data.startingHandle,           o, 2);
@@ -254,7 +254,7 @@ export interface AttFindByTypeValueRspMsg {
 
 export class AttFindByTypeValueRsp {
   static serialize(data: AttFindByTypeValueRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + data.handlesInformationList.length * 4);
+    const buffer = Buffer.alloc(1 + data.handlesInformationList.length * 4);
 
     let o = buffer.writeUIntLE(AttOpcode.FindByTypeValueRsp, 0, 1);
 
@@ -302,7 +302,7 @@ export class AttReadByTypeReq {
     if ([2, 16].includes(data.attributeType.length) === false) {
       throw new Error('Invalid attribute type length');
     }
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeType.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.attributeType.length);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByTypeReq, o, 1);
     o = buffer.writeUIntLE(data.startingHandle,     o, 2);
@@ -354,7 +354,7 @@ export class AttReadByTypeRsp {
     }
 
     const payloadSize = attributeDataList.length * (this.handleSize + attributeValueSize);
-    const buffer = Buffer.allocUnsafe(this.hdrSize + payloadSize);
+    const buffer = Buffer.alloc(this.hdrSize + payloadSize);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByTypeRsp,               o, 1);
@@ -385,7 +385,7 @@ export class AttReadByTypeRsp {
       const handle = buffer.readUIntLE(o, this.handleSize);
       o += this.handleSize;
 
-      const value = Buffer.allocUnsafe(attributeValueSize);
+      const value = Buffer.alloc(attributeValueSize);
       buffer.copy(value, 0, o, attributeValueSize);
       o += attributeValueSize;
 
@@ -402,7 +402,7 @@ export interface AttReadReqMsg {
 
 export class AttReadReq {
   static serialize(data: AttReadReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(3);
+    const buffer = Buffer.alloc(3);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadReq,     o, 1);
@@ -427,7 +427,7 @@ export interface AttReadRspMsg {
 
 export class AttReadRsp {
   static serialize(data: AttReadRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + data.attributeValue.length);
+    const buffer = Buffer.alloc(1 + data.attributeValue.length);
     buffer.writeUInt8(AttOpcode.ReadRsp, 0);
     data.attributeValue.copy(buffer, 1);
     return buffer;
@@ -450,7 +450,7 @@ export interface AttReadBlobReqMsg {
 
 export class AttReadBlobReq {
   static serialize(data: AttReadBlobReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(5);
+    const buffer = Buffer.alloc(5);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadBlobReq, o, 1);
@@ -479,7 +479,7 @@ export interface AttReadBlobRspMsg {
 
 export class AttReadBlobRsp {
   static serialize(data: AttReadBlobRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + data.partAttributeValue.length);
+    const buffer = Buffer.alloc(1 + data.partAttributeValue.length);
     buffer.writeUIntLE(AttOpcode.ReadBlobRsp, 0, 1);
     data.partAttributeValue.copy(buffer, 1);
     return buffer;
@@ -501,7 +501,7 @@ export interface AttReadMultipleReqMsg {
 
 export class AttReadMultipleReq {
   static serialize(data: AttReadMultipleReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + 2 * data.setOfHandles.length);
+    const buffer = Buffer.alloc(1 + 2 * data.setOfHandles.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadMultipleReq, o, 1);
@@ -536,7 +536,7 @@ export interface AttReadMultipleRspMsg {
 
 export class AttReadMultipleRsp {
   static serialize(data: AttReadMultipleRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + data.setOfValues.length);
+    const buffer = Buffer.alloc(1 + data.setOfValues.length);
     buffer.writeUInt8(AttOpcode.ReadMultipleRsp, 0);
     data.setOfValues.copy(buffer, 1);
     return buffer;
@@ -566,7 +566,7 @@ export class AttReadByGroupTypeReq {
       throw new Error('Invalid ATT data');
     }
 
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeGroupType.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.attributeGroupType.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeReq, o, 1);
@@ -610,7 +610,7 @@ export class AttReadByGroupTypeRsp {
   static serialize(data: AttReadByGroupTypeRspMsg): Buffer {
     const { total, entry } = this.getSize(data);
 
-    const buffer = Buffer.allocUnsafe(total);
+    const buffer = Buffer.alloc(total);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeRsp, o, 1);
@@ -682,7 +682,7 @@ export class AttWriteReq {
   private static readonly hdrSize = 3;
 
   static serialize(data: AttWriteReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.attributeValue.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.attributeValue.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.WriteReq,    o, 1);
@@ -734,7 +734,7 @@ export class AttPrepareWriteReq {
   private static readonly hdrSize = 5;
 
   static serialize(data: AttPrepareWriteReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.partAttributeValue.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.partAttributeValue.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteReq, o, 1);
@@ -771,7 +771,7 @@ export class AttPrepareWriteRsp {
   private static readonly hdrSize = 5;
 
   static serialize(data: AttPrepareWriteRspMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(this.hdrSize + data.partAttributeValue.length);
+    const buffer = Buffer.alloc(this.hdrSize + data.partAttributeValue.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteRsp, o, 1);
@@ -848,7 +848,7 @@ export interface AttReadMultipleVariableReqMsg {
 
 export class AttReadMultipleVariableReq {
   static serialize(data: AttReadMultipleVariableReqMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(1 + data.setOfHandles.length);
+    const buffer = Buffer.alloc(1 + data.setOfHandles.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableReq, o, 1);
@@ -878,7 +878,7 @@ export interface AttReadMultipleVariableRspMsg {
 export class AttReadMultipleVariableRsp {
   static serialize(data: AttReadMultipleVariableRspMsg): Buffer {
     const size = 1 + data.values.reduce((sum, entry) => sum + (2 + entry.length), 0);
-    const buffer = Buffer.allocUnsafe(size);
+    const buffer = Buffer.alloc(size);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableRsp, o, 1);
@@ -917,7 +917,7 @@ export interface AttWriteCmdMsg {
 
 export class AttWriteCmd {
   static serialize(data: AttWriteCmdMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+    const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.WriteCmd,    o, 1);
@@ -947,7 +947,7 @@ export interface AttSignedWriteCmdMsg {
 
 export class AttSignedWriteCmd {
   static serialize(data: AttSignedWriteCmdMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+    const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.SignedWriteCmd, o, 1);
@@ -977,7 +977,7 @@ export interface AttHandleValueNtfMsg {
 
 export class AttHandleValueNtf {
   static serialize(data: AttHandleValueNtfMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+    const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.HandleValueNtf, o, 1);
@@ -1007,7 +1007,7 @@ export interface AttHandleValueIndMsg {
 
 export class AttHandleValueInd {
   static serialize(data: AttHandleValueIndMsg): Buffer {
-    const buffer = Buffer.allocUnsafe(3 + data.attributeValue.length);
+    const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.HandleValueInd, o, 1);
@@ -1058,7 +1058,7 @@ export interface AttMultipleHandleValueNtfMsg {
 export class AttMultipleHandleValueNtf {
   static serialize(data: AttMultipleHandleValueNtfMsg): Buffer {
     const size = 1 + data.values.reduce((sum, entry) => sum + (4 + entry.attributeValue.length), 0);
-    const buffer = Buffer.allocUnsafe(size);
+    const buffer = Buffer.alloc(size);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.MultipleHandleValueNtf, o, 1);

@@ -119,7 +119,7 @@ export class SetEventMask {
     mask = bitSet(mask, 60n, events.remoteHostSupportedFeaturesNotification);
     mask = bitSet(mask, 61n, events.leMeta);
 
-    const payload = Buffer.allocUnsafe(8);
+    const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
 
     return { ocf: HciOcfControlAndBasebandCommands.SetEventMask, payload };
@@ -133,7 +133,7 @@ export enum ReadTransmitPowerLevelType {
 
 export class ReadTransmitPowerLevel {
   static inParams(connectionHandle: number, type: ReadTransmitPowerLevelType): InParamsConn<HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
-    const payload = Buffer.allocUnsafe(3);
+    const payload = Buffer.alloc(3);
     payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(type, 2);
     return { ocf: HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel, payload, connectionHandle };
@@ -156,7 +156,7 @@ export enum FlowControlEnable {
 
 export class SetControllerToHostFlowControl {
   static inParams(enable: FlowControlEnable): Buffer {
-    const payload = Buffer.allocUnsafe(1);
+    const payload = Buffer.alloc(1);
     payload.writeUInt8(enable, 0);
     return payload;
   }
@@ -220,7 +220,7 @@ export class SetEventMask2 {
     mask = bitSet(mask, 23n,  events.authenticatedPayloadTimeoutExpired);
     mask = bitSet(mask, 24n,  events.samStatusChange);
 
-    const payload = Buffer.allocUnsafe(8);
+    const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
     return payload;
   }
@@ -239,7 +239,7 @@ export class ReadLeHostSupport {
 
 export class WriteLeHostSupported {
   static inParams(leSupportedHost: boolean): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload[0] = leSupportedHost ? 1 : 0;
     payload[1] = 0; // Simultaneous Le Host shall be ignored
     return payload;
@@ -255,7 +255,7 @@ export interface HostBufferSize {
 
 export class HostBufferSize {
   static inParams(params: HostBufferSize): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt16LE(params.hostAclDataPacketLength);
     return payload;
   }
@@ -268,7 +268,7 @@ export interface CompletedPackets {
 
 export class HostNumberOfCompletedPackets {
   static inParams(completedPackets: CompletedPackets[]): Buffer {
-    const payload = Buffer.allocUnsafe(1 + (2+2) * completedPackets.length);
+    const payload = Buffer.alloc(1 + (2+2) * completedPackets.length);
 
     let o = payload.writeUInt8(completedPackets.length, 0);
 
@@ -285,7 +285,7 @@ export class ReadAuthenticatedPayloadTimeout {
   private static readonly timeoutFactor = 10;
 
   static inParams(connectionHandle: number): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt16LE(connectionHandle, 0);
     return payload;
   }
@@ -302,7 +302,7 @@ export class WriteAuthenticatedPayloadTimeout {
   private static readonly timeoutFactor = 10;
 
   static inParams(connectionHandle: number, timeoutMs: number): Buffer {
-    const payload = Buffer.allocUnsafe(4);
+    const payload = Buffer.alloc(4);
     payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt16LE(Math.round(timeoutMs / this.timeoutFactor), 2);
     return payload;

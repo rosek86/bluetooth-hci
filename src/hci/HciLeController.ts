@@ -80,7 +80,7 @@ export class LeSetEventsMask {
     mask = bitSet(mask, 32n, events.transmitPowerReporting);
     mask = bitSet(mask, 33n, events.bigInfoAdvertisingReport);
 
-    const payload = Buffer.allocUnsafe(8);
+    const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
 
     return payload;
@@ -214,7 +214,7 @@ export class LeReadLocalSupportedFeatures {
 
 export class LeSetRandomAddress {
   static inParams(randomAddress: Address): Buffer {
-    const payload = Buffer.allocUnsafe(6);
+    const payload = Buffer.alloc(6);
     payload.writeUIntLE(randomAddress.toNumeric(), 0, 6);
     return payload;
   }
@@ -237,7 +237,7 @@ export class LeSetAdvertisingParameters {
     const advertisingIntervalMax = Math.round(params.advertisingIntervalMaxMs / 0.625);
     const advertisingChannelMap  = buildBitfield(params.advertisingChannelMap);
 
-    const payload = Buffer.allocUnsafe(15);
+    const payload = Buffer.alloc(15);
 
     let o = 0;
     o = payload.writeUIntLE(advertisingIntervalMin,         o, 2);
@@ -278,7 +278,7 @@ export class LeSetAdvertisingScanResponseData {
 
 export class LeSetAdvertisingEnable {
   static inParams(enable: boolean): Buffer {
-    const payload = Buffer.allocUnsafe(1);
+    const payload = Buffer.alloc(1);
     payload.writeUInt8(enable ? 1 : 0);
     return payload;
   }
@@ -296,7 +296,7 @@ export class LeSetScanParameters {
   private static readonly timeFactor = 0.625;
 
   static inParams(params: LeScanParameters): Buffer {
-    const payload = Buffer.allocUnsafe(1+2+2+1+1);
+    const payload = Buffer.alloc(1+2+2+1+1);
 
     const interval = Math.round(params.intervalMs / this.timeFactor);
     const window   = Math.round(params.windowMs   / this.timeFactor);
@@ -315,7 +315,7 @@ export class LeSetScanParameters {
 
 export class LeSetScanEnabled {
   static inParams(enable: boolean, filterDuplicates?: boolean): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt8(enable           ? 1 : 0);
     payload.writeUInt8(filterDuplicates ? 1 : 0);
     return payload;
@@ -338,7 +338,7 @@ export interface LeCreateConnection {
 
 export class LeCreateConnection {
   static inParams(params: LeCreateConnection): Buffer {
-    const payload = Buffer.allocUnsafe(2+2+1+1+6+1+2+2+2+2+2+2);
+    const payload = Buffer.alloc(2+2+1+1+6+1+2+2+2+2+2+2);
 
     const scanInterval       = this.msToValue(params.scanIntervalMs,          0.625);
     const scanWindow         = this.msToValue(params.scanWindowMs,            0.625);
@@ -382,7 +382,7 @@ export interface LeConnectionUpdate {
 
 export class LeConnectionUpdate {
   static inParams(params: LeConnectionUpdate): Buffer {
-    const payload = Buffer.allocUnsafe(2+2+2+2+2+2+2);
+    const payload = Buffer.alloc(2+2+2+2+2+2+2);
 
     const connIntervalMin    = this.msToValue(params.connectionIntervalMinMs, 1.25);
     const connIntervalMax    = this.msToValue(params.connectionIntervalMaxMs, 1.25);
@@ -429,7 +429,7 @@ export interface LeWhiteList {
 
 export class LeWhiteList {
   static inParams(params: LeWhiteList): Buffer {
-    const payload = Buffer.allocUnsafe(1+6);
+    const payload = Buffer.alloc(1+6);
     payload.writeUIntLE(params.addressType,  0, 1);
     payload.writeUIntLE(params.address?.toNumeric() ?? 0, 1, 6);
     return payload;
@@ -438,7 +438,7 @@ export class LeWhiteList {
 
 export class LeReadChannelMap {
   static inParams(connectionHandle: number): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUIntLE(connectionHandle, 0, 2);
     return payload;
   }
@@ -457,7 +457,7 @@ export class LeEncrypt {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.allocUnsafe(32);
+    const payload = Buffer.alloc(32);
 
     key.reverse().copy(payload, 0);
     plaintextData.reverse().copy(payload, 16);
@@ -493,7 +493,7 @@ export class LeEnableEncryption {
     if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
-    const payload = Buffer.allocUnsafe(2+8+2+16);
+    const payload = Buffer.alloc(2+8+2+16);
 
     let o = 0;
     o  = payload.writeUIntLE(connectionHandle, o, 2);
@@ -510,7 +510,7 @@ export class LeLongTermKeyRequestReply {
     if (longTermKey.length !== 16) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
-    const payload = Buffer.allocUnsafe(2+16);
+    const payload = Buffer.alloc(2+16);
 
     let o = 0;
     o  = payload.writeUIntLE(connectionHandle, o, 2);
@@ -522,7 +522,7 @@ export class LeLongTermKeyRequestReply {
 
 export class LeLongTermKeyRequestNegativeReply {
   static inParams(connectionHandle: number): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUIntLE(connectionHandle, 0, 2);
     return payload;
   }
@@ -642,7 +642,7 @@ abstract class LeTest {
 export class LeReceiverTestV1 extends LeTest {
   static inParams(rxChannelMhz: number): Buffer {
     const rxChannel = this.channelFrequencyToHciValue(rxChannelMhz);
-    const payload = Buffer.allocUnsafe(1);
+    const payload = Buffer.alloc(1);
     payload.writeUIntLE(rxChannel, 0, 1);
     return payload;
   }
@@ -658,7 +658,7 @@ export class LeReceiverTestV2 extends LeTest {
   static inParams(params: LeReceiverTestV2): Buffer {
     const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1);
+    const payload = Buffer.alloc(1+1+1);
 
     let o = 0;
     o = payload.writeUIntLE(rxChannel,              o, 1);
@@ -683,7 +683,7 @@ export class LeReceiverTestV3 extends LeTest {
   static inParams(params: LeReceiverTestV3): Buffer {
     const rxChannel = this.channelFrequencyToHciValue(params.rxChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+    const payload = Buffer.alloc(1+1+1+1+1+1+1+params.antennaIds.length);
 
     let o = 0;
     o = payload.writeUIntLE(rxChannel,                o, 1);
@@ -724,7 +724,7 @@ export class LeTransmitterTestV1 extends LeTest {
   static inParams(params: LeTransmitterTestV1): Buffer {
     const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1);
+    const payload = Buffer.alloc(1+1+1);
 
     let o = 0;
     o = payload.writeUIntLE(txChannel,              o, 1);
@@ -746,7 +746,7 @@ export class LeTransmitterTestV2 extends LeTest {
   static inParams(params: LeTransmitterTestV2): Buffer {
     const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1+1);
+    const payload = Buffer.alloc(1+1+1+1);
 
     let o = 0;
     o = payload.writeUIntLE(txChannel,              o, 1);
@@ -772,7 +772,7 @@ export class LeTransmitterTestV3 extends LeTest {
   static inParams(params: LeTransmitterTestV3): Buffer {
     const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length);
+    const payload = Buffer.alloc(1+1+1+1+1+1+1+params.antennaIds.length);
 
     let o = 0;
     o = payload.writeUIntLE(txChannel,                o, 1);
@@ -810,7 +810,7 @@ export class LeTransmitterTestV4 extends LeTest {
   static inParams(params: LeTransmitterTestV4): Buffer {
     const txChannel = this.channelFrequencyToHciValue(params.txChannelMhz);
 
-    const payload = Buffer.allocUnsafe(1+1+1+1+1+1+1+params.antennaIds.length+1);
+    const payload = Buffer.alloc(1+1+1+1+1+1+1+params.antennaIds.length+1);
 
     let o = 0;
     o = payload.writeUIntLE(txChannel,                o, 1);
@@ -860,7 +860,7 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
     const minCeLength   = this.msToValue(params.minCeLengthMs, 0.625);
     const maxCeLength   = this.msToValue(params.maxCeLengthMs, 0.625);
 
-    const payload = Buffer.allocUnsafe(2+2+2+2+2+2);
+    const payload = Buffer.alloc(2+2+2+2+2+2);
 
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
@@ -883,7 +883,7 @@ export class LeRemoteConnectionParameterRequestNegativeReply extends LeTest {
     connectionHandle: number,
     reason: HciErrorCode
   ): Buffer {
-    const payload = Buffer.allocUnsafe(2+1);
+    const payload = Buffer.alloc(2+1);
 
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
@@ -900,7 +900,7 @@ export interface LeDataLength {
 
 export class LeDataLength {
   static inParams(connectionHandle: number, params: LeDataLength): Buffer {
-    const payload = Buffer.allocUnsafe(2+2+2);
+    const payload = Buffer.alloc(2+2+2);
 
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
@@ -918,7 +918,7 @@ export interface LeSuggestedDefaultDataLength {
 
 export class LeSuggestedDefaultDataLength {
   static inParams(params: LeSuggestedDefaultDataLength): Buffer {
-    const payload = Buffer.allocUnsafe(4);
+    const payload = Buffer.alloc(4);
     payload.writeUInt16LE(params.suggestedMaxTxOctets, 0);
     payload.writeUInt16LE(params.suggestedMaxTxTime,   2);
     return payload;
@@ -945,7 +945,7 @@ export class LeDhKeyV1 {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.allocUnsafe(64);
+    const payload = Buffer.alloc(64);
     params.publicKey.reverse().copy(payload, 0);
 
     return payload;
@@ -962,7 +962,7 @@ export class LeDhKeyV2 {
     if (params.publicKey.length !== 64) {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
-    const payload = Buffer.allocUnsafe(65);
+    const payload = Buffer.alloc(65);
     params.publicKey.reverse().copy(payload, 0);
     payload.writeUInt8(params.keyType, 64);
     return payload;
@@ -985,7 +985,7 @@ export class LeAddDeviceToResolvingList {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.allocUnsafe(39);
+    const payload = Buffer.alloc(39);
 
     let o = 0;
     o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
@@ -1004,7 +1004,7 @@ export interface LeRemoveDeviceFromResolvingList {
 
 export class LeRemoveDeviceFromResolvingList {
   static inParams(params: LeRemoveDeviceFromResolvingList): Buffer {
-    const payload = Buffer.allocUnsafe(7);
+    const payload = Buffer.alloc(7);
 
     let o = 0;
     o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
@@ -1030,7 +1030,7 @@ export interface LeReadPeerResolvableAddress {
 
 export class LeReadPeerResolvableAddress {
   static inParams(params: LeReadPeerResolvableAddress): Buffer {
-    const payload = Buffer.allocUnsafe(7);
+    const payload = Buffer.alloc(7);
 
     let o = 0;
     o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
@@ -1054,7 +1054,7 @@ export interface LeLocalPeerResolvableAddress {
 
 export class LeLocalPeerResolvableAddress {
   static inParams(params: LeLocalPeerResolvableAddress): Buffer {
-    const payload = Buffer.allocUnsafe(7);
+    const payload = Buffer.alloc(7);
 
     let o = 0;
     o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
@@ -1094,7 +1094,7 @@ export class LeMaximumDataLength {
 
 export class ConnectionHandle {
   static inParams(connectionHandle: number): Buffer {
-    const payload = Buffer.allocUnsafe(2);
+    const payload = Buffer.alloc(2);
     payload.writeUInt16LE(connectionHandle, 0);
     return payload;
   }
@@ -1138,7 +1138,7 @@ export class DefaultTxRxPhy {
       rxPhys = 1 << params.rxPhys;
     }
 
-    const payload = Buffer.allocUnsafe(3);
+    const payload = Buffer.alloc(3);
 
     let o = 0;
     o = payload.writeUInt8(allPhys, o);
@@ -1181,7 +1181,7 @@ export class LeSetTxRxPhy {
       opts = params.opts;
     }
 
-    const payload = Buffer.allocUnsafe(7);
+    const payload = Buffer.alloc(7);
 
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
@@ -1196,7 +1196,7 @@ export class LeSetTxRxPhy {
 
 export class LeAdvertisingSetRandomAddress {
   static inParams(advertHandle: number, randomAddress: Address): Buffer {
-    const payload = Buffer.allocUnsafe(7);
+    const payload = Buffer.alloc(7);
 
     let o = 0;
     o = payload.writeUIntLE(advertHandle,               o, 1);
@@ -1222,7 +1222,7 @@ export interface LeExtendedAdvertisingData {
 
 export class LeExtendedAdvertisingData {
   static inParams(advertHandle: number, params: LeExtendedAdvertisingData): Buffer {
-    const payload = Buffer.allocUnsafe(4 + params.data.length);
+    const payload = Buffer.alloc(4 + params.data.length);
 
     let o = 0;
     o = payload.writeUIntLE(advertHandle,            o, 1);
@@ -1246,7 +1246,7 @@ export interface LeExtendedAdvertisingEnable {
 
 export class LeExtendedAdvertisingEnable {
   static inParams(params: LeExtendedAdvertisingEnable): Buffer {
-    const payload = Buffer.allocUnsafe(1+1+(1+2+1) * params.sets.length);
+    const payload = Buffer.alloc(1+1+(1+2+1) * params.sets.length);
 
     let o = 0;
     o = payload.writeUInt8(params.enable ? 1 : 0, o);
@@ -1321,7 +1321,7 @@ export class LeExtendedCreateConnection {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.allocUnsafe(
+    const payload = Buffer.alloc(
       1+1+1+6+1 + physParams.length * (2+2+2+2+2+2+2+2)
     );
 
@@ -1398,7 +1398,7 @@ export interface LePrivacyMode {
 
 export class LePrivacyMode {
   static inParams(params: LePrivacyMode): Buffer {
-    const payload = Buffer.allocUnsafe(8);
+    const payload = Buffer.alloc(8);
 
     let o = 0;
     o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
@@ -1424,7 +1424,7 @@ export interface LeExtendedScanResponseData {
 
 export class LeExtendedScanResponseData {
   static inParams(advertHandle: number, params: LeExtendedScanResponseData): Buffer {
-    const payload = Buffer.allocUnsafe(4 + params.data.length);
+    const payload = Buffer.alloc(4 + params.data.length);
 
     let o = 0;
     o = payload.writeUIntLE(advertHandle,            o, 1);
@@ -1463,7 +1463,7 @@ export class LeExtendedAdvertisingParameters {
     const advertisingTxPower            = params.advertisingTxPower ?? 0x7F; // 0x7F - Host has no preference
     const scanRequestNotificationEnable = params.scanRequestNotificationEnable ? 1 : 0;
 
-    const payload = Buffer.allocUnsafe(25);
+    const payload = Buffer.alloc(25);
 
     let o = 0;
     o = payload.writeUIntLE(advertisingHandle,                  o, 1);
@@ -1530,7 +1530,7 @@ export class LeExtendedScanParameters {
       throw makeHciError(HciErrorCode.InvalidCommandParameter);
     }
 
-    const payload = Buffer.allocUnsafe(3 + phys.count * (1+2+2));
+    const payload = Buffer.alloc(3 + phys.count * (1+2+2));
 
     let o = 0;
     o = payload.writeUIntLE(params.ownAddressType,       o, 1);
@@ -1591,7 +1591,7 @@ export class LeExtendedScanEnabled {
       filterDuplicates = LeScanFilterDuplicates.Disabled;
     }
 
-    const payload = Buffer.allocUnsafe(1+1+2+2);
+    const payload = Buffer.alloc(1+1+2+2);
 
     let o = 0;
     o = payload.writeUIntLE(params.enable ? 1 : 0,  o, 1);

@@ -1,23 +1,23 @@
 import { Att } from '../att/Att';
 import { AttReadByGroupTypeRspMsg, AttReadByTypeRspMsg } from '../att/AttSerDes';
-import { readBigUInt128LE } from '../utils/Utils';
+import { UUID } from '../utils/UUID';
 
 export interface GattService {
   handle: number;
-  uuid: bigint;
+  uuid: string;
   endGroupHandle: number;
 }
 
 export interface GattIncService {
   handle: number;
-  uuid: bigint;
+  uuid: string;
 }
 
 export interface GattCharacteristic {
   handle: number;
   properties: number;
-  uuid: bigint;
-  valueHandle: bigint;
+  uuid: string;
+  valueHandle: number;
 }
 
 export class Gatt {
@@ -32,36 +32,26 @@ export class Gatt {
     console.log(entries);
     return entries.map((x) => ({
       handle: x.attributeHandle,
-      uuid: this.readUuid(x.attributeValue),
+      uuid: UUID.toString(x.attributeValue),
       endGroupHandle: x.endGroupHandle,
     }));
   }
 
-  private readUuid(buffer: Buffer): bigint {
-    if (buffer.length === 2) {
-      return BigInt(buffer.readUInt16LE(0));
-    }
-    if (buffer.length === 16) {
-      return readBigUInt128LE(buffer, 0);
-    }
-    throw new Error('Invalid UUID size');
-  }
-
-  async discoverIncludedServices(service: GattService) {
+  async discoverIncludedServices(service: GattService): Promise<GattIncService[]> {
     const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.handle, service.endGroupHandle);
     return entries.map((x) => ({
       handle: x.handle,
-      uuid: this.readUuid(x.value),
+      uuid: UUID.toString(x.value),
     }));
   }
 
-  async discoverCharacteristics(service: GattService) {
+  async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
     const entries = await this.readByType(this.GATT_CHARAC_UUID, service.handle, service.endGroupHandle);
-
+    console.log(entries);
     return entries.map((e) => {
       const properties = e.value.readUInt8(0);
       const valueHandle = e.value.readUInt16LE(1);
-      const uuid = this.readUuid(e.value.slice(3));
+      const uuid = UUID.toString(e.value.slice(3));
       return { handle: e.handle, properties, valueHandle, uuid };
     });
   }

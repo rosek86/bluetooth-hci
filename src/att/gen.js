@@ -63,7 +63,7 @@ function genSerDes(name) {
 
     export class Att${name}Req {
       static serialize(data: Att${name}ReqMsg): Buffer {
-        return Buffer.allocUnsafe(0);
+        return Buffer.alloc(0);
       }
 
       static deserialize(buffer: Buffer): Att${name}ReqMsg|null {
@@ -76,7 +76,7 @@ function genSerDes(name) {
 
     export class Att${name}Rsp {
       static serialize(data: Att${name}RspMsg): Buffer {
-        return Buffer.allocUnsafe(0);
+        return Buffer.alloc(0);
       }
 
       static deserialize(buffer: Buffer): Att${name}RspMsg|null {

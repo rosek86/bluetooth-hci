@@ -111,7 +111,7 @@ export class Adapter extends EventEmitter {
       do {
         if (result) {
           this.hci.onData(result.type, result.packet);
-          result = this.h4.parse(Buffer.allocUnsafe(0));
+          result = this.h4.parse(Buffer.alloc(0));
         }
       } while (result);
     });

@@ -13,7 +13,7 @@ export class H4 {
 
   private parserState = ParserState.Type;
   private parserPacketType = 0;
-  private parserPacketData = Buffer.allocUnsafe(0);
+  private parserPacketData = Buffer.alloc(0);
 
   private parserHeaderSize = 0;
   private parserPacketSize = 0;
