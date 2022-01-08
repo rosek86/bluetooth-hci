@@ -33,8 +33,10 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       }
 
       const gatt = new Gatt(att);
-      const services = await gatt.discoverServices();
 
+      await gatt.exchangeMtu(50);
+
+      const services = await gatt.discoverServices();
       for (const service of services) {
         console.log('');
         console.log('service', service);
@@ -43,9 +45,19 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
         for (const characteristic of characteristics) {
           console.log('characteristics', characteristic);
 
+          if (characteristic.Properties.read === true) {
+            const result = await gatt.read(characteristic.Handle);
+            console.log(service.UUID, characteristic.UUID, result, result.toString('ascii'));
+          }
+
           const descriptors = await gatt.discoverDescriptors(characteristic);
           for (const descriptor of descriptors) {
             console.log('descriptors', descriptor);
+
+            if (characteristic.Properties.read === true) {
+              const result = await gatt.read(descriptor.Handle);
+              console.log(service.UUID, characteristic.UUID, descriptor.UUID, result, result.toString('ascii'));
+            }
           }
         }
       }

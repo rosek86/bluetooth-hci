@@ -12,38 +12,38 @@ export enum CharacteristicPropertiesBits {
   // If set, permits broadcasts of the Characteristic Value using
   // Server Characteristic Configuration Descriptor. If set, the Server
   // Characteristic Configuration Descriptor shall exist.
-  Broadcast = 0x01,
+  Broadcast = 0,
 
   // If set, permits reads of the Characteristic Value using procedures
   // defined in Section 4.8
-  Read = 0x02,
+  Read = 1,
 
   // If set, permit writes of the Characteristic Value without response
   // using procedures defined in Section 4.9.1.
-  WriteWithoutResponse = 0x04,
+  WriteWithoutResponse = 2,
 
   // If set, permits writes of the Characteristic Value with response
   // using procedures defined in Section 4.9.3 or Section 4.9.4.
-  Write = 0x08,
+  Write = 3,
 
   // If set, permits notifications of a Characteristic Value without
   // acknowledgment using the procedure defined in Section 4.10. If
   // set, the Client Characteristic Configuration Descriptor shall exist.
-  Notify = 0x10,
+  Notify = 4,
 
   // If set, permits indications of a Characteristic Value with acknowledgment
   // using the procedure defined in Section 4.11. If set, the
   // Client Characteristic Configuration Descriptor shall exist.
-  Indicate = 0x20,
+  Indicate = 5,
 
   // If set, permits signed writes to the Characteristic Value using the
   // procedure defined in Section 4.9.2.
-  AuthenticatedSignedWrites = 0x40,
+  AuthenticatedSignedWrites = 6,
 
   // If set, additional characteristic properties are defined in the Characteristic
   // Extended Properties Descriptor defined in Section 3.3.3.1.
   // If set, the Characteristic Extended Properties Descriptor shall exist.
-  ExtendedProperties = 0x80,
+  ExtendedProperties = 7,
 }
 
 export interface CharacteristicProperties {
@@ -70,10 +70,10 @@ export class GattService {
     return new GattService(data);
   }
 
-  private constructor(private data: AttDataEntry) {
+  private constructor(data: AttDataEntry) {
     this.handle = data.handle;
     this.endingHandle = data.endingHandle;
-    this.uuid = UUID.toString(this.data.value);
+    this.uuid = UUID.toString(data.value);
   }
 
   public toObject() {
@@ -102,10 +102,10 @@ export class GattIncService {
     return new GattIncService(data);
   }
 
-  private constructor(private data: AttDataEntry) {
+  private constructor(data: AttDataEntry) {
     this.handle = data.handle;
     this.endingHandle = data.endingHandle;
-    this.uuid = UUID.toString(this.data.value);
+    this.uuid = UUID.toString(data.value);
   }
 
   public toObject() {
@@ -138,13 +138,13 @@ export class GattCharacteristic {
     return new GattCharacteristic(data);
   }
 
-  private constructor(private data: AttDataEntry) {
-    const properties  = this.data.value.readUInt8(0);
-    const valueHandle = this.data.value.readUInt16LE(1);
-    const uuid        = this.data.value.slice(3);
+  private constructor(data: AttDataEntry) {
+    const properties  = data.value.readUInt8(0);
+    const valueHandle = data.value.readUInt16LE(1);
+    const uuid        = data.value.slice(3);
 
-    this.handle       = this.data.handle;
-    this.endingHandle = this.data.endingHandle;
+    this.handle       = data.handle;
+    this.endingHandle = data.endingHandle;
     this.properties   = this.parseProperties(properties);
     this.valueHandle  = valueHandle;
     this.uuid         = UUID.toString(uuid);
@@ -191,10 +191,10 @@ export class GattDescriptor {
     return new GattDescriptor(data);
   }
 
-  private constructor(private data: AttDataEntry) {
-    this.handle       = this.data.handle;
-    this.endingHandle = this.data.endingHandle;
-    this.uuid         = UUID.toString(this.data.value);
+  private constructor(data: AttDataEntry) {
+    this.handle       = data.handle;
+    this.endingHandle = data.endingHandle;
+    this.uuid         = UUID.toString(data.value);
   }
 
   public toObject() {
@@ -214,6 +214,8 @@ export class Gatt {
   private readonly GATT_PRIM_SVC_UUID = Buffer.from([0x00, 0x28]);
   private readonly GATT_INCLUDE_UUID = Buffer.from([0x02, 0x28]);
   private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
+
+  private mtu = 23;
 
   constructor(private att: Att) {}
 
@@ -235,6 +237,45 @@ export class Gatt {
   public async discoverDescriptors(characteristic: GattCharacteristic) {
     const entries = await this.findInformation(characteristic.Handle, characteristic.EndingHandle);
     return entries.map((e) => GattDescriptor.fromAttData(e));
+  }
+
+  public async exchangeMtu(mtu: number): Promise<number> {
+    const result = await this.att.exchangeMtuReq({ mtu });
+    this.mtu = result.mtu;
+    return result.mtu;
+  }
+
+  public async read(handle: number): Promise<Buffer> {
+    const blob = await this.att.readReq({ attributeHandle: handle });
+
+    let part = blob.attributeValue;
+    let value = Buffer.concat([ part ]);
+
+    while (part.length === (this.mtu - 1)) {
+      const blob = await this.att.readBlobReq({
+        attributeHandle: handle,
+        valueOffset: value.length,
+      });
+
+      part = blob.partAttributeValue;
+      value = Buffer.concat([ value, part ]);
+    }
+
+    return value;
+  }
+
+  public async write(characteristic: GattCharacteristic, value: Buffer, withResponse: boolean): Promise<void> {
+    if (withResponse) {
+      await this.att.writeReq({
+        attributeHandle: characteristic.Handle,
+        attributeValue: value,
+      });
+    } else {
+      await this.att.writeCmd({
+        attributeHandle: characteristic.Handle,
+        attributeValue: value,
+      });
+    }
   }
 
   private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
