@@ -37,10 +37,12 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
       for (const service of services) {
         console.log('');
-        console.log('service', service);
+        console.log('service', service.uuid, service.uuid.toString(16));
 
         const characteristics = await gatt.discoverCharacteristics(service);
-        console.log('characteristics', characteristics);
+        for (const characteristic of characteristics) {
+          console.log('characteristics',  characteristic.uuid, characteristic.uuid.toString(16));
+        }
       }
 
       await gap.disconnect(event.connectionHandle);

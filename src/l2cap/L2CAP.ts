@@ -26,6 +26,7 @@ interface AclFragments {
 
 export declare interface L2CAP {
   on(event: 'AttData', listener: (connectionHandle: number, payload: Buffer) => void): this;
+  on(event: 'Disconnected', listener: (connectionHandle: number, reason: number) => void): this;
 }
 
 export class L2CAP extends EventEmitter {
@@ -164,9 +165,13 @@ export class L2CAP extends EventEmitter {
       return;
     }
 
-    this.aclQueue = this.aclQueue.filter(acl => acl.connectionHandle !== event.connectionHandle);
-    this.aclConnections.delete(event.connectionHandle);
+    const connectionHandle = event.connectionHandle;
+
+    this.aclQueue = this.aclQueue.filter(acl => acl.connectionHandle !== connectionHandle);
+    this.aclConnections.delete(connectionHandle);
     this.flushAcl();
+
+    this.emit('Disconnected', connectionHandle, event.reason);
   }
 
   private onNumberOfCompletedPackets = (_: Error|null, event: NumberOfCompletedPacketsEntry): void => {

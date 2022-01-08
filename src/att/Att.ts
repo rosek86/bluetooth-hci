@@ -24,6 +24,7 @@ import {
   AttHandleValueNtf, AttHandleValueNtfMsg, AttHandleValueInd, AttHandleValueIndMsg,
   AttHandleValueCfm, AttHandleValueCfmMsg, AttMultipleHandleValueNtf, AttMultipleHandleValueNtfMsg
 } from './AttSerDes';
+import { HciError } from '../hci/HciError';
 
 const debug = Debug('nble-att');
 
@@ -31,10 +32,14 @@ type AttEvents = keyof typeof AttOpcode;
 
 interface L2cap extends EventEmitter {
   on(event: 'AttData', listener: (connectionHandle: number, payload: Buffer) => void): this;
+  on(event: 'Disconnected', listener: (connectionHandle: number, reason: number) => void): this;
+
   writeAclData: (connectionHandle: number, channelId: L2capChannelId, data: Buffer) => void;
 }
 
 export declare interface Att {
+  on(event: 'Disconnected',            listener: (connectionHandle: number, reason: HciError) => void): this;
+
   on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
   on(event: 'ExchangeMtuReq',          listener: (event: AttExchangeMtuReqMsg) => void): this;
   on(event: 'ExchangeMtuRsp',          listener: (event: AttExchangeMtuRspMsg) => void): this;
@@ -106,10 +111,12 @@ export class Att extends EventEmitter {
   constructor (private l2cap: L2cap, private connectionHandle: number) {
     super();
     l2cap.on('AttData', this.onAttData);
+    l2cap.on('Disconnected', this.onDisconnected);
   }
 
   public destroy(): void {
     this.l2cap.off('AttData', this.onAttData);
+    this.l2cap.off('Disconnected', this.onDisconnected);
     this.removeAllListeners();
   }
 
@@ -275,7 +282,11 @@ export class Att extends EventEmitter {
     if (this.handlers[opcode]) {
       this.handlers[opcode](data);
     }
-  }
+  };
+
+  private onDisconnected = (connectionHandle: number, reasonCode: number): void => {
+    this.emit('Disconnected', connectionHandle, new HciError(reasonCode));
+  };
 
   // Utils
   private async writeAttWaitEvent<T>(req: AttOpcode, res: AttOpcode, data: Buffer): Promise<T> {
@@ -297,13 +308,16 @@ export class Att extends EventEmitter {
   private waitAttEvent<T>(reqOpcode: AttOpcode, resEventType: AttEvents): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const cleanup = () => {
-        this.off(resEventType, onSuccess);
-        this.off('ErrorRsp',   onFailure);
-        clearTimeout(timerHandle);
+        this.off(resEventType,    onSuccess);
+        this.off('ErrorRsp',      onFailure);
+        this.off('Disconnected',  onDisconnected);
       };
-      const onTimeout = () => {
+      const onDisconnected = (connectionHandle: number, reason: HciError) => {
+        if (connectionHandle !== this.connectionHandle) {
+          return;
+        }
         cleanup();
-        reject(new Error(`ATT request (${AttOpcode[reqOpcode]}) timeout`));
+        reject(reason);
       };
       const onFailure = (event: AttErrorRspMsg) => {
         debug('onFailure', reqOpcode, resEventType, event);
@@ -323,10 +337,9 @@ export class Att extends EventEmitter {
         cleanup();
         resolve(event);
       };
-      this.on('ErrorRsp',   onFailure);
-      this.on(resEventType, onSuccess);
-      const timerTimeout = 30 * 1000;
-      const timerHandle = setTimeout(onTimeout, timerTimeout);
+      this.on('ErrorRsp',     onFailure);
+      this.on(resEventType,   onSuccess);
+      this.on('Disconnected', onDisconnected);
     });
   }
 
