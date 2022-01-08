@@ -190,7 +190,7 @@ export class AttFindInformationRsp {
     if (!uuidSize) {
       return null;
     }
-    if (((buffer.length - 2) % uuidSize) !== 0) {
+    if (((buffer.length - 2) % (uuidSize + 2)) !== 0) {
       return null;
     }
 
