@@ -1,4 +1,5 @@
 import { Hci } from '../../src/hci/Hci';
+import { Address, AddressType } from '../../src/utils/Address';
 import { ArgsParser, DefaultInputArgs } from './ArgsParser';
 import { Adapter, HciAdapterFactory } from './HciAdapterFactory';
 
@@ -113,6 +114,8 @@ export class Utils {
       suggestedMaxTxOctets: 27,
       suggestedMaxTxTime: 328,
     });
+
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82, AddressType.Random));
 
     console.log('initialised');
   }

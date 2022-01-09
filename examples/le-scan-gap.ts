@@ -11,7 +11,6 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       usb: { vid: 0x2fe3, pid: 0x000d },
     });
     await Utils.defaultAdapterSetup(adapter.Hci);
-    await adapter.Hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     const gap = new Gap(adapter.Hci);
     await gap.init();

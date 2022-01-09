@@ -19,7 +19,6 @@ import { Gap } from '../src/gap/Gap';
     const hci = adapter.Hci;
 
     await Utils.defaultAdapterSetup(hci);
-    await hci.leSetRandomAddress(Address.from('aa:ab:ac:de:df:ff', AddressType.Random));
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
     const gap = new Gap(adapter.Hci);

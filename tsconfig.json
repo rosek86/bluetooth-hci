@@ -16,17 +16,17 @@
     "declaration": true
   },
   "files": [
-    "test/index.ts",
-    "examples/serialport.ts",
+    "examples/CodedPHY/advertising.ts",
+    "examples/CodedPHY/scanning.ts",
     "examples/advertising.ts",
-    "examples/le-scan-hci.ts",
-    "examples/le-scan-hci-ext.ts",
-    "examples/le-scan-gap.ts",
-    "examples/le-random.ts",
-    "examples/le-encrypt.ts",
+    "examples/hci-simple.ts",
     "examples/le-conn-central.ts",
     "examples/le-conn-peripheral.ts",
-    "examples/CodedPHY/scanning.ts",
-    "examples/CodedPHY/advertising.ts"
+    "examples/le-encrypt.ts",
+    "examples/le-random.ts",
+    "examples/le-scan-gap.ts",
+    "examples/le-scan-hci-ext.ts",
+    "examples/le-scan-hci.ts",
+    "test/index.ts",
   ]
 }

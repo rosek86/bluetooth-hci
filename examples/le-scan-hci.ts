@@ -12,7 +12,6 @@ import {
   try {
     const adapter = await Utils.createHciAdapter({ deviceType: 'hci' });
     await Utils.defaultAdapterSetup(adapter.Hci);
-    await adapter.Hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     await adapter.Hci.leSetScanParameters({
       type: LeScanType.Active,

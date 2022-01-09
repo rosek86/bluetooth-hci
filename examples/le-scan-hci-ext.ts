@@ -15,7 +15,6 @@ import {
       usb: { vid: 0x2fe3, pid: 0x000e },
     });
     await Utils.defaultAdapterSetup(adapter.Hci);
-    await adapter.Hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     await adapter.Hci.leSetExtendedScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,

@@ -18,11 +18,8 @@ import {
     const adapter = await Utils.createHciAdapter({
       usb: { vid: 0x2fe3, pid: 0x000d },
     });
+    await Utils.defaultAdapterSetup(adapter.Hci);
     const hci = adapter.Hci;
-
-    await Utils.defaultAdapterSetup(hci);
-
-    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
       advertisingEventProperties: [
