@@ -68,3 +68,9 @@ export function writeBigUInt128LE(buf: Buffer, value: bigint, offset: number): n
   }
   return offset;
 }
+
+export function delay(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
