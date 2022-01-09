@@ -1,9 +1,10 @@
-process.env.BLUETOOTH_HCI_SOCKET_FORCE_USB = '1';
-import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
+process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
+import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetooth-hci-socket';
 import SerialPort from 'serialport';
 import { EventEmitter } from 'stream';
 import { Hci } from '../../src/hci/Hci';
 import { H4 } from '../../src/transport/H4';
+import { delay } from '../../src/utils/Utils';
 
 export interface AdapterSerialParams {
   type: 'serial';
@@ -21,7 +22,14 @@ export interface AdapterUsbParams {
   };
 }
 
-export type AdapterParams = AdapterSerialParams | AdapterUsbParams;
+export interface AdapterNativeHciParams {
+  type: 'hci';
+  hci: {
+    devId?: number;
+  }
+}
+
+export type AdapterParams = AdapterSerialParams | AdapterUsbParams | AdapterNativeHciParams;
 
 export interface HciDevice {
   open(): Promise<void>;
@@ -62,16 +70,52 @@ export class SerialHciDevice implements HciDevice {
   }
 }
 
-export class UsbHciDevice implements HciDevice {
+export class UsbHciSocket implements HciDevice {
   private port: BluetoothHciSocket;
 
   constructor(private devId: number, private usbParams: AdapterUsbParams['usb']) {
-    this.port = new BluetoothHciSocket();
+    this.port = bluetoothHciSocketFactory('usb');
   }
 
   public async open() {
     this.port.bindRaw(this.devId, { usb: this.usbParams });
     this.port.start();
+  }
+
+  public async close() {
+    this.port.stop();
+    this.port.removeAllListeners('data');
+    this.port.removeAllListeners('error');
+  }
+
+  public write(data: Buffer): void {
+    this.port.write(data);
+  }
+
+  public on(evt: 'data', listener: (data: Buffer) => void): void;
+  public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  public on(evt: any, listener: (data: any) => void): void {
+    this.port.on(evt, listener);
+  }
+}
+
+export class NativeHciSocket implements HciDevice {
+  private port: BluetoothHciSocket;
+
+  constructor(private devId: number) {
+    this.port = bluetoothHciSocketFactory('native');
+  }
+
+  public async open() {
+    console.log(this.devId);
+    this.port.bindRaw(this.devId);
+    this.port.start();
+
+    while (this.port.isDevUp() === false) {
+      await delay(1000);
+    }
+
+    this.port.setFilter(Buffer.from('1600000020c10800000000400000', 'hex'));
   }
 
   public async close() {
@@ -149,7 +193,10 @@ export abstract class HciAdapterFactory {
       return new SerialHciDevice(portInfo.path, params.serial);
     }
     if (params.type === 'usb') {
-      return new UsbHciDevice(params.usb.devId ?? 0, params.usb);
+      return new UsbHciSocket(params.usb.devId ?? 0, params.usb);
+    }
+    if (params.type === 'hci') {
+      return new NativeHciSocket(params.hci.devId ?? 0);
     }
     throw new Error('Unknown adapter interface');
   }

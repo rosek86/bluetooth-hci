@@ -3,6 +3,7 @@ import { hideBin } from 'yargs/helpers';
 import { AdapterParams } from './HciAdapterFactory';
 
 export interface DefaultInputArgs {
+  deviceType?: 'usb' | 'serial' | 'hci';
   usb?: {
     vid?: number;
     pid?: number;
@@ -10,7 +11,7 @@ export interface DefaultInputArgs {
 }
 
 interface InputArgs {
-  deviceType: 'usb' | 'serial';
+  deviceType: 'usb' | 'serial' | 'hci';
   usbVid: number;
   usbPid: number;
   usbDevId: number;
@@ -21,12 +22,13 @@ interface InputArgs {
   serialParity: 'none'|'even'|'mark'|'odd'|'space';
   serialStopBits: 1|2;
   serialRtscts: boolean;
+  hciDevId: number;
 }
 
 export class ArgsParser {
   public async getInputArgs(defaults?: DefaultInputArgs): Promise<InputArgs | null> {
     const argv = await yargs(hideBin(process.argv)).options({
-      'device-type':      { choices: ['serial', 'usb'] , default: 'usb' },
+      'device-type':      { choices: ['serial', 'usb', 'hci'] , default: defaults?.deviceType ?? 'usb' },
       'usb-vid':          { type: 'number', default: defaults?.usb?.vid ?? 0x2fe3 },
       'usb-pid':          { type: 'number', default: defaults?.usb?.pid ?? 0x000d },
       'usb-dev-id':       { type: 'number', default: 0 },
@@ -37,8 +39,9 @@ export class ArgsParser {
       'serial-parity':    { choices: [ 'none', 'even', 'mark', 'odd', 'space' ], default: 'none' },
       'serial-stop-bits': { choices: [ 1, 2 ], default: 1 },
       'serial-rtscts':    { type: 'boolean', default: true },
+      'hci-dev-id':       { type: 'number', default: 0 },
     }).argv;
-    if (argv.deviceType !== 'serial' && argv.deviceType !== 'usb') {
+    if (argv.deviceType !== 'serial' && argv.deviceType !== 'usb' && argv.deviceType !== 'hci') {
       return null;
     }
     if (argv.serialDataBits !== 8 && argv.serialDataBits !== 7 &&
@@ -65,6 +68,7 @@ export class ArgsParser {
       serialParity:   argv.serialParity,
       serialStopBits: argv.serialStopBits,
       serialRtscts:   argv.serialRtscts,
+      hciDevId:       argv.hciDevId,
     };
   }
 
@@ -92,6 +96,13 @@ export class ArgsParser {
           bus:      args.usbBus,
           address:  args.usbAddress,
         }
+      };
+      return adapterOptions;
+    }
+    if (args.deviceType === 'hci') {
+      const adapterOptions: AdapterParams = {
+        type: 'hci',
+        hci: { devId: args.hciDevId },
       };
       return adapterOptions;
     }

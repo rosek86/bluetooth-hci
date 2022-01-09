@@ -10,20 +10,18 @@ import {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({
-      usb: { vid: 0x2fe3, pid: 0x000e },
-    });
+    const adapter = await Utils.createHciAdapter({ deviceType: 'hci' });
     await Utils.defaultAdapterSetup(adapter.Hci);
     await adapter.Hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     await adapter.Hci.leSetScanParameters({
       type: LeScanType.Active,
-      intervalMs: 100,
+      intervalMs: 1000,
       windowMs: 100,
-      ownAddressType: LeOwnAddressType.PublicDeviceAddress,
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.All,
     });
-    await adapter.Hci.leSetScanEnable(true, false);
+    await adapter.Hci.leSetScanEnable(true, true);
 
     adapter.Hci.on('LeAdvertisingReport', (report) => {
       console.log(report, AdvData.parse(report.data ?? Buffer.alloc(0)));

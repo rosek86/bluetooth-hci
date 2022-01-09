@@ -25,6 +25,12 @@ export class Utils {
   public static async defaultAdapterSetup(hci: Hci): Promise<void> {
     await hci.reset();
 
+    const localVersion = await hci.readLocalVersionInformation();
+    console.log('Local Version', localVersion);
+
+    const localCommands = await hci.readLocalSupportedCommands();
+    console.log('Local Supported Commands:', localCommands.toString());
+
     const localFeatures = await hci.readLocalSupportedFeatures();
     console.log('Local Supported Features', localFeatures);
 
@@ -32,26 +38,24 @@ export class Utils {
       throw new Error('LE not supported');
     }
 
-    const localVersion = await hci.readLocalVersionInformation();
-    console.log('Local Version', localVersion);
-
-    const bdAddress = await hci.readBdAddr();
-    console.log('BD Address:', bdAddress.toString());
-
-    const leTransmitPower = await hci.leReadTransmitPower();
-    console.log(`LE Transmit Power:`, leTransmitPower);
-
-    const leBufferSize = await hci.leReadBufferSize();
-    console.log('LE Buffer Size:', leBufferSize);
-
     const leFeatures = await hci.leReadLocalSupportedFeatures();
     console.log('LE Features:', leFeatures.toString());
 
     const leStates = await hci.leReadSupportedStates();
     console.log('LE States:', leStates);
 
-    const localCommands = await hci.readLocalSupportedCommands();
-    console.log('Local Supported Commands:', localCommands.toString());
+    if (localCommands.isSupported('readBdAddr')) {
+      const bdAddress = await hci.readBdAddr();
+      console.log('BD Address:', bdAddress.toString());
+    }
+
+    if (localCommands.isSupported('leReadTransmitPower')) {
+      const leTransmitPower = await hci.leReadTransmitPower();
+      console.log(`LE Transmit Power:`, leTransmitPower);
+    }
+
+    const leBufferSize = await hci.leReadBufferSize();
+    console.log('LE Buffer Size:', leBufferSize);
 
     await hci.setEventMask({
       disconnectionComplete:                true,
@@ -61,9 +65,13 @@ export class Utils {
       leMeta:                               true,
     });
     await hci.setEventMaskPage2({});
+
+    const extendedScan = localCommands.Commands.leSetExtendedScanEnable;
+    const extendedConnection = localCommands.Commands.leExtendedCreateConnection;
+
     await hci.leSetEventMask({
-      connectionComplete:                   false,
-      advertisingReport:                    false,
+      connectionComplete:                   extendedConnection ? false : true,
+      advertisingReport:                    extendedScan ? false : true,
       connectionUpdateComplete:             true,
       readRemoteFeaturesComplete:           true,
       longTermKeyRequest:                   true,
@@ -71,33 +79,41 @@ export class Utils {
       dataLengthChange:                     true,
       readLocalP256PublicKeyComplete:       true,
       generateDhKeyComplete:                true,
-      enhancedConnectionComplete:           true,
+      enhancedConnectionComplete:           extendedConnection ? true : false,
       directedAdvertisingReport:            true,
       phyUpdateComplete:                    true,
-      extendedAdvertisingReport:            true,
+      extendedAdvertisingReport:            extendedScan ? true : false,
       scanTimeout:                          true,
       advertisingSetTerminated:             true,
       channelSelectionAlgorithm:            true,
     });
 
-    console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
-    await hci.leClearWhiteList();
+    if (localCommands.isSupported('leReadWhiteListSize')) {
+      console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
+      await hci.leClearWhiteList();
+    }
 
-    console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
-    await hci.leClearResolvingList();
+    if (localCommands.isSupported('leReadResolvingListSize')) {
+      console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
+      await hci.leClearResolvingList();
+    }
 
-    const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
-    console.log(`Number of supported advertising sets: ${advSets}`);
+    if (localCommands.isSupported('leReadNumberOfSupportedAdvertisingSets')) {
+      const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+      console.log(`Number of supported advertising sets: ${advSets}`);
+    }
 
     const maxDataLength = await hci.leReadMaximumDataLength();
     console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
 
-    let suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
     console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
 
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,
       suggestedMaxTxTime: 328,
     });
+
+    console.log('initialised');
   }
 }
