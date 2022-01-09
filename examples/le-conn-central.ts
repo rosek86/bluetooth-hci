@@ -2,22 +2,16 @@ import Debug from 'debug';
 
 import { Utils } from './utils/Utils';
 import { Address, AddressType } from '../src/utils/Address';
-import { AdvData } from '../src/gap/AdvData';
 
 import {
   LePhy,
   LeOwnAddressType,
   LeScanningFilterPolicy,
   LeScanType,
-  LeScanFilterDuplicates,
-  LeInitiatorFilterPolicy
+  LeScanFilterDuplicates
 } from '../src/hci/HciLeController';
-import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
-import { L2CAP } from '../src/l2cap/L2CAP';
-import { Att } from '../src/att/Att';
-import { Gap } from '../src/gap/Gap';
 
-const debug = Debug('nble-main');
+import { Gap } from '../src/gap/Gap';
 
 (async () => {
   try {
