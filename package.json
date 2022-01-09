@@ -11,13 +11,16 @@
   },
   "keywords": [],
   "author": "Krzysztof Rosinski",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d4bab75c2c041d5b568e8a6fdd892ef6f32c35b5",
+    "@types/chai": "^4.3.0",
     "@types/debug": "^4.1.7",
-    "@types/node": "^16.11.17",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.19",
     "@types/serialport": "^8.0.2",
     "@types/yargs": "^17.0.8",
+    "chai": "^4.3.4",
     "mocha": "^9.1.3",
     "serialport": "^9.2.8",
     "ts-node": "^10.4.0",
@@ -25,7 +28,7 @@
     "yargs": "^17.3.1"
   },
   "dependencies": {
-    "crc": "^4.0.0",
+    "crc": "^4.1.0",
     "debug": "^4.3.3"
   }
 }

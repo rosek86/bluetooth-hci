@@ -1,5 +1,3 @@
-import Debug from 'debug';
-
 import { Utils } from './utils/Utils';
 import { Address, AddressType } from '../src/utils/Address';
 
