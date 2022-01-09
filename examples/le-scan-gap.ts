@@ -1,5 +1,4 @@
 import { Utils } from './utils/Utils';
-import { Address } from '../src/utils/Address';
 
 import { Gap } from '../src/gap/Gap';
 import { Gatt } from '../src/gatt/Gatt';
@@ -15,8 +14,28 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     const gap = new Gap(adapter.Hci);
     await gap.init();
 
+    await gap.setScanParameters();
+    await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
+    console.log('scanning...');
+
     gap.on('GapLeScanState', (scanning) => {
       console.log('scanning', scanning);
+    });
+
+    let connecting = false;
+    gap.on('GapLeAdvReport', async (report) => {
+      if (connecting) { return; }
+      if (report.data.completeLocalName) {
+        console.log(report.address, report.data.completeLocalName, report.rssi, report.scanResponse);
+      }
+      if (report.data.completeLocalName !== 'Tacx Flux 39756') {
+        return;
+      }
+
+      connecting = true;
+      console.log('connecting...');
+      await gap.stopScanning();
+      await gap.connect(report.address);
     });
 
     gap.on('GapConnected', async (event) => {
@@ -76,26 +95,6 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       await gap.setScanParameters();
       await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
     });
-
-    let connecting = false;
-    gap.on('GapLeAdvReport', async (report) => {
-      if (connecting) { return; }
-      if (report.data.completeLocalName) {
-        console.log(report.address, report.data.completeLocalName, report.rssi, report.scanResponse);
-      }
-      if (report.data.completeLocalName !== 'Tacx Flux 39756') {
-        return;
-      }
-
-      connecting = true;
-      console.log('connecting...');
-      await gap.stopScanning();
-      await gap.connect(report.address);
-    });
-
-    await gap.setScanParameters();
-    await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
-    console.log('scanning...');
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

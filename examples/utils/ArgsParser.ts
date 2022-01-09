@@ -4,6 +4,7 @@ import { AdapterParams } from './HciAdapterFactory';
 
 export interface DefaultInputArgs {
   deviceType?: 'usb' | 'serial' | 'hci';
+  deviceId?: number;
   usb?: {
     vid?: number;
     pid?: number;
@@ -31,7 +32,7 @@ export class ArgsParser {
       'device-type':      { choices: ['serial', 'usb', 'hci'] , default: defaults?.deviceType ?? 'usb' },
       'usb-vid':          { type: 'number', default: defaults?.usb?.vid ?? 0x2fe3 },
       'usb-pid':          { type: 'number', default: defaults?.usb?.pid ?? 0x000d },
-      'usb-dev-id':       { type: 'number', default: 0 },
+      'usb-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },
       'usb-bus':          { type: 'number' },
       'usb-address':      { type: 'number' },
       'serial-baud-rate': { type: 'number', default: 1000000 },
@@ -39,7 +40,7 @@ export class ArgsParser {
       'serial-parity':    { choices: [ 'none', 'even', 'mark', 'odd', 'space' ], default: 'none' },
       'serial-stop-bits': { choices: [ 1, 2 ], default: 1 },
       'serial-rtscts':    { type: 'boolean', default: true },
-      'hci-dev-id':       { type: 'number', default: 0 },
+      'hci-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },
     }).argv;
     if (argv.deviceType !== 'serial' && argv.deviceType !== 'usb' && argv.deviceType !== 'hci') {
       return null;
