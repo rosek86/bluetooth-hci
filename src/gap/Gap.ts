@@ -6,10 +6,11 @@ import { Hci } from '../hci/Hci';
 import {
   DisconnectionCompleteEvent,
   LeAdvEventType, LeAdvReport, LeChannelSelAlgoEvent, LeConnectionCompleteEvent,
-  LeConnectionRole, LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy,
+  LeConnectionRole, LeConnectionUpdateCompleteEvent, LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy,
   LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
 } from '../hci/HciEvent';
 import {
+  LeConnectionUpdate,
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
   LeOwnAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
@@ -17,6 +18,7 @@ import {
 import { Address } from '../utils/Address';
 import { Att } from '../att/Att';
 import { L2CAP } from '../l2cap/L2CAP';
+import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
 
 type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
@@ -234,6 +236,22 @@ export class Gap extends EventEmitter {
         maxCeLengthMs: 3.75,
       });
     }
+  }
+
+  public async connectionUpdate(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
+    return await this.hci.leConnectionUpdateAwait(params);
+  }
+
+  public async readTransmitPowerLevels(connectionHandle: number) {
+    const current = await this.hci.readTransmitPowerLevel(
+      connectionHandle,
+      ReadTransmitPowerLevelType.Current
+    );
+    const maximum = await this.hci.readTransmitPowerLevel(
+      connectionHandle,
+      ReadTransmitPowerLevelType.Maximum
+    );
+    return { current, maximum };
   }
 
   public async disconnect(connectionHandle: number): Promise<void> {

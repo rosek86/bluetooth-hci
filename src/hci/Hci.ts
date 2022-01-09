@@ -374,6 +374,14 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
+  public async leConnectionUpdateAwait(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
+    const waitEvent = this.waitEvent<LeConnectionUpdateCompleteEvent>(
+      params.connectionHandle, 'LeConnectionUpdateComplete'
+    );
+    await this.leConnectionUpdate(params);
+    return await waitEvent;
+  }
+
   public async leSetHostChannelClassification(channelMap: number): Promise<void> {
     const payload = Buffer.alloc(5);
     payload.writeUIntLE(channelMap, 0, 5);
