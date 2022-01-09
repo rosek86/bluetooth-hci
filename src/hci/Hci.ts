@@ -3,7 +3,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType';
 
-import { getHciErrorMessage, HciErrorCode, makeHciError } from './HciError';
+import { getHciErrorMessage, HciError, HciErrorCode, makeHciError } from './HciError';
 import { HciDisconnectReason } from './HciError';
 import { HciParserError, makeParserError } from './HciError';
 
@@ -72,6 +72,22 @@ interface HciInit {
   send: (pt: HciPacketType, data: Buffer) => void;
 }
 
+type HciConnEvent = 'DisconnectionComplete' |
+                    'EncryptionChange' |
+                    'EncryptionKeyRefreshComplete' |
+                    'ReadRemoteVersionInformationComplete' |
+                    'NumberOfCompletedPackets' |
+                    'LeConnectionComplete' |
+                    'LeConnectionUpdateComplete' |
+                    'LeReadRemoteFeaturesComplete' |
+                    'LeLongTermKeyRequest' |
+                    'LeRemoteConnectionParameterRequest' |
+                    'LeDataLengthChange' |
+                    'LeReadLocalP256PublicKeyComplete' |
+                    'LeEnhancedConnectionComplete' |
+                    'LePhyUpdateComplete' |
+                    'LeChannelSelectionAlgorithm';
+
 export declare interface Hci {
   on(event: 'DisconnectionComplete',                listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
   on(event: 'EncryptionChange',                     listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
@@ -88,6 +104,7 @@ export declare interface Hci {
   on(event: 'LeEnhancedConnectionComplete',         listener: (err: Error|null, event: LeEnhConnectionCompleteEvent) => void): this;
   on(event: 'LePhyUpdateComplete',                  listener: (err: Error|null, event: LePhyUpdateCompleteEvent) => void): this;
   on(event: 'LeChannelSelectionAlgorithm',          listener: (err: Error|null, event: LeChannelSelAlgoEvent) => void): this;
+  on<T>(event: HciConnEvent,                        listener: (err: Error|null, event: T) => void): this;
 
   on(event: 'LeScanTimeout',                        listener: () => void): this;
   on(event: 'LeAdvertisingReport',                  listener: (report: LeAdvReport) => void): this;
@@ -479,6 +496,12 @@ export class Hci extends EventEmitter {
     const ocf = HciOcfLeControllerCommands.SetDataLength;
     const payload = LeDataLength.inParams(connectionHandle, params);
     await this.cmd.leController({ ocf, connectionHandle, payload });
+  }
+
+  public async leSetDataLengthAwait(connectionHandle: number, params: LeDataLength): Promise<LeDataLengthChangeEvent> {
+    const waitEvent = this.waitEvent<LeDataLengthChangeEvent>(connectionHandle, 'LeDataLengthChange');
+    await this.leSetDataLength(connectionHandle, params);
+    return await waitEvent;
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<LeSuggestedDefaultDataLength> {
@@ -1045,5 +1068,29 @@ export class Hci extends EventEmitter {
     };
 
     this.emit('AclData', connectionHandle, result);
+  }
+
+  // Utils
+  public async waitEvent<T extends { connectionHandle: number }>(connectionHandle: number, event: HciConnEvent): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const cleanup = () => {
+        this.off(event, onEvent);
+        this.off('DisconnectionComplete', onDisconnected);
+      };
+      const onEvent = (err: Error | null, res: T) => {
+        if (res.connectionHandle === connectionHandle) {
+          cleanup();
+          err ? reject(err) : resolve(res);
+        }
+      };
+      const onDisconnected = (err: Error | null, event: DisconnectionCompleteEvent) => {
+        if (connectionHandle === event.connectionHandle) {
+          cleanup();
+          reject(new HciError(event.reason.code));
+        }
+      };
+      this.on(event, onEvent);
+      this.on('DisconnectionComplete', onDisconnected);
+    });
   }
 }

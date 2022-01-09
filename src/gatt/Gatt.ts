@@ -230,12 +230,12 @@ export class Gatt {
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
-    const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle, service.EndingHandle);
+    const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle+1, service.EndingHandle);
     return entries.map((e) => GattCharacteristic.fromAttData(e));
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic) {
-    const entries = await this.findInformation(characteristic.Handle, characteristic.EndingHandle);
+    const entries = await this.findInformation(characteristic.Handle+1, characteristic.EndingHandle);
     return entries.map((e) => GattDescriptor.fromAttData(e));
   }
 
@@ -337,6 +337,7 @@ export class Gatt {
   private async findInformation(startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
+      --startingHandle;
       while (startingHandle < endingHandle) {
         const data = await this.att.findInformationReq({
           startingHandle: startingHandle + 1,

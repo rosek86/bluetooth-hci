@@ -15,6 +15,7 @@ import {
   HciOcfTestingCommands,
   HicOcfLinkPolicyCommands
 } from './HciOgfOcf';
+import assert from 'assert';
 
 const debug = Debug('nble-hci-cmd');
 
@@ -176,7 +177,6 @@ export class HciCmd {
       });
       if (this.onResult !== null) {
         debug('cannot start command: ', cmd);
-        console.log('cannot start command: ', cmd);
         return reject(makeParserError(HciParserError.Busy));
       }
       const complete = (err?: Error, evt?: HciCmdResult) => {
@@ -198,14 +198,8 @@ export class HciCmd {
             complete(undefined, evt);
           }
         } else {
-          if (!evt.returnParameters) {
-            debug(`Return parameters are missing`);
-            return;
-          }
-          if (evt.returnParameters.length < 2) {
-            debug(`Cannot parse connection command complete event`);
-            return; // NOTE: can't tell which connection
-          }
+          assert(evt.returnParameters, 'Return parameters are missing');
+          assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
           if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
             return;
           }

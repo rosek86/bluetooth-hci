@@ -43,6 +43,7 @@ export interface GapConnectEvent {
     version: number;
     subversion: number;
   };
+  leRemoteFeatures: bigint;
 };
 
 export declare interface Gap {
@@ -341,6 +342,7 @@ export class Gap extends EventEmitter {
     }
 
     const version = device.versionInformation;
+    const leRemoteFeatures = device.leRemoteFeatures;
 
     const event: GapConnectEvent = {
       connectionHandle: conn.connectionHandle,
@@ -357,6 +359,7 @@ export class Gap extends EventEmitter {
         version: version?.version ?? 0,
         subversion: version?.subversion ?? 0,
       },
+      leRemoteFeatures: leRemoteFeatures?.leFeatures ?? 0n,
     };
 
     if (this.extended) {
