@@ -15,6 +15,7 @@ import {
 import { ReadTransmitPowerLevelType } from '../src/hci/HciControlAndBaseband';
 import { L2CAP } from '../src/l2cap/L2CAP';
 import { Att } from '../src/att/Att';
+import { Gap } from '../src/gap/Gap';
 
 const debug = Debug('nble-main');
 
@@ -27,15 +28,12 @@ const debug = Debug('nble-main');
 
     await Utils.defaultAdapterSetup(hci);
     await hci.leSetRandomAddress(Address.from('aa:ab:ac:de:df:ff', AddressType.Random));
-
-    const l2cap = new L2CAP(hci);
-    await l2cap.init();
-
-    console.log('set default phy');
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    console.log('set ext scan params');
-    await hci.leSetExtendedScanParameters({
+    const gap = new Gap(adapter.Hci);
+
+    await gap.init();
+    await gap.setScanParameters({
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.All,
       scanningPhy: {
@@ -43,82 +41,68 @@ const debug = Debug('nble-main');
           type: LeScanType.Active,
           intervalMs: 11.25,
           windowMs: 11.25
-        }
-      }
+        },
+      },
     });
+    await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
 
-    console.log('set ext scan enable');
-    await hci.leSetExtendedScanEnable({
-      enable: true,
-      filterDuplicates: LeScanFilterDuplicates.Disabled,
-      durationMs: 0,
-    });
-
-    hci.on('LeScanTimeout', () => {
-      console.log('LeScanTimeout');
+    gap.on('GapLeScanState', (scanning) => {
+      console.log('scanning', scanning);
     });
 
     let connecting = false;
-    hci.on('LeExtendedAdvertisingReport', async (report) => {
-      try {
-        if (connecting === true || report.data === null) {
-          return;
-        }
-        if (report.address.toString() !== 'AA:BB:CC:DD:EE:FF') {
-          return;
-        }
-
-        const advData = AdvData.parse(report.data);
-        console.log(report);
-        console.log(JSON.stringify(advData, null, 2));
-
-        connecting = true;
-        await hci.leSetExtendedScanEnable({ enable: false });
-
-        await hci.leExtendedCreateConnection({
-          initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-          ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-          peerAddress: report.address,
-          initiatingPhy: {
-            Phy1M: {
-              scanIntervalMs: 100,
-              scanWindowMs: 100,
-              connectionIntervalMinMs: 7.5,
-              connectionIntervalMaxMs: 100,
-              connectionLatency: 0,
-              supervisionTimeoutMs: 4000,
-              minCeLengthMs: 2.5,
-              maxCeLengthMs: 3.75,
-            },
-          },
-        });
-        console.log('connecting...');
-      } catch (err) {
-        console.log(err);
+    gap.on('GapLeAdvReport', async (report) => {
+      if (connecting) { return; }
+      if (report.address.toString() !== 'AA:BB:CC:DD:EE:FF') {
+        return;
       }
+
+      connecting = true;
+      console.log('connecting...');
+      await gap.stopScanning();
+      await gap.connect(report.address);
     });
 
-    hci.on('LeEnhancedConnectionComplete', async (err, event) => {
-      console.log('LeEnhancedConnectionComplete', err, event);
-    });
-
-    hci.on('LeChannelSelectionAlgorithm', async (err, event) => {
+    gap.on('GapConnected', async (event) => {
       connecting = false;
-      console.log('LeChannelSelectionAlgorithm', err, event);
 
-      await hci.readRemoteVersionInformation(event.connectionHandle);
+      console.log(
+        'connected',
+        event.connectionHandle,
+        event.connectionParams,
+        event.versionInfo,
+        event.leRemoteFeatures.toString(),
+      );
 
-      await hci.leReadRemoteFeatures(event.connectionHandle);
+      const att = gap.getATT(event.connectionHandle);
+      if (!att) {
+        throw new Error('ATT layer not exists');
+      }
 
-      await hci.leSetDataLength(event.connectionHandle, {
-        txOctets: 200,
-        txTime:   2000,
-      });
+      const rssi = await hci.readRssi(event.connectionHandle);
+      console.log(`RSSI: ${rssi} dBm`);
+
+      const powerLevels = await gap.readTransmitPowerLevels(event.connectionHandle);
+      console.log(`Power Level: ${powerLevels.current}/${powerLevels.maximum} dBm`);
 
       const phy = await hci.leReadPhy(event.connectionHandle);
       console.log('PHY:', phy);
 
-      await hci.leConnectionUpdate({
+      const dataLength = await hci.leSetDataLengthAwait(event.connectionHandle, {
+        txOctets: 200,
+        txTime:   2000,
+      });
+      console.log('data-length', dataLength);
+
+      const mtu = await att.exchangeMtuReq({ mtu: 200 });
+      console.log('mtu', mtu);
+
+      const info = await att.findInformationReq({
+        startingHandle: 0x0001, endingHandle: 0xFFFF,
+      });
+      console.log(info);
+
+      const connParams = await gap.connectionUpdate({
         connectionHandle: event.connectionHandle,
         connectionIntervalMinMs: 40,
         connectionIntervalMaxMs: 90,
@@ -127,29 +111,7 @@ const debug = Debug('nble-main');
         minCeLengthMs: 2.5,
         maxCeLengthMs: 3.75,
       });
-
-      const maxPowerLevel = await hci.readTransmitPowerLevel(
-        event.connectionHandle,
-        ReadTransmitPowerLevelType.Maximum
-      );
-      const curPowerLevel = await hci.readTransmitPowerLevel(
-        event.connectionHandle,
-        ReadTransmitPowerLevelType.Current
-      );
-      console.log(`Power Level: ${curPowerLevel}/${maxPowerLevel} dBm`);
-
-      const att = new Att(l2cap, event.connectionHandle);
-
-      const mtu = await att.exchangeMtuReq({ mtu: 200 });
-      console.log('MTU', mtu);
-
-      const info = await att.findInformationReq({
-        startingHandle: 0x0001, endingHandle: 0xFFFF,
-      });
-      console.log(info);
-
-      const rssi = await hci.readRssi(event.connectionHandle);
-      console.log(`RSSI: ${rssi} dBm`);
+      console.log(connParams);
 
       setTimeout(async () => {
         att.destroy();
@@ -157,32 +119,11 @@ const debug = Debug('nble-main');
       }, 2000);
     });
 
-    hci.on('LePhyUpdateComplete', (err, event) => {
-      console.log('LePhyUpdateComplete', err, event);
-    });
-    hci.on('LeRemoteConnectionParameterRequest', (err, event) => {
-      console.log('LeRemoteConnectionParameterRequest', err, event);
-    });
-
-    hci.on('LeConnectionUpdateComplete', async (err, event) => {
-      console.log('LeConnectionUpdateComplete', err, event);
-    });
-    hci.on('LeReadRemoteFeaturesComplete', (status, event) => {
-      console.log('LeReadRemoteFeaturesComplete', status, event);
-    });
-    hci.on('ReadRemoteVersionInformationComplete', (err, event) => {
-      console.log('ReadRemoteVersionInformationComplete', err, event);
-    });
-    hci.on('LeDataLengthChange', (err, event) => {
-      console.log('LeDataLengthChange', err, event);
-    });
-    hci.on('DisconnectionComplete', (err, event) => {
-      console.log('DisconnectionComplete', err, event);
+    gap.on('GapDisconnected', (reason) => {
+      console.log('disconnected', reason);
     });
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
-  } finally {
-    // port.close();
   }
 })();
