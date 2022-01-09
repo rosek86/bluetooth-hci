@@ -179,7 +179,7 @@ export class ReadBdAddr {
   }
 }
 
-export interface LocalSupportedCommands {
+export interface LocalSupportedCommandsFields {
   inquiry:                                                boolean;
   inquiryCancel:                                          boolean;
   periodicInquiryMode:                                    boolean;
@@ -508,12 +508,29 @@ export interface LocalSupportedCommands {
   configureDataPath:                                      boolean;
 }
 
-export class ReadLocalSupportedCommands {
-  static outParams(params?: Buffer): LocalSupportedCommands {
-    if (!params || params.length < 64) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+export class LocalSupportedCommands {
+  private constructor(private commands: LocalSupportedCommandsFields) {}
+
+  public get Commands(): LocalSupportedCommandsFields {
+    return Object.assign({}, this.commands);
+  }
+
+  public isSupported(command: keyof LocalSupportedCommandsFields): boolean {
+    return this.commands[command];
+  }
+
+  public toString(): string {
+    let result = '';
+    for (const [k, v] of Object.entries(this.commands)) {
+      if (v === true) {
+        result += result === '' ? k : ', ' + k;
+      }
     }
-    return {
+    return result;
+  }
+
+  static from(params: Buffer): LocalSupportedCommands {
+    return new LocalSupportedCommands({
       inquiry:                                                bitGet(params[0], 0),
       inquiryCancel:                                          bitGet(params[0], 1),
       periodicInquiryMode:                                    bitGet(params[0], 2),
@@ -840,10 +857,18 @@ export class ReadLocalSupportedCommands {
       readLocalSupportedCodecCapabilities:                    bitGet(params[45], 3),
       readLocalSupportedControllerDelay:                      bitGet(params[45], 4),
       configureDataPath:                                      bitGet(params[45], 5),
-    };
+    });
   }
 }
 
+export class ReadLocalSupportedCommands {
+  static outParams(params?: Buffer): LocalSupportedCommands {
+    if (!params || params.length < 64) {
+      throw makeParserError(HciParserError.InvalidPayloadSize);
+    }
+    return LocalSupportedCommands.from(params);
+  }
+}
 
 export class ReadRssi {
   static inParams(connectionHandle: number): Buffer {

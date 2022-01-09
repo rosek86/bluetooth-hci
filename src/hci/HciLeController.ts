@@ -5,6 +5,104 @@ import {
 } from './HciError';
 import { bitGet, bitSet, buildBitfield } from '../utils/Utils';
 
+export interface LeSupportedFeaturesInfo {
+  leEncryption:                               boolean;
+  connectionParametersRequestProcedure:       boolean;
+  extendedRejectIndication:                   boolean;
+  slaveInitiatedFeaturesExchange:             boolean;
+  lePing:                                     boolean;
+  leDataPacketLengthExtension:                boolean;
+  llPrivacy:                                  boolean;
+  extendedScannerFilterPolicies:              boolean;
+  le2mPhy:                                    boolean;
+  stableModulationIndexTransmitter:           boolean;
+  stableModulationIndexReceiver:              boolean;
+  leCodedPhy:                                 boolean;
+  leExtendedAdvertising:                      boolean;
+  lePeriodicAdvertising:                      boolean;
+  channelSelectionAlgorithmV2:                boolean;
+  lePowerClass1:                              boolean;
+  minimumNumberOfUsedChannelsProcedure:       boolean;
+  connectionCteRequest:                       boolean;
+  connectionCteResponse:                      boolean;
+  connectionlessCteTransmitter:               boolean;
+  connectionlessCteReceiver:                  boolean;
+  antennaSwitchingDuringCteTransmission:      boolean;
+  antennaSwitchingDuringCteReception:         boolean;
+  receivingConstantToneExtensions:            boolean;
+  periodicAdvertisingSyncTransferSender:      boolean;
+  periodicAdvertisingSyncTransferRecipient:   boolean;
+  sleepClockAccuracyUpdates:                  boolean;
+  remotePublicKeyValidation:                  boolean;
+  connectedIsochronousStreamMaster:           boolean;
+  connectedIsochronousStreamSlave:            boolean;
+  isochronousBroadcaster:                     boolean;
+  synchronizedReceiver:                       boolean;
+  isochronousChannels:                        boolean;
+  lePowerControlRequest:                      boolean;
+  lePowerChangeIndication:                    boolean;
+  lePathLossMonitoring:                       boolean;
+}
+
+export class LeSupportedFeatures {
+  private constructor(private features: LeSupportedFeaturesInfo) {}
+
+  public get Features(): LeSupportedFeaturesInfo {
+    return Object.assign({}, this.features);
+  }
+
+  static from(mask: bigint): LeSupportedFeatures{
+    return new LeSupportedFeatures({
+      leEncryption:                             bitGet(mask, 0n),
+      connectionParametersRequestProcedure:     bitGet(mask, 1n),
+      extendedRejectIndication:                 bitGet(mask, 2n),
+      slaveInitiatedFeaturesExchange:           bitGet(mask, 3n),
+      lePing:                                   bitGet(mask, 4n),
+      leDataPacketLengthExtension:              bitGet(mask, 5n),
+      llPrivacy:                                bitGet(mask, 6n),
+      extendedScannerFilterPolicies:            bitGet(mask, 7n),
+      le2mPhy:                                  bitGet(mask, 8n),
+      stableModulationIndexTransmitter:         bitGet(mask, 9n),
+      stableModulationIndexReceiver:            bitGet(mask, 10n),
+      leCodedPhy:                               bitGet(mask, 11n),
+      leExtendedAdvertising:                    bitGet(mask, 12n),
+      lePeriodicAdvertising:                    bitGet(mask, 13n),
+      channelSelectionAlgorithmV2:              bitGet(mask, 14n),
+      lePowerClass1:                            bitGet(mask, 15n),
+      minimumNumberOfUsedChannelsProcedure:     bitGet(mask, 16n),
+      connectionCteRequest:                     bitGet(mask, 17n),
+      connectionCteResponse:                    bitGet(mask, 18n),
+      connectionlessCteTransmitter:             bitGet(mask, 19n),
+      connectionlessCteReceiver:                bitGet(mask, 20n),
+      antennaSwitchingDuringCteTransmission:    bitGet(mask, 21n),
+      antennaSwitchingDuringCteReception:       bitGet(mask, 22n),
+      receivingConstantToneExtensions:          bitGet(mask, 23n),
+      periodicAdvertisingSyncTransferSender:    bitGet(mask, 24n),
+      periodicAdvertisingSyncTransferRecipient: bitGet(mask, 25n),
+      sleepClockAccuracyUpdates:                bitGet(mask, 26n),
+      remotePublicKeyValidation:                bitGet(mask, 27n),
+      connectedIsochronousStreamMaster:         bitGet(mask, 28n),
+      connectedIsochronousStreamSlave:          bitGet(mask, 29n),
+      isochronousBroadcaster:                   bitGet(mask, 30n),
+      synchronizedReceiver:                     bitGet(mask, 31n),
+      isochronousChannels:                      bitGet(mask, 32n),
+      lePowerControlRequest:                    bitGet(mask, 33n),
+      lePowerChangeIndication:                  bitGet(mask, 34n),
+      lePathLossMonitoring:                     bitGet(mask, 35n),
+    });
+  }
+
+  public toString(): string {
+    let result = '';
+    for (const [k, v] of Object.entries(this.features)) {
+      if (v === true) {
+        result += result === '' ? k : ', ' + k;
+      }
+    }
+    return result;
+  }
+}
+
 export interface LeEvents {
   connectionComplete:                      boolean;
   advertisingReport:                       boolean;
@@ -125,90 +223,14 @@ export class LeReadBufferSizeV2 {
   }
 }
 
-export interface LeLocalSupportedFeatures {
-  leEncryption:                               boolean;
-  connectionParametersRequestProcedure:       boolean;
-  extendedRejectIndication:                   boolean;
-  slaveInitiatedFeaturesExchange:             boolean;
-  lePing:                                     boolean;
-  leDataPacketLengthExtension:                boolean;
-  llPrivacy:                                  boolean;
-  extendedScannerFilterPolicies:              boolean;
-  le2mPhy:                                    boolean;
-  stableModulationIndexTransmitter:           boolean;
-  stableModulationIndexReceiver:              boolean;
-  leCodedPhy:                                 boolean;
-  leExtendedAdvertising:                      boolean;
-  lePeriodicAdvertising:                      boolean;
-  channelSelectionAlgorithmV2:                boolean;
-  lePowerClass1:                              boolean;
-  minimumNumberOfUsedChannelsProcedure:       boolean;
-  connectionCteRequest:                       boolean;
-  connectionCteResponse:                      boolean;
-  connectionlessCteTransmitter:               boolean;
-  connectionlessCteReceiver:                  boolean;
-  antennaSwitchingDuringCteTransmission:      boolean;
-  antennaSwitchingDuringCteReception:         boolean;
-  receivingConstantToneExtensions:            boolean;
-  periodicAdvertisingSyncTransferSender:      boolean;
-  periodicAdvertisingSyncTransferRecipient:   boolean;
-  sleepClockAccuracyUpdates:                  boolean;
-  remotePublicKeyValidation:                  boolean;
-  connectedIsochronousStreamMaster:           boolean;
-  connectedIsochronousStreamSlave:            boolean;
-  isochronousBroadcaster:                     boolean;
-  synchronizedReceiver:                       boolean;
-  isochronousChannels:                        boolean;
-  lePowerControlRequest:                      boolean;
-  lePowerChangeIndication:                    boolean;
-  lePathLossMonitoring:                       boolean;
-}
-
 export class LeReadLocalSupportedFeatures {
-  static outParams(params?: Buffer): LeLocalSupportedFeatures {
+  static outParams(params?: Buffer): LeSupportedFeatures {
     if (!params || params.length < (64/8)) {
       throw makeParserError(HciParserError.InvalidPayloadSize);
     }
 
     const mask = params.readBigUInt64LE(0);
-    return {
-      leEncryption:                             bitGet(mask, 0n),
-      connectionParametersRequestProcedure:     bitGet(mask, 1n),
-      extendedRejectIndication:                 bitGet(mask, 2n),
-      slaveInitiatedFeaturesExchange:           bitGet(mask, 3n),
-      lePing:                                   bitGet(mask, 4n),
-      leDataPacketLengthExtension:              bitGet(mask, 5n),
-      llPrivacy:                                bitGet(mask, 6n),
-      extendedScannerFilterPolicies:            bitGet(mask, 7n),
-      le2mPhy:                                  bitGet(mask, 8n),
-      stableModulationIndexTransmitter:         bitGet(mask, 9n),
-      stableModulationIndexReceiver:            bitGet(mask, 10n),
-      leCodedPhy:                               bitGet(mask, 11n),
-      leExtendedAdvertising:                    bitGet(mask, 12n),
-      lePeriodicAdvertising:                    bitGet(mask, 13n),
-      channelSelectionAlgorithmV2:              bitGet(mask, 14n),
-      lePowerClass1:                            bitGet(mask, 15n),
-      minimumNumberOfUsedChannelsProcedure:     bitGet(mask, 16n),
-      connectionCteRequest:                     bitGet(mask, 17n),
-      connectionCteResponse:                    bitGet(mask, 18n),
-      connectionlessCteTransmitter:             bitGet(mask, 19n),
-      connectionlessCteReceiver:                bitGet(mask, 20n),
-      antennaSwitchingDuringCteTransmission:    bitGet(mask, 21n),
-      antennaSwitchingDuringCteReception:       bitGet(mask, 22n),
-      receivingConstantToneExtensions:          bitGet(mask, 23n),
-      periodicAdvertisingSyncTransferSender:    bitGet(mask, 24n),
-      periodicAdvertisingSyncTransferRecipient: bitGet(mask, 25n),
-      sleepClockAccuracyUpdates:                bitGet(mask, 26n),
-      remotePublicKeyValidation:                bitGet(mask, 27n),
-      connectedIsochronousStreamMaster:         bitGet(mask, 28n),
-      connectedIsochronousStreamSlave:          bitGet(mask, 29n),
-      isochronousBroadcaster:                   bitGet(mask, 30n),
-      synchronizedReceiver:                     bitGet(mask, 31n),
-      isochronousChannels:                      bitGet(mask, 32n),
-      lePowerControlRequest:                    bitGet(mask, 33n),
-      lePowerChangeIndication:                  bitGet(mask, 34n),
-      lePathLossMonitoring:                     bitGet(mask, 35n),
-    };
+    return LeSupportedFeatures.from(mask);
   }
 }
 

@@ -30,7 +30,7 @@ import {
 import {
   LeSupportedStates, LeEvents, LeSetEventsMask,
   LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
-  LeLocalSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
+  LeSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
   LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
   LeScanParameters, LeCreateConnection, LeSetScanParameters, LeSetScanEnabled, LeConnectionUpdate,
   LeReadWhiteListSize, LeWhiteList, LeExtendedAdvertisingParameters, LeExtendedScanParameters,
@@ -147,6 +147,12 @@ export class Hci extends EventEmitter {
     payload.writeUInt16LE(connectionHandle, 0);
     const ocf = HciOcfLinkControlCommands.ReadRemoteVersionInformation;
     await this.cmd.linkControl({ ocf, payload });
+  }
+
+  public async readRemoteVersionInformationAwait(connectionHandle: number): Promise<ReadRemoteVersionInformationCompleteEvent> {
+    const waitEvent = this.waitEvent<ReadRemoteVersionInformationCompleteEvent>(connectionHandle, 'ReadRemoteVersionInformationComplete');
+    await this.readRemoteVersionInformation(connectionHandle);
+    return await waitEvent;
   }
 
   // Control and Baseband
@@ -274,7 +280,7 @@ export class Hci extends EventEmitter {
     return LeReadBufferSizeV2.outParams(result.returnParameters);
   }
 
-  public async leReadLocalSupportedFeatures(): Promise<LeLocalSupportedFeatures> {
+  public async leReadLocalSupportedFeatures(): Promise<LeSupportedFeatures> {
     const ocf = HciOcfLeControllerCommands.ReadLocalSupportedFeatures;
     const result = await this.cmd.leController({ ocf });
     return LeReadLocalSupportedFeatures.outParams(result.returnParameters);
@@ -387,6 +393,12 @@ export class Hci extends EventEmitter {
     payload.writeUIntLE(connectionHandle, 0, 2);
     const ocf = HciOcfLeControllerCommands.ReadRemoteFeatures;
     await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leReadRemoteFeaturesAwait(connectionHandle: number): Promise<LeReadRemoteFeaturesCompleteEvent> {
+    const waitEvent = this.waitEvent<LeReadRemoteFeaturesCompleteEvent>(connectionHandle, 'LeReadRemoteFeaturesComplete');
+    await this.leReadRemoteFeatures(connectionHandle);
+    return await waitEvent;
   }
 
   public async leEncrypt(key: Buffer, plainTextData: Buffer): Promise<Buffer> {

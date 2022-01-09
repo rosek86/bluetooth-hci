@@ -45,19 +45,13 @@ export class Utils {
     console.log('LE Buffer Size:', leBufferSize);
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log('LE Features:', leFeatures);
+    console.log('LE Features:', leFeatures.toString());
 
     const leStates = await hci.leReadSupportedStates();
     console.log('LE States:', leStates);
 
     const localCommands = await hci.readLocalSupportedCommands();
-
-    console.log('Local Supported Commands:')
-    for (const [key, value] of Object.entries(localCommands)) {
-      if (value === true) {
-        console.log(key);
-      }
-    }
+    console.log('Local Supported Commands:', localCommands.toString());
 
     await hci.setEventMask({
       disconnectionComplete:                true,

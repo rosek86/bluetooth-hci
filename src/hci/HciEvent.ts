@@ -3,6 +3,7 @@ import Debug from 'debug';
 
 import { Address, AddressType } from '../utils/Address';
 import { HciErrorCode } from './HciError';
+import { LeSupportedFeatures } from './HciLeController';
 
 const debug = Debug('nble-hci-event');
 
@@ -637,7 +638,7 @@ export class LeConnectionUpdateComplete {
 }
 
 export interface LeReadRemoteFeaturesCompleteEvent extends ConnEvent {
-  leFeatures: bigint;
+  leFeatures: LeSupportedFeatures;
 }
 
 export class LeReadRemoteFeaturesComplete {
@@ -653,10 +654,8 @@ export class LeReadRemoteFeaturesComplete {
 
     const event: LeReadRemoteFeaturesCompleteEvent = {
       connectionHandle,
-      leFeatures,
+      leFeatures: LeSupportedFeatures.from(leFeatures),
     };
-
-    // TODO: Parse le features
 
     return { status, event };
   }

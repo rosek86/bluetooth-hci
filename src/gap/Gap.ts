@@ -1,16 +1,18 @@
+import assert from 'assert';
 import { EventEmitter } from 'events';
+import Debug from 'debug';
 import { AdvData } from './AdvData';
 import { Hci } from '../hci/Hci';
 import {
   DisconnectionCompleteEvent,
   LeAdvEventType, LeAdvReport, LeChannelSelAlgoEvent, LeConnectionCompleteEvent,
-  LeConnectionRole,
-  LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy, LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
+  LeConnectionRole, LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy,
+  LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
 } from '../hci/HciEvent';
 import {
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
   LeOwnAddressType, LeScanFilterDuplicates,
-  LeScanningFilterPolicy, LeScanType
+  LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
 } from '../hci/HciLeController';
 import { Address } from '../utils/Address';
 import { Att } from '../att/Att';
@@ -43,8 +45,10 @@ export interface GapConnectEvent {
     version: number;
     subversion: number;
   };
-  leRemoteFeatures: bigint;
+  leRemoteFeatures: LeSupportedFeatures;
 };
+
+const debug = Debug('nble-gap');
 
 export declare interface Gap {
   on(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
@@ -64,6 +68,15 @@ export declare interface Gap {
   removeListener(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
 }
 
+interface GapDeviceInfo {
+  connComplete?: LeConnectionCompleteEvent;
+  enhConnComplete?: LeEnhConnectionCompleteEvent;
+  channelSelectionAlgorithm?: LeChannelSelAlgoEvent;
+  versionInformation?: ReadRemoteVersionInformationCompleteEvent;
+  leRemoteFeatures?: LeReadRemoteFeaturesCompleteEvent;
+  att?: Att;
+};
+
 export class Gap extends EventEmitter {
   private extended = false;
 
@@ -72,14 +85,7 @@ export class Gap extends EventEmitter {
 
   private l2cap: L2CAP;
 
-  private connectedDevices: Map<number, {
-    connComplete?: LeConnectionCompleteEvent;
-    enhConnComplete?: LeEnhConnectionCompleteEvent;
-    channelSelectionAlgorithm?: LeChannelSelAlgoEvent;
-    versionInformation?: ReadRemoteVersionInformationCompleteEvent;
-    leRemoteFeatures?: LeReadRemoteFeaturesCompleteEvent;
-    att?: Att;
-  }> = new Map();
+  private connectedDevices: Map<number, GapDeviceInfo> = new Map();
 
   constructor(private hci: Hci) {
     super();
@@ -92,15 +98,14 @@ export class Gap extends EventEmitter {
     this.hci.on('LeConnectionComplete',                 this.onLeConnectionComplete);
     this.hci.on('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
     this.hci.on('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
-    this.hci.on('ReadRemoteVersionInformationComplete', this.onReadRemoteVersionInformationComplete);
-    this.hci.on('LeReadRemoteFeaturesComplete',         this.onLeReadRemoteFeaturesComplete);
     this.hci.on('DisconnectionComplete',                this.onDisconnectionComplete);
   }
 
   public async init() {
     const commands = await this.hci.readLocalSupportedCommands();
 
-    if (commands.leSetExtendedScanParameters && commands.leSetExtendedScanEnable) {
+    if (commands.isSupported('leSetExtendedScanParameters') &&
+        commands.isSupported('leSetExtendedScanEnable')) {
       this.extended = true;
     }
 
@@ -114,8 +119,6 @@ export class Gap extends EventEmitter {
     this.hci.removeListener('LeConnectionComplete',                 this.onLeConnectionComplete);
     this.hci.removeListener('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
     this.hci.removeListener('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
-    this.hci.removeListener('ReadRemoteVersionInformationComplete', this.onReadRemoteVersionInformationComplete);
-    this.hci.removeListener('LeReadRemoteFeaturesComplete',         this.onLeReadRemoteFeaturesComplete);
     this.hci.removeListener('DisconnectionComplete',                this.onDisconnectionComplete);
     this.removeAllListeners();
   }
@@ -279,55 +282,39 @@ export class Gap extends EventEmitter {
     }
   };
 
-  private onLeConnectionComplete = (_err: Error|null, event: LeConnectionCompleteEvent) => {
+  private onLeConnectionComplete = (_: Error|null, event: LeConnectionCompleteEvent) => {
     this.scanning = false;
-    this.connectedDevices.set(event.connectionHandle, {
-      connComplete: event,
-      att: new Att(this.l2cap, event.connectionHandle),
-    });
+    this.connectedDevices.set(event.connectionHandle, { connComplete: event });
   };
 
-  private onLeEnhancedConnectionComplete = (_err: Error|null, event: LeEnhConnectionCompleteEvent) => {
+  private onLeEnhancedConnectionComplete = (_: Error|null, event: LeEnhConnectionCompleteEvent) => {
     this.scanning = false;
-    this.connectedDevices.set(event.connectionHandle, {
-      enhConnComplete: event,
-      att: new Att(this.l2cap, event.connectionHandle),
-    });
+    this.connectedDevices.set(event.connectionHandle, { enhConnComplete: event });
   };
 
-  private onLeChannelSelectionAlgorithm = async (_err: Error|null, event: LeChannelSelAlgoEvent) => {
-    this.connecting = false;
-    this.scanning = false;
+  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
+    try {
+      this.connecting = false;
+      this.scanning = false;
 
-    const device = this.connectedDevices.get(event.connectionHandle);
-    if (device) {
+      const device = this.connectedDevices.get(event.connectionHandle);
+      assert(device);
+
+      const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle);
+      const features = await this.hci.leReadRemoteFeaturesAwait(event.connectionHandle);
+
+      device.att = new Att(this.l2cap, event.connectionHandle);
       device.channelSelectionAlgorithm = event;
+      device.versionInformation = version;
+      device.leRemoteFeatures = features;
+
+      const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
+      assert(gapEvent);
+
+      this.emit('GapConnected', gapEvent);
+    } catch (err) {
+      debug(err);
     }
-
-    await this.hci.readRemoteVersionInformation(event.connectionHandle);
-  };
-
-  private onReadRemoteVersionInformationComplete = async (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => {
-    const device = this.connectedDevices.get(event.connectionHandle);
-    if (device) {
-      device.versionInformation = event;
-    }
-
-    await this.hci.leReadRemoteFeatures(event.connectionHandle);
-  };
-
-  private onLeReadRemoteFeaturesComplete = (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => {
-    const device = this.connectedDevices.get(event.connectionHandle);
-    if (device) {
-      device.leRemoteFeatures = event;
-    }
-
-    const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
-    if (!gapEvent) {
-      return;
-    }
-
-    this.emit('GapConnected', gapEvent);
   };
 
   private createGapConnectedEvent(connectionHandle: number): GapConnectEvent | null {
@@ -342,7 +329,11 @@ export class Gap extends EventEmitter {
     }
 
     const version = device.versionInformation;
-    const leRemoteFeatures = device.leRemoteFeatures;
+    const features = device.leRemoteFeatures;
+
+    if (!version || !features) {
+      return null;
+    }
 
     const event: GapConnectEvent = {
       connectionHandle: conn.connectionHandle,
@@ -355,11 +346,11 @@ export class Gap extends EventEmitter {
       role: conn.role,
       masterClockAccuracy: conn.masterClockAccuracy,
       versionInfo: {
-        manufacturerName: version?.manufacturerName ?? 0,
-        version: version?.version ?? 0,
-        subversion: version?.subversion ?? 0,
+        manufacturerName: version.manufacturerName,
+        version: version.version,
+        subversion: version.subversion,
       },
-      leRemoteFeatures: leRemoteFeatures?.leFeatures ?? 0n,
+      leRemoteFeatures: features.leFeatures,
     };
 
     if (this.extended) {

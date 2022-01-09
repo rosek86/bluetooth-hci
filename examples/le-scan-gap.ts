@@ -21,8 +21,15 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     });
 
     gap.on('GapConnected', async (event) => {
-      console.log('connected', event);
       connecting = false;
+
+      console.log(
+        'connected',
+        event.connectionHandle,
+        event.connectionParams,
+        event.versionInfo,
+        event.leRemoteFeatures.toString(),
+      );
 
       const rssi = await adapter.Hci.readRssi(event.connectionHandle);
       console.log(`RSSI: ${rssi} dBm`);
@@ -32,16 +39,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
         throw new Error('ATT layer not exists');
       }
 
-      // const dataLength = await adapter.Hci.leSetDataLengthAwait(event.connectionHandle, {
-      //   txOctets: 50,
-      //   txTime: 400,
-      // });
-      // console.log(dataLength);
-
       const gatt = new Gatt(att);
-
-      // const mtu = await gatt.exchangeMtu(50);
-      // console.log(mtu);
 
       const services = await gatt.discoverServices();
       for (const service of services) {
