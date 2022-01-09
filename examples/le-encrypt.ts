@@ -1,26 +1,40 @@
+import { LeDhKeyV2KeyType } from '../src/hci/HciLeController';
 import { Utils } from './utils/Utils';
 
 (async () => {
   const adapter = await Utils.createHciAdapter();
   const hci = adapter.Hci;
 
-  const key = Buffer.from('0123456789ABCDEF');
-  const data = Buffer.from('0123456789ABCDEF');
+  const commands = await hci.readLocalSupportedCommands();
 
-  const result = await hci.leEncrypt(key, data);
-  console.log(`Encrypted:`, result);
+  await hci.setEventMask({ leMeta: true });
+  await hci.leSetEventMask({
+    generateDhKeyComplete: true,
+    readLocalP256PublicKeyComplete: true,
+  });
 
-  // NOTE: command not implemented on the controller:
-  // hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
-  //   console.log('LeReadLocalP256PublicKeyComplete', status, event);
-  // });
-  // await hci.leReadLocalP256PublicKey();
-  // hci.on('LeGenerateDhKeyComplete', (status, event) => {
-  //   console.log('LeGenerateDhKeyComplete', status, event);
-  // });
-  // await hci.leGenerateDhKeyV1({ publicKey: Buffer.alloc(64) });
+  hci.on('LeGenerateDhKeyComplete', (status, event) => {
+    console.log('LeGenerateDhKeyComplete', status, event);
+  });
+  hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
+    console.log('LeReadLocalP256PublicKeyComplete', status, event);
+  });
 
-  await adapter.close();
+  if (commands.isSupported('leEncrypt')) {
+    const key = Buffer.from('0123456789ABCDEF');
+    const data = Buffer.from('0123456789ABCDEF');
+    const result = await hci.leEncrypt(key, data);
+    console.log(`Encrypted:`, result);
+  }
 
-  process.exit(0);
+  if (commands.isSupported('leGenerateDhKeyV2')) {
+    await hci.leGenerateDhKeyV2({
+      publicKey: Buffer.alloc(64),
+      keyType: LeDhKeyV2KeyType.UseDebugPrivateKey,
+    });
+  }
+
+  if (commands.isSupported('leReadLocalP256PublicKey')) {
+    await hci.leReadLocalP256PublicKey();
+  }
 })();

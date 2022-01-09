@@ -71,8 +71,8 @@ export class Utils {
     const extendedConnection = localCommands.Commands.leExtendedCreateConnection;
 
     await hci.leSetEventMask({
-      connectionComplete:                   extendedConnection ? false : true,
-      advertisingReport:                    extendedScan ? false : true,
+      connectionComplete:                   !extendedConnection,
+      advertisingReport:                    !extendedScan,
       connectionUpdateComplete:             true,
       readRemoteFeaturesComplete:           true,
       longTermKeyRequest:                   true,
@@ -80,10 +80,10 @@ export class Utils {
       dataLengthChange:                     true,
       readLocalP256PublicKeyComplete:       true,
       generateDhKeyComplete:                true,
-      enhancedConnectionComplete:           extendedConnection ? true : false,
+      enhancedConnectionComplete:           extendedConnection,
       directedAdvertisingReport:            true,
       phyUpdateComplete:                    true,
-      extendedAdvertisingReport:            extendedScan ? true : false,
+      extendedAdvertisingReport:            extendedScan,
       scanTimeout:                          true,
       advertisingSetTerminated:             true,
       channelSelectionAlgorithm:            true,

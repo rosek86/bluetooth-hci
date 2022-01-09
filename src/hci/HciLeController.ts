@@ -974,9 +974,14 @@ export class LeDhKeyV1 {
   }
 }
 
+export enum LeDhKeyV2KeyType {
+  UseGeneratedPrivateKey = 0x00, // Use the generated private key
+  UseDebugPrivateKey     = 0x01, // Use the debug private key
+}
+
 export interface LeDhKeyV2 {
   publicKey: Buffer;
-  keyType: number;
+  keyType: LeDhKeyV2KeyType;
 }
 
 export class LeDhKeyV2 {
