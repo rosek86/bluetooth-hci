@@ -7,7 +7,10 @@ export class UUID {
   }
 
   static toString(uuid: Buffer): string {
-    const padded = uuid.toString('hex').padEnd(16, '0');
+    if (![2, 16].includes(uuid.length)) {
+      throw new Error(`Invalid UUID length: ${uuid.length}`);
+    }
+    const padded = uuid.toString('hex').padEnd(uuid.length, '0');
     const bytes = padded.match(/.{1,2}/g);
     return (bytes ?? []).reverse().join('');
   }

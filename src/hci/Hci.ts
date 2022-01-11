@@ -125,7 +125,7 @@ export class Hci extends EventEmitter {
 
     this.send = init.send;
 
-    const timeout = init.cmdTimeout ?? 2000;
+    const timeout = init.cmdTimeout ?? 2_000;
     this.cmd = new HciCmd(this.send, timeout);
   }
 

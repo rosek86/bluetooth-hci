@@ -520,13 +520,18 @@ export class LocalSupportedCommands {
   }
 
   public toString(): string {
-    let result = '';
-    for (const [k, v] of Object.entries(this.commands)) {
-      if (v === true) {
-        result += result === '' ? k : ', ' + k;
-      }
-    }
-    return result;
+    return Object.entries(this.commands)
+      .filter(([_, supported]) => supported)
+      .map(([command]) => command)
+      .join(', ');
+  }
+
+  public toStringSorted(): string {
+    return Object.entries(this.commands)
+      .filter(([_, supported]) => supported)
+      .map(([command]) => command)
+      .sort()
+      .join(', ');
   }
 
   static from(params: Buffer): LocalSupportedCommands {

@@ -49,7 +49,7 @@ export interface HciCmdResult {
 export class HciCmd {
   private onResult: ((_: HciCmdResult) => void) | null = null;
 
-  public constructor(private sendBuffer: HciSendFunction, private timeout: number = 2000) {
+  public constructor(private sendBuffer: HciSendFunction, private timeout: number = 2_000) {
   }
 
   public async linkControl(params: {

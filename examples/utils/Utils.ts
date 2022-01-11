@@ -3,6 +3,8 @@ import { Address, AddressType } from '../../src/utils/Address';
 import { ArgsParser, DefaultInputArgs } from './ArgsParser';
 import { Adapter, HciAdapterFactory } from './HciAdapterFactory';
 
+import companies from '../../assigned numbers/Company Identifiers.json';
+
 export class Utils {
   public static async createHciAdapter(defaults?: DefaultInputArgs): Promise<Adapter> {
     const argsParser = new ArgsParser();
@@ -27,10 +29,11 @@ export class Utils {
     await hci.reset();
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log('Local Version', localVersion);
+    console.log('Local Version:', localVersion);
+    console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
 
     const localCommands = await hci.readLocalSupportedCommands();
-    console.log('Local Supported Commands:', localCommands.toString());
+    console.log('Local Supported Commands:', localCommands.toStringSorted());
 
     const localFeatures = await hci.readLocalSupportedFeatures();
     console.log('Local Supported Features', localFeatures);
@@ -118,5 +121,13 @@ export class Utils {
     await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82, AddressType.Random));
 
     console.log('initialised');
+  }
+
+  public static manufacturerNameFromCode(code: number): string | undefined {
+    const hexcode = code.toString(16).padStart(4, '0');
+    const manufacturers = Object.entries(companies.entries)
+      .filter(([k]) => k === hexcode)
+      .map(([_,v]) => v);
+    return manufacturers.at(0);
   }
 }

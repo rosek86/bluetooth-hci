@@ -8,6 +8,8 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
   try {
     const adapter = await Utils.createHciAdapter({
       usb: { vid: 0x2fe3, pid: 0x000d },
+      // usb: { vid: 0x0b05, pid: 0x190e },
+      // usb: { vid: 0x0b05, pid: 0x17cb },
     });
     await Utils.defaultAdapterSetup(adapter.Hci);
 
@@ -46,6 +48,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
         event.connectionHandle,
         event.connectionParams,
         event.versionInfo,
+        Utils.manufacturerNameFromCode(event.versionInfo.manufacturerName),
         event.leRemoteFeatures.toString(),
       );
 

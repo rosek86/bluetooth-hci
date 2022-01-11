@@ -13,7 +13,8 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true,
   },
   "files": [
     "examples/CodedPHY/advertising.ts",
