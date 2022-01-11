@@ -38,7 +38,7 @@ interface L2cap extends EventEmitter {
 }
 
 export declare interface Att {
-  on(event: 'Disconnected',            listener: (connectionHandle: number, reason: HciError) => void): this;
+  on(event: 'Disconnected',            listener: (reason: HciError) => void): this;
 
   on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
   on(event: 'ExchangeMtuReq',          listener: (event: AttExchangeMtuReqMsg) => void): this;
@@ -114,7 +114,7 @@ export class Att extends EventEmitter {
     l2cap.on('Disconnected', this.onDisconnected);
   }
 
-  public destroy(): void {
+  private destroy(): void {
     this.l2cap.off('AttData', this.onAttData);
     this.l2cap.off('Disconnected', this.onDisconnected);
     this.removeAllListeners();
@@ -285,7 +285,12 @@ export class Att extends EventEmitter {
   };
 
   private onDisconnected = (connectionHandle: number, reasonCode: number): void => {
-    this.emit('Disconnected', connectionHandle, new HciError(reasonCode));
+    if (this.connectionHandle !== connectionHandle) {
+      return;
+    }
+
+    this.destroy();
+    this.emit('Disconnected', new HciError(reasonCode));
   };
 
   // Utils
@@ -312,10 +317,7 @@ export class Att extends EventEmitter {
         this.off('ErrorRsp',      onFailure);
         this.off('Disconnected',  onDisconnected);
       };
-      const onDisconnected = (connectionHandle: number, reason: HciError) => {
-        if (connectionHandle !== this.connectionHandle) {
-          return;
-        }
+      const onDisconnected = (reason: HciError) => {
         cleanup();
         reject(reason);
       };

@@ -384,7 +384,6 @@ export class Gap extends EventEmitter {
 
     const device = this.connectedDevices.get(event.connectionHandle);
     if (device) {
-      device.att?.destroy();
       this.connectedDevices.delete(event.connectionHandle);
     }
 

@@ -105,7 +105,6 @@ import { Gap } from '../src/gap/Gap';
       console.log(connParams);
 
       setTimeout(async () => {
-        att.destroy();
         await hci.disconnect(event.connectionHandle);
       }, 2000);
     });

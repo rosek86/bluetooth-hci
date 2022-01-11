@@ -114,7 +114,6 @@ import { Att } from '../src/att/Att';
       });
 
       const onDisconnectionComplete = () => {
-        att.destroy();
         hci.off('DisconnectionComplete', onDisconnectionComplete);
       };
       hci.on('DisconnectionComplete', onDisconnectionComplete);

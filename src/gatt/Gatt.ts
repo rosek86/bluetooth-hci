@@ -4,15 +4,45 @@ import { GattService } from './GattService';
 import { GattIncService } from './GattIncService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
+import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
+import { EventEmitter } from 'stream';
+import { HciError } from '../hci/HciError';
 
-export class Gatt {
+export class Gatt extends EventEmitter {
   private readonly GATT_PRIM_SVC_UUID = Buffer.from([0x00, 0x28]);
   private readonly GATT_INCLUDE_UUID = Buffer.from([0x02, 0x28]);
   private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
 
   private mtu = 23;
 
-  constructor(private att: Att) {}
+  constructor(private att: Att) {
+    super();
+    att.on('Disconnected', this.onDisconnected);
+    att.on('HandleValueInd', this.onValueIndication);
+    att.on('HandleValueNtf', this.onValueNotification);
+  }
+
+  private destroy(): void {
+    this.att.off('Disconnected', this.onDisconnected);
+    this.att.off('HandleValueInd', this.onValueIndication);
+    this.att.off('handleValueNtf', this.onValueNotification);
+    this.removeAllListeners();
+  }
+
+  private onDisconnected = (reason: HciError) => {
+    this.destroy();
+  };
+
+  private onValueIndication = async (msg: AttHandleValueIndMsg) => {
+    // msg.attributeHandle
+    // msg.attributeValue
+    await this.att.handleValueCfm();
+  };
+
+  private onValueNotification = (msg: AttHandleValueNtfMsg) => {
+    // msg.attributeHandle
+    // msg.attributeValue
+  };
 
   public async discoverServices(): Promise<GattService[]> {
     const entries = await this.readByGroupTypeReq(this.GATT_PRIM_SVC_UUID, 1, 0xFFFF);
