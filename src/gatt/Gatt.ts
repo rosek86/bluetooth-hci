@@ -59,18 +59,12 @@ export class Gatt {
     return value;
   }
 
-  public async write(characteristic: GattCharacteristic, value: Buffer, withResponse: boolean): Promise<void> {
-    if (withResponse) {
-      await this.att.writeReq({
-        attributeHandle: characteristic.Handle,
-        attributeValue: value,
-      });
-    } else {
-      await this.att.writeCmd({
-        attributeHandle: characteristic.Handle,
-        attributeValue: value,
-      });
-    }
+  public async write(handle: number, value: Buffer): Promise<void> {
+    await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
+  }
+
+  public async writeWithoutResponse(handle: number, value: Buffer): Promise<void> {
+    await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
   private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {

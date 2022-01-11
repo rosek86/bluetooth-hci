@@ -748,6 +748,7 @@ export class Hci extends EventEmitter {
       }
     } catch (err) {
       debug(err);
+      // TODO: handle this in some way (at least error emit?)
     }
   }
 
