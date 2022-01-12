@@ -1,18 +1,39 @@
 {
-  "name": "n-ble",
+  "name": "@rosek86/n-ble",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
+  "author": {
+    "name": "Krzysztof Rosinski",
+    "url": "https://github.com/rosek86"
+  },
+  "license": "MIT",
+  "engines": { "node": ">= 16.0.0" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rosek86/n-ble"
+  },
   "scripts": {
     "start": "node lib/index.js",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "mocha"
   },
-  "keywords": [],
-  "author": "Krzysztof Rosinski",
-  "license": "MIT",
-  "engines": { "node": ">=16.0.0" },
+  "keywords": [
+    "bluetooth",
+    "ble",
+    "bluetooth low energy",
+    "bluetooth smart",
+    "central",
+    "peripheral",
+    "hci"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "freebsd",
+    "win32"
+  ],
   "devDependencies": {
     "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#2b577f2d37d3a303c327f7bc094e016e3e772225",
     "@types/chai": "^4.3.0",
