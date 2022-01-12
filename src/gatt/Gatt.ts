@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { EventEmitter } from 'stream';
+import { EventEmitter } from 'events';
 
 import { Att, AttDataEntry } from './AttGlue';
 import { GattService } from './GattService';

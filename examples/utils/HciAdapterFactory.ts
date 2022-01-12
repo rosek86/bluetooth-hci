@@ -1,7 +1,7 @@
 process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
 import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetooth-hci-socket';
 import SerialPort from 'serialport';
-import { EventEmitter } from 'stream';
+import { EventEmitter } from 'events';
 import { Hci } from '../../src/hci/Hci';
 import { H4 } from '../../src/transport/H4';
 import { delay } from '../../src/utils/Utils';
