@@ -12,17 +12,17 @@ const debug = Debug('nble-gatt');
 
 interface CharacteristicEntries {
   characteristic: GattCharacteristic;
-  descriptors: { [uuid: string]: GattDescriptor };
+  descriptors: Record<string, GattDescriptor | undefined>;
 }
 
 interface ServiceEntries {
   service: GattService;
-  characteristics: { [uuid: string]: CharacteristicEntries };
-  services: { [uuid: string]: ServiceEntries };
+  characteristics: Record<string, CharacteristicEntries | undefined>;
+  services: Record<string, ServiceEntries | undefined>;
 }
 
 interface Profile {
-  services: { [uuid: string]: ServiceEntries };
+  services: Record<string, ServiceEntries | undefined>;
 }
 
 export class Gatt extends EventEmitter {
@@ -31,6 +31,12 @@ export class Gatt extends EventEmitter {
   private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
 
   private profile: Profile = { services: {} };
+
+  private flatProfile: {
+    services: Record<number, GattService>;
+    characteristics: Record<number, GattCharacteristic>;
+    descriptors: Record<number, GattDescriptor>;
+  } = { services: {}, characteristics: {}, descriptors: {} };
 
   public get Profile() {
     // TODO: deep clone
@@ -53,19 +59,38 @@ export class Gatt extends EventEmitter {
     this.removeAllListeners();
   }
 
-  private onDisconnected = (_: HciError) => {
+  private onDisconnected = (_: HciError): void => {
     this.destroy();
   };
 
-  private onValueIndication = async (msg: AttHandleValueIndMsg) => {
-    // msg.attributeHandle
-    // msg.attributeValue
+  private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
     await this.att.handleValueCfm();
+
+    const characteristic = this.flatProfile.characteristics[msg.attributeHandle];
+    if (!characteristic) {
+      return;
+    }
+
+    const service = this.findServiceForCharacteristic(characteristic);
+    if (!service) {
+      return;
+    }
+
+    this.emit('GattIndication', service.UUID, characteristic.UUID, msg.attributeValue);
   };
 
-  private onValueNotification = (msg: AttHandleValueNtfMsg) => {
-    // msg.attributeHandle
-    // msg.attributeValue
+  private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
+    const characteristic = this.flatProfile.characteristics[msg.attributeHandle];
+    if (!characteristic) {
+      return;
+    }
+
+    const service = this.findServiceForCharacteristic(characteristic);
+    if (!service) {
+      return;
+    }
+
+    this.emit('GattNotification', service.UUID, characteristic.UUID, msg.attributeValue);
   };
 
   public async discover(): Promise<Profile> {
@@ -104,9 +129,10 @@ export class Gatt extends EventEmitter {
   public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
     const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
-    if (this.profile.services[service.UUID]) {
+    const profileService = this.profile.services[service.UUID];
+    if (profileService) {
       for (const includedService of includedServices) {
-        this.saveIncludedService(this.profile.services[service.UUID], includedService);
+        this.saveIncludedService(profileService, includedService);
       }
     }
     return includedServices;
@@ -115,9 +141,10 @@ export class Gatt extends EventEmitter {
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
     const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle+1, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
-    if (this.profile.services[service.UUID]) {
+    const profileService = this.profile.services[service.UUID];
+    if (profileService) {
       for (const characteristic of characteristics) {
-        this.saveCharacteristic(this.profile.services[service.UUID], characteristic);
+        this.saveCharacteristic(profileService, characteristic);
       }
     }
     return characteristics;
@@ -126,19 +153,14 @@ export class Gatt extends EventEmitter {
   public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
     const entries = await this.findInformation(characteristic.Handle+1, characteristic.EndingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
-    const service = this.findServiceForCharacteristic(characteristic);
-    if (service) {
-      for (const descriptor of descriptors) {
-        this.saveDescriptor(service.characteristics[characteristic.UUID], descriptor);
-      }
-    }
+    this.saveDescriptors(characteristic, descriptors);
     return descriptors;
   }
 
-  private findServiceForCharacteristic(characteristic: GattCharacteristic): ServiceEntries | null {
+  private findServiceForCharacteristic(characteristic: GattCharacteristic): GattService | null {
     for (const service of Object.values(this.profile.services)) {
-      if (service.characteristics[characteristic.UUID]) {
-        return service;
+      if (service?.characteristics[characteristic.UUID]) {
+        return service.service;
       }
     }
     return null;
@@ -146,18 +168,36 @@ export class Gatt extends EventEmitter {
 
   private saveService(service: GattService): void {
     this.profile.services[service.UUID] = { service, characteristics: {}, services: {} };
+    this.flatProfile.services[service.Handle] = service;
   }
 
   private saveIncludedService(services: ServiceEntries, service: GattService): void {
     services.services[service.UUID] = { service, characteristics: {}, services: {} };
+    this.flatProfile.services[service.Handle] = service;
   }
 
   private saveCharacteristic(services: ServiceEntries, characteristic: GattCharacteristic): void {
     services.characteristics[characteristic.UUID] = { characteristic, descriptors: {} };
+    this.flatProfile.characteristics[characteristic.Handle] = characteristic;
+  }
+
+  private saveDescriptors(characteristic: GattCharacteristic, descriptors: GattDescriptor[]) {
+    const service = this.findServiceForCharacteristic(characteristic);
+    if (!service) {
+      return;
+    }
+    const profileCharacteristic = this.profile.services[service.UUID]?.characteristics[characteristic.UUID];
+    if (!profileCharacteristic) {
+      return;
+    }
+    for (const descriptor of descriptors) {
+      this.saveDescriptor(profileCharacteristic, descriptor);
+    }
   }
 
   private saveDescriptor(characteristic: CharacteristicEntries, descriptor: GattDescriptor): void {
     characteristic.descriptors[descriptor.UUID] = descriptor;
+    this.flatProfile.descriptors[descriptor.Handle] = descriptor;
   }
 
   public async exchangeMtu(mtu: number): Promise<number> {
