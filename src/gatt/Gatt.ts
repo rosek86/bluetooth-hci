@@ -1,17 +1,41 @@
-import { Att, AttDataEntry } from './AttGlue';
+import Debug from 'debug';
+import { EventEmitter } from 'stream';
 
+import { Att, AttDataEntry } from './AttGlue';
 import { GattService } from './GattService';
-import { GattIncService } from './GattIncService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
 import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
-import { EventEmitter } from 'stream';
 import { HciError } from '../hci/HciError';
+
+const debug = Debug('nble-gatt');
+
+interface CharacteristicEntries {
+  characteristic: GattCharacteristic;
+  descriptors: { [uuid: string]: GattDescriptor };
+}
+
+interface ServiceEntries {
+  service: GattService;
+  characteristics: { [uuid: string]: CharacteristicEntries };
+  services: { [uuid: string]: ServiceEntries };
+}
+
+interface Profile {
+  services: { [uuid: string]: ServiceEntries };
+}
 
 export class Gatt extends EventEmitter {
   private readonly GATT_PRIM_SVC_UUID = Buffer.from([0x00, 0x28]);
   private readonly GATT_INCLUDE_UUID = Buffer.from([0x02, 0x28]);
   private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
+
+  private profile: Profile = { services: {} };
+
+  public get Profile() {
+    // TODO: deep clone
+    return this.profile;
+  }
 
   private mtu = 23;
 
@@ -29,7 +53,7 @@ export class Gatt extends EventEmitter {
     this.removeAllListeners();
   }
 
-  private onDisconnected = (reason: HciError) => {
+  private onDisconnected = (_: HciError) => {
     this.destroy();
   };
 
@@ -44,24 +68,96 @@ export class Gatt extends EventEmitter {
     // msg.attributeValue
   };
 
-  public async discoverServices(): Promise<GattService[]> {
-    const entries = await this.readByGroupTypeReq(this.GATT_PRIM_SVC_UUID, 1, 0xFFFF);
-    return entries.map((e) => GattService.fromAttData(e));
+  public async discover(): Promise<Profile> {
+    const services = await this.discoverServices();
+    for (const service of services) {
+      debug('service', service);
+
+      const includedServices = await this.discoverIncludedServices(service);
+      for (const includedService of includedServices) {
+        debug('inc-service', includedService);
+      }
+
+      const characteristics = await this.discoverCharacteristics(service);
+      for (const characteristic of characteristics) {
+        debug('characteristic', characteristic);
+
+        const descriptors = await this.discoverDescriptors(characteristic);
+
+        for (const descriptor of descriptors) {
+          debug('descriptor', descriptor);
+        }
+      }
+    }
+    return this.Profile;
   }
 
-  public async discoverIncludedServices(service: GattService): Promise<GattIncService[]> {
+  public async discoverServices(): Promise<GattService[]> {
+    const entries = await this.readByGroupTypeReq(this.GATT_PRIM_SVC_UUID, 1, 0xFFFF);
+    const services = entries.map((e) => GattService.fromAttData(e));
+    for (const service of services) {
+      this.saveService(service);
+    }
+    return services;
+  }
+
+  public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
     const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndingHandle);
-    return entries.map((e) => GattIncService.fromAttData(e));
+    const includedServices = entries.map((e) => GattService.fromAttData(e));
+    if (this.profile.services[service.UUID]) {
+      for (const includedService of includedServices) {
+        this.saveIncludedService(this.profile.services[service.UUID], includedService);
+      }
+    }
+    return includedServices;
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
     const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle+1, service.EndingHandle);
-    return entries.map((e) => GattCharacteristic.fromAttData(e));
+    const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
+    if (this.profile.services[service.UUID]) {
+      for (const characteristic of characteristics) {
+        this.saveCharacteristic(this.profile.services[service.UUID], characteristic);
+      }
+    }
+    return characteristics;
   }
 
-  public async discoverDescriptors(characteristic: GattCharacteristic) {
+  public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
     const entries = await this.findInformation(characteristic.Handle+1, characteristic.EndingHandle);
-    return entries.map((e) => GattDescriptor.fromAttData(e));
+    const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
+    const service = this.findServiceForCharacteristic(characteristic);
+    if (service) {
+      for (const descriptor of descriptors) {
+        this.saveDescriptor(service.characteristics[characteristic.UUID], descriptor);
+      }
+    }
+    return descriptors;
+  }
+
+  private findServiceForCharacteristic(characteristic: GattCharacteristic): ServiceEntries | null {
+    for (const service of Object.values(this.profile.services)) {
+      if (service.characteristics[characteristic.UUID]) {
+        return service;
+      }
+    }
+    return null;
+  }
+
+  private saveService(service: GattService): void {
+    this.profile.services[service.UUID] = { service, characteristics: {}, services: {} };
+  }
+
+  private saveIncludedService(services: ServiceEntries, service: GattService): void {
+    services.services[service.UUID] = { service, characteristics: {}, services: {} };
+  }
+
+  private saveCharacteristic(services: ServiceEntries, characteristic: GattCharacteristic): void {
+    services.characteristics[characteristic.UUID] = { characteristic, descriptors: {} };
+  }
+
+  private saveDescriptor(characteristic: CharacteristicEntries, descriptor: GattDescriptor): void {
+    characteristic.descriptors[descriptor.UUID] = descriptor;
   }
 
   public async exchangeMtu(mtu: number): Promise<number> {
