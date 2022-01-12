@@ -10,12 +10,19 @@ import { HciError } from '../hci/HciError';
 
 const debug = Debug('nble-gatt');
 
+interface DescriptorEntry {
+  parent: WeakRef<CharacteristicEntries>;
+  descriptor: GattDescriptor;
+}
+
 interface CharacteristicEntries {
+  parent: WeakRef<ServiceEntries>;
   characteristic: GattCharacteristic;
-  descriptors: Record<string, GattDescriptor | undefined>;
+  descriptors: Record<string, DescriptorEntry | undefined>;
 }
 
 interface ServiceEntries {
+  parent?: WeakRef<ServiceEntries>;
   service: GattService;
   characteristics: Record<string, CharacteristicEntries | undefined>;
   services: Record<string, ServiceEntries | undefined>;
@@ -33,9 +40,9 @@ export class Gatt extends EventEmitter {
   private profile: Profile = { services: {} };
 
   private flatProfile: {
-    services: Record<number, GattService>;
-    characteristics: Record<number, GattCharacteristic>;
-    descriptors: Record<number, GattDescriptor>;
+    services: Record<number, ServiceEntries | undefined>;
+    characteristics: Record<number, CharacteristicEntries | undefined>;
+    descriptors: Record<number, DescriptorEntry | undefined>;
   } = { services: {}, characteristics: {}, descriptors: {} };
 
   public get Profile() {
@@ -65,32 +72,19 @@ export class Gatt extends EventEmitter {
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
     await this.att.handleValueCfm();
-
-    const characteristic = this.flatProfile.characteristics[msg.attributeHandle];
-    if (!characteristic) {
+    const entry = this.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
+    if (!entry) {
       return;
     }
-
-    const service = this.findServiceForCharacteristic(characteristic);
-    if (!service) {
-      return;
-    }
-
-    this.emit('GattIndication', service.UUID, characteristic.UUID, msg.attributeValue);
+    this.emit('GattIndication', entry.service.UUID, entry.characteristic.UUID, msg.attributeValue);
   };
 
   private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
-    const characteristic = this.flatProfile.characteristics[msg.attributeHandle];
-    if (!characteristic) {
+    const entry = this.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
+    if (!entry) {
       return;
     }
-
-    const service = this.findServiceForCharacteristic(characteristic);
-    if (!service) {
-      return;
-    }
-
-    this.emit('GattNotification', service.UUID, characteristic.UUID, msg.attributeValue);
+    this.emit('GattNotification', entry.service.UUID, entry.characteristic.UUID, msg.attributeValue);
   };
 
   public async discover(): Promise<Profile> {
@@ -164,40 +158,6 @@ export class Gatt extends EventEmitter {
       }
     }
     return null;
-  }
-
-  private saveService(service: GattService): void {
-    this.profile.services[service.UUID] = { service, characteristics: {}, services: {} };
-    this.flatProfile.services[service.Handle] = service;
-  }
-
-  private saveIncludedService(services: ServiceEntries, service: GattService): void {
-    services.services[service.UUID] = { service, characteristics: {}, services: {} };
-    this.flatProfile.services[service.Handle] = service;
-  }
-
-  private saveCharacteristic(services: ServiceEntries, characteristic: GattCharacteristic): void {
-    services.characteristics[characteristic.UUID] = { characteristic, descriptors: {} };
-    this.flatProfile.characteristics[characteristic.Handle] = characteristic;
-  }
-
-  private saveDescriptors(characteristic: GattCharacteristic, descriptors: GattDescriptor[]) {
-    const service = this.findServiceForCharacteristic(characteristic);
-    if (!service) {
-      return;
-    }
-    const profileCharacteristic = this.profile.services[service.UUID]?.characteristics[characteristic.UUID];
-    if (!profileCharacteristic) {
-      return;
-    }
-    for (const descriptor of descriptors) {
-      this.saveDescriptor(profileCharacteristic, descriptor);
-    }
-  }
-
-  private saveDescriptor(characteristic: CharacteristicEntries, descriptor: GattDescriptor): void {
-    characteristic.descriptors[descriptor.UUID] = descriptor;
-    this.flatProfile.descriptors[descriptor.Handle] = descriptor;
   }
 
   public async exchangeMtu(mtu: number): Promise<number> {
@@ -314,5 +274,55 @@ export class Gatt extends EventEmitter {
       }
     }
     return attributeData;
+  }
+
+  // profile directory
+
+  private saveService(service: GattService): void {
+    this.profile.services[service.UUID] = { service, characteristics: {}, services: {} };
+    this.flatProfile.services[service.Handle] = this.profile.services[service.UUID];
+  }
+
+  private saveIncludedService(service: ServiceEntries, incService: GattService): void {
+    service.services[incService.UUID] = {
+      parent: new WeakRef(service), service: incService, characteristics: {}, services: {},
+    };
+    this.flatProfile.services[incService.Handle] = service.services[incService.UUID];
+  }
+
+  private saveCharacteristic(service: ServiceEntries, characteristic: GattCharacteristic): void {
+    service.characteristics[characteristic.UUID] = {
+      parent: new WeakRef(service), characteristic, descriptors: {},
+    };
+    this.flatProfile.characteristics[characteristic.Handle] = service.characteristics[characteristic.UUID];
+  }
+
+  private saveDescriptors(characteristic: GattCharacteristic, descriptors: GattDescriptor[]) {
+    const service = this.findServiceForCharacteristic(characteristic);
+    if (!service) {
+      return;
+    }
+    const profileCharacteristic = this.profile.services[service.UUID]?.characteristics[characteristic.UUID];
+    if (!profileCharacteristic) {
+      return;
+    }
+    for (const descriptor of descriptors) {
+      this.saveDescriptor(profileCharacteristic, descriptor);
+    }
+  }
+
+  private saveDescriptor(characteristic: CharacteristicEntries, descriptor: GattDescriptor): void {
+    characteristic.descriptors[descriptor.UUID] = { parent: new WeakRef(characteristic), descriptor };
+    this.flatProfile.descriptors[descriptor.Handle] = characteristic.descriptors[descriptor.UUID];
+  }
+
+  private findServiceAndCharacteristicByCharacteristicHandle(attributeHandle: number) {
+    const cEntry = this.flatProfile.characteristics[attributeHandle];
+    if (!cEntry) { return null; }
+
+    const sEntry = cEntry.parent.deref();
+    if (!sEntry) { return null; }
+
+    return { service: sEntry.service, characteristic: cEntry.characteristic };
   }
 }
