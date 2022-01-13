@@ -9,14 +9,24 @@ import { Profile, GattDirectory } from './GattDirectory';
 
 import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
 import { HciError } from '../hci/HciError';
+import { UUID } from '../utils/UUID';
 
 const debug = Debug('nble-gatt');
 
-export class Gatt extends EventEmitter {
-  private readonly GATT_PRIM_SVC_UUID = Buffer.from([0x00, 0x28]);
-  private readonly GATT_INCLUDE_UUID = Buffer.from([0x02, 0x28]);
-  private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
+export enum  GattProfileAttributeType {
+  PrimaryService                    = 0x2800, // Primary Service Declaration
+  SecondaryService                  = 0x2801, // Secondary Service Declaration
+  Include                           = 0x2802, // Include Declaration
+  Characteristic                    = 0x2803, // Characteristic Declaration
+  CharacteristicExtendedProperties  = 0x2900, // Characteristic Extended Properties
+  CharacteristicUserDescription     = 0x2901, // Characteristic User Description Descriptor
+  ClientCharacteristicConfiguration = 0x2902, // Client Characteristic Configuration Descriptor
+  ServerCharacteristicConfiguration = 0x2903, // Server Characteristic Configuration Descriptor
+  CharacteristicPresentationFormat  = 0x2904, // Characteristic Presentation Format Descriptor
+  CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
+}
 
+export class Gatt extends EventEmitter {
   private mtu = 23;
   private directory = new GattDirectory();
 
@@ -38,9 +48,7 @@ export class Gatt extends EventEmitter {
     this.removeAllListeners();
   }
 
-  private onDisconnected = (_: HciError): void => {
-    this.destroy();
-  };
+  private onDisconnected = (_: HciError): void => this.destroy();
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
     await this.att.handleValueCfm();
@@ -84,21 +92,24 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverServices(): Promise<GattService[]> {
-    const entries = await this.readByGroupTypeReq(this.GATT_PRIM_SVC_UUID, 1, 0xFFFF);
+    const type = UUID.from(GattProfileAttributeType.PrimaryService);
+    const entries = await this.readByGroupTypeReq(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
     return services;
   }
 
   public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
-    const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndingHandle);
+    const type = UUID.from(GattProfileAttributeType.Include);
+    const entries = await this.readByType(type, service.Handle, service.EndingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveIncludedServices(service, includedServices);
     return includedServices;
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
-    const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle+1, service.EndingHandle);
+    const type = UUID.from(GattProfileAttributeType.Characteristic);
+    const entries = await this.readByType(type, service.Handle+1, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service, characteristics);
     return characteristics;
@@ -142,6 +153,48 @@ export class Gatt extends EventEmitter {
 
   public async writeWithoutResponse(handle: number, value: Buffer): Promise<void> {
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
+  }
+
+  public async notify(charHandle: number, enable: boolean) {
+    const char = this.directory.findCharacteristic(charHandle);
+    if (!char) {
+      return;
+    }
+
+    const attributeType = UUID.from(
+      GattProfileAttributeType.ClientCharacteristicConfiguration
+    );
+
+    const data = await this.att.readByTypeReq({
+      startingHandle: char.Handle + 1,
+      endingHandle: char.EndingHandle,
+      attributeType,
+    });
+    const attributeData = data.attributeDataList[0];
+    let attributeValue = attributeData.value.readUInt16LE(0);
+
+    let mask = 0;
+    if (char.Properties.notify) {
+      mask = 1;
+    } else if (char.Properties.indicate) {
+      mask = 2;
+    } else {
+      throw new Error('');
+    }
+
+    if (enable) {
+      attributeValue |= mask;
+    } else {
+      attributeValue &= ~mask;
+    }
+
+    const out = Buffer.alloc(2);
+    out.writeUInt16LE(attributeValue);
+
+    await this.att.writeReq({
+      attributeHandle: attributeData.handle,
+      attributeValue: out,
+    });
   }
 
   private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {

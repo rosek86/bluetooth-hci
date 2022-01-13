@@ -1,6 +1,7 @@
 import { GattService } from './GattService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
+import { UUID } from '../utils/UUID';
 
 export interface DescriptorEntry {
   parent?: WeakRef<CharacteristicEntries>;
@@ -107,6 +108,24 @@ export class GattDirectory {
       this.flatProfile.descriptors[descriptor.Handle] = profileCharacteristic.descriptors[descriptor.Handle];
     }
     return true;
+  }
+
+  public findCharacteristic(charHandle: number): GattCharacteristic | null {
+    const eChar = this.flatProfile.characteristics[charHandle];
+    if (!eChar) { return null; }
+    return eChar.characteristic;
+  }
+
+  public findDescriptor(charHandle: number, type: number): GattDescriptor | null {
+    const eChar = this.flatProfile.characteristics[charHandle];
+    if (!eChar) { return null; }
+    for (const eDesc of Object.values(eChar.descriptors)) {
+      if (!eDesc) { continue; }
+      if (eDesc.descriptor.UUID === UUID.from(type).toString()) {
+        return eDesc.descriptor;
+      }
+    }
+    return null;
   }
 
   public findServiceAndCharacteristicByCharacteristicHandle(attributeHandle: number) {
