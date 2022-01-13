@@ -47,33 +47,32 @@ export namespace GattCharacteristic {
     endingHandle: number;
     valueHandle: number;
     uuid: string;
-    properties: CharacteristicProperties;
+    properties: Properties;
   }
-}
-
-export interface CharacteristicProperties {
-  broadcast: boolean;
-  read: boolean;
-  writeWithoutResponse: boolean;
-  write: boolean;
-  notify: boolean;
-  indicate: boolean;
-  authenticatedSignedWrites: boolean;
-  extendedProperties: boolean;
+  export interface Properties {
+    broadcast: boolean;
+    read: boolean;
+    writeWithoutResponse: boolean;
+    write: boolean;
+    notify: boolean;
+    indicate: boolean;
+    authenticatedSignedWrites: boolean;
+    extendedProperties: boolean;
+  }
 }
 
 export class GattCharacteristic {
   private handle: number;
   private endingHandle: number;
   private valueHandle: number;
-  private properties: CharacteristicProperties;
+  private properties: GattCharacteristic.Properties;
   private uuid: string;
 
   public get Handle(): number { return this.handle; }
   public get EndingHandle(): number { return this.endingHandle; }
   public get ValueHandle(): number { return this.valueHandle; }
   public get UUID(): string { return this.uuid; }
-  public get Properties(): CharacteristicProperties { return this.properties; }
+  public get Properties(): GattCharacteristic.Properties { return this.properties; }
 
   public static fromAttData(data: AttDataEntry): GattCharacteristic {
     return new GattCharacteristic(data);
@@ -101,7 +100,7 @@ export class GattCharacteristic {
     };
   }
 
-  private parseProperties(bitsfield: number): CharacteristicProperties {
+  private parseProperties(bitsfield: number): GattCharacteristic.Properties {
     return {
       broadcast:                  bitGet(bitsfield, CharacteristicPropertiesBits.Broadcast),
       read:                       bitGet(bitsfield, CharacteristicPropertiesBits.Read),
