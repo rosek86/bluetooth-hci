@@ -59,7 +59,7 @@ export class Gatt extends EventEmitter {
     this.emit('GattNotification', entry.service.UUID, entry.characteristic.UUID, msg.attributeValue);
   };
 
-  public async discover(): Promise<Profile> {
+  public async discover(): Promise<Profile.AsObject> {
     const services = await this.discoverServices();
     for (const service of services) {
       debug('service', service);

@@ -10,18 +10,39 @@ export interface DescriptorEntry {
 export interface CharacteristicEntries {
   parent?: WeakRef<ServiceEntries>;
   characteristic: GattCharacteristic;
-  descriptors: Record<string, DescriptorEntry | undefined>;
+  descriptors: Record<number, DescriptorEntry | undefined>;
+}
+
+export namespace CharacteristicEntries {
+  export interface AsObject {
+    characteristic: GattCharacteristic.AsObject;
+    descriptors: Record<number, GattDescriptor.AsObject>;
+  }
 }
 
 export interface ServiceEntries {
   parent?: WeakRef<ServiceEntries>;
   service: GattService;
-  characteristics: Record<string, CharacteristicEntries | undefined>;
-  services: Record<string, ServiceEntries | undefined>;
+  characteristics: Record<number, CharacteristicEntries | undefined>;
+  services: Record<number, ServiceEntries | undefined>;
+}
+
+export namespace ServiceEntries {
+  export interface AsObject {
+    service: GattService.AsObject;
+    characteristics: Record<number, CharacteristicEntries.AsObject>;
+    services: Record<number, ServiceEntries.AsObject>;
+  }
 }
 
 export interface Profile {
-  services: Record<string, ServiceEntries | undefined>;
+  services: Record<number, ServiceEntries | undefined>;
+}
+
+export namespace Profile {
+  export interface AsObject {
+    services: Record<number, ServiceEntries.AsObject>;
+  }
 }
 
 export class GattDirectory {
@@ -34,14 +55,13 @@ export class GattDirectory {
   } = { services: {}, characteristics: {}, descriptors: {} };
 
   public get Profile() {
-    // TODO: clone this
-    return this.profile;
+    return this.cloneProfile(this.profile);
   }
 
   public saveServices(services: GattService[]): void {
     for (const service of services) {
-      this.profile.services[service.UUID] = { service, characteristics: {}, services: {} };
-      this.flatProfile.services[service.Handle] = this.profile.services[service.UUID];
+      this.profile.services[service.Handle] = { service, characteristics: {}, services: {} };
+      this.flatProfile.services[service.Handle] = this.profile.services[service.Handle];
     }
   }
 
@@ -51,11 +71,11 @@ export class GattDirectory {
       return false;
     }
     for (const incService of incServices) {
-      profileService.services[incService.UUID] = {
+      profileService.services[incService.Handle] = {
         parent: new WeakRef(profileService),
         service: incService, characteristics: {}, services: {},
       };
-      this.flatProfile.services[incService.Handle] = profileService.services[incService.UUID];
+      this.flatProfile.services[incService.Handle] = profileService.services[incService.Handle];
     }
     return true;
   }
@@ -66,10 +86,10 @@ export class GattDirectory {
       return false;
     }
     for (const characteristic of characteristics) {
-      profileService.characteristics[characteristic.UUID] = {
+      profileService.characteristics[characteristic.Handle] = {
         parent: new WeakRef(profileService), characteristic, descriptors: {},
       };
-      this.flatProfile.characteristics[characteristic.Handle] = profileService.characteristics[characteristic.UUID];
+      this.flatProfile.characteristics[characteristic.Handle] = profileService.characteristics[characteristic.Handle];
     }
     return true;
   }
@@ -80,11 +100,11 @@ export class GattDirectory {
       return false;
     }
     for (const descriptor of descriptors) {
-      profileCharacteristic.descriptors[descriptor.UUID] = {
+      profileCharacteristic.descriptors[descriptor.Handle] = {
         parent: new WeakRef(profileCharacteristic),
         descriptor,
       };
-      this.flatProfile.descriptors[descriptor.Handle] = profileCharacteristic.descriptors[descriptor.UUID];
+      this.flatProfile.descriptors[descriptor.Handle] = profileCharacteristic.descriptors[descriptor.Handle];
     }
     return true;
   }
@@ -97,5 +117,37 @@ export class GattDirectory {
     if (!sEntry) { return null; }
 
     return { service: sEntry.service, characteristic: cEntry.characteristic };
+  }
+
+  private cloneProfile(profile: Profile): Profile.AsObject {
+    const cloneCharacteristic = (e: CharacteristicEntries): CharacteristicEntries.AsObject => {
+      const characteristic = e.characteristic.toObject();
+      const descriptors: Record<string, GattDescriptor.AsObject> = {};
+      for (const [k, v] of Object.entries(e.descriptors)) {
+        if (!v) { continue; }
+        descriptors[k] = v.descriptor.toObject();
+      }
+      return { characteristic, descriptors };
+    };
+    const cloneService = (e: ServiceEntries): ServiceEntries.AsObject => {
+      const service = e.service.toObject();
+      const characteristics: Record<string, CharacteristicEntries.AsObject> = {};
+      for (const [k, v] of Object.entries(e.characteristics)) {
+        if (!v) { continue; }
+        characteristics[k] = cloneCharacteristic(v);
+      }
+      const services: Record<string, ServiceEntries.AsObject> = {};
+      for (const [k, v] of Object.entries(e.services)) {
+        if (!v) { continue; }
+        services[k] = cloneService(v);
+      }
+      return { service, services, characteristics };
+    };
+    const services: Record<string, ServiceEntries.AsObject> = {};
+    for (const [k, v] of Object.entries(profile.services)) {
+      if (!v) { continue; }
+      services[k] = cloneService(v);
+    }
+    return { services };
   }
 }
