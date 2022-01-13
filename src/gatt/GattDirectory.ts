@@ -1,4 +1,3 @@
-
 import { GattService } from './GattService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
