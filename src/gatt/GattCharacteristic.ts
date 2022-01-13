@@ -41,6 +41,16 @@ enum CharacteristicPropertiesBits {
   ExtendedProperties = 7,
 }
 
+export namespace GattCharacteristic {
+  export interface AsObject {
+    handle: number;
+    endingHandle: number;
+    valueHandle: number;
+    uuid: string;
+    properties: CharacteristicProperties;
+  }
+}
+
 export interface CharacteristicProperties {
   broadcast: boolean;
   read: boolean;
@@ -81,7 +91,7 @@ export class GattCharacteristic {
     this.uuid         = UUID.toString(uuid);
   }
 
-  public toObject() {
+  public toObject(): GattCharacteristic.AsObject {
     return {
       handle: this.Handle,
       endingHandle: this.EndingHandle,

@@ -35,7 +35,7 @@ export class GattDirectory {
   } = { services: {}, characteristics: {}, descriptors: {} };
 
   public get Profile() {
-    // return structuredClone(this.directory.Profile);
+    // TODO: clone this
     return this.profile;
   }
 

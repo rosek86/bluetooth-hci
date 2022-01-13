@@ -2,6 +2,14 @@ import { AttDataEntry } from './AttGlue';
 
 import { UUID } from '../utils/UUID';
 
+export namespace GattService {
+  export interface AsObject {
+    handle: number;
+    endingHandle: number;
+    uuid: string;
+  }
+}
+
 export class GattService {
   private handle: number;
   private endingHandle: number;
@@ -21,7 +29,7 @@ export class GattService {
     this.uuid = UUID.toString(data.value);
   }
 
-  public toObject() {
+  public toObject(): GattService.AsObject {
     return {
       handle: this.Handle,
       endingHandle: this.EndingHandle,
