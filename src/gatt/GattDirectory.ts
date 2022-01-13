@@ -4,12 +4,12 @@ import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
 
 export interface DescriptorEntry {
-  parent: WeakRef<CharacteristicEntries>;
+  parent?: WeakRef<CharacteristicEntries>;
   descriptor: GattDescriptor;
 }
 
 export interface CharacteristicEntries {
-  parent: WeakRef<ServiceEntries>;
+  parent?: WeakRef<ServiceEntries>;
   characteristic: GattCharacteristic;
   descriptors: Record<string, DescriptorEntry | undefined>;
 }
@@ -34,8 +34,10 @@ export class GattDirectory {
     descriptors: Record<number, DescriptorEntry | undefined>;
   } = { services: {}, characteristics: {}, descriptors: {} };
 
-  public get Profile() { return this.profile; }
-  public get FlatProfile() { return this.flatProfile; }
+  public get Profile() {
+    // return structuredClone(this.directory.Profile);
+    return this.profile;
+  }
 
   public saveServices(services: GattService[]): void {
     for (const service of services) {
@@ -44,36 +46,55 @@ export class GattDirectory {
     }
   }
 
-  public saveIncludedServices(service: ServiceEntries, incServices: GattService[]): void {
+  public saveIncludedServices(service: GattService, incServices: GattService[]): boolean {
+    const profileService = this.flatProfile.services[service.Handle];
+    if (!profileService) {
+      return false;
+    }
     for (const incService of incServices) {
-      service.services[incService.UUID] = {
-        parent: new WeakRef(service), service: incService, characteristics: {}, services: {},
+      profileService.services[incService.UUID] = {
+        parent: new WeakRef(profileService),
+        service: incService, characteristics: {}, services: {},
       };
-      this.flatProfile.services[incService.Handle] = service.services[incService.UUID];
+      this.flatProfile.services[incService.Handle] = profileService.services[incService.UUID];
     }
+    return true;
   }
 
-  public saveCharacteristics(service: ServiceEntries, characteristics: GattCharacteristic[]): void {
+  public saveCharacteristics(service: GattService, characteristics: GattCharacteristic[]): boolean {
+    const profileService = this.flatProfile.services[service.Handle];
+    if (!profileService) {
+      return false;
+    }
     for (const characteristic of characteristics) {
-      service.characteristics[characteristic.UUID] = {
-        parent: new WeakRef(service), characteristic, descriptors: {},
+      profileService.characteristics[characteristic.UUID] = {
+        parent: new WeakRef(profileService), characteristic, descriptors: {},
       };
-      this.flatProfile.characteristics[characteristic.Handle] = service.characteristics[characteristic.UUID];
+      this.flatProfile.characteristics[characteristic.Handle] = profileService.characteristics[characteristic.UUID];
     }
+    return true;
   }
 
-  public saveDescriptors(characteristic: CharacteristicEntries, descriptors: GattDescriptor[]) {
-    for (const descriptor of descriptors) {
-      characteristic.descriptors[descriptor.UUID] = { parent: new WeakRef(characteristic), descriptor };
-      this.flatProfile.descriptors[descriptor.Handle] = characteristic.descriptors[descriptor.UUID];
+  public saveDescriptors(characteristic: GattCharacteristic, descriptors: GattDescriptor[]): boolean {
+    const profileCharacteristic = this.flatProfile.characteristics[characteristic.Handle];
+    if (!profileCharacteristic) {
+      return false;
     }
+    for (const descriptor of descriptors) {
+      profileCharacteristic.descriptors[descriptor.UUID] = {
+        parent: new WeakRef(profileCharacteristic),
+        descriptor,
+      };
+      this.flatProfile.descriptors[descriptor.Handle] = profileCharacteristic.descriptors[descriptor.UUID];
+    }
+    return true;
   }
 
   public findServiceAndCharacteristicByCharacteristicHandle(attributeHandle: number) {
     const cEntry = this.flatProfile.characteristics[attributeHandle];
     if (!cEntry) { return null; }
 
-    const sEntry = cEntry.parent.deref();
+    const sEntry = cEntry.parent?.deref();
     if (!sEntry) { return null; }
 
     return { service: sEntry.service, characteristic: cEntry.characteristic };

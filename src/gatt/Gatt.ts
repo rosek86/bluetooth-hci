@@ -17,14 +17,12 @@ export class Gatt extends EventEmitter {
   private readonly GATT_INCLUDE_UUID = Buffer.from([0x02, 0x28]);
   private readonly GATT_CHARAC_UUID = Buffer.from([0x03, 0x28]);
 
+  private mtu = 23;
   private directory = new GattDirectory();
 
   public get Profile() {
-    // TODO: deep clone
     return this.directory.Profile;
   }
-
-  private mtu = 23;
 
   constructor(private att: Att) {
     super();
@@ -95,30 +93,21 @@ export class Gatt extends EventEmitter {
   public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
     const entries = await this.readByType(this.GATT_INCLUDE_UUID, service.Handle, service.EndingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
-    const profileService = this.directory.FlatProfile.services[service.Handle];
-    if (profileService) {
-      this.directory.saveIncludedServices(profileService, includedServices);
-    }
+    this.directory.saveIncludedServices(service, includedServices);
     return includedServices;
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
     const entries = await this.readByType(this.GATT_CHARAC_UUID, service.Handle+1, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
-    const profileService = this.directory.FlatProfile.services[service.Handle];
-    if (profileService) {
-      this.directory.saveCharacteristics(profileService, characteristics);
-    }
+    this.directory.saveCharacteristics(service, characteristics);
     return characteristics;
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
     const entries = await this.findInformation(characteristic.Handle+1, characteristic.EndingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
-    const profileCharacteristic = this.directory.FlatProfile.characteristics[characteristic.Handle];
-    if (profileCharacteristic) {
-      this.directory.saveDescriptors(profileCharacteristic, descriptors);
-    }
+    this.directory.saveDescriptors(characteristic, descriptors);
     return descriptors;
   }
 
