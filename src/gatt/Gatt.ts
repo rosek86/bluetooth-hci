@@ -7,9 +7,9 @@ import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
 import { Profile, GattDirectory } from './GattDirectory';
 
-import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
-import { HciError } from '../hci/HciError';
 import { UUID } from '../utils/UUID';
+import { HciError } from '../hci/HciError';
+import {AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
 
 const debug = Debug('nble-gatt');
 
@@ -92,7 +92,7 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverServices(): Promise<GattService[]> {
-    const type = UUID.from(GattProfileAttributeType.PrimaryService);
+    const type = UUID.from(GattProfileAttributeType.PrimaryService, 2);
     const entries = await this.readByGroupTypeReq(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
@@ -100,7 +100,7 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
-    const type = UUID.from(GattProfileAttributeType.Include);
+    const type = UUID.from(GattProfileAttributeType.Include, 2);
     const entries = await this.readByType(type, service.Handle, service.EndingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveIncludedServices(service, includedServices);
@@ -108,7 +108,7 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
-    const type = UUID.from(GattProfileAttributeType.Characteristic);
+    const type = UUID.from(GattProfileAttributeType.Characteristic, 2);
     const entries = await this.readByType(type, service.Handle+1, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service, characteristics);
@@ -162,7 +162,7 @@ export class Gatt extends EventEmitter {
     }
 
     const attributeType = UUID.from(
-      GattProfileAttributeType.ClientCharacteristicConfiguration
+      GattProfileAttributeType.ClientCharacteristicConfiguration, 2
     );
 
     const data = await this.att.readByTypeReq({
