@@ -9,7 +9,7 @@ import { Profile, GattDirectory } from './GattDirectory';
 
 import { UUID } from '../utils/UUID';
 import { HciError } from '../hci/HciError';
-import {AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
+import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
 
 const debug = Debug('nble-gatt');
 
@@ -92,31 +92,31 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverServices(): Promise<GattService[]> {
-    const type = UUID.from(GattProfileAttributeType.PrimaryService, 2);
-    const entries = await this.readByGroupTypeReq(type, 1, 0xFFFF);
+    const type = GattProfileAttributeType.PrimaryService;
+    const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
     return services;
   }
 
   public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
-    const type = UUID.from(GattProfileAttributeType.Include, 2);
-    const entries = await this.readByType(type, service.Handle, service.EndingHandle);
+    const type = GattProfileAttributeType.Include;
+    const entries = await this.readByTypeBetween(type, service.Handle, service.EndingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveIncludedServices(service, includedServices);
     return includedServices;
   }
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
-    const type = UUID.from(GattProfileAttributeType.Characteristic, 2);
-    const entries = await this.readByType(type, service.Handle+1, service.EndingHandle);
+    const type = GattProfileAttributeType.Characteristic;
+    const entries = await this.readByTypeBetween(type, service.Handle+1, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service, characteristics);
     return characteristics;
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
-    const entries = await this.findInformation(characteristic.Handle+1, characteristic.EndingHandle);
+    const entries = await this.findInformationBetween(characteristic.Handle+1, characteristic.EndingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
     this.directory.saveDescriptors(characteristic, descriptors);
     return descriptors;
@@ -128,7 +128,8 @@ export class Gatt extends EventEmitter {
     return result.mtu;
   }
 
-  public async read(handle: number): Promise<Buffer> {
+  public async read(attribute: GattCharacteristic | GattDescriptor): Promise<Buffer> {
+    const handle = attribute.Handle;
     const blob = await this.att.readReq({ attributeHandle: handle });
 
     let part = blob.attributeValue;
@@ -147,66 +148,66 @@ export class Gatt extends EventEmitter {
     return value;
   }
 
-  public async write(handle: number, value: Buffer): Promise<void> {
+  public async write(attribute: GattCharacteristic | GattDescriptor, value: Buffer): Promise<void> {
+    const handle = attribute.Handle;
     await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async writeWithoutResponse(handle: number, value: Buffer): Promise<void> {
+  public async writeWithoutResponse(attribute: GattCharacteristic | GattDescriptor, value: Buffer): Promise<void> {
+    const handle = attribute.Handle;
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async notify(charHandle: number, enable: boolean) {
-    const char = this.directory.findCharacteristic(charHandle);
-    if (!char) {
-      return;
+  public async startCharacteristicsNotifications(char: GattCharacteristic, requireAck: boolean) {
+    if (!requireAck && !char.Properties.notify ||
+         requireAck && !char.Properties.indicate) {
+      throw new Error('Cannot start notification on characteristic');
     }
 
-    const attributeType = UUID.from(
-      GattProfileAttributeType.ClientCharacteristicConfiguration, 2
-    );
-
-    const data = await this.att.readByTypeReq({
-      startingHandle: char.Handle + 1,
-      endingHandle: char.EndingHandle,
-      attributeType,
-    });
-    const attributeData = data.attributeDataList[0];
-    let attributeValue = attributeData.value.readUInt16LE(0);
-
-    let mask = 0;
-    if (char.Properties.notify) {
-      mask = 1;
-    } else if (char.Properties.indicate) {
-      mask = 2;
-    } else {
-      throw new Error('');
+    const attributeHandle = await this.getCCCDescriptor(char);
+    if (!attributeHandle) {
+      throw new Error('CCCD not found');
     }
 
-    if (enable) {
-      attributeValue |= mask;
-    } else {
-      attributeValue &= ~mask;
-    }
+    const enableNotificationBitfield = requireAck ? 2 : 1;
+    const attributeValue = Buffer.alloc(2);
+    attributeValue.writeUInt16LE(enableNotificationBitfield);
 
-    const out = Buffer.alloc(2);
-    out.writeUInt16LE(attributeValue);
-
-    await this.att.writeReq({
-      attributeHandle: attributeData.handle,
-      attributeValue: out,
-    });
+    await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  private async readByGroupTypeReq(attributeGroupType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+  public async stopCharacteristicsNotifications(char: GattCharacteristic) {
+    const attributeHandle = await this.getCCCDescriptor(char);
+    if (!attributeHandle) {
+      throw new Error('CCCD not found');
+    }
+
+    const attributeValue = Buffer.alloc(0);
+    await this.att.writeReq({ attributeHandle, attributeValue });
+  }
+
+  private async getCCCDescriptor(char: GattCharacteristic) {
+    // TODO: use cache
+    const data = await this.readByTypeReq(
+      char.Handle + 1, char.EndingHandle,
+      GattProfileAttributeType.ClientCharacteristicConfiguration
+    );
+
+    const attributeData = data.attributeDataList.at(0);
+    if (!attributeData) {
+      return null;
+    }
+
+    return attributeData.handle;
+  }
+
+  private async readByGroupTypeReqBetween(attributeGroupType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
-        const data = await this.att.readByGroupTypeReq({
-          startingHandle: startingHandle + 1,
-          endingHandle: endingHandle,
-          attributeGroupType,
-        });
+        const data = await this.readByGroupType(startingHandle + 1, endingHandle, attributeGroupType);
+
         for (const entry of data?.attributeDataList ?? []) {
           attributeData.push({
             handle: entry.attributeHandle,
@@ -225,16 +226,21 @@ export class Gatt extends EventEmitter {
     return attributeData;
   }
 
-  private async readByType(attributeType: Buffer, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+  private async readByGroupType(attributeGroupType: number, startingHandle: number, endingHandle: number) {
+    return await this.att.readByGroupTypeReq({
+      startingHandle: startingHandle + 1,
+      endingHandle: endingHandle,
+      attributeGroupType: UUID.from(attributeGroupType, 2),
+    });
+  }
+
+  private async readByTypeBetween(attributeType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
-        const data = await this.att.readByTypeReq({
-          startingHandle: startingHandle + 1,
-          endingHandle: endingHandle,
-          attributeType,
-        });
+        const data = await this.readByTypeReq(startingHandle + 1, endingHandle, attributeType);
+
         for (const entry of data?.attributeDataList ?? []) {
           const previous = attributeData.at(-1);
           if (previous) {
@@ -253,7 +259,15 @@ export class Gatt extends EventEmitter {
     return attributeData;
   }
 
-  private async findInformation(startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+  private async readByTypeReq(attributeType: number, startingHandle: number, endingHandle: number) {
+    return await this.att.readByTypeReq({
+      startingHandle: startingHandle + 1,
+      endingHandle: endingHandle,
+      attributeType: UUID.from(attributeType, 2),
+    });
+  }
+
+  private async findInformationBetween(startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
