@@ -109,14 +109,14 @@ export class Gatt extends EventEmitter {
 
   public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
     const type = GattProfileAttributeType.Characteristic;
-    const entries = await this.readByTypeBetween(type, service.Handle+1, service.EndingHandle);
+    const entries = await this.readByTypeBetween(type, service.Handle, service.EndingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service, characteristics);
     return characteristics;
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
-    const entries = await this.findInformationBetween(characteristic.Handle+1, characteristic.EndingHandle);
+    const entries = await this.findInformationBetween(characteristic.Handle, characteristic.EndingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
     this.directory.saveDescriptors(characteristic, descriptors);
     return descriptors;
@@ -189,8 +189,8 @@ export class Gatt extends EventEmitter {
   private async getCCCDescriptor(char: GattCharacteristic) {
     // TODO: use cache
     const data = await this.readByTypeReq(
-      char.Handle + 1, char.EndingHandle,
-      GattProfileAttributeType.ClientCharacteristicConfiguration
+      GattProfileAttributeType.ClientCharacteristicConfiguration,
+      char.Handle, char.EndingHandle
     );
 
     const attributeData = data.attributeDataList.at(0);
@@ -206,7 +206,7 @@ export class Gatt extends EventEmitter {
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
-        const data = await this.readByGroupType(startingHandle + 1, endingHandle, attributeGroupType);
+        const data = await this.readByGroupType(attributeGroupType, startingHandle + 1, endingHandle);
 
         for (const entry of data?.attributeDataList ?? []) {
           attributeData.push({
@@ -228,9 +228,8 @@ export class Gatt extends EventEmitter {
 
   private async readByGroupType(attributeGroupType: number, startingHandle: number, endingHandle: number) {
     return await this.att.readByGroupTypeReq({
-      startingHandle: startingHandle + 1,
-      endingHandle: endingHandle,
       attributeGroupType: UUID.from(attributeGroupType, 2),
+      startingHandle, endingHandle,
     });
   }
 
@@ -239,7 +238,7 @@ export class Gatt extends EventEmitter {
     try {
       --startingHandle;
       while (startingHandle < endingHandle) {
-        const data = await this.readByTypeReq(startingHandle + 1, endingHandle, attributeType);
+        const data = await this.readByTypeReq(attributeType, startingHandle + 1, endingHandle);
 
         for (const entry of data?.attributeDataList ?? []) {
           const previous = attributeData.at(-1);
@@ -261,9 +260,8 @@ export class Gatt extends EventEmitter {
 
   private async readByTypeReq(attributeType: number, startingHandle: number, endingHandle: number) {
     return await this.att.readByTypeReq({
-      startingHandle: startingHandle + 1,
-      endingHandle: endingHandle,
       attributeType: UUID.from(attributeType, 2),
+      startingHandle, endingHandle,
     });
   }
 
@@ -273,8 +271,7 @@ export class Gatt extends EventEmitter {
       --startingHandle;
       while (startingHandle < endingHandle) {
         const data = await this.att.findInformationReq({
-          startingHandle: startingHandle + 1,
-          endingHandle: endingHandle,
+          startingHandle: startingHandle + 1, endingHandle,
         });
         for (const entry of data) {
           const previous = attributeData.at(-1);

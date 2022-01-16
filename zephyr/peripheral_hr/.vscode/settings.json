@@ -1,0 +1,7 @@
+{
+  "nrf-connect.topdir": "/opt/nordic/ncs/v1.8.0",
+  "nrf-connect.toolchain.path": "/opt/nordic/ncs/v1.8.0/toolchain",
+  "nrf-connect.applications": [
+    "/Users/krzysiek/Documents/my/n-ble/zephyr/peripheral_hr"
+  ]
+}
