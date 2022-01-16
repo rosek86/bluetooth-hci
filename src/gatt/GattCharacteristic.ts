@@ -47,8 +47,13 @@ export namespace GattCharacteristic {
     endingHandle: number;
     valueHandle: number;
     uuid: string;
+    uuidInfo?: {
+      for: string;
+      type: string;
+    };
     properties: Properties;
   }
+
   export interface Properties {
     broadcast: boolean;
     read: boolean;

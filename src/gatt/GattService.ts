@@ -7,6 +7,10 @@ export namespace GattService {
     handle: number;
     endingHandle: number;
     uuid: string;
+    uuidInfo?: {
+      for: string;
+      type: string;
+    };
   }
 }
 
