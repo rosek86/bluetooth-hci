@@ -51,6 +51,7 @@ export class Gatt extends EventEmitter {
   private onDisconnected = (_: HciError): void => this.destroy();
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
+    console.log(msg);
     await this.att.handleValueCfm();
     const entry = this.directory.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
     if (!entry) {
@@ -60,6 +61,7 @@ export class Gatt extends EventEmitter {
   };
 
   private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
+    console.log(msg);
     const entry = this.directory.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
     if (!entry) {
       return;
@@ -158,9 +160,9 @@ export class Gatt extends EventEmitter {
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async startCharacteristicsNotifications(char: GattCharacteristic, requireAck: boolean) {
-    if (!requireAck && !char.Properties.notify ||
-         requireAck && !char.Properties.indicate) {
+  public async startCharacteristicsNotifications(char: GattCharacteristic.AsObject, requireAck: boolean) {
+    if (!requireAck && !char.properties.notify ||
+         requireAck && !char.properties.indicate) {
       throw new Error('Cannot start notification on characteristic');
     }
 
@@ -176,7 +178,7 @@ export class Gatt extends EventEmitter {
     await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  public async stopCharacteristicsNotifications(char: GattCharacteristic) {
+  public async stopCharacteristicsNotifications(char: GattCharacteristic.AsObject) {
     const attributeHandle = await this.getCCCDescriptor(char);
     if (!attributeHandle) {
       throw new Error('CCCD not found');
@@ -186,11 +188,11 @@ export class Gatt extends EventEmitter {
     await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  private async getCCCDescriptor(char: GattCharacteristic) {
+  private async getCCCDescriptor(char: GattCharacteristic.AsObject) {
     // TODO: use cache
     const data = await this.readByTypeReq(
       GattProfileAttributeType.ClientCharacteristicConfiguration,
-      char.Handle, char.EndingHandle
+      char.handle, char.endingHandle
     );
 
     const attributeData = data.attributeDataList.at(0);

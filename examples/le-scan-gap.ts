@@ -4,6 +4,8 @@ import { Gap } from '../src/gap/Gap';
 import { Gatt } from '../src/gatt/Gatt';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 import { amendProfileWithUuidNames } from '../src/utils/Profile';
+import { GattService } from '../src/gatt/GattService';
+import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
 (async () => {
   try {
@@ -69,7 +71,34 @@ import { amendProfileWithUuidNames } from '../src/utils/Profile';
 
       console.log(JSON.stringify(profileAmended, null, 2));
 
-      await gap.disconnect(event.connectionHandle);
+      let hr: { service: GattService.AsObject, characteristic: GattCharacteristic.AsObject } | null = null;
+      for (const service of Object.values(profileAmended.services)) {
+        if (service.service.uuidInfo?.for !== 'Heart Rate') {
+          continue;
+        }
+        for (const char of Object.values(service.characteristics)) {
+          if (char.characteristic.properties.notify === false) {
+            continue;
+          }
+          for (const descriptor of Object.values(char.descriptors)) {
+            if (descriptor.uuidInfo?.for !== 'Heart Rate Measurement') {
+              continue;
+            }
+            hr = { service: service.service, characteristic: char.characteristic };
+            break;
+          }
+          if (hr) { break; }
+        }
+        if (hr) { break; }
+      }
+
+      if (hr) {
+        await gatt.startCharacteristicsNotifications(hr.characteristic, false);
+      }
+
+      setTimeout(async () => {
+        await gap.disconnect(event.connectionHandle);
+      }, 10_000);
     });
 
     gap.on('GapDisconnected', async (reason) => {
