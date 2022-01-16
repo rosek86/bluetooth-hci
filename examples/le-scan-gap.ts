@@ -3,6 +3,7 @@ import { Utils } from './utils/Utils';
 import { Gap } from '../src/gap/Gap';
 import { Gatt } from '../src/gatt/Gatt';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
+import { amendProfileWithUuidNames } from '../src/utils/Profile';
 
 (async () => {
   try {
@@ -64,7 +65,9 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
       const gatt = new Gatt(att);
       const profile = await gatt.discover();
-      console.log(JSON.stringify(profile, null, 2));
+      const profileAmended = amendProfileWithUuidNames(profile);
+
+      console.log(JSON.stringify(profileAmended, null, 2));
 
       await gap.disconnect(event.connectionHandle);
     });
