@@ -3,7 +3,7 @@ import { Utils } from './utils/Utils';
 import { Gap } from '../src/gap/Gap';
 import { Gatt } from '../src/gatt/Gatt';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
-import { amendProfileWithUuidNames } from '../src/utils/Profile';
+import { amendProfileWithUuidNames, uuidInfo } from '../src/utils/Profile';
 import { GattService } from '../src/gatt/GattService';
 import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
@@ -94,6 +94,16 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
       if (hr) {
         await gatt.startCharacteristicsNotifications(hr.characteristic, false);
+        gatt.on('GattNotification', (s, c, d, b) => {
+          const flags = b[0];
+          const v16 = flags & 1;
+          const value = v16 ? b.readUIntLE(1, 2) : b.readUIntLE(1, 1);
+          console.log(`
+            ${s.uuid}, ${uuidInfo(s.uuid)?.for}
+            ${d.uuid}, ${uuidInfo(d.uuid)?.for}
+            ${value} bpm
+          `);
+        });
       }
 
       setTimeout(async () => {

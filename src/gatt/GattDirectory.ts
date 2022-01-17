@@ -101,8 +101,8 @@ export class GattDirectory {
     }
   }
 
-  public saveIncludedServices(service: GattService, incServices: GattService[]): boolean {
-    const profileService = this.flatProfile.services[service.Handle];
+  public saveIncludedServices(handle: number, incServices: GattService[]): boolean {
+    const profileService = this.flatProfile.services[handle];
     if (!profileService) {
       return false;
     }
@@ -116,8 +116,8 @@ export class GattDirectory {
     return true;
   }
 
-  public saveCharacteristics(service: GattService, characteristics: GattCharacteristic[]): boolean {
-    const profileService = this.flatProfile.services[service.Handle];
+  public saveCharacteristics(handle: number, characteristics: GattCharacteristic[]): boolean {
+    const profileService = this.flatProfile.services[handle];
     if (!profileService) {
       return false;
     }
@@ -130,8 +130,8 @@ export class GattDirectory {
     return true;
   }
 
-  public saveDescriptors(characteristic: GattCharacteristic, descriptors: GattDescriptor[]): boolean {
-    const profileCharacteristic = this.flatProfile.characteristics[characteristic.Handle];
+  public saveDescriptors(handle: number, descriptors: GattDescriptor[]): boolean {
+    const profileCharacteristic = this.flatProfile.characteristics[handle];
     if (!profileCharacteristic) {
       return false;
     }
@@ -145,14 +145,14 @@ export class GattDirectory {
     return true;
   }
 
-  public findCharacteristic(charHandle: number): GattCharacteristic | null {
-    const eChar = this.flatProfile.characteristics[charHandle];
+  public findCharacteristic(handle: number): GattCharacteristic | null {
+    const eChar = this.flatProfile.characteristics[handle];
     if (!eChar) { return null; }
     return eChar.characteristic;
   }
 
-  public findDescriptor(charHandle: number, type: number): GattDescriptor | null {
-    const eChar = this.flatProfile.characteristics[charHandle];
+  public findDescriptor(handle: number, type: number): GattDescriptor | null {
+    const eChar = this.flatProfile.characteristics[handle];
     if (!eChar) { return null; }
     for (const eDesc of Object.values(eChar.descriptors)) {
       if (!eDesc) { continue; }
@@ -163,14 +163,16 @@ export class GattDirectory {
     return null;
   }
 
-  public findServiceAndCharacteristicByCharacteristicHandle(attributeHandle: number) {
-    const cEntry = this.flatProfile.characteristics[attributeHandle];
+  public findByDescriptorHandle(handle: number) {
+    const dEntry = this.flatProfile.descriptors[handle];
+    if (!dEntry) { return null; }
+
+    const cEntry = dEntry.parent?.deref();
     if (!cEntry) { return null; }
 
     const sEntry = cEntry.parent?.deref();
     if (!sEntry) { return null; }
 
-    return { service: sEntry.service, characteristic: cEntry.characteristic };
+    return { service: sEntry.service, characteristic: cEntry.characteristic, descriptor: dEntry.descriptor };
   }
-
 }

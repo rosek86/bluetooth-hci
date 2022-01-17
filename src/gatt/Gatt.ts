@@ -5,7 +5,7 @@ import { Att, AttDataEntry } from './AttGlue';
 import { GattService } from './GattService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
-import { Profile, GattDirectory } from './GattDirectory';
+import { Profile, GattDirectory, Service, Characteristic } from './GattDirectory';
 
 import { UUID } from '../utils/UUID';
 import { HciError } from '../hci/HciError';
@@ -24,6 +24,16 @@ export enum  GattProfileAttributeType {
   ServerCharacteristicConfiguration = 0x2903, // Server Characteristic Configuration Descriptor
   CharacteristicPresentationFormat  = 0x2904, // Characteristic Presentation Format Descriptor
   CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
+}
+
+export declare interface Gatt {
+  on(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+  once(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+  removeListener(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+
+  on(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+  once(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+  removeListener(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
 }
 
 export class Gatt extends EventEmitter {
@@ -51,22 +61,28 @@ export class Gatt extends EventEmitter {
   private onDisconnected = (_: HciError): void => this.destroy();
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
-    console.log(msg);
     await this.att.handleValueCfm();
-    const entry = this.directory.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
+    const entry = this.directory.findByDescriptorHandle(msg.attributeHandle);
     if (!entry) {
       return;
     }
-    this.emit('GattIndication', entry.service.UUID, entry.characteristic.UUID, msg.attributeValue);
+    this.emit('GattIndication',
+      entry.service.toObject(),
+      entry.characteristic.toObject(),
+      entry.descriptor.toObject(),
+      msg.attributeValue);
   };
 
   private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
-    console.log(msg);
-    const entry = this.directory.findServiceAndCharacteristicByCharacteristicHandle(msg.attributeHandle);
+    const entry = this.directory.findByDescriptorHandle(msg.attributeHandle);
     if (!entry) {
       return;
     }
-    this.emit('GattNotification', entry.service.UUID, entry.characteristic.UUID, msg.attributeValue);
+    this.emit('GattNotification',
+      entry.service.toObject(),
+      entry.characteristic.toObject(),
+      entry.descriptor.toObject(),
+      msg.attributeValue);
   };
 
   public async discover(): Promise<Profile.AsObject> {
@@ -93,35 +109,35 @@ export class Gatt extends EventEmitter {
     return this.Profile;
   }
 
-  public async discoverServices(): Promise<GattService[]> {
+  public async discoverServices(): Promise<GattService.AsObject[]> {
     const type = GattProfileAttributeType.PrimaryService;
     const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
-    return services;
+    return services.map((s) => s.toObject());
   }
 
-  public async discoverIncludedServices(service: GattService): Promise<GattService[]> {
+  public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
     const type = GattProfileAttributeType.Include;
-    const entries = await this.readByTypeBetween(type, service.Handle, service.EndingHandle);
+    const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
-    this.directory.saveIncludedServices(service, includedServices);
-    return includedServices;
+    this.directory.saveIncludedServices(service.handle, includedServices);
+    return includedServices.map((s) => s.toObject());
   }
 
-  public async discoverCharacteristics(service: GattService): Promise<GattCharacteristic[]> {
+  public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
     const type = GattProfileAttributeType.Characteristic;
-    const entries = await this.readByTypeBetween(type, service.Handle, service.EndingHandle);
+    const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
-    this.directory.saveCharacteristics(service, characteristics);
-    return characteristics;
+    this.directory.saveCharacteristics(service.handle, characteristics);
+    return characteristics.map((c) => c.toObject());
   }
 
-  public async discoverDescriptors(characteristic: GattCharacteristic): Promise<GattDescriptor[]> {
-    const entries = await this.findInformationBetween(characteristic.Handle, characteristic.EndingHandle);
+  public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
+    const entries = await this.findInformationBetween(characteristic.handle, characteristic.endingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
-    this.directory.saveDescriptors(characteristic, descriptors);
-    return descriptors;
+    this.directory.saveDescriptors(characteristic.handle, descriptors);
+    return descriptors.map((d) => d.toObject());
   }
 
   public async exchangeMtu(mtu: number): Promise<number> {
@@ -130,8 +146,8 @@ export class Gatt extends EventEmitter {
     return result.mtu;
   }
 
-  public async read(attribute: GattCharacteristic | GattDescriptor): Promise<Buffer> {
-    const handle = attribute.Handle;
+  public async read(attribute: { handle: number }): Promise<Buffer> {
+    const handle = attribute.handle;
     const blob = await this.att.readReq({ attributeHandle: handle });
 
     let part = blob.attributeValue;
@@ -150,13 +166,13 @@ export class Gatt extends EventEmitter {
     return value;
   }
 
-  public async write(attribute: GattCharacteristic | GattDescriptor, value: Buffer): Promise<void> {
-    const handle = attribute.Handle;
+  public async write(attribute: { handle: number }, value: Buffer): Promise<void> {
+    const handle = attribute.handle;
     await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async writeWithoutResponse(attribute: GattCharacteristic | GattDescriptor, value: Buffer): Promise<void> {
-    const handle = attribute.Handle;
+  public async writeWithoutResponse(attribute: { handle: number }, value: Buffer): Promise<void> {
+    const handle = attribute.handle;
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 

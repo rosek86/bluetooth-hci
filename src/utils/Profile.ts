@@ -6,8 +6,9 @@ interface Entries {
   [id: string]: { type: string; for: string; } | undefined;
 }
 
+export const uuidInfo = (uuid: string): { type: string; for: string; } | undefined => (entries as Entries)[uuid];
+
 export const amendProfileWithUuidNames = (p: Profile.AsObject): Profile.AsObject => {
-  const uuidInfo = (uuid: string): { type: string; for: string; } | undefined => (entries as Entries)[uuid];
   const amendCharacteristic = (e: Characteristic.AsObject): Characteristic.AsObject => {
     e.characteristic.uuidInfo = uuidInfo(e.characteristic.uuid);
     for (const v of e.descriptors) {
