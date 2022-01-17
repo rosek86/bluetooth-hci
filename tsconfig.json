@@ -15,6 +15,7 @@
     "emitDecoratorMetadata": true,
     "declaration": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "files": [
     "examples/CodedPHY/advertising.ts",

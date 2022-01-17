@@ -72,15 +72,15 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
       console.log(JSON.stringify(profileAmended, null, 2));
 
       let hr: { service: GattService.AsObject, characteristic: GattCharacteristic.AsObject } | null = null;
-      for (const service of Object.values(profileAmended.services)) {
+      for (const service of profileAmended.services) {
         if (service.service.uuidInfo?.for !== 'Heart Rate') {
           continue;
         }
-        for (const char of Object.values(service.characteristics)) {
+        for (const char of service.characteristics) {
           if (char.characteristic.properties.notify === false) {
             continue;
           }
-          for (const descriptor of Object.values(char.descriptors)) {
+          for (const descriptor of char.descriptors) {
             if (descriptor.uuidInfo?.for !== 'Heart Rate Measurement') {
               continue;
             }

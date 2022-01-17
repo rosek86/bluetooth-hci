@@ -1,6 +1,6 @@
 import { structuredClone } from '../utils/Utils';
 import { entries } from '../../assigned numbers/16-bit UUID Numbers.json';
-import { Profile, ServiceEntries, CharacteristicEntries } from '../gatt/GattDirectory';
+import { Profile, Service, Characteristic } from '../gatt/GattDirectory';
 
 interface Entries {
   [id: string]: { type: string; for: string; } | undefined;
@@ -8,25 +8,25 @@ interface Entries {
 
 export const amendProfileWithUuidNames = (p: Profile.AsObject): Profile.AsObject => {
   const uuidInfo = (uuid: string): { type: string; for: string; } | undefined => (entries as Entries)[uuid];
-  const amendCharacteristic = (e: CharacteristicEntries.AsObject): CharacteristicEntries.AsObject => {
+  const amendCharacteristic = (e: Characteristic.AsObject): Characteristic.AsObject => {
     e.characteristic.uuidInfo = uuidInfo(e.characteristic.uuid);
-    for (const v of Object.values(e.descriptors)) {
+    for (const v of e.descriptors) {
       v.uuidInfo = uuidInfo(v.uuid);
     }
     return e;
   };
-  const amendService = (e: ServiceEntries.AsObject): ServiceEntries.AsObject => {
+  const amendService = (e: Service.AsObject): Service.AsObject => {
     e.service.uuidInfo = uuidInfo(e.service.uuid);
-    for (const v of Object.values(e.services)) {
+    for (const v of e.services) {
       amendService(v);
     }
-    for (const v of Object.values(e.characteristics)) {
+    for (const v of e.characteristics) {
       amendCharacteristic(v);
     }
     return e;
   };
   const profile = structuredClone(p);
-  for (const v of Object.values(profile.services)) {
+  for (const v of profile.services) {
     amendService(v);
   }
   return profile;

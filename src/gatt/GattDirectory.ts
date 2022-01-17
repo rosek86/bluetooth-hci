@@ -3,88 +3,91 @@ import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
 import { UUID } from '../utils/UUID';
 
-export interface DescriptorEntry {
-  parent?: WeakRef<CharacteristicEntries>;
-  descriptor: GattDescriptor;
+
+export namespace Descriptor {
+  export interface Entry {
+    parent?: WeakRef<Characteristic.Entries>;
+    descriptor: GattDescriptor;
+  }
 }
 
-export interface CharacteristicEntries {
-  parent?: WeakRef<ServiceEntries>;
-  characteristic: GattCharacteristic;
-  descriptors: Record<number, DescriptorEntry | undefined>;
-}
+export namespace Characteristic {
+  export interface Entries {
+    parent?: WeakRef<Service.Entries>;
+    characteristic: GattCharacteristic;
+    descriptors: Record<number, Descriptor.Entry | undefined>;
+  }
 
-export namespace CharacteristicEntries {
   export interface AsObject {
     characteristic: GattCharacteristic.AsObject;
-    descriptors: Record<number, GattDescriptor.AsObject>;
+    descriptors: GattDescriptor.AsObject[];
   }
 }
 
-export interface ServiceEntries {
-  parent?: WeakRef<ServiceEntries>;
-  service: GattService;
-  characteristics: Record<number, CharacteristicEntries | undefined>;
-  services: Record<number, ServiceEntries | undefined>;
-}
+export namespace Service {
+  export interface Entries {
+    parent?: WeakRef<Service.Entries>;
+    service: GattService;
+    characteristics: Record<number, Characteristic.Entries | undefined>;
+    services: Record<number, Service.Entries | undefined>;
+  }
 
-export namespace ServiceEntries {
   export interface AsObject {
     service: GattService.AsObject;
-    characteristics: Record<number, CharacteristicEntries.AsObject>;
-    services: Record<number, ServiceEntries.AsObject>;
+    characteristics: Characteristic.AsObject[];
+    services: Service.AsObject[];
   }
-}
-
-export interface Profile {
-  services: Record<number, ServiceEntries | undefined>;
 }
 
 export namespace Profile {
-  export interface AsObject {
-    services: Record<number, ServiceEntries.AsObject>;
+  export interface Entries {
+    services: Record<number, Service.Entries | undefined>;
   }
 
-  export const clone = (profile: Profile): Profile.AsObject => {
-    const cloneCharacteristic = (e: CharacteristicEntries): CharacteristicEntries.AsObject => {
+  export interface AsObject {
+    services: Service.AsObject[];
+  }
+
+  export const clone = (profile: Profile.Entries): Profile.AsObject => {
+    const cloneCharacteristic = (e: Characteristic.Entries): Characteristic.AsObject => {
       const characteristic = e.characteristic.toObject();
-      const descriptors: Record<string, GattDescriptor.AsObject> = {};
-      for (const [k, v] of Object.entries(e.descriptors)) {
+      const descriptors: GattDescriptor.AsObject[] = [];
+      for (const v of Object.values(e.descriptors)) {
         if (!v) { continue; }
-        descriptors[k] = v.descriptor.toObject();
+        descriptors.push(v.descriptor.toObject());
       }
       return { characteristic, descriptors };
     };
-    const cloneService = (e: ServiceEntries): ServiceEntries.AsObject => {
+    const cloneService = (e: Service.Entries): Service.AsObject => {
       const service = e.service.toObject();
-      const characteristics: Record<string, CharacteristicEntries.AsObject> = {};
-      for (const [k, v] of Object.entries(e.characteristics)) {
+      const characteristics: Characteristic.AsObject[] = [];
+      for (const v of Object.values(e.characteristics)) {
         if (!v) { continue; }
-        characteristics[k] = cloneCharacteristic(v);
+        characteristics.push(cloneCharacteristic(v));
       }
-      const services: Record<string, ServiceEntries.AsObject> = {};
-      for (const [k, v] of Object.entries(e.services)) {
+      const services: Service.AsObject[] = [];
+      for (const v of Object.values(e.services)) {
         if (!v) { continue; }
-        services[k] = cloneService(v);
+        services.push(cloneService(v));
       }
       return { service, services, characteristics };
     };
-    const services: Record<string, ServiceEntries.AsObject> = {};
-    for (const [k, v] of Object.entries(profile.services)) {
+    const services: Service.AsObject[] = [];
+    for (const v of Object.values(profile.services)) {
       if (!v) { continue; }
-      services[k] = cloneService(v);
+      services.push(cloneService(v));
     }
     return { services };
   };
 }
 
 export class GattDirectory {
-  private profile: Profile = { services: {} };
+  private profile: Profile.Entries = { services: {} };
 
   private flatProfile: {
-    services: Record<number, ServiceEntries | undefined>;
-    characteristics: Record<number, CharacteristicEntries | undefined>;
-    descriptors: Record<number, DescriptorEntry | undefined>;
+    services: Record<number, Service.Entries | undefined>;
+    characteristics: Record<number, Characteristic.Entries | undefined>;
+    descriptors: Record<number, Descriptor.Entry | undefined>;
   } = { services: {}, characteristics: {}, descriptors: {} };
 
   public get Profile(): Profile.AsObject {
