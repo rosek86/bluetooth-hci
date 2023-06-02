@@ -41,7 +41,8 @@ export interface HciDevice {
 
 export class SerialHciDevice implements HciDevice {
   private port: SerialPort;
-  constructor(path: string, options: SerialPort.OpenOptions) {
+  constructor(path: string, options?: SerialPort.OpenOptions) {
+    options ??= {};
     options.autoOpen = false;
     this.port = new SerialPort(path, options);
   }
@@ -135,7 +136,7 @@ export class NativeHciSocket implements HciDevice {
   }
 }
 
-export class Adapter extends EventEmitter {
+export class HciAdapter extends EventEmitter {
   private readonly hci: Hci;
   private readonly h4: H4;
 
@@ -182,9 +183,9 @@ export class Adapter extends EventEmitter {
 
 export abstract class HciAdapterFactory {
 
-  public static async create(params: AdapterParams): Promise<Adapter> {
+  public static async create(params: AdapterParams): Promise<HciAdapter> {
     const device = await this.createDevice(params);
-    return new Adapter(device);
+    return new HciAdapter(device);
   }
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {

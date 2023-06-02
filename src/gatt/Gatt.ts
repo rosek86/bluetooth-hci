@@ -5,7 +5,7 @@ import { Att, AttDataEntry } from './AttGlue';
 import { GattService } from './GattService';
 import { GattCharacteristic } from './GattCharacteristic';
 import { GattDescriptor } from './GattDescriptor';
-import { Profile, GattDirectory, Service, Characteristic } from './GattDirectory';
+import { Profile, GattDirectory } from './GattDirectory';
 
 import { UUID } from '../utils/UUID';
 import { HciError } from '../hci/HciError';

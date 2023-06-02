@@ -1,12 +1,12 @@
 import { Hci } from '../../src/hci/Hci';
 import { Address, AddressType } from '../../src/utils/Address';
 import { ArgsParser, DefaultInputArgs } from './ArgsParser';
-import { Adapter, HciAdapterFactory } from './HciAdapterFactory';
+import { HciAdapter, HciAdapterFactory } from './HciAdapterFactory';
 
 import companies from '../../assigned numbers/Company Identifiers.json';
 
 export class Utils {
-  public static async createHciAdapter(defaults?: DefaultInputArgs): Promise<Adapter> {
+  public static async createHciAdapter(defaults?: DefaultInputArgs): Promise<HciAdapter> {
     const argsParser = new ArgsParser();
 
     const args = await argsParser.getInputArgs(defaults);
