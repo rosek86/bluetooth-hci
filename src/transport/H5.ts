@@ -146,7 +146,7 @@ export class H5 {
         (slipPayload[payloadLength + this.h5HeaderLength + 1] << 8)
       );
       const calculatedPacketChecksum = this.calculateCrc16Checksum(
-        slipPayload.slice(0, payloadLength + this.h5HeaderLength)
+        slipPayload.subarray(0, payloadLength + this.h5HeaderLength)
       );
       if (packetChecksum !== calculatedPacketChecksum) {
         return { code: H5TransportRetCode.ParserPacketChecksum };
@@ -164,7 +164,7 @@ export class H5 {
     };
 
     if (payloadLength > 0) {
-      result.payload = Buffer.from(slipPayload.slice(
+      result.payload = Buffer.from(slipPayload.subarray(
         this.h5HeaderLength, this.h5HeaderLength + payloadLength
       ));
     }

@@ -760,7 +760,7 @@ export class Hci extends EventEmitter {
 
     const eventCode     = data[0];
     const payloadLength = data[1];
-    const payload       = data.slice(2);
+    const payload       = data.subarray(2);
 
     if (payloadLength !== payload.length) {
       debug(`(evt) invalid payload size: ${payloadLength}/${payload.length}`);
@@ -861,7 +861,7 @@ export class Hci extends EventEmitter {
       status:           payload[3],
       numHciPackets:    payload[0],
       opcode:           payload.readUInt16LE(1),
-      returnParameters: payload.slice(4),
+      returnParameters: payload.subarray(4),
     });
   }
 
@@ -916,7 +916,7 @@ export class Hci extends EventEmitter {
 
   private onLeEvent(data: Buffer): void {
     const eventCode = data[0];
-    const payload = data.slice(1);
+    const payload = data.subarray(1);
 
     if (eventCode !== HciEvent.LeMeta) {
       debug('on-hci-le-event', HciLeEvent[eventCode]);
@@ -1085,7 +1085,7 @@ export class Hci extends EventEmitter {
     const result: AclDataPacket = {
       boundary,
       broadcast,
-      data: data.slice(aclHdrSize),
+      data: data.subarray(aclHdrSize),
     };
 
     this.emit('AclData', connectionHandle, result);

@@ -299,7 +299,7 @@ export class LeAdvReport {
       if (dataLength === 0) {
         continue;
       }
-      reportsRaw[i].data = data.slice(o, o + dataLength);
+      reportsRaw[i].data = data.subarray(o, o + dataLength);
       o += dataLength;
     }
     for (let i = 0; i < numReports; i++, o += 1) {
@@ -410,7 +410,7 @@ export class LeExtAdvReport {
       if (dataLength === 0) {
         continue;
       }
-      reportsRaw[i].data = data.slice(o, o + dataLength);
+      reportsRaw[i].data = data.subarray(o, o + dataLength);
       o += dataLength;
     }
 
@@ -755,7 +755,7 @@ export class LeReadLocalP256PublicKeyComplete {
     }
 
     const status = data.readUIntLE(0, 1);
-    const localP256PublicKey = data.slice(1, 1 + 64).reverse();
+    const localP256PublicKey = data.subarray(1, 1 + 64).reverse();
 
     return { status, event: { localP256PublicKey } };
   }
@@ -775,7 +775,7 @@ export class LeGenerateDhKeyComplete {
     }
 
     const status = data.readUIntLE(0, 1);
-    const dhKey = data.slice(1, 1 + 32).reverse();
+    const dhKey = data.subarray(1, 1 + 32).reverse();
 
     return { status, event: { dhKey } };
   }

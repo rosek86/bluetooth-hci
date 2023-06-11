@@ -84,7 +84,7 @@ export class L2CAP extends EventEmitter {
     fragment.writeUIntLE(channelId,       2, 2);
     payload.copy(fragment, 4);
 
-    payload = payload.slice(fragment.length - 4);
+    payload = payload.subarray(fragment.length - 4);
 
     this.aclQueue.push({
       connectionHandle, fragment,
@@ -98,7 +98,7 @@ export class L2CAP extends EventEmitter {
       const fragment = Buffer.alloc(aclLength);
       payload.copy(fragment, 0);
 
-      payload = payload.slice(fragment.length);
+      payload = payload.subarray(fragment.length);
 
       this.aclQueue.push({
         connectionHandle, fragment,
@@ -197,7 +197,7 @@ export class L2CAP extends EventEmitter {
     if (event.boundary === AclDataBoundary.FirstFrag) {
       const length    = event.data.readUIntLE(0, 2);
       const channelId = event.data.readUIntLE(2, 2);
-      const payload   = event.data.slice(4);
+      const payload   = event.data.subarray(4);
 
       if (length === payload.length) {
         this.onAclDataComplete(connectionHandle, channelId, payload);

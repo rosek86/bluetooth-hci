@@ -10,7 +10,7 @@ import { delay } from '../src/utils/Utils';
   const port = bluetoothHciSocketFactory('native');
   // const port = new BluetoothHciSocket();
 
-  port.bindRaw(0);
+  await port.bindRaw(0);
   port.start();
 
   while (port.isDevUp() === false) {

@@ -12,8 +12,8 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
     const adapter = await Utils.createHciAdapter({
       deviceType: 'usb',
       // usb: { vid: 0x2fe3, pid: 0x000d },
-      usb: { vid: 0x2fe3, pid: 0x000e },
-      // usb: { vid: 0x0b05, pid: 0x190e }, // BT5
+      // usb: { vid: 0x2fe3, pid: 0x000e },
+      usb: { vid: 0x0b05, pid: 0x190e }, // BT5
       // usb: { vid: 0x0b05, pid: 0x17cb }, // BT4
     });
     await Utils.defaultAdapterSetup(adapter.Hci);

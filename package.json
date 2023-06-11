@@ -37,7 +37,7 @@
     "win32"
   ],
   "devDependencies": {
-    "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#79c130a169087f9751f026fc3e26bb17b180f648",
+    "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d7ac57eb3dd69cfe5bcd075977b24888dc3bd555",
     "@types/chai": "^4.3.5",
     "@types/debug": "^4.1.8",
     "@types/mocha": "^9.1.1",

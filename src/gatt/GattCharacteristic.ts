@@ -86,7 +86,7 @@ export class GattCharacteristic {
   private constructor(data: AttDataEntry) {
     const properties  = data.value.readUInt8(0);
     const valueHandle = data.value.readUInt16LE(1);
-    const uuid        = data.value.slice(3);
+    const uuid        = data.value.subarray(3);
 
     this.handle       = data.handle;
     this.endingHandle = data.endingHandle;

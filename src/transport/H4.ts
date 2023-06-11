@@ -32,7 +32,7 @@ export class H4 {
     if (this.parserState === ParserState.Type) {
       if (this.parserPacketData.length > 0) {
         this.parserPacketType = this.parserPacketData[0];
-        this.parserPacketData = this.parserPacketData.slice(1);
+        this.parserPacketData = this.parserPacketData.subarray(1);
         this.parserHeaderSize = this.headerSize[this.parserPacketType] ?? 0;
 
         this.parserState = ParserState.Header;
@@ -49,8 +49,8 @@ export class H4 {
 
     if (this.parserState === ParserState.Payload) {
       if (this.parserPacketData.length >= this.parserPacketSize) {
-        const packet = this.parserPacketData.slice(0, this.parserPacketSize);
-        this.parserPacketData = this.parserPacketData.slice(this.parserPacketSize);
+        const packet = this.parserPacketData.subarray(0, this.parserPacketSize);
+        this.parserPacketData = this.parserPacketData.subarray(this.parserPacketSize);
 
         this.parserState = ParserState.Type;
 

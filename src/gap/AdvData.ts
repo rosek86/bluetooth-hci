@@ -322,7 +322,7 @@ export class AdvData {
       }
 
       const type = advData[o++];
-      const data = advData.slice(o, o + (len - 1));
+      const data = advData.subarray(o, o + (len - 1));
 
       o += len - 1;
 
@@ -411,31 +411,31 @@ export class AdvData {
       case AdvDataType.ServiceData16bitUuid: {
         advData.serviceData16bitUuid = advData.serviceData16bitUuid ?? [];
         advData.serviceData16bitUuid.push({
-          uuid: field.data.slice(0, 2).reverse().toString('hex'),
-          data: field.data.slice(2, field.data.length),
+          uuid: field.data.subarray(0, 2).reverse().toString('hex'),
+          data: field.data.subarray(2, field.data.length),
         });
         break;
       }
       case AdvDataType.ServiceData32bitUuid: {
         advData.serviceData32bitUuid = advData.serviceData32bitUuid ?? [];
         advData.serviceData32bitUuid.push({
-          uuid: field.data.slice(0, 4).reverse().toString('hex'),
-          data: field.data.slice(4, field.data.length),
+          uuid: field.data.subarray(0, 4).reverse().toString('hex'),
+          data: field.data.subarray(4, field.data.length),
         });
         break;
       }
       case AdvDataType.ServiceData128bitUuid: {
         advData.serviceData128bitUuid = advData.serviceData128bitUuid ?? [];
         advData.serviceData128bitUuid.push({
-          uuid: field.data.slice(0, 16).reverse().toString('hex'),
-          data: field.data.slice(16, field.data.length),
+          uuid: field.data.subarray(0, 16).reverse().toString('hex'),
+          data: field.data.subarray(16, field.data.length),
         });
         break;
       }
       case AdvDataType.ManufacturerSpecificData: {
         advData.manufacturerData = {
           ident: field.data.readUInt16LE(0),
-          data:  field.data.slice(2),
+          data:  field.data.subarray(2),
         };
         break;
       }
@@ -445,7 +445,7 @@ export class AdvData {
   private static parseServiceClassUuids(data: Buffer, size: number): string[] {
     const uuids: string[] = [];
     for (let i = 0; i < data.length; i += size) {
-      const uuid = data.slice(i, i + size).reverse().toString('hex');
+      const uuid = data.subarray(i, i + size).reverse().toString('hex');
       uuids.push(uuid);
     }
     return uuids;

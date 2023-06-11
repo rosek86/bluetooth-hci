@@ -199,7 +199,7 @@ export class AttFindInformationRsp {
     let o = 2;
     while (o < buffer.length) {
       const handle = buffer.readUIntLE(o, 2);       o += 2;
-      const uuid   = buffer.slice(o, o + uuidSize); o += uuidSize;
+      const uuid   = buffer.subarray(o, o + uuidSize); o += uuidSize;
 
       result.push({ handle, uuid, });
     }
@@ -238,7 +238,7 @@ export class AttFindByTypeValueReq {
       startingHandle: buffer.readUIntLE(1, 2),
       endingHandle:   buffer.readUIntLE(3, 2),
       attributeType:  buffer.readUIntLE(5, 2),
-      attributeValue: buffer.slice(this.hdrSize),
+      attributeValue: buffer.subarray(this.hdrSize),
     };
   }
 }
@@ -320,7 +320,7 @@ export class AttReadByTypeReq {
     return {
       startingHandle: buffer.readUIntLE(1, 2),
       endingHandle:   buffer.readUIntLE(3, 2),
-      attributeType:  buffer.slice(this.hdrSize),
+      attributeType:  buffer.subarray(this.hdrSize),
     };
   }
 }
@@ -439,7 +439,7 @@ export class AttReadRsp {
       return null;
     }
 
-    return { attributeValue: buffer.slice(1) };
+    return { attributeValue: buffer.subarray(1) };
   }
 }
 
@@ -491,7 +491,7 @@ export class AttReadBlobRsp {
       return null;
     }
 
-    return { partAttributeValue: buffer.slice(1) };
+    return { partAttributeValue: buffer.subarray(1) };
   }
 }
 
@@ -548,7 +548,7 @@ export class AttReadMultipleRsp {
       return null;
     }
 
-    return { setOfValues: buffer.slice(1) };
+    return { setOfValues: buffer.subarray(1) };
   }
 }
 
@@ -590,7 +590,7 @@ export class AttReadByGroupTypeReq {
     return {
       startingHandle:     buffer.readUIntLE(1, 2),
       endingHandle:       buffer.readUIntLE(3, 2),
-      attributeGroupType: buffer.slice(this.hdrSize),
+      attributeGroupType: buffer.subarray(this.hdrSize),
     };
   }
 }
@@ -661,7 +661,7 @@ export class AttReadByGroupTypeRsp {
     while (o < buffer.length) {
       const attributeHandle = buffer.readUInt16LE(o); o += 2;
       const endGroupHandle  = buffer.readUInt16LE(o); o += 2;
-      const attributeValue  = buffer.slice(o, o + length);
+      const attributeValue  = buffer.subarray(o, o + length);
       o += length;
 
       result.attributeDataList.push({
@@ -700,7 +700,7 @@ export class AttWriteReq {
 
     const result: AttWriteReqMsg = {
       attributeHandle: buffer.readUInt16LE(1),
-      attributeValue:  buffer.slice(3),
+      attributeValue:  buffer.subarray(3),
     };
 
     return result;
@@ -754,7 +754,7 @@ export class AttPrepareWriteReq {
     const result: AttPrepareWriteReqMsg = {
       attributeHandle:    buffer.readUInt16LE(1),
       valueOffset:        buffer.readUInt16LE(3),
-      partAttributeValue: buffer.slice(this.hdrSize),
+      partAttributeValue: buffer.subarray(this.hdrSize),
     };
 
     return result;
@@ -791,7 +791,7 @@ export class AttPrepareWriteRsp {
     const result: AttPrepareWriteRspMsg = {
       attributeHandle:    buffer.readUInt16LE(1),
       valueOffset:        buffer.readUInt16LE(3),
-      partAttributeValue: buffer.slice(this.hdrSize),
+      partAttributeValue: buffer.subarray(this.hdrSize),
     };
 
     return result;
@@ -864,7 +864,7 @@ export class AttReadMultipleVariableReq {
     }
 
     const result: AttReadMultipleVariableReqMsg = {
-      setOfHandles: buffer.slice(1),
+      setOfHandles: buffer.subarray(1),
     };
 
     return result;
@@ -902,7 +902,7 @@ export class AttReadMultipleVariableRsp {
     let o = 1;
     while (o < buffer.length) {
       const len = buffer.readUIntLE(o, 2); o += 2;
-      result.values.push(buffer.slice(o, o + len));
+      result.values.push(buffer.subarray(o, o + len));
       o += len;
     }
 
@@ -935,7 +935,7 @@ export class AttWriteCmd {
 
     return {
       attributeHandle: buffer.readUIntLE(1, 2),
-      attributeValue: buffer.slice(3),
+      attributeValue: buffer.subarray(3),
     };
   }
 }
@@ -965,7 +965,7 @@ export class AttSignedWriteCmd {
 
     return {
       attributeHandle: buffer.readUIntLE(1, 2),
-      attributeValue: buffer.slice(3),
+      attributeValue: buffer.subarray(3),
     };
   }
 }
@@ -995,7 +995,7 @@ export class AttHandleValueNtf {
 
     return {
       attributeHandle: buffer.readUIntLE(1, 2),
-      attributeValue: buffer.slice(3),
+      attributeValue: buffer.subarray(3),
     };
   }
 }
@@ -1025,7 +1025,7 @@ export class AttHandleValueInd {
 
     return {
       attributeHandle: buffer.readUIntLE(1, 2),
-      attributeValue: buffer.slice(3),
+      attributeValue: buffer.subarray(3),
     };
   }
 }
@@ -1086,7 +1086,7 @@ export class AttMultipleHandleValueNtf {
       const length = buffer.readUIntLE(o, 2); o += 2;
       result.values.push({
         attributeHandle: handle,
-        attributeValue: buffer.slice(o, o + length),
+        attributeValue: buffer.subarray(o, o + length),
       });
       o += length;
     }

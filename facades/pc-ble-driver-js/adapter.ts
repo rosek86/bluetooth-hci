@@ -2,7 +2,7 @@ import EventEmitter from "events";
 import { HciAdapter, SerialHciDevice } from "../../examples/utils/HciAdapterFactory";
 import { LeOwnAddressType, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
 import { LeAdvReport } from "../../src/hci/HciEvent";
-import { Address, AddressType } from "../../src/utils/Address";
+import { Address } from "../../src/utils/Address";
 
 interface ScanParams {
   active: boolean;
@@ -14,17 +14,13 @@ interface ScanParams {
 }
 
 export class Adapter extends EventEmitter {
-  private device: SerialHciDevice;
-  private hciAdapter: HciAdapter;
   private scanning: boolean = false;
 
-  constructor(port: string) {
+  constructor(private hciAdapter: HciAdapter) {
     super();
-    this.device = new SerialHciDevice(port);
-    this.hciAdapter = new HciAdapter(this.device);
   }
 
-  public async init(): Promise<void> {
+  public async open(): Promise<void> {
     const hci = this.hciAdapter.Hci;
     await this.hciAdapter.open();
 
@@ -121,9 +117,12 @@ export class Adapter extends EventEmitter {
       });
       await this.hciAdapter.Hci.leSetScanEnable(true, false);
       this.scanning = true;
+      callback?.();
     } catch (e) {
-      callback?.(e);
-      throw e;
+      if (e instanceof Error) {
+        callback?.(e);
+        throw e;
+      }
     }
   }
 
@@ -131,9 +130,12 @@ export class Adapter extends EventEmitter {
     try {
       await this.hciAdapter.Hci.leSetScanEnable(false);
       this.scanning = false;
+      callback?.();
     } catch (e) {
-      callback?.(e);
-      throw e;
+      if (e instanceof Error) {
+        callback?.(e);
+        throw e;
+      }
     }
   }
 }

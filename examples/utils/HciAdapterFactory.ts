@@ -79,7 +79,7 @@ export class UsbHciSocket implements HciDevice {
   }
 
   public async open() {
-    this.port.bindRaw(this.devId, { usb: this.usbParams });
+    await this.port.bindRaw(this.devId, { usb: this.usbParams });
     this.port.start();
   }
 
@@ -109,7 +109,7 @@ export class NativeHciSocket implements HciDevice {
 
   public async open() {
     console.log(this.devId);
-    this.port.bindRaw(this.devId);
+    await this.port.bindRaw(this.devId);
     this.port.start();
 
     while (this.port.isDevUp() === false) {
