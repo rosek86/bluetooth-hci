@@ -3,7 +3,8 @@ import { Utils } from './utils/Utils';
 
 (async () => {
   const hciAdapter = await Utils.createHciAdapter({
-    usb: { vid: 0x0b05, pid: 0x190e },
+    deviceType: 'usb',
+    usb: { vid: 0x0b05, pid: 0x190e }, // BT5
   });
 
   const adapter = new Adapter(hciAdapter);
@@ -14,5 +15,9 @@ import { Utils } from './utils/Utils';
     interval: 100,
     window: 100,
     timeout: 0,
+  });
+
+  adapter.on('deviceDiscovered', (device) => {
+    console.log(device);
   });
 })();

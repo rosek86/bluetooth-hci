@@ -1,8 +1,9 @@
 import EventEmitter from "events";
-import { HciAdapter, SerialHciDevice } from "../../examples/utils/HciAdapterFactory";
-import { LeOwnAddressType, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
+import { HciAdapter } from "../../examples/utils/HciAdapterFactory";
+import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
 import { LeAdvReport } from "../../src/hci/HciEvent";
 import { Address } from "../../src/utils/Address";
+import { Gap } from "../../src/gap/Gap";
 
 interface ScanParams {
   active: boolean;
@@ -13,41 +14,94 @@ interface ScanParams {
   adv_dir_report?: number;
 }
 
+interface AdData {
+  BLE_GAP_AD_TYPE_FLAGS: string[];
+  BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA: number[];
+  BLE_GAP_AD_TYPE_SERVICE_DATA: number[];
+  BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME: string | undefined;
+}
+
+interface Service {
+  instanceId: string;
+  deviceInstanceId: string;
+  type: 'primary' | 'secondary';
+  uuid: string;
+  startHandle: number;
+  endHandle: number;
+}
+
+interface Device {
+  instanceId: string;
+  address: string;
+  addressType: string;
+  role: 'peripheral' | 'central';
+  connectionHandle?: unknown;
+  connected?: boolean;
+  txPower?: number;
+  minConnectionInterval?: number;
+  maxConnectionInterval?: number;
+  slaveLatency?: number;
+  connectionSupervisionTimeout?: number;
+  paired?: boolean;
+  name?: string;
+  rssi?: number;
+  rssi_level?: number;
+  advType?: string;
+  adData?: AdData;
+  services?: Service[];
+  flags?: string[];
+  scanResponse?: boolean;
+  time?: Date;
+
+  // ownPeriphInitiatedPairingPending: boolean;
+  // processEventData(evt: ProcessEventData): void;
+}
+
 export class Adapter extends EventEmitter {
-  private scanning: boolean = false;
+  private gap: Gap;
 
   constructor(private hciAdapter: HciAdapter) {
     super();
+    this.gap = new Gap(hciAdapter.Hci);
   }
 
   public async open(): Promise<void> {
     const hci = this.hciAdapter.Hci;
-    await this.hciAdapter.open();
 
     await hci.reset();
 
-    // const localVersion = await hci.readLocalVersionInformation();
+    const localVersion = await hci.readLocalVersionInformation();
+    console.log('Local Version:', localVersion);
+    // console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
+
     const localCommands = await hci.readLocalSupportedCommands();
+    console.log('Local Supported Commands:', localCommands.toStringSorted());
+
     const localFeatures = await hci.readLocalSupportedFeatures();
+    console.log('Local Supported Features', localFeatures);
 
     if (localFeatures.leSupported === false) {
       throw new Error('LE not supported');
     }
 
-    // const leFeatures = await hci.leReadLocalSupportedFeatures();
+    const leFeatures = await hci.leReadLocalSupportedFeatures();
+    console.log('LE Features:', leFeatures.toString());
 
-    // const leStates = await hci.leReadSupportedStates();
+    const leStates = await hci.leReadSupportedStates();
+    console.log('LE States:', leStates);
 
-    // if (localCommands.isSupported('readBdAddr')) {
-    //   const bdAddress = await hci.readBdAddr();
-    // }
+    if (localCommands.isSupported('readBdAddr')) {
+      const bdAddress = await hci.readBdAddr();
+      console.log('BD Address:', bdAddress.toString());
+    }
 
-    // if (localCommands.isSupported('leReadTransmitPower')) {
-    //   const leTransmitPower = await hci.leReadTransmitPower();
-    // }
+    if (localCommands.isSupported('leReadTransmitPower')) {
+      const leTransmitPower = await hci.leReadTransmitPower();
+      console.log(`LE Transmit Power:`, leTransmitPower);
+    }
 
-    // const leBufferSize = await hci.leReadBufferSize();
-    // console.log('LE Buffer Size:', leBufferSize);
+    const leBufferSize = await hci.leReadBufferSize();
+    console.log('LE Buffer Size:', leBufferSize);
 
     await hci.setEventMask({
       disconnectionComplete:                true,
@@ -81,12 +135,25 @@ export class Adapter extends EventEmitter {
     });
 
     if (localCommands.isSupported('leReadWhiteListSize')) {
+      console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
       await hci.leClearWhiteList();
     }
 
     if (localCommands.isSupported('leReadResolvingListSize')) {
+      console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
       await hci.leClearResolvingList();
     }
+
+    if (localCommands.isSupported('leReadNumberOfSupportedAdvertisingSets')) {
+      const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
+      console.log(`Number of supported advertising sets: ${advSets}`);
+    }
+
+    const maxDataLength = await hci.leReadMaximumDataLength();
+    console.log(`Max data length: ${JSON.stringify(maxDataLength)}`);
+
+    const suggestedMaxDataLength = await hci.leReadSuggestedDefaultDataLength();
+    console.log(`Suggested max data length: ${JSON.stringify(suggestedMaxDataLength)}`);
 
     await hci.leWriteSuggestedDefaultDataLength({
       suggestedMaxTxOctets: 27,
@@ -95,28 +162,56 @@ export class Adapter extends EventEmitter {
 
     await hci.leSetRandomAddress(Address.random());
 
-    this.hciAdapter.Hci.on('LeAdvertisingReport', this.leAdvertisingReportHandler);
-  }
+    await this.gap.init();
 
-  private leAdvertisingReportHandler = (report: LeAdvReport) => {
-    console.log(report);
-  };
+    this.gap.on('GapLeAdvReport', (report, raw) => {
+      const adData: AdData = {
+        BLE_GAP_AD_TYPE_FLAGS: [],
+        BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME: report.data.completeLocalName,
+        BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA: [],
+        BLE_GAP_AD_TYPE_SERVICE_DATA: [],
+      };
+
+      if (report.data.manufacturerData) {
+        const data = Buffer.alloc(2 + report.data.manufacturerData.data.length);
+        data.writeUInt16LE(report.data.manufacturerData.ident, 0);
+        report.data.manufacturerData.data.copy(data, 2);
+        adData.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA = [ ...data ];
+      }
+
+      // TODO: store device in cache
+      // TODO: fill device with data from report
+      const device: Device = {
+        instanceId: report.address.toString(),
+        address: report.address.toString(),
+        addressType: report.address.Type.toString(), // TODO: expand address type
+        role: 'peripheral',
+        connected: false,
+        adData
+      };
+
+      this.emit('deviceDiscovered', device, raw);
+    });
+    console.log('initialised');
+  }
 
   async startScan(options: ScanParams, callback?: (err?: Error) => void) {
     try {
-      const type = options.active ? LeScanType.Active : LeScanType.Passive;
-      const scanningFilterPolicy = options.use_whitelist ?
-        LeScanningFilterPolicy.FromWhiteList :
-        LeScanningFilterPolicy.All;
-      await this.hciAdapter.Hci.leSetScanParameters({
-        type,
-        intervalMs: options.interval,
-        windowMs: options.window,
+      await this.gap.setScanParameters({
         ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-        scanningFilterPolicy,
+        scanningFilterPolicy: LeScanningFilterPolicy.All,
+        scanningPhy: {
+          Phy1M: {
+            type: options.active ? LeScanType.Active : LeScanType.Passive,
+            intervalMs: options.interval,
+            windowMs: options.window,
+          },
+        },
       });
-      await this.hciAdapter.Hci.leSetScanEnable(true, false);
-      this.scanning = true;
+      await this.gap.startScanning({
+        durationMs: options.timeout,
+        filterDuplicates: LeScanFilterDuplicates.Disabled,
+      });
       callback?.();
     } catch (e) {
       if (e instanceof Error) {
@@ -128,8 +223,7 @@ export class Adapter extends EventEmitter {
 
   async stopScan(callback?: (err?: Error) => void) {
     try {
-      await this.hciAdapter.Hci.leSetScanEnable(false);
-      this.scanning = false;
+      await this.gap.stopScanning();
       callback?.();
     } catch (e) {
       if (e instanceof Error) {
