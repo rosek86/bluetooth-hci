@@ -136,6 +136,7 @@ export interface AdvData {
   serviceData16bitUuid?: AdvDataServcieData[];
   serviceData32bitUuid?: AdvDataServcieData[];
   serviceData128bitUuid?: AdvDataServcieData[];
+  unparsed?: { [key: number]: Buffer; }
 }
 
 export class AdvData {
@@ -437,6 +438,11 @@ export class AdvData {
           ident: field.data.readUInt16LE(0),
           data:  field.data.subarray(2),
         };
+        break;
+      }
+      default: {
+        advData.unparsed = advData.unparsed ?? {};
+        advData.unparsed[field.type] = field.data;
         break;
       }
     }
