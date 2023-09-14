@@ -18,6 +18,7 @@ interface InputArgs {
   usbDevId: number;
   usbBus: number | undefined;
   usbAddress: number | undefined;
+  serialPath: string | null;
   serialBaudRate: number;
   serialDataBits: 8|7|6|5;
   serialParity: 'none'|'even'|'mark'|'odd'|'space';
@@ -35,6 +36,7 @@ export class ArgsParser {
       'usb-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },
       'usb-bus':          { type: 'number' },
       'usb-address':      { type: 'number' },
+      'serial-path':      { type: 'string', default: null },
       'serial-baud-rate': { type: 'number', default: 1000000 },
       'serial-data-bits': { choices: [ 8, 7, 6, 5 ], default: 8 },
       'serial-parity':    { choices: [ 'none', 'even', 'mark', 'odd', 'space' ], default: 'none' },
@@ -64,6 +66,7 @@ export class ArgsParser {
       usbDevId:       argv.usbDevId,
       usbBus:         argv.usbBus,
       usbAddress:     argv.usbAddress,
+      serialPath:     argv.serialPath,
       serialBaudRate: argv.serialBaudRate,
       serialDataBits: argv.serialDataBits,
       serialParity:   argv.serialParity,
@@ -78,6 +81,7 @@ export class ArgsParser {
       const adapterOptions: AdapterParams = {
         type: 'serial',
         serial: {
+          path:     args.serialPath,
           baudRate: args.serialBaudRate,
           dataBits: args.serialDataBits,
           parity:   args.serialParity,

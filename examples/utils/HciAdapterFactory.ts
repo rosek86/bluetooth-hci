@@ -9,10 +9,11 @@ import { EventEmitter } from 'events';
 import { Hci } from '../../src/hci/Hci';
 import { H4 } from '../../src/transport/H4';
 import { delay } from '../../src/utils/Utils';
+import assert from 'assert';
 
 export interface AdapterSerialParams {
   type: 'serial';
-  serial: SerialPortOpenOptions<AutoDetectTypes>;
+  serial: Omit<SerialPortOpenOptions<AutoDetectTypes>, 'path'> & { path: string | null };
 }
 
 export interface AdapterUsbParams {
@@ -193,7 +194,11 @@ export abstract class HciAdapterFactory {
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {
     if (params.type === 'serial') {
-      return new SerialHciDevice(params.serial);
+      const serial = params.serial;
+      if (serial.path === null) {
+        serial.path = (await this.findHciSerialPort()).path;
+      }
+      return new SerialHciDevice({ ...serial, path: serial.path });
     }
     if (params.type === 'usb') {
       return new UsbHciSocket(params.usb.devId ?? 0, params.usb);
