@@ -9,7 +9,6 @@ import { EventEmitter } from 'events';
 import { Hci } from '../../src/hci/Hci';
 import { H4 } from '../../src/transport/H4';
 import { delay } from '../../src/utils/Utils';
-import assert from 'assert';
 
 export interface AdapterSerialParams {
   type: 'serial';
@@ -48,6 +47,11 @@ export class SerialHciDevice implements HciDevice {
   private port: SerialPort;
   constructor(options: SerialPortOpenOptions<AutoDetectTypes>) {
     options.autoOpen = false;
+    options.parity = options.parity ?? 'none';
+    options.rtscts = options.rtscts ?? true;
+    options.baudRate = options.baudRate ?? 1_000_000;
+    options.dataBits = options.dataBits ?? 8;
+    options.stopBits = options.stopBits ?? 1;
     this.port = new SerialPort(options);
   }
 
@@ -149,7 +153,8 @@ export class HciAdapter extends EventEmitter {
 
     this.hci = new Hci({
       send: (packetType, data) => {
-        device.write(Buffer.from([packetType, ...data]));
+        const packet = Buffer.concat([Buffer.from([packetType]), data, Buffer.from([0])]);
+        device.write(packet);
       },
     });
 
@@ -212,9 +217,16 @@ export abstract class HciAdapterFactory {
   public static async findHciSerialPort(): Promise<PortInfo> {
     const portInfos = await SerialPort.list();
 
-    const hciPortInfos = portInfos.filter(
-      (port) => port.manufacturer === 'SEGGER'
-    );
+    const hciPortInfos = portInfos.filter((port) => {
+      if (port.manufacturer === 'SEGGER') {
+        return true;
+      }
+      // Zephyr HCI UART
+      if (port.vendorId === '2fe3' && port.productId === '0100') {
+        return true;
+      }
+      return false;
+    });
 
     if (hciPortInfos.length === 0) {
       throw new Error(`Cannot find appropriate port`);

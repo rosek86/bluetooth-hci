@@ -41,7 +41,7 @@
     "@types/chai": "^4.3.6",
     "@types/debug": "^4.1.8",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.6.0",
+    "@types/node": "^18.17.15",
     "@types/serialport": "^8.0.2",
     "@types/yargs": "^17.0.24",
     "chai": "^4.3.8",

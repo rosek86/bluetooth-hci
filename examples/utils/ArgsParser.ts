@@ -37,7 +37,7 @@ export class ArgsParser {
       'usb-bus':          { type: 'number' },
       'usb-address':      { type: 'number' },
       'serial-path':      { type: 'string', default: null },
-      'serial-baud-rate': { type: 'number', default: 1000000 },
+      'serial-baud-rate': { type: 'number', default: 1_000_000 },
       'serial-data-bits': { choices: [ 8, 7, 6, 5 ], default: 8 },
       'serial-parity':    { choices: [ 'none', 'even', 'mark', 'odd', 'space' ], default: 'none' },
       'serial-stop-bits': { choices: [ 1, 2 ], default: 1 },
