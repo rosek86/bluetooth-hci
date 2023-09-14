@@ -23,6 +23,7 @@ import {
     });
 
     const gap = new Gap(hci);
+    await gap.init();
 
     await gap.setScanParameters({
       ownAddressType:       LeOwnAddressType.RandomDeviceAddress,
@@ -40,8 +41,6 @@ import {
     gap.on('GapLeAdvReport', (report) => {
       console.log(report);
     });
-
-    console.log('end');
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

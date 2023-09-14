@@ -4,6 +4,9 @@ import { Gap, GapAdvertReport } from '../src/gap/Gap';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
 (async () => {
+  let printTime = Date.now();
+  const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
+
   try {
     const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
@@ -19,8 +22,6 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       console.log('scanning', scanning);
     });
 
-    let startTime = Date.now();
-    const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
     gap.on('GapLeAdvReport', async (report) => {
       const { address, scanResponse } = report;
 
@@ -32,23 +33,9 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
       }
       adverts.set(address.toString(), entry);
 
-      if ((Date.now() - startTime) > 1000) {
-        startTime = Date.now();
-
-        console.log();
-        console.log('adverts', adverts.size);
-        for (const [ address, { adv, sr } ] of adverts.entries()) {
-          const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
-
-          console.log(address, ident ? Utils.manufacturerNameFromCode(ident) : '');
-
-          if (adv) {
-            console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));
-          }
-          if (sr) {
-            console.log(`                 `, sr?.rssi, JSON.stringify(sr?.data));
-          }
-        }
+      if ((Date.now() - printTime) > 1000) {
+        printTime = Date.now();
+        print(adverts);
       }
     });
   } catch (e) {
@@ -56,3 +43,20 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     console.log(err.message);
   }
 })();
+
+function print(adverts: Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>) {
+  console.log();
+  console.log('adverts', adverts.size);
+  for (const [ address, { adv, sr } ] of adverts.entries()) {
+    const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
+
+    console.log(address, ident ? Utils.manufacturerNameFromCode(ident) : '');
+
+    if (adv) {
+      console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));
+    }
+    if (sr) {
+      console.log(`                 `, sr?.rssi, JSON.stringify(sr?.data));
+    }
+  }
+}
