@@ -1,6 +1,10 @@
 process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
 import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetooth-hci-socket';
-import SerialPort from 'serialport';
+
+import { SerialPort, SerialPortOpenOptions } from 'serialport';
+import { PortInfo } from '@serialport/bindings-interface';
+import { AutoDetectTypes } from '@serialport/bindings-cpp';
+
 import { EventEmitter } from 'events';
 import { Hci } from '../../src/hci/Hci';
 import { H4 } from '../../src/transport/H4';
@@ -8,7 +12,7 @@ import { delay } from '../../src/utils/Utils';
 
 export interface AdapterSerialParams {
   type: 'serial';
-  serial: SerialPort.OpenOptions;
+  serial: SerialPortOpenOptions<AutoDetectTypes>;
 }
 
 export interface AdapterUsbParams {
@@ -41,10 +45,9 @@ export interface HciDevice {
 
 export class SerialHciDevice implements HciDevice {
   private port: SerialPort;
-  constructor(path: string, options?: SerialPort.OpenOptions) {
-    options ??= {};
+  constructor(options: SerialPortOpenOptions<AutoDetectTypes>) {
     options.autoOpen = false;
-    this.port = new SerialPort(path, options);
+    this.port = new SerialPort(options);
   }
 
   async open() {
@@ -190,8 +193,7 @@ export abstract class HciAdapterFactory {
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {
     if (params.type === 'serial') {
-      const portInfo = await this.findHciSerialPort();
-      return new SerialHciDevice(portInfo.path, params.serial);
+      return new SerialHciDevice(params.serial);
     }
     if (params.type === 'usb') {
       return new UsbHciSocket(params.usb.devId ?? 0, params.usb);
@@ -202,7 +204,7 @@ export abstract class HciAdapterFactory {
     throw new Error('Unknown adapter interface');
   }
 
-  private static async findHciSerialPort(): Promise<SerialPort.PortInfo> {
+  public static async findHciSerialPort(): Promise<PortInfo> {
     const portInfos = await SerialPort.list();
 
     const hciPortInfos = portInfos.filter(
