@@ -13,9 +13,7 @@ import { Gap } from '../src/gap/Gap';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({
-      usb: { vid: 0x2fe3, pid: 0x000d },
-    });
+    const adapter = await Utils.createHciAdapter();
     const hci = adapter.Hci;
 
     await Utils.defaultAdapterSetup(hci);

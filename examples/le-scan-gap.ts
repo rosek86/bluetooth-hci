@@ -9,9 +9,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({
-      deviceType: 'serial',
-    });
+    const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
 
     const gap = new Gap(adapter.Hci);

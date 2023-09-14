@@ -10,7 +10,7 @@ import {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({ deviceType: 'hci' });
+    const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
 
     await adapter.Hci.leSetScanParameters({

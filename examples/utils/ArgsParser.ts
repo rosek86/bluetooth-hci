@@ -30,7 +30,7 @@ interface InputArgs {
 export class ArgsParser {
   public async getInputArgs(defaults?: DefaultInputArgs): Promise<InputArgs | null> {
     const argv = await yargs(hideBin(process.argv)).options({
-      'device-type':      { choices: ['serial', 'usb', 'hci'] , default: defaults?.deviceType ?? 'usb' },
+      'device-type':      { choices: ['serial', 'usb', 'hci'] , default: defaults?.deviceType ?? 'serial' },
       'usb-vid':          { type: 'number', default: defaults?.usb?.vid ?? 0x2fe3 },
       'usb-pid':          { type: 'number', default: defaults?.usb?.pid ?? 0x000d },
       'usb-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },

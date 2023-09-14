@@ -13,9 +13,7 @@ import {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({
-      usb: { vid: 0x2fe3, pid: 0x000e },
-    });
+    const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
     const hci = adapter.Hci;
 

@@ -5,9 +5,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter({
-      deviceType: 'serial',
-    });
+    const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
 
     const gap = new Gap(adapter.Hci);
