@@ -14,6 +14,14 @@ While the nRF52840 dongle offers an easy-to-use solution, there are other altern
 2. **Standard Bluetooth USB Subsystem**: This provides a common interface for Bluetooth USB devices.
 3. **HCI Controller via UART**: This method requires either a direct UART connection or using a third-party UART to USB adapter.
 
+## Run example
+
+Simple LE Bluetooth scanner
+
+```
+npx ts-node examples/le-scanner.ts
+```
+
 ## Further Reading
 
 To build and flash the firmware, detailed steps are provided in [ZephyrHciController.md](docs/ZephyrHciController.md).
