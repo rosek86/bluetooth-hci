@@ -184,6 +184,8 @@ export class Adapter extends EventEmitter {
       const device: Device = {
         instanceId: report.address.toString(),
         address: report.address.toString(),
+
+        // BLE_GAP_ADV_TYPE_ADV_NONCONN_IND
         addressType: report.address.Type.toString(), // TODO: expand address type
         role: 'peripheral',
         connected: false,
