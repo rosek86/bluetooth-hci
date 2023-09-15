@@ -13,9 +13,9 @@ export interface DefaultInputArgs {
 
 interface InputArgs {
   deviceType: 'usb' | 'serial' | 'hci';
+  deviceId: number;
   usbVid: number;
   usbPid: number;
-  usbDevId: number;
   usbBus: number | undefined;
   usbAddress: number | undefined;
   serialPath: string | null;
@@ -24,16 +24,15 @@ interface InputArgs {
   serialParity: 'none'|'even'|'mark'|'odd'|'space';
   serialStopBits: 1|2;
   serialRtscts: boolean;
-  hciDevId: number;
 }
 
 export class ArgsParser {
   public async getInputArgs(defaults?: DefaultInputArgs): Promise<InputArgs | null> {
     const argv = await yargs(hideBin(process.argv)).options({
       'device-type':      { choices: ['serial', 'usb', 'hci'] , default: defaults?.deviceType ?? 'serial' },
+      'device-id':        { type: 'number', default: defaults?.deviceId ?? 0 },
       'usb-vid':          { type: 'number', default: defaults?.usb?.vid ?? 0x2fe3 },
       'usb-pid':          { type: 'number', default: defaults?.usb?.pid ?? 0x000d },
-      'usb-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },
       'usb-bus':          { type: 'number' },
       'usb-address':      { type: 'number' },
       'serial-path':      { type: 'string', default: null },
@@ -42,7 +41,6 @@ export class ArgsParser {
       'serial-parity':    { choices: [ 'none', 'even', 'mark', 'odd', 'space' ], default: 'none' },
       'serial-stop-bits': { choices: [ 1, 2 ], default: 1 },
       'serial-rtscts':    { type: 'boolean', default: true },
-      'hci-dev-id':       { type: 'number', default: defaults?.deviceId ?? 0 },
     }).argv;
     if (argv.deviceType !== 'serial' && argv.deviceType !== 'usb' && argv.deviceType !== 'hci') {
       return null;
@@ -61,9 +59,9 @@ export class ArgsParser {
     }
     return {
       deviceType:     argv.deviceType,
+      deviceId:       argv.deviceId,
       usbVid:         argv.usbVid,
       usbPid:         argv.usbPid,
-      usbDevId:       argv.usbDevId,
       usbBus:         argv.usbBus,
       usbAddress:     argv.usbAddress,
       serialPath:     argv.serialPath,
@@ -72,7 +70,6 @@ export class ArgsParser {
       serialParity:   argv.serialParity,
       serialStopBits: argv.serialStopBits,
       serialRtscts:   argv.serialRtscts,
-      hciDevId:       argv.hciDevId,
     };
   }
 
@@ -80,6 +77,7 @@ export class ArgsParser {
     if (args.deviceType === 'serial') {
       const adapterOptions: AdapterParams = {
         type: 'serial',
+        deviceId: args.deviceId,
         serial: {
           path:     args.serialPath,
           baudRate: args.serialBaudRate,
@@ -94,8 +92,8 @@ export class ArgsParser {
     if (args.deviceType === 'usb') {
       const adapterOptions: AdapterParams = {
         type: 'usb',
+        deviceId: args.deviceId,
         usb: {
-          devId:    args.usbDevId,
           vid:      args.usbVid,
           pid:      args.usbPid,
           bus:      args.usbBus,
@@ -107,7 +105,7 @@ export class ArgsParser {
     if (args.deviceType === 'hci') {
       const adapterOptions: AdapterParams = {
         type: 'hci',
-        hci: { devId: args.hciDevId },
+        deviceId: args.deviceId,
       };
       return adapterOptions;
     }

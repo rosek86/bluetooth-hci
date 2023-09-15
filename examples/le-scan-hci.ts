@@ -1,5 +1,4 @@
 import { Utils } from './utils/Utils';
-import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
 
 import {

@@ -12,13 +12,14 @@ import { delay } from '../../src/utils/Utils';
 
 export interface AdapterSerialParams {
   type: 'serial';
+  deviceId: number;
   serial: Omit<SerialPortOpenOptions<AutoDetectTypes>, 'path'> & { path: string | null };
 }
 
 export interface AdapterUsbParams {
   type: 'usb';
+  deviceId: number;
   usb: {
-    devId?: number;
     vid: number;
     pid: number;
     bus?: number;
@@ -28,9 +29,7 @@ export interface AdapterUsbParams {
 
 export interface AdapterNativeHciParams {
   type: 'hci';
-  hci: {
-    devId?: number;
-  }
+  deviceId: number;
 }
 
 export type AdapterParams = AdapterSerialParams | AdapterUsbParams | AdapterNativeHciParams;
@@ -201,20 +200,24 @@ export abstract class HciAdapterFactory {
     if (params.type === 'serial') {
       const serial = params.serial;
       if (serial.path === null) {
-        serial.path = (await this.findHciSerialPort()).path;
+        const path = (await this.findHciSerialPort(params.deviceId))?.path;
+        if (!path) {
+          throw new Error('Cannot find appropriate port');
+        }
+        serial.path = path;
       }
       return new SerialHciDevice({ ...serial, path: serial.path });
     }
     if (params.type === 'usb') {
-      return new UsbHciSocket(params.usb.devId ?? 0, params.usb);
+      return new UsbHciSocket(params.deviceId, params.usb);
     }
     if (params.type === 'hci') {
-      return new NativeHciSocket(params.hci.devId ?? 0);
+      return new NativeHciSocket(params.deviceId);
     }
     throw new Error('Unknown adapter interface');
   }
 
-  public static async findHciSerialPort(): Promise<PortInfo> {
+  public static async findHciSerialPort(deviceId: number = 0): Promise<PortInfo | null> {
     const portInfos = await SerialPort.list();
 
     const hciPortInfos = portInfos.filter((port) => {
@@ -232,6 +235,6 @@ export abstract class HciAdapterFactory {
       throw new Error(`Cannot find appropriate port`);
     }
 
-    return hciPortInfos[0];
+    return hciPortInfos[deviceId] ?? null;
   }
 }
