@@ -24,6 +24,6 @@ npx ts-node examples/le-scanner.ts
 
 ## Further Reading
 
-Getting Started Guide [GettingStarted.md](docs/GettingStarted.md).
-
-To build and flash the firmware, detailed steps are provided in [ZephyrHciController.md](docs/ZephyrHciController.md).
+- Getting Started Guide [GettingStarted.md](docs/GettingStarted.md)
+- Advertising and scanning using Coded PHY [CodedPHY.md](docs/CodedPHY.md)
+- Build HCI firmware [ZephyrHciController.md](docs/ZephyrHciController.md).
