@@ -28,47 +28,49 @@ export class Utils {
   public static async defaultAdapterSetup(hci: Hci): Promise<void> {
     await hci.reset();
 
-    const localVersion = await hci.readLocalVersionInformation();
+    const [localVersion, localCommands, localFeatures] = await Promise.all([
+      hci.readLocalVersionInformation(),
+      hci.readLocalSupportedCommands(),
+      hci.readLocalSupportedFeatures(),
+    ]);
     console.log('Local Version:', localVersion);
     console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
-
-    const localCommands = await hci.readLocalSupportedCommands();
     console.log('Local Supported Commands:', localCommands.toStringSorted());
-
-    const localFeatures = await hci.readLocalSupportedFeatures();
     console.log('Local Supported Features', localFeatures);
-
-    if (localFeatures.leSupported === false) {
-      throw new Error('LE not supported');
-    }
-
-    const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log('LE Features:', leFeatures.toString());
-
-    const leStates = await hci.leReadSupportedStates();
-    console.log('LE States:', leStates);
 
     if (localCommands.isSupported('readBdAddr')) {
       const bdAddress = await hci.readBdAddr();
       console.log('BD Address:', bdAddress.toString());
     }
 
+    if (localFeatures.leSupported === false) {
+      throw new Error('LE not supported');
+    }
+
+    const [leFeatures, leStates, leBufferSize] = await Promise.all([
+      hci.leReadLocalSupportedFeatures(),
+      hci.leReadSupportedStates(),
+      hci.leReadBufferSize(),
+    ]);
+    console.log('LE Features:', leFeatures.toString());
+    console.log('LE States:', leStates);
+    console.log('LE Buffer Size:', leBufferSize);
+
     if (localCommands.isSupported('leReadTransmitPower')) {
       const leTransmitPower = await hci.leReadTransmitPower();
       console.log(`LE Transmit Power:`, leTransmitPower);
     }
 
-    const leBufferSize = await hci.leReadBufferSize();
-    console.log('LE Buffer Size:', leBufferSize);
-
-    await hci.setEventMask({
-      disconnectionComplete:                true,
-      encryptionChange:                     true,
-      encryptionKeyRefreshComplete:         true,
-      readRemoteVersionInformationComplete: true,
-      leMeta:                               true,
-    });
-    await hci.setEventMaskPage2({});
+    await Promise.all([
+      hci.setEventMask({
+        disconnectionComplete:                true,
+        encryptionChange:                     true,
+        encryptionKeyRefreshComplete:         true,
+        readRemoteVersionInformationComplete: true,
+        leMeta:                               true,
+      }),
+      hci.setEventMaskPage2({})
+    ]);
 
     const extendedScan = localCommands.Commands.leSetExtendedScanEnable;
     const extendedConnection = localCommands.Commands.leExtendedCreateConnection;
