@@ -104,8 +104,10 @@ export class GattDirectory {
   }
 
   public getServices(): GattService.AsObject[] | undefined {
-    if (!this.flatProfile.services) { return undefined; }
-    return Object.values(this.flatProfile.services ?? [])
+    if (!this.profile.services) {
+      return undefined;
+    }
+    return Object.values(this.flatProfile.services ?? {})
       .map((e) => e?.service)
       .filter((e): e is GattService.AsObject => !!e);
   }
@@ -123,12 +125,15 @@ export class GattDirectory {
     }
   }
 
-  public getIncludedServices(handle: number): GattService.AsObject[] {
+  public getIncludedServices(handle: number): GattService.AsObject[] | undefined {
     const profileService = this.flatProfile.services?.[handle];
     if (!profileService) {
-      return [];
+      return undefined;
     }
-    return Object.values(profileService.includedServices ?? [])
+    if (!profileService.includedServices) {
+      return undefined;
+    }
+    return Object.values(profileService.includedServices ?? {})
       .map((e) => e?.service)
       .filter((e): e is GattService.AsObject => !!e);
   }
@@ -162,7 +167,7 @@ export class GattDirectory {
     if (!profileService.characteristics) {
       return undefined;
     }
-    return Object.values(profileService.characteristics ?? [])
+    return Object.values(profileService.characteristics ?? {})
       .map((e) => e?.characteristic)
       .filter((e): e is GattCharacteristic.AsObject => !!e);
   }

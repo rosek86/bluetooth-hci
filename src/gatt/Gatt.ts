@@ -87,7 +87,6 @@ export class Gatt extends EventEmitter {
   };
 
   public async discover(): Promise<Profile> {
-    const directory = new GattDirectory();
     const services = await this.discoverServices();
     for (const service of services) {
       debug('service', service);
@@ -108,8 +107,7 @@ export class Gatt extends EventEmitter {
         }
       }
     }
-    this.directory = directory;
-    return directory.Profile;
+    return this.directory.Profile;
   }
 
   public async discoverServices(): Promise<GattService.AsObject[]> {
