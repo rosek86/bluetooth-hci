@@ -37,7 +37,7 @@ export interface Profile {
   services?: Record<number, Service>;
 }
 
-export const clone = (profile: Profile): Profile => {
+export const cloneProfile = (profile: Profile): Profile => {
   const cloneDescriptor = (e: Descriptor): Descriptor => {
     return { descriptor: structuredClone(e.descriptor) };
   };
@@ -100,8 +100,7 @@ export class GattDirectory {
   } = {};
 
   public get Profile(): Profile {
-    // should we clone?
-    return this.profile;
+    return cloneProfile(this.profile);
   }
 
   public getServices(): GattService.AsObject[] | undefined {
