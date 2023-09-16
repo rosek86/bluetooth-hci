@@ -38,6 +38,10 @@ export interface Profile {
 }
 
 export const clone = (profile: Profile): Profile => {
+  const cloneDescriptor = (e: Descriptor): Descriptor => {
+    return { descriptor: structuredClone(e.descriptor) };
+  };
+
   const cloneCharacteristic = (e: Characteristic): Characteristic => {
     const characteristic: Characteristic = { characteristic: structuredClone(e.characteristic) };
 
@@ -45,7 +49,7 @@ export const clone = (profile: Profile): Profile => {
       if (characteristic.descriptors === undefined) {
         characteristic.descriptors = {};
       }
-      characteristic.descriptors[descriptor.descriptor.handle] = { descriptor: structuredClone(descriptor.descriptor) };
+      characteristic.descriptors[descriptor.descriptor.handle] = cloneDescriptor(descriptor);
       characteristic.descriptors[descriptor.descriptor.handle].parent = new WeakRef(characteristic);
     }
 
