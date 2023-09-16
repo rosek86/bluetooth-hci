@@ -74,16 +74,3 @@ export function delay(ms: number): Promise<void> {
     setTimeout(resolve, ms);
   });
 }
-
-import { MessageChannel, receiveMessageOnPort } from 'worker_threads'
-
-let channel: MessageChannel | undefined;
-export function structuredClone<T>(value: T): T {
-  // TODO: Improve this with a more efficient solution that avoids
-  // instantiating a MessageChannel
-  channel ??= new MessageChannel();
-  channel.port1.unref();
-  channel.port2.unref();
-  channel.port1.postMessage(value);
-  return receiveMessageOnPort(channel.port2)?.message;
-}

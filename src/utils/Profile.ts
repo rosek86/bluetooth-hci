@@ -1,4 +1,3 @@
-import { structuredClone } from '../utils/Utils';
 import { entries } from '../../assigned numbers/16-bit UUID Numbers.json';
 import { Profile, Service, Characteristic } from '../gatt/GattDirectory';
 
