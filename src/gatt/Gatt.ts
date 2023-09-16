@@ -26,7 +26,7 @@ export enum  GattProfileAttributeType {
   CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
 }
 
-export declare interface Gatt {
+export interface Gatt {
   on(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
   once(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
   removeListener(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
@@ -38,14 +38,15 @@ export declare interface Gatt {
 
 export class Gatt extends EventEmitter {
   private mtu = 23;
-  private directory = new GattDirectory();
+  private directory: GattDirectory;
 
   public get Profile() {
-    return this.directory.Profile;
+    return this.directory?.Profile;
   }
 
-  constructor(private att: Att) {
+  constructor(private att: Att, directory?: GattDirectory) {
     super();
+    this.directory = directory ?? new GattDirectory();
     att.on('Disconnected', this.onDisconnected);
     att.on('HandleValueInd', this.onValueIndication);
     att.on('HandleValueNtf', this.onValueNotification);
@@ -62,30 +63,31 @@ export class Gatt extends EventEmitter {
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
     await this.att.handleValueCfm();
-    const entry = this.directory.findByDescriptorHandle(msg.attributeHandle);
+    const entry = this.directory?.findByDescriptorHandle(msg.attributeHandle);
     if (!entry) {
       return;
     }
     this.emit('GattIndication',
-      entry.service.toObject(),
-      entry.characteristic.toObject(),
-      entry.descriptor.toObject(),
+      entry.service,
+      entry.characteristic,
+      entry.descriptor,
       msg.attributeValue);
   };
 
   private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
-    const entry = this.directory.findByDescriptorHandle(msg.attributeHandle);
+    const entry = this.directory?.findByDescriptorHandle(msg.attributeHandle);
     if (!entry) {
       return;
     }
     this.emit('GattNotification',
-      entry.service.toObject(),
-      entry.characteristic.toObject(),
-      entry.descriptor.toObject(),
+      entry.service,
+      entry.characteristic,
+      entry.descriptor,
       msg.attributeValue);
   };
 
-  public async discover(): Promise<Profile.AsObject> {
+  public async discover(): Promise<Profile> {
+    const directory = new GattDirectory();
     const services = await this.discoverServices();
     for (const service of services) {
       debug('service', service);
@@ -106,45 +108,54 @@ export class Gatt extends EventEmitter {
         }
       }
     }
-    return this.Profile;
+    this.directory = directory;
+    return directory.Profile;
   }
 
   public async discoverServices(): Promise<GattService.AsObject[]> {
-    debug('discovering services');
+    const cacheServices = this.directory.getServices();
+    if (cacheServices) {
+      return cacheServices;
+    }
     const type = GattProfileAttributeType.PrimaryService;
     const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
-    debug('discovered');
     return services.map((s) => s.toObject());
   }
 
   public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
-    debug('discovering included services');
+    const cacheIncludedServices = this.directory.getIncludedServices(service.handle);
+    if (cacheIncludedServices) {
+      return cacheIncludedServices;
+    }
     const type = GattProfileAttributeType.Include;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveIncludedServices(service.handle, includedServices);
-    debug('discovered');
     return includedServices.map((s) => s.toObject());
   }
 
   public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
-    debug('discovering characteristics');
+    const cacheCharacteristics = this.directory.getCharacteristics(service.handle);
+    if (cacheCharacteristics) {
+      return cacheCharacteristics;
+    }
     const type = GattProfileAttributeType.Characteristic;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service.handle, characteristics);
-    debug('discovered');
     return characteristics.map((c) => c.toObject());
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
-    debug('discovering descriptors');
+    const cacheDescriptors = this.directory.getDescriptors(characteristic.handle);
+    if (cacheDescriptors) {
+      return cacheDescriptors;
+    }
     const entries = await this.findInformationBetween(characteristic.handle, characteristic.endingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
     this.directory.saveDescriptors(characteristic.handle, descriptors);
-    debug('discovered');
     return descriptors.map((d) => d.toObject());
   }
 
@@ -216,7 +227,7 @@ export class Gatt extends EventEmitter {
     return this.directory.findDescriptor(
       char.handle,
       GattProfileAttributeType.ClientCharacteristicConfiguration
-    )?.Handle ?? null;
+    )?.handle ?? null;
   }
 
   private async readByGroupTypeReqBetween(attributeGroupType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
