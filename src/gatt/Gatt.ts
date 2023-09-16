@@ -41,7 +41,7 @@ export class Gatt extends EventEmitter {
   private directory: GattDirectory;
 
   public get Profile() {
-    return this.directory?.Profile;
+    return this.directory.Profile;
   }
 
   constructor(private att: Att, directory?: GattDirectory) {

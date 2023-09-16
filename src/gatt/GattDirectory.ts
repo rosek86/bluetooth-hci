@@ -89,18 +89,64 @@ export const cloneProfile = (profile: Profile): Profile => {
   return p;
 };
 
+export interface FlatProfile  {
+  services?: Record<number, Service>;
+  includedServices?: Record<number, IncludedService>;
+  characteristics?: Record<number, Characteristic>;
+  descriptors?: Record<number, Descriptor>;
+}
+
 export class GattDirectory {
   private profile: Profile = {};
-
-  private flatProfile: {
-    services?: Record<number, Service>;
-    includedServices?: Record<number, IncludedService>;
-    characteristics?: Record<number, Characteristic>;
-    descriptors?: Record<number, Descriptor>;
-  } = {};
+  private flatProfile: FlatProfile = {};
 
   public get Profile(): Profile {
     return cloneProfile(this.profile);
+  }
+
+  public constructor(profile?: Profile) {
+    if (!profile) {
+      return;
+    }
+    const fillDescriptor = (e: Descriptor, fp: FlatProfile) => {
+      if (!fp.descriptors) { fp.descriptors = {}; }
+      fp.descriptors[e.descriptor.handle] = e;
+    };
+    const fillCharacteristic = (e: Characteristic, fp: FlatProfile) => {
+      if (!fp.characteristics) { fp.characteristics = {}; }
+      fp.characteristics[e.characteristic.handle] = e;
+      for (const descriptor of Object.values(e.descriptors ?? {})) {
+        fillDescriptor(descriptor, fp);
+      }
+    };
+    const fillIncludedService = (e: IncludedService, fp: FlatProfile) => {
+      if (!fp.includedServices) { fp.includedServices = {}; }
+      fp.includedServices[e.service.handle] = e;
+      for (const characteristic of Object.values(e.characteristics ?? {})) {
+        fillCharacteristic(characteristic, fp);
+      }
+      for (const includedService of Object.values(e.includedServices ?? {})) {
+        fillIncludedService(includedService, fp);
+      }
+    }
+    const fillService = (e: Service, fp: FlatProfile) => {
+      if (!fp.services) { fp.services = {}; }
+      fp.services[e.service.handle] = e;
+      for (const characteristic of Object.values(e.characteristics ?? {})) {
+        fillCharacteristic(characteristic, fp);
+      }
+      for (const includedService of Object.values(e.includedServices ?? {})) {
+        fillIncludedService(includedService, fp);
+      }
+    };
+    const fillFlatProfile = (p: Profile, fp: FlatProfile): FlatProfile => {
+      for (const service of Object.values(p.services ?? {})) {
+        fillService(service, fp);
+      }
+      return fp;
+    };
+    this.profile = cloneProfile(profile);
+    this.flatProfile = fillFlatProfile(this.profile, {});
   }
 
   public getServices(): GattService.AsObject[] | undefined {
