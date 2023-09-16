@@ -110,33 +110,41 @@ export class Gatt extends EventEmitter {
   }
 
   public async discoverServices(): Promise<GattService.AsObject[]> {
+    debug('discovering services');
     const type = GattProfileAttributeType.PrimaryService;
     const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
     const services = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveServices(services);
+    debug('discovered');
     return services.map((s) => s.toObject());
   }
 
   public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
+    debug('discovering included services');
     const type = GattProfileAttributeType.Include;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const includedServices = entries.map((e) => GattService.fromAttData(e));
     this.directory.saveIncludedServices(service.handle, includedServices);
+    debug('discovered');
     return includedServices.map((s) => s.toObject());
   }
 
   public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
+    debug('discovering characteristics');
     const type = GattProfileAttributeType.Characteristic;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
     const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
     this.directory.saveCharacteristics(service.handle, characteristics);
+    debug('discovered');
     return characteristics.map((c) => c.toObject());
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
+    debug('discovering descriptors');
     const entries = await this.findInformationBetween(characteristic.handle, characteristic.endingHandle);
     const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
     this.directory.saveDescriptors(characteristic.handle, descriptors);
+    debug('discovered');
     return descriptors.map((d) => d.toObject());
   }
 

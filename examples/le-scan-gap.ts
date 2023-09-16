@@ -36,7 +36,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
       connecting = true;
       console.log('connecting...');
       await gap.stopScanning();
-      await gap.connect(report.address);
+      await gap.connect({ peerAddress: report.address });
     });
 
     gap.on('GapConnected', async (event) => {

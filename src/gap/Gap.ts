@@ -11,6 +11,8 @@ import {
 } from '../hci/HciEvent';
 import {
   LeConnectionUpdate,
+  LeExtendedCreateConnection,
+  LeExtendedCreateConnectionPhy,
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
   LeOwnAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
@@ -20,8 +22,9 @@ import { Att } from '../att/Att';
 import { L2CAP } from '../l2cap/L2CAP';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
 
-type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
-type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
+export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
+export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
+export type GapConnectParams = Partial<Omit<LeExtendedCreateConnection, 'peerAddress'>> & { peerAddress: Address };
 
 export interface GapAdvertReport {
   address: Address;
@@ -196,44 +199,33 @@ export class Gap extends EventEmitter {
     this.emit('GapLeScanState', false);
   }
 
-  public async connect(peerAddress: Address): Promise<void> {
-    // TODO: add params
-    if (this.connecting === true) {
-      return;
-    }
-    this.connecting = true;
-
+  public async connect(params: GapConnectParams): Promise<void> {
+    const defaultScanParams: LeExtendedCreateConnectionPhy = {
+      scanIntervalMs: 100,
+      scanWindowMs: 100,
+      connectionIntervalMinMs: 7.5,
+      connectionIntervalMaxMs: 100,
+      connectionLatency: 0,
+      supervisionTimeoutMs: 4000,
+      minCeLengthMs: 2.5,
+      maxCeLengthMs: 3.75,
+    };
     if (this.extended) {
       await this.hci.leExtendedCreateConnection({
-        initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-        ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-        peerAddress: peerAddress,
-        initiatingPhy: {
-          Phy1M: {
-            scanIntervalMs: 100,
-            scanWindowMs: 100,
-            connectionIntervalMinMs: 7.5,
-            connectionIntervalMaxMs: 100,
-            connectionLatency: 0,
-            supervisionTimeoutMs: 4000,
-            minCeLengthMs: 2.5,
-            maxCeLengthMs: 3.75,
-          },
-        },
+        ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
+        initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+        peerAddress: params.peerAddress,
+        initiatingPhy: params?.initiatingPhy ?? { Phy1M: defaultScanParams },
       });
     } else {
+      if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
+        throw new Error('Extended connection parameters are not supported');
+      }
       await this.hci.leCreateConnection({
-        ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-        initiatorFilterPolicy: LeInitiatorFilterPolicy.PeerAddress,
-        peerAddress: peerAddress,
-        scanIntervalMs: 100,
-        scanWindowMs: 100,
-        connectionIntervalMinMs: 7.5,
-        connectionIntervalMaxMs: 100,
-        connectionLatency: 0,
-        supervisionTimeoutMs: 4000,
-        minCeLengthMs: 2.5,
-        maxCeLengthMs: 3.75,
+        ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
+        initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+        peerAddress: params.peerAddress,
+        ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
       });
     }
   }

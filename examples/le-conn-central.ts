@@ -1,5 +1,4 @@
 import { Utils } from './utils/Utils';
-import { Address, AddressType } from '../src/utils/Address';
 
 import {
   LePhy,
@@ -19,7 +18,7 @@ import { Gap } from '../src/gap/Gap';
     await Utils.defaultAdapterSetup(hci);
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    const gap = new Gap(adapter.Hci);
+    const gap = new Gap(hci);
 
     await gap.init();
     await gap.setScanParameters({
@@ -49,7 +48,7 @@ import { Gap } from '../src/gap/Gap';
       connecting = true;
       console.log('connecting...');
       await gap.stopScanning();
-      await gap.connect(report.address);
+      await gap.connect({ peerAddress: report.address });
     });
 
     gap.on('GapConnected', async (event) => {

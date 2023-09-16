@@ -1303,7 +1303,7 @@ export enum LeInitiatingPhy {
   PhyCoded = 2,
 }
 
-interface LeExtendedCreateConnectionPhy {
+export interface LeExtendedCreateConnectionPhy {
   scanIntervalMs:           number;
   scanWindowMs:             number;
   connectionIntervalMinMs:  number;
