@@ -117,9 +117,9 @@ export class Gatt extends EventEmitter {
     }
     const type = GattProfileAttributeType.PrimaryService;
     const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
-    const services = entries.map((e) => GattService.fromAttData(e));
+    const services = entries.map((e) => GattService.fromAttData(e).toObject());
     this.directory.saveServices(services);
-    return services.map((s) => s.toObject());
+    return services;
   }
 
   public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
@@ -129,9 +129,9 @@ export class Gatt extends EventEmitter {
     }
     const type = GattProfileAttributeType.Include;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
-    const includedServices = entries.map((e) => GattService.fromAttData(e));
+    const includedServices = entries.map((e) => GattService.fromAttData(e).toObject());
     this.directory.saveIncludedServices(service.handle, includedServices);
-    return includedServices.map((s) => s.toObject());
+    return includedServices;
   }
 
   public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
@@ -141,9 +141,9 @@ export class Gatt extends EventEmitter {
     }
     const type = GattProfileAttributeType.Characteristic;
     const entries = await this.readByTypeBetween(type, service.handle, service.endingHandle);
-    const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e));
+    const characteristics = entries.map((e) => GattCharacteristic.fromAttData(e).toObject());
     this.directory.saveCharacteristics(service.handle, characteristics);
-    return characteristics.map((c) => c.toObject());
+    return characteristics;
   }
 
   public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
@@ -152,9 +152,9 @@ export class Gatt extends EventEmitter {
       return cacheDescriptors;
     }
     const entries = await this.findInformationBetween(characteristic.handle, characteristic.endingHandle);
-    const descriptors = entries.map((e) => GattDescriptor.fromAttData(e));
+    const descriptors = entries.map((e) => GattDescriptor.fromAttData(e).toObject());
     this.directory.saveDescriptors(characteristic.handle, descriptors);
-    return descriptors.map((d) => d.toObject());
+    return descriptors;
   }
 
   public async exchangeMtu(mtu: number): Promise<number> {
