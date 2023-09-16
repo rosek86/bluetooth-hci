@@ -190,7 +190,7 @@ export class Gatt extends EventEmitter {
       throw new Error('Cannot start notification on characteristic');
     }
 
-    const attributeHandle = await this.getCCCDescriptor(char);
+    const attributeHandle = await this.getCCCDescriptorHandle(char);
     if (!attributeHandle) {
       throw new Error('CCCD not found');
     }
@@ -203,7 +203,7 @@ export class Gatt extends EventEmitter {
   }
 
   public async stopCharacteristicsNotifications(char: GattCharacteristic.AsObject) {
-    const attributeHandle = await this.getCCCDescriptor(char);
+    const attributeHandle = await this.getCCCDescriptorHandle(char);
     if (!attributeHandle) {
       throw new Error('CCCD not found');
     }
@@ -212,19 +212,11 @@ export class Gatt extends EventEmitter {
     await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  private async getCCCDescriptor(char: GattCharacteristic.AsObject) {
-    // TODO: use cache
-    const data = await this.readByTypeReq(
-      GattProfileAttributeType.ClientCharacteristicConfiguration,
-      char.handle, char.endingHandle
-    );
-
-    const attributeData = data.attributeDataList.at(0);
-    if (!attributeData) {
-      return null;
-    }
-
-    return attributeData.handle;
+  private getCCCDescriptorHandle(char: GattCharacteristic.AsObject): number | null {
+    return this.directory.findDescriptor(
+      char.handle,
+      GattProfileAttributeType.ClientCharacteristicConfiguration
+    )?.Handle ?? null;
   }
 
   private async readByGroupTypeReqBetween(attributeGroupType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {

@@ -151,13 +151,13 @@ export class GattDirectory {
     return eChar.characteristic;
   }
 
-  public findDescriptor(handle: number, type: number): GattDescriptor | null {
-    const eChar = this.flatProfile.characteristics[handle];
-    if (!eChar) { return null; }
-    for (const eDesc of Object.values(eChar.descriptors)) {
-      if (!eDesc) { continue; }
-      if (eDesc.descriptor.UUID === UUID.from(type).toString()) {
-        return eDesc.descriptor;
+  public findDescriptor(charHandle: number, type: number): GattDescriptor | null {
+    const char = this.flatProfile.characteristics[charHandle];
+    if (!char) { return null; }
+    for (const desc of Object.values(char.descriptors)) {
+      if (!desc) { continue; }
+      if (desc.descriptor.UUID16 === type) {
+        return desc.descriptor;
       }
     }
     return null;
