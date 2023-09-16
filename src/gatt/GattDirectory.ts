@@ -46,9 +46,7 @@ export const cloneProfile = (profile: Profile): Profile => {
     const characteristic: Characteristic = { characteristic: structuredClone(e.characteristic) };
 
     for (const descriptor of Object.values(e.descriptors ?? {})) {
-      if (characteristic.descriptors === undefined) {
-        characteristic.descriptors = {};
-      }
+      if (characteristic.descriptors === undefined) { characteristic.descriptors = {}; }
       characteristic.descriptors[descriptor.descriptor.handle] = cloneDescriptor(descriptor);
       characteristic.descriptors[descriptor.descriptor.handle].parent = new WeakRef(characteristic);
     }
@@ -60,17 +58,13 @@ export const cloneProfile = (profile: Profile): Profile => {
     const service: Service = { service: structuredClone(e.service) };
 
     for (const characteristic of Object.values(e.characteristics ?? {})) {
-      if (service.characteristics === undefined) {
-        service.characteristics = {};
-      }
+      if (service.characteristics === undefined) { service.characteristics = {}; }
       service.characteristics[characteristic.characteristic.handle] = cloneCharacteristic(characteristic);
       service.characteristics[characteristic.characteristic.handle].parent = new WeakRef(service);
     }
 
     for (const includedService of Object.values(e.includedServices ?? {})) {
-      if (service.includedServices === undefined) {
-        service.includedServices = {};
-      }
+      if (service.includedServices === undefined) { service.includedServices = {}; }
       service.includedServices[includedService.service.handle] = cloneService(includedService);
       service.includedServices[includedService.service.handle].parent = new WeakRef(service);
     }
@@ -80,9 +74,7 @@ export const cloneProfile = (profile: Profile): Profile => {
 
   const p: Profile = {};
   for (const service of Object.values(profile.services ?? {})) {
-    if (p.services === undefined) {
-      p.services = {};
-    }
+    if (p.services === undefined) { p.services = {}; }
     p.services[service.service.handle] = cloneService(service);
   }
 
@@ -109,18 +101,18 @@ export class GattDirectory {
       return;
     }
     const fillDescriptor = (e: Descriptor, fp: FlatProfile) => {
-      if (!fp.descriptors) { fp.descriptors = {}; }
+      if (fp.descriptors === undefined) { fp.descriptors = {}; }
       fp.descriptors[e.descriptor.handle] = e;
     };
     const fillCharacteristic = (e: Characteristic, fp: FlatProfile) => {
-      if (!fp.characteristics) { fp.characteristics = {}; }
+      if (fp.characteristics === undefined) { fp.characteristics = {}; }
       fp.characteristics[e.characteristic.handle] = e;
       for (const descriptor of Object.values(e.descriptors ?? {})) {
         fillDescriptor(descriptor, fp);
       }
     };
     const fillIncludedService = (e: IncludedService, fp: FlatProfile) => {
-      if (!fp.includedServices) { fp.includedServices = {}; }
+      if (fp.includedServices === undefined) { fp.includedServices = {}; }
       fp.includedServices[e.service.handle] = e;
       for (const characteristic of Object.values(e.characteristics ?? {})) {
         fillCharacteristic(characteristic, fp);
@@ -130,7 +122,7 @@ export class GattDirectory {
       }
     }
     const fillService = (e: Service, fp: FlatProfile) => {
-      if (!fp.services) { fp.services = {}; }
+      if (fp.services === undefined) { fp.services = {}; }
       fp.services[e.service.handle] = e;
       for (const characteristic of Object.values(e.characteristics ?? {})) {
         fillCharacteristic(characteristic, fp);
