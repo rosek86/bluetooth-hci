@@ -18,7 +18,7 @@ export enum HciEvent {
   EncryptionChange                                    = 0x08, // * Encryption Change
   ChangeConnectionLinkKeyComplete                     = 0x09, // Change Connection Link Key Complete
   MasterLinkKeyComplete                               = 0x0A, // Master Link Key Complete
-  ReadRemoteSupportedFeaturesComplete                 = 0x0B, // Read Remote Supported Features Complete
+  ReadRemoteSupportedFeaturesComplete                 = 0x0B, // * Read Remote Supported Features Complete
   ReadRemoteVersionInformationComplete                = 0x0C, // * Read Remote Version Information Complete
   QosSetupComplete                                    = 0x0D, // QoS Setup Complete
   CommandComplete                                     = 0x0E, // * Command Complete
@@ -138,6 +138,32 @@ export class ReadRemoteVersionInformationComplete {
 
     const event: ReadRemoteVersionInformationCompleteEvent = {
       connectionHandle, version, manufacturerName, subversion,
+    };
+
+    return { status, event };
+  }
+}
+
+export interface ReadRemoteSupportedFeaturesCompleteEvent extends ConnEvent {
+  lpmFeatures: Buffer;
+}
+
+export class ReadRemoteSupportedFeaturesComplete {
+  static parse(data: Buffer): {
+    status: HciErrorCode,
+    event: ReadRemoteSupportedFeaturesCompleteEvent,
+  } {
+    if (data.length !== 11) {
+      debug(`ReadRemoteSupportedFeaturesComplete: invalid size ${data.length}`);
+    }
+
+    let o = 0;
+    const status            = data.readUIntLE(o, 1); o += 1;
+    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const lpmFeatures       = data.subarray(o, o + 8); o += 8;
+
+    const event: ReadRemoteSupportedFeaturesCompleteEvent = {
+      connectionHandle, lpmFeatures,
     };
 
     return { status, event };

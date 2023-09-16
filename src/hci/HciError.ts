@@ -192,7 +192,15 @@ export class HciError extends Error implements NodeJS.ErrnoException {
   }
 }
 
-export enum HciParserError {
+
+export class HciParserError extends Error implements NodeJS.ErrnoException {
+  errno?: number | undefined;
+  code?: string | undefined;
+  path?: string | undefined;
+  syscall?: string | undefined;
+}
+
+export enum HciParserErrorType {
   InvalidPayloadSize,
   Busy,
   Timeout,
@@ -202,17 +210,24 @@ export function makeHciError(code: HciErrorCode): HciError {
   return new HciError(code);
 }
 
-export function makeParserError(code: HciParserError): Error {
-  if (code === HciParserError.InvalidPayloadSize) {
-    return new Error(`Cannot parse payload, invalid size`);
+export function makeParserError(code: HciParserErrorType): Error {
+  const error = new HciParserError(`Unexpected error`);
+  if (code === HciParserErrorType.InvalidPayloadSize) {
+    error.message = `Invalid payload size`;
+    error.errno = code;
+    error.code = 'NBLE_INVALID_PAYLOAD_SIZE';
   }
-  if (code === HciParserError.Busy) {
-    return new Error(`Busy, command in progress.`)
+  if (code === HciParserErrorType.Busy) {
+    error.message = `Command busy`;
+    error.errno = code;
+    error.code = 'NBLE_COMMAND_BUSY';
   }
-  if (code === HciParserError.Timeout) {
-    return new Error(`Command timeout`);
+  if (code === HciParserErrorType.Timeout) {
+    error.message = `Command timeout`;
+    error.errno = code;
+    error.code = 'NBLE_COMMAND_TIMEOUT';
   }
-  return new Error(`Unexpected error`);
+  return error;
 }
 
 export function getHciErrorMessage(code: HciErrorCode): string {

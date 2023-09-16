@@ -1,4 +1,4 @@
-import { HciParserError, makeParserError } from "./HciError";
+import { HciParserErrorType, makeParserError } from "./HciError";
 import { bitSet } from "../utils/Utils";
 import { HciOcfControlAndBasebandCommands } from "./HciOgfOcf";
 
@@ -141,7 +141,7 @@ export class ReadTransmitPowerLevel {
 
   static outParams(params?: Buffer): number {
     if (!params || params.length < 3) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readInt8(2);
   }
@@ -229,7 +229,7 @@ export class SetEventMask2 {
 export class ReadLeHostSupport {
   static outParams(params?: Buffer): boolean {
     if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     // Simultaneous Le Host shall be ignored [Vol 4] Part E, Section 6.35
     const leSupportedHost = params.readUInt8(0) === 1;
@@ -292,7 +292,7 @@ export class ReadAuthenticatedPayloadTimeout {
 
   static outParams(params?: Buffer): number {
     if (!params || params.length < 2) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUInt16LE(0) * this.timeoutFactor;
   }

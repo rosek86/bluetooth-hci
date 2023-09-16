@@ -84,9 +84,7 @@ interface GapDeviceInfo {
 
 export class Gap extends EventEmitter {
   private extended = false;
-
   private scanning = false;
-  private connecting = false;
 
   private l2cap: L2CAP;
 
@@ -263,7 +261,6 @@ export class Gap extends EventEmitter {
   };
 
   private onLeAdvertisingReport = (report: LeAdvReport): void => {
-    if (this.connecting === true) { return; }
     try {
       const advertisingReport: GapAdvertReport = {
         address: report.address,
@@ -273,12 +270,11 @@ export class Gap extends EventEmitter {
       };
       this.emit('GapLeAdvReport', advertisingReport, report);
     } catch (err) {
-      console.log(err);
+      debug(err);
     }
   };
 
   private onLeExtendedAdvertisingReport = (report: LeExtAdvReport): void => {
-    if (this.connecting === true) { return; }
     try {
       const advertisingReport: GapAdvertReport = {
         address: report.address,
@@ -288,7 +284,7 @@ export class Gap extends EventEmitter {
       };
       this.emit('GapLeAdvReport', advertisingReport, report);
     } catch (err) {
-      console.log(err);
+      debug(err);
     }
   };
 
@@ -304,14 +300,15 @@ export class Gap extends EventEmitter {
 
   private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
     try {
-      this.connecting = false;
       this.scanning = false;
 
       const device = this.connectedDevices.get(event.connectionHandle);
       assert(device);
 
-      const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle);
-      const features = await this.hci.leReadRemoteFeaturesAwait(event.connectionHandle);
+      const [version, features] = await Promise.all([
+        this.hci.readRemoteVersionInformationAwait(event.connectionHandle),
+        this.hci.leReadRemoteFeaturesAwait(event.connectionHandle),
+      ]);
 
       device.att = new Att(this.l2cap, event.connectionHandle);
       device.channelSelectionAlgorithm = event;

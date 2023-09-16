@@ -1,6 +1,7 @@
 import { Address } from '../utils/Address';
 import {
-  HciErrorCode, HciParserError,
+  HciErrorCode,
+  HciParserErrorType,
   makeHciError, makeParserError
 } from './HciError';
 import { bitGet, bitSet, buildBitfield } from '../utils/Utils';
@@ -193,7 +194,7 @@ export interface LeBufferSize {
 export class LeReadBufferSize {
   static outParams(params?: Buffer): LeBufferSize {
     if (!params || params.length < 3) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       leAclDataPacketLength:    params.readUInt16LE(0),
@@ -212,7 +213,7 @@ export interface LeBufferSizeV2 {
 export class LeReadBufferSizeV2 {
   static outParams(params?: Buffer): LeBufferSizeV2 {
     if (!params || params.length < 6) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       leAclDataPacketLength:    params.readUInt16LE(0),
@@ -226,7 +227,7 @@ export class LeReadBufferSizeV2 {
 export class LeReadLocalSupportedFeatures {
   static outParams(params?: Buffer): LeSupportedFeatures {
     if (!params || params.length < (64/8)) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
 
     const mask = params.readBigUInt64LE(0);
@@ -278,7 +279,7 @@ export class LeSetAdvertisingParameters {
 export class LeReadAdvertisingPhysicalChannelTxPower {
   static outParams(params?: Buffer): number {
     if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readInt8(0);
   }
@@ -432,7 +433,7 @@ export class LeConnectionUpdate {
 export class LeReadWhiteListSize {
   static outParams(params?: Buffer): number {
     if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUInt8(0);
   }
@@ -467,7 +468,7 @@ export class LeReadChannelMap {
 
   static outParams(params?: Buffer): number {
     if (!params || params.length < 7) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUIntLE(2, 5);
   }
@@ -489,7 +490,7 @@ export class LeEncrypt {
 
   static outParams(params?: Buffer): Buffer {
     if (!params) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.reverse();
   }
@@ -498,7 +499,7 @@ export class LeEncrypt {
 export class LeRand {
   static outParams(params?: Buffer): Buffer {
     if (!params) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.reverse();
   }
@@ -630,7 +631,7 @@ export class LeSupportedStates {
 
   public static outParams(params?: Buffer): LeSupportedStates {
     if (!params || params.length < (64/8)) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     const bitmask = params.readBigUInt64LE(0);
     return LeSupportedStates.fromBitmask(bitmask);
@@ -856,7 +857,7 @@ export class LeTransmitterTestV4 extends LeTest {
 export class LeTestEnd {
   static outParams(params?: Buffer): number {
     if (!params || params.length < 2) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUInt16LE(0);
   }
@@ -948,7 +949,7 @@ export class LeSuggestedDefaultDataLength {
 
   static outParams(params?: Buffer): LeSuggestedDefaultDataLength {
     if (!params || params.length < 4) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       suggestedMaxTxOctets: params.readUInt16LE(0),
@@ -1044,7 +1045,7 @@ export class LeRemoveDeviceFromResolvingList {
 export class LeReadResolvingListSize {
   static outParams(params?: Buffer): number {
     if (!params|| params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUInt8(0);
   }
@@ -1068,7 +1069,7 @@ export class LeReadPeerResolvableAddress {
 
   static outParams(params?: Buffer): Address {
     if (!params|| params.length < 6) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return Address.from(params.readUIntLE(0, 6));
   }
@@ -1092,7 +1093,7 @@ export class LeLocalPeerResolvableAddress {
 
   static outParams(params?: Buffer): Address {
     if (!params|| params.length < 6) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return Address.from(params.readUIntLE(0, 6));
   }
@@ -1108,7 +1109,7 @@ export interface LeMaximumDataLength {
 export class LeMaximumDataLength {
   static outParams(params?: Buffer): LeMaximumDataLength {
     if (!params|| params.length < 8) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       supportedMaxTxOctets: params.readUInt16LE(0),
@@ -1135,7 +1136,7 @@ export interface LeTxRxPhy {
 export class LeTxRxPhy {
   static outParams(params?: Buffer): LeTxRxPhy {
     if (!params|| params.length < 4) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       txPhy: params.readUInt8(2),
@@ -1408,7 +1409,7 @@ export interface LeTransmitPower {
 export class LeTransmitPower {
   static outParams(params?: Buffer): LeTransmitPower {
     if (!params || params.length < 2) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       minTxPower: params.readInt8(0),
@@ -1514,7 +1515,7 @@ export class LeExtendedAdvertisingParameters {
 
   static outParams(params?: Buffer): number {
     if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
 
     const selectedTxPower = params.readInt8(0);
@@ -1525,7 +1526,7 @@ export class LeExtendedAdvertisingParameters {
 export class LeNumberOfSupportedAdvertisingSets {
   static outParams(params?: Buffer): number {
     if (!params || params.length < 1) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return params.readUInt8(0);
   }

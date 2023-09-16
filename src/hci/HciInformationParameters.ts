@@ -1,5 +1,5 @@
 import { Address } from "../utils/Address";
-import { HciParserError, makeParserError } from "./HciError";
+import { HciParserErrorType, makeParserError } from "./HciError";
 import { bitGet } from "../utils/Utils";
 
 export interface LocalSupportedFeatures {
@@ -63,7 +63,7 @@ export interface LocalSupportedFeatures {
 export class ReadLocalSupportedFeatures {
   static outParams(params?: Buffer): LocalSupportedFeatures {
     if (!params || params.length < (64/8)) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     const features = params.readBigUInt64LE(0);
     return {
@@ -137,7 +137,7 @@ export interface LocalVersionInformation {
 export class ReadLocalVersionInformation {
   static outParams(params?: Buffer): LocalVersionInformation {
     if (!params || params.length < 8) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       hciVersion:       params.readUIntLE(0, 1),
@@ -159,7 +159,7 @@ export interface BufferSize {
 export class ReadBufferSize {
   static outParams(params?: Buffer): BufferSize {
     if (!params || params.length < 7) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
       aclDataPacketLength:            params.readUInt16LE(0),
@@ -173,7 +173,7 @@ export class ReadBufferSize {
 export class ReadBdAddr {
   static outParams(params?: Buffer): Address {
     if (!params || params.length < 6) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return Address.from(params.readUIntLE(0, 6));
   }
@@ -869,7 +869,7 @@ export class LocalSupportedCommands {
 export class ReadLocalSupportedCommands {
   static outParams(params?: Buffer): LocalSupportedCommands {
     if (!params || params.length < 64) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return LocalSupportedCommands.from(params);
   }
@@ -884,7 +884,7 @@ export class ReadRssi {
 
   static outParams(params?: Buffer): number {
     if (!params || params.length < 3) {
-      throw makeParserError(HciParserError.InvalidPayloadSize);
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     const rssi = params.readInt8(2);
     return rssi;

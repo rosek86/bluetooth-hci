@@ -2,7 +2,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from "./HciPacketType";
 
-import { HciErrorCode, HciParserError } from "./HciError";
+import { HciErrorCode, HciParserErrorType } from "./HciError";
 import { makeHciError, makeParserError} from "./HciError";
 
 import {
@@ -47,9 +47,9 @@ export interface HciCmdResult {
 }
 
 export class HciCmd {
-  private onResult: ((_: HciCmdResult) => void) | null = null;
+  private pendingCommands: { opcode: number; connectionHandle?: number; onResult: (evt: HciCmdResult) => void }[] = [];
 
-  public constructor(private sendBuffer: HciSendFunction, private timeout: number = 2_000) {
+  public constructor(private sendBuffer: HciSendFunction, public readonly timeout: number = 2_000) {
   }
 
   public async linkControl(params: {
@@ -175,41 +175,30 @@ export class HciCmd {
         ogf: cmd.opcode.ogf,
         ocf: cmd.opcode.ocf,
       });
-      if (this.onResult !== null) {
-        debug('cannot start command: ', cmd);
-        return reject(makeParserError(HciParserError.Busy));
-      }
+      const dropPendingCommand = () => {
+        for (let i = 0; i < this.pendingCommands.length; ++i) {
+          if (this.pendingCommands[i].onResult === onResult) {
+            this.pendingCommands.splice(i, 1);
+            break;
+          }
+        }
+      };
       const complete = (err?: Error, evt?: HciCmdResult) => {
         clearTimeout(timeoutId);
-        this.onResult = null;
+        dropPendingCommand();
         err ? reject(err) : resolve(evt!);
       };
       const timeoutId = setTimeout(
-        () => complete(makeParserError(HciParserError.Timeout)), this.timeout
+        () => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout
       );
-      this.onResult = (evt: HciCmdResult) => {
-        if (opcode !== evt.opcode) {
-          return;
-        }
-        if (cmd.connectionHandle === undefined) {
-          if (evt.status !== HciErrorCode.Success) {
-            complete(makeHciError(evt.status));
-          } else {
-            complete(undefined, evt);
-          }
+      const onResult = (evt: HciCmdResult) => {
+        if (evt.status !== HciErrorCode.Success) {
+          complete(makeHciError(evt.status));
         } else {
-          assert(evt.returnParameters, 'Return parameters are missing');
-          assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
-          if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
-            return;
-          }
-          if (evt.status !== HciErrorCode.Success) {
-            complete(makeHciError(evt.status));
-          } else {
-            complete(undefined, evt);
-          }
+          complete(undefined, evt);
         }
       };
+      this.pendingCommands.push({ opcode, connectionHandle: cmd.connectionHandle, onResult });
       this.sendCommand(opcode, cmd.payload);
     });
   }
@@ -221,9 +210,24 @@ export class HciCmd {
     );
   }
 
-  public onCmdResult(result: HciCmdResult) {
-    if (this.onResult) {
-      this.onResult(result);
+  public onCmdResult(evt: HciCmdResult) {
+    for (const cmd of this.pendingCommands) {
+      if (cmd.opcode !== evt.opcode) {
+        continue;
+      }
+
+      if (cmd.connectionHandle === undefined) {
+        return cmd.onResult(evt);
+      }
+
+      // parse connection handle
+      assert(evt.returnParameters, 'Return parameters are missing');
+      assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
+      if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
+        continue;
+      }
+
+      return cmd.onResult(evt);
     }
   }
 
