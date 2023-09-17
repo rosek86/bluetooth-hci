@@ -62,33 +62,45 @@ export class GattDirectory {
     const fillCharacteristic = (e: Characteristic, fp: FlatProfile) => {
       if (fp.characteristics === undefined) { fp.characteristics = {}; }
       fp.characteristics[e.characteristic.handle] = e;
-      for (const descriptor of Object.values(e.descriptors ?? {})) {
-        fillDescriptor(descriptor, fp);
+      if (e.descriptors !== undefined) {
+        for (const descriptor of Object.values(e.descriptors)) {
+          fillDescriptor(descriptor, fp);
+        }
       }
     };
     const fillIncludedService = (e: IncludedService, fp: FlatProfile) => {
       if (fp.includedServices === undefined) { fp.includedServices = {}; }
       fp.includedServices[e.service.handle] = e;
-      for (const characteristic of Object.values(e.characteristics ?? {})) {
-        fillCharacteristic(characteristic, fp);
+      if (e.characteristics !== undefined) {
+        for (const characteristic of Object.values(e.characteristics)) {
+          fillCharacteristic(characteristic, fp);
+        }
       }
-      for (const includedService of Object.values(e.includedServices ?? {})) {
-        fillIncludedService(includedService, fp);
+      if (e.includedServices !== undefined) {
+        for (const includedService of Object.values(e.includedServices)) {
+          fillIncludedService(includedService, fp);
+        }
       }
     }
     const fillService = (e: Service, fp: FlatProfile) => {
       if (fp.services === undefined) { fp.services = {}; }
       fp.services[e.service.handle] = e;
-      for (const characteristic of Object.values(e.characteristics ?? {})) {
-        fillCharacteristic(characteristic, fp);
+      if (e.characteristics !== undefined) {
+        for (const characteristic of Object.values(e.characteristics)) {
+          fillCharacteristic(characteristic, fp);
+        }
       }
-      for (const includedService of Object.values(e.includedServices ?? {})) {
-        fillIncludedService(includedService, fp);
+      if (e.includedServices !== undefined) {
+        for (const includedService of Object.values(e.includedServices)) {
+          fillIncludedService(includedService, fp);
+        }
       }
     };
     const fillFlatProfile = (p: Profile, fp: FlatProfile): FlatProfile => {
-      for (const service of Object.values(p.services ?? {})) {
-        fillService(service, fp);
+      if (p.services !== undefined) {
+        for (const service of Object.values(p.services)) {
+          fillService(service, fp);
+        }
       }
       return fp;
     };
@@ -103,10 +115,12 @@ export class GattDirectory {
     const cloneCharacteristic = (e: Characteristic): Characteristic => {
       const characteristic: Characteristic = { characteristic: structuredClone(e.characteristic) };
 
-      for (const descriptor of Object.values(e.descriptors ?? {})) {
-        if (characteristic.descriptors === undefined) { characteristic.descriptors = {}; }
-        characteristic.descriptors[descriptor.descriptor.handle] = cloneDescriptor(descriptor);
-        characteristic.descriptors[descriptor.descriptor.handle].parent = new WeakRef(characteristic);
+      if (e.descriptors !== undefined) {
+        characteristic.descriptors = {};
+        for (const descriptor of Object.values(e.descriptors)) {
+          characteristic.descriptors[descriptor.descriptor.handle] = cloneDescriptor(descriptor);
+          characteristic.descriptors[descriptor.descriptor.handle].parent = new WeakRef(characteristic);
+        }
       }
 
       return characteristic;
@@ -114,26 +128,34 @@ export class GattDirectory {
     const cloneService = (e: Service) => {
       const service: Service = { service: structuredClone(e.service) };
 
-      for (const characteristic of Object.values(e.characteristics ?? {})) {
-        if (service.characteristics === undefined) { service.characteristics = {}; }
-        service.characteristics[characteristic.characteristic.handle] = cloneCharacteristic(characteristic);
-        service.characteristics[characteristic.characteristic.handle].parent = new WeakRef(service);
+      if (e.characteristics !== undefined) {
+        service.characteristics = {};
+        for (const characteristic of Object.values(e.characteristics)) {
+          service.characteristics[characteristic.characteristic.handle] = cloneCharacteristic(characteristic);
+          service.characteristics[characteristic.characteristic.handle].parent = new WeakRef(service);
+        }
       }
 
-      for (const includedService of Object.values(e.includedServices ?? {})) {
-        if (service.includedServices === undefined) { service.includedServices = {}; }
-        service.includedServices[includedService.service.handle] = cloneService(includedService);
-        service.includedServices[includedService.service.handle].parent = new WeakRef(service);
+      if (e.includedServices !== undefined) {
+        service.includedServices = {};
+        for (const includedService of Object.values(e.includedServices)) {
+          service.includedServices[includedService.service.handle] = cloneService(includedService);
+          service.includedServices[includedService.service.handle].parent = new WeakRef(service);
+        }
       }
 
       return service;
     };
     const cloneProfile = (p: Profile): Profile => {
       const profile: Profile = {};
-      for (const service of Object.values(p.services ?? {})) {
+
+      if (p.services !== undefined) {
         profile.services = {};
-        profile.services[service.service.handle] = cloneService(service);
+        for (const service of Object.values(p.services)) {
+          profile.services[service.service.handle] = cloneService(service);
+        }
       }
+
       return profile;
     };
     return cloneProfile(profile);
@@ -143,9 +165,7 @@ export class GattDirectory {
     if (!this.profile.services) {
       return undefined;
     }
-    return Object.values(this.flatProfile.services ?? {})
-      .map((e) => e?.service)
-      .filter((e): e is GattService.AsObject => !!e);
+    return Object.values(this.flatProfile.services ?? {}).map((e) => e.service);
   }
 
   public saveServices(services: GattService.AsObject[]): void {
@@ -169,9 +189,7 @@ export class GattDirectory {
     if (!profileService.includedServices) {
       return undefined;
     }
-    return Object.values(profileService.includedServices ?? {})
-      .map((e) => e?.service)
-      .filter((e): e is GattService.AsObject => !!e);
+    return Object.values(profileService.includedServices ?? {}).map((e) => e.service);
   }
 
   public saveIncludedServices(handle: number, includedServices: GattService.AsObject[]): boolean {
@@ -200,9 +218,7 @@ export class GattDirectory {
     if (!profileService.characteristics) {
       return undefined;
     }
-    return Object.values(profileService.characteristics ?? {})
-      .map((e) => e?.characteristic)
-      .filter((e): e is GattCharacteristic.AsObject => !!e);
+    return Object.values(profileService.characteristics ?? {}).map((e) => e.characteristic);
   }
 
   public saveCharacteristics(handle: number, characteristics: GattCharacteristic.AsObject[]): boolean {
@@ -231,9 +247,7 @@ export class GattDirectory {
     if (!profileCharacteristic.descriptors) {
       return undefined;
     }
-    return Object.values(profileCharacteristic.descriptors)
-      .map((e) => e?.descriptor)
-      .filter((e): e is GattDescriptor.AsObject => !!e);
+    return Object.values(profileCharacteristic.descriptors).map((e) => e.descriptor);
   }
 
   public saveDescriptors(handle: number, descriptors: GattDescriptor.AsObject[]): boolean {

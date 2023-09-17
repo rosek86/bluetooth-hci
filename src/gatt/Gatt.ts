@@ -112,7 +112,7 @@ export class Gatt extends EventEmitter {
 
   public async discoverServices(): Promise<GattService.AsObject[]> {
     const cacheServices = this.directory.getServices();
-    if (cacheServices) {
+    if (cacheServices !== undefined) {
       return cacheServices;
     }
     const type = GattProfileAttributeType.PrimaryService;
@@ -124,7 +124,7 @@ export class Gatt extends EventEmitter {
 
   public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
     const cacheIncludedServices = this.directory.getIncludedServices(service.handle);
-    if (cacheIncludedServices) {
+    if (cacheIncludedServices !== undefined) {
       return cacheIncludedServices;
     }
     const type = GattProfileAttributeType.Include;
@@ -136,7 +136,7 @@ export class Gatt extends EventEmitter {
 
   public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
     const cacheCharacteristics = this.directory.getCharacteristics(service.handle);
-    if (cacheCharacteristics) {
+    if (cacheCharacteristics !== undefined) {
       return cacheCharacteristics;
     }
     const type = GattProfileAttributeType.Characteristic;
@@ -148,7 +148,7 @@ export class Gatt extends EventEmitter {
 
   public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
     const cacheDescriptors = this.directory.getDescriptors(characteristic.handle);
-    if (cacheDescriptors) {
+    if (cacheDescriptors !== undefined) {
       return cacheDescriptors;
     }
     const entries = await this.findInformationBetween(characteristic.handle, characteristic.endingHandle);
