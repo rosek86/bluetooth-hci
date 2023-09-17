@@ -1370,14 +1370,14 @@ export class LeExtendedCreateConnection {
       const minCeLengthMs           = this.msToValue(phyParams.minCeLengthMs,           0.625);
       const maxCeLengthMs           = this.msToValue(phyParams.maxCeLengthMs,           0.625);
 
-      o = payload.writeUIntLE(scanIntervalMs, o, 2);
-      o = payload.writeUIntLE(scanWindowMs, o, 2);
-      o = payload.writeUIntLE(connectionIntervalMinMs, o, 2);
-      o = payload.writeUIntLE(connectionIntervalMaxMs, o, 2);
-      o = payload.writeUIntLE(connectionLatency, o, 2);
-      o = payload.writeUIntLE(supervisionTimeoutMs, o, 2);
-      o = payload.writeUIntLE(minCeLengthMs, o, 2);
-      o = payload.writeUIntLE(maxCeLengthMs, o, 2);
+      o = payload.writeUIntLE(scanIntervalMs,           o, 2);
+      o = payload.writeUIntLE(scanWindowMs,             o, 2);
+      o = payload.writeUIntLE(connectionIntervalMinMs,  o, 2);
+      o = payload.writeUIntLE(connectionIntervalMaxMs,  o, 2);
+      o = payload.writeUIntLE(connectionLatency,        o, 2);
+      o = payload.writeUIntLE(supervisionTimeoutMs,     o, 2);
+      o = payload.writeUIntLE(minCeLengthMs,            o, 2);
+      o = payload.writeUIntLE(maxCeLengthMs,            o, 2);
     }
 
     return payload;
@@ -1553,20 +1553,22 @@ export class LeExtendedScanParameters {
     o = payload.writeUIntLE(phys.bitmask,                o, 1);
 
     if (params.scanningPhy.Phy1M) {
+      const type     = params.scanningPhy.Phy1M.type;
       const interval = this.msToValue(params.scanningPhy.Phy1M.intervalMs);
-      const window = this.msToValue(params.scanningPhy.Phy1M.windowMs);
+      const window   = this.msToValue(params.scanningPhy.Phy1M.windowMs);
 
-      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
+      o = payload.writeUIntLE(type,     o, 1);
       o = payload.writeUIntLE(interval, o, 2);
-      o = payload.writeUIntLE(window, o, 2);
+      o = payload.writeUIntLE(window,   o, 2);
     }
     if (params.scanningPhy.PhyCoded) {
+      const type     = params.scanningPhy.PhyCoded.type;
       const interval = this.msToValue(params.scanningPhy.PhyCoded.intervalMs);
-      const window = this.msToValue(params.scanningPhy.PhyCoded.windowMs);
+      const window   = this.msToValue(params.scanningPhy.PhyCoded.windowMs);
 
-      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
+      o = payload.writeUIntLE(type,     o, 1);
       o = payload.writeUIntLE(interval, o, 2);
-      o = payload.writeUIntLE(window, o, 2);
+      o = payload.writeUIntLE(window,   o, 2);
     }
 
     return payload;
