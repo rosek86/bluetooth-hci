@@ -1361,36 +1361,23 @@ export class LeExtendedCreateConnection {
     o = payload.writeUIntLE(physBitmask,                          o, 1);
 
     for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.scanIntervalMs,          0.625);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.scanWindowMs,            0.625);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.connectionIntervalMinMs, 1.25);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.connectionIntervalMaxMs, 1.25);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = phyParams.connectionLatency;
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.supervisionTimeoutMs,    10);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.minCeLengthMs,           0.625);
-      o = payload.writeUIntLE(value, o, 2);
-    }
-    for (const phyParams of physParams) {
-      const value = this.msToValue(phyParams.maxCeLengthMs,           0.625);
-      o = payload.writeUIntLE(value, o, 2);
+      const scanIntervalMs          = this.msToValue(phyParams.scanIntervalMs,          0.625);
+      const scanWindowMs            = this.msToValue(phyParams.scanWindowMs,            0.625);
+      const connectionIntervalMinMs = this.msToValue(phyParams.connectionIntervalMinMs, 1.25);
+      const connectionIntervalMaxMs = this.msToValue(phyParams.connectionIntervalMaxMs, 1.25);
+      const connectionLatency       = phyParams.connectionLatency;
+      const supervisionTimeoutMs    = this.msToValue(phyParams.supervisionTimeoutMs,    10);
+      const minCeLengthMs           = this.msToValue(phyParams.minCeLengthMs,           0.625);
+      const maxCeLengthMs           = this.msToValue(phyParams.maxCeLengthMs,           0.625);
+
+      o = payload.writeUIntLE(scanIntervalMs, o, 2);
+      o = payload.writeUIntLE(scanWindowMs, o, 2);
+      o = payload.writeUIntLE(connectionIntervalMinMs, o, 2);
+      o = payload.writeUIntLE(connectionIntervalMaxMs, o, 2);
+      o = payload.writeUIntLE(connectionLatency, o, 2);
+      o = payload.writeUIntLE(supervisionTimeoutMs, o, 2);
+      o = payload.writeUIntLE(minCeLengthMs, o, 2);
+      o = payload.writeUIntLE(maxCeLengthMs, o, 2);
     }
 
     return payload;
@@ -1566,25 +1553,19 @@ export class LeExtendedScanParameters {
     o = payload.writeUIntLE(phys.bitmask,                o, 1);
 
     if (params.scanningPhy.Phy1M) {
-      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
-    }
-    if (params.scanningPhy.PhyCoded) {
-      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
-    }
-    if (params.scanningPhy.Phy1M) {
       const interval = this.msToValue(params.scanningPhy.Phy1M.intervalMs);
-      o = payload.writeUIntLE(interval, o, 2);
-    }
-    if (params.scanningPhy.PhyCoded) {
-      const interval = this.msToValue(params.scanningPhy.PhyCoded.intervalMs);
-      o = payload.writeUIntLE(interval, o, 2);
-    }
-    if (params.scanningPhy.Phy1M) {
       const window = this.msToValue(params.scanningPhy.Phy1M.windowMs);
+
+      o = payload.writeUIntLE(params.scanningPhy.Phy1M.type, o, 1);
+      o = payload.writeUIntLE(interval, o, 2);
       o = payload.writeUIntLE(window, o, 2);
     }
     if (params.scanningPhy.PhyCoded) {
+      const interval = this.msToValue(params.scanningPhy.PhyCoded.intervalMs);
       const window = this.msToValue(params.scanningPhy.PhyCoded.windowMs);
+
+      o = payload.writeUIntLE(params.scanningPhy.PhyCoded.type, o, 1);
+      o = payload.writeUIntLE(interval, o, 2);
       o = payload.writeUIntLE(window, o, 2);
     }
 
