@@ -44,9 +44,9 @@ export class Gatt extends EventEmitter {
     return this.directory.Profile;
   }
 
-  constructor(private att: Att, directory?: GattDirectory) {
+  constructor(private att: Att, profile?: Profile) {
     super();
-    this.directory = directory ?? new GattDirectory();
+    this.directory = new GattDirectory(profile);
     att.on('Disconnected', this.onDisconnected);
     att.on('HandleValueInd', this.onValueIndication);
     att.on('HandleValueNtf', this.onValueNotification);

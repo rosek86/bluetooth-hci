@@ -44,6 +44,7 @@ export interface HciDevice {
 
 export class SerialHciDevice implements HciDevice {
   private port: SerialPort;
+
   constructor(options: SerialPortOpenOptions<AutoDetectTypes>) {
     options.autoOpen = false;
     options.parity = options.parity ?? 'none';
@@ -52,6 +53,9 @@ export class SerialHciDevice implements HciDevice {
     options.dataBits = options.dataBits ?? 8;
     options.stopBits = options.stopBits ?? 1;
     this.port = new SerialPort(options);
+    this.port.on('error', (err) => console.log(err));
+    // this.port.on('data', (data) => console.log(data.toString('hex')));
+    this.port.on('close', () => console.log('close'));
   }
 
   async open() {
