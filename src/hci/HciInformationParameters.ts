@@ -506,6 +506,18 @@ export interface LocalSupportedCommandsFields {
   readLocalSupportedCodecCapabilities:                    boolean;
   readLocalSupportedControllerDelay:                      boolean;
   configureDataPath:                                      boolean;
+  leSetDataRelatedAddressChanges:                         boolean;
+  SetMinEncryptionKeySize:                                boolean;
+  leSetDefaultSubrate:                                    boolean;
+  leSubrateRequest:                                       boolean;
+  leSetExtendedAdvertisingParametersV2:                   boolean;
+  // Reserved for future use
+  // Reserved for future use
+  leSetPeriodicAdvertisingSubeventData:                   boolean;
+  leSetPeriodicAdvertisingResponseData:                   boolean;
+  leSetPeriodicSyncSubevent:                              boolean;
+  leExtendedCreateConnectionV2:                           boolean;
+  leSetPeriodicAdvertisingParametersV2:                   boolean;
 }
 
 export class LocalSupportedCommands {
@@ -862,6 +874,18 @@ export class LocalSupportedCommands {
       readLocalSupportedCodecCapabilities:                    bitGet(params[45], 3),
       readLocalSupportedControllerDelay:                      bitGet(params[45], 4),
       configureDataPath:                                      bitGet(params[45], 5),
+      leSetDataRelatedAddressChanges:                         bitGet(params[45], 6),
+      SetMinEncryptionKeySize:                                bitGet(params[45], 7),
+      leSetDefaultSubrate:                                    bitGet(params[46], 0),
+      leSubrateRequest:                                       bitGet(params[46], 1),
+      leSetExtendedAdvertisingParametersV2:                   bitGet(params[46], 2),
+      // Reserved for future use
+      // Reserved for future use
+      leSetPeriodicAdvertisingSubeventData:                   bitGet(params[46], 5),
+      leSetPeriodicAdvertisingResponseData:                   bitGet(params[46], 6),
+      leSetPeriodicSyncSubevent:                              bitGet(params[46], 7),
+      leExtendedCreateConnectionV2:                           bitGet(params[47], 0),
+      leSetPeriodicAdvertisingParametersV2:                   bitGet(params[47], 1),
     });
   }
 }
