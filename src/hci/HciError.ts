@@ -70,6 +70,8 @@ export enum HciErrorCode {
   LimitReached                = 0x43, // Limit Reached
   OperationCancelled          = 0x44, // Operation Cancelled by Host
   PacketTooLong               = 0x45, // Packet Too Long
+  TooLate                     = 0x46, // Too Late
+  TooEarly                    = 0x47, // Too Early
 };
 
 export enum HciDisconnectReason {
@@ -153,6 +155,8 @@ const HciErrorCodeToString: { [id: number]: string } = {
   0x43: "Limit Reached",
   0x44: "Operation Cancelled by Host",
   0x45: "Packet Too Long",
+  0x46: "Too Late",
+  0x47: "Too Early",
 };
 
 export class HciError extends Error implements NodeJS.ErrnoException {
@@ -202,7 +206,6 @@ export class HciParserError extends Error implements NodeJS.ErrnoException {
 
 export enum HciParserErrorType {
   InvalidPayloadSize,
-  Busy,
   Timeout,
 }
 
@@ -216,11 +219,6 @@ export function makeParserError(code: HciParserErrorType): Error {
     error.message = `Invalid payload size`;
     error.errno = code;
     error.code = 'NBLE_INVALID_PAYLOAD_SIZE';
-  }
-  if (code === HciParserErrorType.Busy) {
-    error.message = `Command busy`;
-    error.errno = code;
-    error.code = 'NBLE_COMMAND_BUSY';
   }
   if (code === HciParserErrorType.Timeout) {
     error.message = `Command timeout`;
