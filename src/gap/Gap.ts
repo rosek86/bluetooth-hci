@@ -14,7 +14,7 @@ import {
   LeExtendedCreateConnection,
   LeExtendedCreateConnectionPhy,
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
-  LeOwnAddressType, LeScanFilterDuplicates,
+  LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
 } from '../hci/HciLeController';
 import { Address } from '../utils/Address';
@@ -212,6 +212,7 @@ export class Gap extends EventEmitter {
       await this.hci.leExtendedCreateConnection({
         ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
         initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+        peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
         peerAddress: params.peerAddress,
         initiatingPhy: params?.initiatingPhy ?? { Phy1M: defaultScanParams },
       });
@@ -222,6 +223,7 @@ export class Gap extends EventEmitter {
       await this.hci.leCreateConnection({
         ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
         initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+        peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
         peerAddress: params.peerAddress,
         ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
       });

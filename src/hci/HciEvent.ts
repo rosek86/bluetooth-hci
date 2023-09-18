@@ -297,13 +297,6 @@ export class LeAdvReport {
 
     const reports: LeAdvReport[] = [];
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
-    const toAddress = (address: number, addressType: LeAdvReportAddrType): Address => {
-      if (addressType === LeAdvReportAddrType.RandomDeviceAddress ||
-          addressType === LeAdvReportAddrType.RandomIdentityAddress) {
-        return Address.from(address, AddressType.Random);
-      }
-      return Address.from(address, AddressType.Public);
-    };
 
     for (let i = 0; i < numReports; i++) {
       const eventType   = data.readUIntLE(o, 1); o += 1;
@@ -322,7 +315,7 @@ export class LeAdvReport {
       reports.push({
         eventType,
         addressType,
-        address: toAddress(address, addressType),
+        address: Address.from(address),
         rssi: powerOrNull(rssi),
         data: advData,
       });
@@ -354,13 +347,6 @@ export class LeExtAdvReport {
 
     const reports: LeExtAdvReport[] = [];
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
-    const toAddress = (address: number, addressType: LeExtAdvReportAddrType): Address => {
-      if (addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
-          addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
-        return Address.from(address, AddressType.Random);
-      }
-      return Address.from(address, AddressType.Public);
-    };
 
     for (let i = 0; i < numReports; i++) {
       const eventType           = data.readUIntLE(o, 2); o += 2;
@@ -385,7 +371,7 @@ export class LeExtAdvReport {
       reports.push({
         eventType: LeExtAdvEventTypeParser.parse(eventType),
         addressType,
-        address: toAddress(address, addressType),
+        address: Address.from(address),
         primaryPhy,
         secondaryPhy,
         advertisingSid,

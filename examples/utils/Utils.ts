@@ -120,7 +120,7 @@ export class Utils {
       suggestedMaxTxTime: 328,
     });
 
-    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82, AddressType.Random));
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
 
     console.log('initialised');
   }

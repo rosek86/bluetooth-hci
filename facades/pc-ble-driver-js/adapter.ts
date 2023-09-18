@@ -186,7 +186,7 @@ export class Adapter extends EventEmitter {
         address: report.address.toString(),
 
         // BLE_GAP_ADV_TYPE_ADV_NONCONN_IND
-        addressType: report.address.Type.toString(), // TODO: expand address type
+        addressType: 'random', // TODO: expand address type
         role: 'peripheral',
         connected: false,
         adData

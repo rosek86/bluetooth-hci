@@ -349,6 +349,7 @@ export interface LeCreateConnection {
   scanIntervalMs:           number;
   scanWindowMs:             number;
   initiatorFilterPolicy:    LeInitiatorFilterPolicy;
+  peerAddressType:          LePeerAddressType;
   peerAddress:              Address;
   ownAddressType:           LeOwnAddressType;
   connectionIntervalMinMs:  number;
@@ -375,7 +376,7 @@ export class LeCreateConnection {
     o = payload.writeUIntLE(scanInterval,                         o, 2);
     o = payload.writeUIntLE(scanWindow,                           o, 2);
     o = payload.writeUIntLE(params.initiatorFilterPolicy,         o, 1);
-    o = payload.writeUIntLE(params.peerAddress.LePeerAddressType, o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
     o = payload.writeUIntLE(params.peerAddress.toNumeric(),       o, 6);
     o = payload.writeUIntLE(params.ownAddressType,                o, 1);
     o = payload.writeUIntLE(connIntervalMin,                      o, 2);
@@ -1318,6 +1319,7 @@ export interface LeExtendedCreateConnectionPhy {
 export interface LeExtendedCreateConnection {
   initiatorFilterPolicy: LeInitiatorFilterPolicy;
   ownAddressType:        LeOwnAddressType;
+  peerAddressType:       LePeerAddressType;
   peerAddress:           Address;
   initiatingPhy: {
     Phy1M?:    LeExtendedCreateConnectionPhy;
@@ -1356,7 +1358,7 @@ export class LeExtendedCreateConnection {
     let o = 0;
     o = payload.writeUIntLE(params.initiatorFilterPolicy,         o, 1);
     o = payload.writeUIntLE(params.ownAddressType,                o, 1);
-    o = payload.writeUIntLE(params.peerAddress.LePeerAddressType, o, 1);
+    o = payload.writeUIntLE(params.peerAddressType,               o, 1);
     o = payload.writeUIntLE(params.peerAddress.toNumeric(),       o, 6);
     o = payload.writeUIntLE(physBitmask,                          o, 1);
 

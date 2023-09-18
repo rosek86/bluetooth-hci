@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export class Address {
-  constructor(private address: number, private type = AddressType.Random) {
+  constructor(private address: number) {
   }
 
   static random(): Address {
@@ -16,12 +16,12 @@ export class Address {
     addressBytes[6] = 0;
     addressBytes[7] = 0;
     const addressNumber = Number((new DataView(addressBytes.buffer)).getBigUint64(0, true));
-    return new Address(addressNumber, AddressType.Random);
+    return new Address(addressNumber);
   }
 
-  static from(address: string|number, type = AddressType.Random): Address {
+  static from(address: string|number): Address {
     if (typeof address === 'number') {
-      return new Address(address, type);
+      return new Address(address);
     }
 
     const num = address
@@ -29,10 +29,10 @@ export class Address {
       .match(/.{1,2}/g)?.join('');
 
     if (!num) {
-      return new Address(0, type);
+      return new Address(0);
     }
 
-    return new Address(parseInt(num, 16), type);
+    return new Address(parseInt(num, 16));
   }
 
   public toId(): string {
@@ -46,26 +46,10 @@ export class Address {
     return this.address;
   }
 
-  public get Type(): AddressType {
-    return this.type;
-  }
-
-  public get LePeerAddressType(): LePeerAddressType {
-    if (this.type === AddressType.Public) {
-      return LePeerAddressType.PublicDeviceAddress;
-    }
-    return LePeerAddressType.RandomDeviceAddress;
-  }
-
   public toObject() {
     return {
       address: this.toString(),
-      type: this.addressTypeToString(),
     };
-  }
-
-  private addressTypeToString(): 'public' | 'random' {
-    return this.type === AddressType.Public ? 'public' : 'random';
   }
 
   public toJSON(): string {
