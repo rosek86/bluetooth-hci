@@ -35,8 +35,8 @@ export class Utils {
     ]);
     console.log('Local Version:', localVersion);
     console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
-    console.log('Local Supported Commands:', localCommands.toStringSorted());
-    console.log('Local Supported Features', localFeatures);
+    console.log('Local Supported Commands:', Object.entries(localCommands.Commands).filter(([_, value]) => value).map(([key]) => key));
+    console.log('Local Supported Features', Object.entries(localFeatures).filter(([_, value]) => value).map(([key]) => key));
 
     if (localCommands.isSupported('readBdAddr')) {
       const bdAddress = await hci.readBdAddr();
@@ -52,7 +52,7 @@ export class Utils {
       hci.leReadSupportedStates(),
       hci.leReadBufferSize(),
     ]);
-    console.log('LE Features:', leFeatures.toString());
+    console.log('LE Features:', Object.entries(leFeatures.Features).filter(([_, value]) => value).map(([key]) => key));
     console.log('LE States:', leStates);
     console.log('LE Buffer Size:', leBufferSize);
 
