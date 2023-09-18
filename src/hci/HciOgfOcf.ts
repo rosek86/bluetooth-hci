@@ -180,6 +180,7 @@ export enum HciOcfControlAndBasebandCommands {
   WriteExtendedInquiryLength                          = 0x0081,
   SetEcosystemBaseInterval                            = 0x0082,
   ConfigureDataPath                                   = 0x0083,
+  SetMinEncryptionKeySize                             = 0x0084, // Set Min Encryption Key Size
 }
 
 export enum HciOcfInformationParameters {
@@ -355,6 +356,6 @@ export enum HciOcfLeControllerCommands {
   SetPeriodicAdvertisingSubeventData                  = 0x0082, // LE Set Periodic Advertising Subevent Data
   SetPeriodicAdvertisingResponseData                  = 0x0083, // LE Set Periodic Advertising Response Data
   SetPeriodicSyncSubevent                             = 0x0084, // LE Set Periodic Sync Transfer Subevent
-  ExtendedCreateConnectionV2                          = 0x0085, // LE Extended Create Connection V2
+  ExtendedCreateConnectionV2                          = 0x0085, // * LE Extended Create Connection V2
   SetPeriodicAdvertisingParametersV2                  = 0x0086, // LE Set Periodic Advertising Parameters V2
 }

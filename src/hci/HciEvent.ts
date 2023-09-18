@@ -204,8 +204,14 @@ export enum HciLeEvent {
   PathLossThreshold                                   = 0x20, // LE Path Loss Threshold
   TransmitPowerReporting                              = 0x21, // LE Transmit Power Reporting
   BigInfoAdvertisingReport                            = 0x22, // LE BIGInfo Advertising Report
+  SubrateChange                                       = 0x23, // LE Subrate Change
+  PeriodicAdvertisingSyncEstablishedV2                = 0x24, // LE Periodic Advertising Sync Established
+  PeriodicAdvertisingReportV2                         = 0x25, // LE Periodic Advertising Report
+  PeriodicAdvertisingSyncTransferReceivedV2           = 0x26, // LE Periodic Advertising Sync Transfer Received
+  PeriodicAdvertisingSubeventDataRequest              = 0x27, // LE Periodic Advertising Subevent Data Request
+  PeriodicAdvertisingResponseReport                   = 0x28, // LE Periodic Advertising Response Report
+  EnhancedConnectionCompleteV2                        = 0x29, // LE Enhanced Connection Complete
 }
-
 
 export enum LeExtAdvEventTypeDataStatus {
   Complete            = 0,
