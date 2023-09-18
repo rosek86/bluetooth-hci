@@ -1390,6 +1390,23 @@ export class LeExtendedCreateConnection {
   }
 }
 
+
+export interface LeExtendedCreateConnectionV2 extends LeExtendedCreateConnection {
+  // 0xFF - means not used
+  // Advertising_Handle identifying the periodic advertising train. Range: 0x00 to 0xEF or 0xFF
+  advertisingHandle: number;
+  // Subevent where the connection request is to be sent. Range: 0x00 to 0x7F or 0xFF
+  subevent: number;
+}
+
+export class LeExtendedCreateConnectionV2 {
+  static inParams(params: LeExtendedCreateConnectionV2): Buffer {
+    const payload = Buffer.from([params.advertisingHandle, params.subevent]);
+    LeExtendedCreateConnection.inParams(params).copy(payload, 2);
+    return payload;
+  };
+}
+
 export interface LeTransmitPower {
   minTxPower: number;
   maxTxPower: number;

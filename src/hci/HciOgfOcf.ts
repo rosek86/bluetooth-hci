@@ -226,7 +226,6 @@ export enum HciOcfTestingCommands {
 export enum HciOcfLeControllerCommands {
   SetEventMask                                        = 0x0001, // * LE Set Event Mask
   ReadBufferSizeV1                                    = 0x0002, // * LE Read Buffer Size
-  ReadBufferSizeV2                                    = 0x0060, // * LE Read Buffer Size
   ReadLocalSupportedFeatures                          = 0x0003, // * LE Read Local Supported Features
   SetRandomAddress                                    = 0x0005, // * LE Set Random Address
   SetAdvertisingParameters                            = 0x0006, // * LE Set Advertising Parameters
@@ -253,12 +252,7 @@ export enum HciOcfLeControllerCommands {
   LongTermKeyRequestNegativeReply                     = 0x001B, // * LE Long Term Key Request Negative Reply
   ReadSupportedStates                                 = 0x001C, // * LE Read Supported States
   ReceiverTestV1                                      = 0x001D, // * LE Receiver Test
-  ReceiverTestV2                                      = 0x0033, // * LE Receiver Test
-  ReceiverTestV3                                      = 0x004F, // * LE Receiver Test
   TransmitterTestV1                                   = 0x001E, // * LE Transmitter Test
-  TransmitterTestV2                                   = 0x0034, // * LE Transmitter Test
-  TransmitterTestV3                                   = 0x0050, // * LE Transmitter Test
-  TransmitterTestV4                                   = 0x007B, // * LE Transmitter Test
   TestEnd                                             = 0x001F, // * LE Test End
   RemoteConnectionParameterRequestReply               = 0x0020, // * LE Remote Connection Parameter Request Reply
   RemoteConnectionParameterRequestNegativeReply       = 0x0021, // * LE Remote Connection Parameter Request Negative Reply
@@ -267,7 +261,6 @@ export enum HciOcfLeControllerCommands {
   WriteSuggestedDefaultDataLength                     = 0x0024, // * LE Write Suggested Default Data Length
   ReadLocalP256PublicKey                              = 0x0025, // * LE Read Local P-256 Public Key
   GenerateDhKeyV1                                     = 0x0026, // * LE Generate DHKey
-  GenerateDhKeyV2                                     = 0x005E, // * LE Generate DHKey
   AddDeviceToResolvingList                            = 0x0027, // * LE Add Device To Resolving List
   RemoveDeviceFromResolvingList                       = 0x0028, // * LE Remove Device From Resolving List
   ClearResolvingList                                  = 0x0029, // * LE Clear Resolving List
@@ -280,6 +273,8 @@ export enum HciOcfLeControllerCommands {
   ReadPhy                                             = 0x0030, // * LE Read PHY
   SetDefaultPhy                                       = 0x0031, // * LE Set Default PHY
   SetPhy                                              = 0x0032, // * LE Set PHY
+  ReceiverTestV2                                      = 0x0033, // * LE Receiver Test
+  TransmitterTestV2                                   = 0x0034, // * LE Transmitter Test
   SetAdvertisingSetRandomAddress                      = 0x0035, // * LE Set Advertising Set Random Address
   SetExtendedAdvertisingParameters                    = 0x0036, // * LE Set Extended Advertising Parameters
   SetExtendedAdvertisingData                          = 0x0037, // * LE Set Extended Advertising Data
@@ -306,6 +301,8 @@ export enum HciOcfLeControllerCommands {
   ReadRfPathCompensation                              = 0x004C, // LE Read RF Path Compensation
   WriteRfPathCompensation                             = 0x004D, // LE Write RF Path Compensation
   SetPrivacyMode                                      = 0x004E, // * LE Set Privacy Mode
+  ReceiverTestV3                                      = 0x004F, // * LE Receiver Test
+  TransmitterTestV3                                   = 0x0050, // * LE Transmitter Test
   SetConnectionlessCteTransmitParameters              = 0x0051, // LE Set Connectionless CTE Transmit Parameters
   SetConnectionlessCteTransmitEnable                  = 0x0052, // LE Set Connectionless CTE Transmit Enable
   SetConnectionlessIqSamplingEnable                   = 0x0053, // LE Set Connectionless IQ Sampling Enable
@@ -319,7 +316,9 @@ export enum HciOcfLeControllerCommands {
   PeriodicAdvertisingSetInfoTransfer                  = 0x005B, // LE Periodic Advertising Set Info Transfer
   SetPeriodicAdvertisingSyncTransferParameters        = 0x005C, // LE Set Periodic Advertising Sync Transfer Parameters
   SetDefaultPeriodicAdvertisingSyncTransferParameters = 0x005D, // LE Set Default Periodic Advertising Sync Transfer Parameters
+  GenerateDhKeyV2                                     = 0x005E, // * LE Generate DHKey
   ModifySleepClockAccuracy                            = 0x005F, // LE Modify Sleep Clock Accuracy
+  ReadBufferSizeV2                                    = 0x0060, // * LE Read Buffer Size
   ReadIsoTxSync                                       = 0x0061, // LE Read ISO TX Sync
   SetCigParameters                                    = 0x0062, // LE Set CIG Parameters
   SetCigParametersTest                                = 0x0063, // LE Set CIG Parameters Test
@@ -345,5 +344,17 @@ export enum HciOcfLeControllerCommands {
   ReadRemoteTransmitPowerLevel                        = 0x0077, // LE Read Remote Transmit Power Level
   SetPathLossReportingParameters                      = 0x0078, // LE Set Path Loss Reporting Parameters
   SetPathLossReportingEnable                          = 0x0079, // LE Set Path Loss Reporting Enable
-  SetTransmitPowerReportingEnable                     = 0x007A, // LE Set Transmit Power Reporting Enable
+  SetTransmitPowerReportingEnable                     = 0x007A, // LE Set Transmit Power
+  TransmitterTestV4                                   = 0x007B, // * LE Transmitter Test Reporting Enable
+  SetDataRelatedAddressChanges                        = 0x007C, // LE Set Data Related Address Changes
+  SetDefaultSubrate                                   = 0x007D, // LE Set Default Subrate
+  SubrateRequest                                      = 0x007E, // LE Subrate Request
+  SetExtendedAdvertisingParametersV2                  = 0x007F, // LE Set Extended Advertising Parameters
+  // Reserved for future use
+  // Reserved for future use
+  SetPeriodicAdvertisingSubeventData                  = 0x0082, // LE Set Periodic Advertising Subevent Data
+  SetPeriodicAdvertisingResponseData                  = 0x0083, // LE Set Periodic Advertising Response Data
+  SetPeriodicSyncSubevent                             = 0x0084, // LE Set Periodic Sync Transfer Subevent
+  ExtendedCreateConnectionV2                          = 0x0085, // LE Extended Create Connection V2
+  SetPeriodicAdvertisingParametersV2                  = 0x0086, // LE Set Periodic Advertising Parameters V2
 }
