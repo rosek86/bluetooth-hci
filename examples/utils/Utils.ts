@@ -1,5 +1,5 @@
 import { Hci } from '../../src/hci/Hci';
-import { Address, AddressType } from '../../src/utils/Address';
+import { Address } from '../../src/utils/Address';
 import { ArgsParser, DefaultInputArgs } from './ArgsParser';
 import { HciAdapter, HciAdapterFactory } from './HciAdapterFactory';
 

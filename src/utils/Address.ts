@@ -1,10 +1,4 @@
 import crypto from "node:crypto";
-import { LePeerAddressType } from "../hci/HciLeController";
-
-export enum AddressType {
-  Public, // Public Device Address or Public Identity Address
-  Random, // Random Device Address or Random (static) Identity Address
-}
 
 export class Address {
   constructor(private address: number) {

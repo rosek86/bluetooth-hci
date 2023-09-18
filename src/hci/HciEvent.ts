@@ -1,7 +1,6 @@
-import assert from 'assert';
 import Debug from 'debug';
 
-import { Address, AddressType } from '../utils/Address';
+import { Address } from '../utils/Address';
 import { HciErrorCode } from './HciError';
 import { LeSupportedFeatures } from './HciLeController';
 
