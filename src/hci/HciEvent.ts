@@ -286,72 +286,49 @@ export interface LeAdvReport {
   eventType: LeAdvEventType;
   addressType: LeAdvReportAddrType;
   address: Address;
-  rssi: number|null;
-  data: Buffer|null;
+  rssi: number | null;
+  data: Buffer | null;
 }
 
 export class LeAdvReport {
   static parse(data: Buffer): LeAdvReport[] {
     const numReports = data[0];
-
-    const reportsRaw: Partial<{
-      eventType:   LeAdvEventType;
-      addressType: LeAdvReportAddrType;
-      address:     number;
-      dataLength:  number;
-      data:        Buffer;
-      rssi:        number;
-    }>[] = [];
-
     let o = 1;
 
-    for (let i = 0; i < numReports; i++) {
-      reportsRaw.push({});
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].eventType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].addressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].address = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].dataLength = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++) {
-      const dataLength = reportsRaw[i].dataLength!;
-      if (dataLength === 0) {
-        continue;
-      }
-      reportsRaw[i].data = data.subarray(o, o + dataLength);
-      o += dataLength;
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].rssi = data.readIntLE(o, 1);
-    }
-
+    const reports: LeAdvReport[] = [];
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
-
-    return reportsRaw.map<LeAdvReport>((reportRaw) => {
-      assert(reportRaw.eventType   !== undefined);
-      assert(reportRaw.address     !== undefined);
-      assert(reportRaw.addressType !== undefined);
-      assert(reportRaw.rssi        !== undefined);
-      let addressType = AddressType.Public;
-      if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
-          reportRaw.addressType === LeAdvReportAddrType.RandomIdentityAddress) {
-        addressType = AddressType.Random;
+    const toAddress = (address: number, addressType: LeAdvReportAddrType): Address => {
+      if (addressType === LeAdvReportAddrType.RandomDeviceAddress ||
+          addressType === LeAdvReportAddrType.RandomIdentityAddress) {
+        return Address.from(address, AddressType.Random);
       }
-      return {
-        eventType:   reportRaw.eventType,
-        addressType: reportRaw.addressType,
-        address:     Address.from(reportRaw.address, addressType),
-        rssi:        powerOrNull(reportRaw.rssi),
-        data:        reportRaw.data ?? null,
-      };
-    });
+      return Address.from(address, AddressType.Public);
+    };
+
+    for (let i = 0; i < numReports; i++) {
+      const eventType   = data.readUIntLE(o, 1); o += 1;
+      const addressType = data.readUIntLE(o, 1); o += 1;
+      const address     = data.readUIntLE(o, 6); o += 6;
+      const dataLength  = data.readUIntLE(o, 1); o += 1;
+
+      let advData: Buffer|null = null;
+      if (dataLength > 0) {
+        advData = data.subarray(o, o + dataLength);
+        o += dataLength;
+      }
+
+      const rssi = data.readIntLE(o, 1); o += 1;
+
+      reports.push({
+        eventType,
+        addressType,
+        address: toAddress(address, addressType),
+        rssi: powerOrNull(rssi),
+        data: advData,
+      });
+    }
+
+    return reports;
   }
 }
 
@@ -373,108 +350,55 @@ export interface LeExtAdvReport {
 export class LeExtAdvReport {
   static parse(data: Buffer): LeExtAdvReport[] {
     const numReports = data[0];
-
-    const reportsRaw: Partial<{
-      eventType:            number;
-      addressType:          number;
-      address:              number;
-      primaryPhy:           number;
-      secondaryPhy:         number;
-      advertisingSid:       number;
-      txPower:              number;
-      rssi:                 number;
-      periodicAdvInterval:  number;
-      directAddressType:    number;
-      directAddress:        number;
-      dataLength:           number;
-      data:                 Buffer;
-    }>[] = [];
-
     let o = 1;
 
-    for (let i = 0; i < numReports; i++) {
-      reportsRaw.push({});
-    }
-    for (let i = 0; i < numReports; i++, o += 2) {
-      reportsRaw[i].eventType = data.readUIntLE(o, 2);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].addressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].address = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].primaryPhy = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].secondaryPhy = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].advertisingSid = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].txPower = data.readIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].rssi = data.readIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 2) {
-      reportsRaw[i].periodicAdvInterval = data.readUIntLE(o, 2);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].directAddress = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].dataLength = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++) {
-      const dataLength = reportsRaw[i].dataLength!;
-      if (dataLength === 0) {
-        continue;
-      }
-      reportsRaw[i].data = data.subarray(o, o + dataLength);
-      o += dataLength;
-    }
-
+    const reports: LeExtAdvReport[] = [];
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
-
-    return reportsRaw.map<LeExtAdvReport>((reportRaw) => {
-      assert(reportRaw.eventType           !== undefined);
-      assert(reportRaw.address             !== undefined);
-      assert(reportRaw.addressType         !== undefined);
-      assert(reportRaw.primaryPhy          !== undefined);
-      assert(reportRaw.secondaryPhy        !== undefined);
-      assert(reportRaw.advertisingSid      !== undefined);
-      assert(reportRaw.rssi                !== undefined);
-      assert(reportRaw.txPower             !== undefined);
-      assert(reportRaw.periodicAdvInterval !== undefined);
-      assert(reportRaw.directAddress       !== undefined);
-      assert(reportRaw.directAddressType   !== undefined);
-
-      let addressType = AddressType.Public;
-      if (reportRaw.addressType === LeAdvReportAddrType.RandomDeviceAddress ||
-          reportRaw.addressType === LeAdvReportAddrType.RandomIdentityAddress) {
-        addressType = AddressType.Random;
+    const toAddress = (address: number, addressType: LeExtAdvReportAddrType): Address => {
+      if (addressType === LeExtAdvReportAddrType.RandomDeviceAddress ||
+          addressType === LeExtAdvReportAddrType.RandomIdentityAddress) {
+        return Address.from(address, AddressType.Random);
       }
-      return {
-        eventType:              LeExtAdvEventTypeParser.parse(reportRaw.eventType),
-        addressType:            reportRaw.addressType,
-        address:                Address.from(reportRaw.address, reportRaw.addressType),
-        primaryPhy:             reportRaw.primaryPhy,
-        secondaryPhy:           reportRaw.secondaryPhy,
-        advertisingSid:         reportRaw.advertisingSid,
-        txPower:                powerOrNull(reportRaw.txPower),
-        rssi:                   powerOrNull(reportRaw.rssi),
-        periodicAdvIntervalMs:  reportRaw.periodicAdvInterval * 1.25,
-        directAddressType:      reportRaw.directAddressType,
-        directAddress:          reportRaw.directAddress,
-        data:                   reportRaw.data ?? null,
-      };
-    });
+      return Address.from(address, AddressType.Public);
+    };
+
+    for (let i = 0; i < numReports; i++) {
+      const eventType           = data.readUIntLE(o, 2); o += 2;
+      const addressType         = data.readUIntLE(o, 1); o += 1;
+      const address             = data.readUIntLE(o, 6); o += 6;
+      const primaryPhy          = data.readUIntLE(o, 1); o += 1;
+      const secondaryPhy        = data.readUIntLE(o, 1); o += 1;
+      const advertisingSid      = data.readUIntLE(o, 1); o += 1;
+      const txPower             = data.readIntLE (o, 1); o += 1;
+      const rssi                = data.readIntLE (o, 1); o += 1;
+      const periodicAdvInterval = data.readUIntLE(o, 2); o += 2;
+      const directAddressType   = data.readUIntLE(o, 1); o += 1;
+      const directAddress       = data.readUIntLE(o, 6); o += 6;
+      const dataLength          = data.readUIntLE(o, 1); o += 1;
+
+      let advData: Buffer|null = null;
+      if (dataLength > 0) {
+        advData = data.subarray(o, o + dataLength);
+        o += dataLength;
+      }
+
+      reports.push({
+        eventType: LeExtAdvEventTypeParser.parse(eventType),
+        addressType,
+        address: toAddress(address, addressType),
+        primaryPhy,
+        secondaryPhy,
+        advertisingSid,
+        txPower: powerOrNull(txPower),
+        rssi: powerOrNull(rssi),
+        periodicAdvIntervalMs: periodicAdvInterval * 1.25,
+        directAddressType,
+        directAddress,
+        data: advData,
+      });
+    }
+
+    return reports;
   }
 }
 
@@ -827,54 +751,32 @@ export interface LeDirectedAdvertisingReportEvent {
 export class LeDirectedAdvertisingReport {
   static parse(data: Buffer): LeDirectedAdvertisingReportEvent[] {
     const numReports = data[0];
-
-    const reportsRaw: Partial<{
-      eventType:          number;
-      addressType:        number;
-      address:            number;
-      directAddressType:  number;
-      directAddress:      number;
-      rssi:               number;
-    }>[] = [];
-
     let o = 1;
 
-    for (let i = 0; i < numReports; i++) {
-      reportsRaw.push({});
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].eventType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].addressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].address = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].directAddressType = data.readUIntLE(o, 1);
-    }
-    for (let i = 0; i < numReports; i++, o += 6) {
-      reportsRaw[i].directAddress = data.readUIntLE(o, 6);
-    }
-    for (let i = 0; i < numReports; i++, o += 1) {
-      reportsRaw[i].rssi = data.readIntLE(o, 1);
-    }
-
+    const reports: LeDirectedAdvertisingReportEvent[] = [];
     const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
 
-    return reportsRaw.map<LeDirectedAdvertisingReportEvent>((reportRaw) => ({
-      eventType:              reportRaw.eventType!,
-      addressType:            reportRaw.addressType!,
-      address:                Address.from(reportRaw.address!),
-      directAddressType:      reportRaw.directAddressType!,
-      directAddress:          Address.from(reportRaw.directAddress!),
-      rssi:                   powerOrNull(reportRaw.rssi!),
-    }));
+    for (let i = 0; i < numReports; i++) {
+      const eventType         = data.readUIntLE(o, 1); o += 1;
+      const addressType       = data.readUIntLE(o, 1); o += 1;
+      const address           = data.readUIntLE(o, 6); o += 6;
+      const directAddressType = data.readUIntLE(o, 1); o += 1;
+      const directAddress     = data.readUIntLE(o, 6); o += 6;
+      const rssi              = data.readIntLE (o, 1); o += 1;
+
+      reports.push({
+        eventType,
+        addressType,
+        address: Address.from(address),
+        directAddressType,
+        directAddress: Address.from(directAddress),
+        rssi: powerOrNull(rssi),
+      });
+    }
+
+    return reports;
   }
 }
-
-
 
 export interface LePhyUpdateCompleteEvent extends ConnEvent {
   txPhy: number;
