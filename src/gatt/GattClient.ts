@@ -36,7 +36,7 @@ export interface Gatt {
   removeListener(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
 }
 
-export class Gatt extends EventEmitter {
+export class GattClient extends EventEmitter {
   private mtu = 23;
   private directory: GattDirectory;
 

@@ -9,7 +9,7 @@ import {
 } from '../src/hci/HciLeController';
 import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
 import { Gap, GapAdvertReport, GapConnectEvent } from '../src/gap/Gap';
-import { Gatt } from '../src/gatt/Gatt';
+import { Gatt, GattClient } from '../src/gatt/GattClient';
 import { Profile } from '../src/gatt/GattDirectory';
 import { amendProfileWithUuidNames } from '../src/utils/Profile';
 
@@ -98,7 +98,7 @@ async function startScanning(gap: Gap) {
         storeValue = { address: event.address.toString(), rssi: null };
       }
 
-      const gatt = new Gatt(att, storeValue?.profile);
+      const gatt = new GattClient(att, storeValue?.profile);
       const profile = await gatt.discover();
       await hci.disconnect(event.connectionHandle);
 

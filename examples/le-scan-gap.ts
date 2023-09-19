@@ -1,7 +1,7 @@
 import { Utils } from './utils/Utils';
 
 import { Gap } from '../src/gap/Gap';
-import { Gatt } from '../src/gatt/Gatt';
+import { Gatt, GattClient } from '../src/gatt/GattClient';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 import { amendProfileWithUuidNames, uuidInfo } from '../src/utils/Profile';
 import { GattService } from '../src/gatt/GattService';
@@ -59,7 +59,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
         throw new Error('ATT layer not exists');
       }
 
-      const gatt = new Gatt(att);
+      const gatt = new GattClient(att);
       const profile = await gatt.discover();
       const profileAmended = amendProfileWithUuidNames(profile);
 
