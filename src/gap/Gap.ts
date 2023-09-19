@@ -29,6 +29,9 @@ export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerA
 export interface GapAdvertReport {
   address: Address;
   rssi: number | null;
+  connectableAdvertising: boolean;
+  scannableAdvertising: boolean;
+  directedAdvertising: boolean;
   scanResponse: boolean;
   data: AdvData;
 }
@@ -267,6 +270,9 @@ export class Gap extends EventEmitter {
       const advertisingReport: GapAdvertReport = {
         address: report.address,
         rssi: report.rssi,
+        connectableAdvertising: report.eventType === LeAdvEventType.Undirected || report.eventType === LeAdvEventType.Directed,
+        scannableAdvertising: report.eventType === LeAdvEventType.Scannable || report.eventType === LeAdvEventType.Undirected,
+        directedAdvertising: report.eventType === LeAdvEventType.Directed,
         scanResponse: report.eventType === LeAdvEventType.ScanResponse,
         data: AdvData.parse(report.data ?? Buffer.alloc(0)),
       };
@@ -281,6 +287,9 @@ export class Gap extends EventEmitter {
       const advertisingReport: GapAdvertReport = {
         address: report.address,
         rssi: report.rssi,
+        connectableAdvertising: report.eventType.ConnectableAdvertising,
+        scannableAdvertising: report.eventType.ScannableAdvertising,
+        directedAdvertising: report.eventType.DirectedAdvertising,
         scanResponse: report.eventType.ScanResponse,
         data: AdvData.parse(report.data ?? Buffer.alloc(0)),
       };
