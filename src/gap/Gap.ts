@@ -331,6 +331,8 @@ export class Gap extends EventEmitter {
 
       this.emit('GapConnected', gapEvent);
     } catch (err) {
+      this.hci.disconnect(event.connectionHandle)
+        .catch(() => {});
       debug(err);
     }
   };
