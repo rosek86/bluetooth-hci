@@ -291,8 +291,8 @@ export interface LeAdvReport {
   eventType: LeAdvEventType;
   addressType: LeAdvReportAddrType;
   address: Address;
-  rssi: number | null;
-  data: Buffer | null;
+  rssi: number|null;
+  data: Buffer|null;
 }
 
 export class LeAdvReport {

@@ -44,6 +44,7 @@ import {
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
   LeTransmitPower, LeExtendedCreateConnection, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
+  LeExtendedAdvertisingParametersV2,
 } from './HciLeController';
 
 import {
@@ -658,6 +659,16 @@ export class Hci extends EventEmitter {
     const payload = LeExtendedAdvertisingParameters.inParams(advertHandle, params);
     const result = await this.cmd.leController({ ocf, payload });
     return LeExtendedAdvertisingParameters.outParams(result.returnParameters);
+  }
+
+  public async leSetExtendedAdvertisingParametersV2(
+    advertHandle: number,
+    params: LeExtendedAdvertisingParametersV2
+  ): Promise<number> {
+    const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParametersV2;
+    const payload = LeExtendedAdvertisingParametersV2.inParams(advertHandle, params);
+    const result = await this.cmd.leController({ ocf, payload });
+    return LeExtendedAdvertisingParametersV2.outParams(result.returnParameters);
   }
 
   public async leSetExtendedAdvertisingData(advertHandle: number, params: LeExtendedAdvertisingData): Promise<void> {

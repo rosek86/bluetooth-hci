@@ -350,7 +350,7 @@ export enum HciOcfLeControllerCommands {
   SetDataRelatedAddressChanges                        = 0x007C, // LE Set Data Related Address Changes
   SetDefaultSubrate                                   = 0x007D, // LE Set Default Subrate
   SubrateRequest                                      = 0x007E, // LE Subrate Request
-  SetExtendedAdvertisingParametersV2                  = 0x007F, // LE Set Extended Advertising Parameters
+  SetExtendedAdvertisingParametersV2                  = 0x007F, // * LE Set Extended Advertising Parameters
   // Reserved for future use
   // Reserved for future use
   SetPeriodicAdvertisingSubeventData                  = 0x0082, // LE Set Periodic Advertising Subevent Data

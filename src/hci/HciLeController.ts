@@ -1422,18 +1422,20 @@ export class LeExtendedCreateConnection {
 
 
 export interface LeExtendedCreateConnectionV2 extends LeExtendedCreateConnection {
-  // 0xFF - means not used
   // Advertising_Handle identifying the periodic advertising train. Range: 0x00 to 0xEF or 0xFF
-  advertisingHandle: number;
+  advertisingHandle?: number;
   // Subevent where the connection request is to be sent. Range: 0x00 to 0x7F or 0xFF
-  subevent: number;
+  subevent?: number;
 }
 
 export class LeExtendedCreateConnectionV2 {
   static inParams(params: LeExtendedCreateConnectionV2): Buffer {
-    const payload = Buffer.from([params.advertisingHandle, params.subevent]);
-    LeExtendedCreateConnection.inParams(params).copy(payload, 2);
-    return payload;
+    params.advertisingHandle = params.advertisingHandle ?? 0xFF;
+    params.subevent          = params.subevent          ?? 0xFF;
+    return Buffer.concat([
+      Buffer.from([ params.advertisingHandle, params.subevent ]),
+      LeExtendedCreateConnection.inParams(params),
+    ]);
   };
 }
 
@@ -1556,6 +1558,34 @@ export class LeExtendedAdvertisingParameters {
 
     const selectedTxPower = params.readInt8(0);
     return selectedTxPower;
+  }
+}
+
+export enum AdvertisingPhyOptions {
+  NoPreferredCoding,
+  PreferS2,
+  PreferS8,
+  RequireS2,
+  RequireS8,
+}
+
+export interface LeExtendedAdvertisingParametersV2 extends LeExtendedAdvertisingParameters {
+  primaryAdvertisingPhyOptions?: AdvertisingPhyOptions;
+  secondaryAdvertisingPhyOptions?: AdvertisingPhyOptions;
+}
+
+export class LeExtendedAdvertisingParametersV2 {
+  static inParams(advertisingHandle: number, params: LeExtendedAdvertisingParametersV2): Buffer {
+    params.primaryAdvertisingPhyOptions   = params.primaryAdvertisingPhyOptions   ?? 0;
+    params.secondaryAdvertisingPhyOptions = params.secondaryAdvertisingPhyOptions ?? 0;
+    return Buffer.concat([
+      LeExtendedAdvertisingParameters.inParams(advertisingHandle, params),
+      Buffer.from([ params.primaryAdvertisingPhyOptions, params.secondaryAdvertisingPhyOptions ]),
+    ]);
+  }
+
+  static outParams(params?: Buffer): number {
+    return LeExtendedAdvertisingParameters.outParams(params);
   }
 }
 
