@@ -20,7 +20,7 @@ import {
     await Utils.defaultAdapterSetup(adapter.Hci);
     const hci = adapter.Hci;
 
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {
       advertisingEventProperties: [
         LeAdvertisingEventProperties.UseLegacyPDUs,
         LeAdvertisingEventProperties.Connectable,

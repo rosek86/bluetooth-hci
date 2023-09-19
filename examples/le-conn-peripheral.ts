@@ -26,7 +26,7 @@ import { Att } from '../src/att/Att';
     const l2cap = new L2CAP(hci);
     await l2cap.init();
 
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {
       advertisingEventProperties: [
         LeAdvertisingEventProperties.UseLegacyPDUs,
         LeAdvertisingEventProperties.Connectable,

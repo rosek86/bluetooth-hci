@@ -113,7 +113,7 @@ export class Adapter extends EventEmitter {
     await hci.setEventMaskPage2({});
 
     const extendedScan = localCommands.Commands.leSetExtendedScanEnable;
-    const extendedConnection = localCommands.Commands.leExtendedCreateConnection;
+    const extendedConnection = localCommands.Commands.leExtendedCreateConnectionV1;
 
     await hci.leSetEventMask({
       connectionComplete:                   !extendedConnection,

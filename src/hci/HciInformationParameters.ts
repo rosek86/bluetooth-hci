@@ -430,7 +430,7 @@ export interface LocalSupportedCommandsFields {
   leReceiverTestV2:                                       boolean;
   leTransmitterTestV2:                                    boolean;
   leSetAdvertisingSetRandomAddress:                       boolean;
-  leSetExtendedAdvertisingParameters:                     boolean;
+  leSetExtendedAdvertisingParametersV1:                   boolean;
   leSetExtendedAdvertisingData:                           boolean;
   leSetExtendedScanResponseData:                          boolean;
   leSetExtendedAdvertisingEnable:                         boolean;
@@ -443,7 +443,7 @@ export interface LocalSupportedCommandsFields {
   leSetPeriodicAdvertisingEnable:                         boolean;
   leSetExtendedScanParameters:                            boolean;
   leSetExtendedScanEnable:                                boolean;
-  leExtendedCreateConnection:                             boolean;
+  leExtendedCreateConnectionV1:                           boolean;
   lePeriodicAdvertisingCreateSync:                        boolean;
   lePeriodicAdvertisingCreateSyncCancel:                  boolean;
   lePeriodicAdvertisingTerminateSync:                     boolean;
@@ -798,7 +798,7 @@ export class LocalSupportedCommands {
       leReceiverTestV2:                                       bitGet(params[35], 7),
       leTransmitterTestV2:                                    bitGet(params[36], 0),
       leSetAdvertisingSetRandomAddress:                       bitGet(params[36], 1),
-      leSetExtendedAdvertisingParameters:                     bitGet(params[36], 2),
+      leSetExtendedAdvertisingParametersV1:                   bitGet(params[36], 2),
       leSetExtendedAdvertisingData:                           bitGet(params[36], 3),
       leSetExtendedScanResponseData:                          bitGet(params[36], 4),
       leSetExtendedAdvertisingEnable:                         bitGet(params[36], 5),
@@ -811,7 +811,7 @@ export class LocalSupportedCommands {
       leSetPeriodicAdvertisingEnable:                         bitGet(params[37], 4),
       leSetExtendedScanParameters:                            bitGet(params[37], 5),
       leSetExtendedScanEnable:                                bitGet(params[37], 6),
-      leExtendedCreateConnection:                             bitGet(params[37], 7),
+      leExtendedCreateConnectionV1:                           bitGet(params[37], 7),
       lePeriodicAdvertisingCreateSync:                        bitGet(params[38], 0),
       lePeriodicAdvertisingCreateSyncCancel:                  bitGet(params[38], 1),
       lePeriodicAdvertisingTerminateSync:                     bitGet(params[38], 2),

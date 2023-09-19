@@ -33,7 +33,7 @@ import {
   LeSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
   LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
   LeScanParameters, LeCreateConnection, LeSetScanParameters, LeSetScanEnabled, LeConnectionUpdate,
-  LeReadWhiteListSize, LeWhiteList, LeExtendedAdvertisingParameters, LeExtendedScanParameters,
+  LeReadWhiteListSize, LeWhiteList, LeExtendedAdvertisingParametersV1, LeExtendedScanParameters,
   LeReadChannelMap, LeEncrypt, LeRand, LeEnableEncryption, LeLongTermKeyRequestReply,
   LeLongTermKeyRequestNegativeReply, LeReceiverTestV1, LeReceiverTestV2, LeReceiverTestV3,
   LeTransmitterTestV1, LeTransmitterTestV2, LeTransmitterTestV3, LeTransmitterTestV4, LeTestEnd,
@@ -43,7 +43,7 @@ import {
   ConnectionHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnection, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
+  LeTransmitPower, LeExtendedCreateConnectionV1, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
   LeExtendedAdvertisingParametersV2,
 } from './HciLeController';
 
@@ -651,14 +651,14 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leSetExtendedAdvertisingParameters(
+  public async leSetExtendedAdvertisingParametersV1(
     advertHandle: number,
-    params: LeExtendedAdvertisingParameters
+    params: LeExtendedAdvertisingParametersV1
   ): Promise<number> {
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
-    const payload = LeExtendedAdvertisingParameters.inParams(advertHandle, params);
+    const payload = LeExtendedAdvertisingParametersV1.inParams(advertHandle, params);
     const result = await this.cmd.leController({ ocf, payload });
-    return LeExtendedAdvertisingParameters.outParams(result.returnParameters);
+    return LeExtendedAdvertisingParametersV1.outParams(result.returnParameters);
   }
 
   public async leSetExtendedAdvertisingParametersV2(
@@ -728,9 +728,9 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leExtendedCreateConnection(params: LeExtendedCreateConnection): Promise<void> {
+  public async leExtendedCreateConnectionV1(params: LeExtendedCreateConnectionV1): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ExtendedCreateConnection;
-    const payload = LeExtendedCreateConnection.inParams(params);
+    const payload = LeExtendedCreateConnectionV1.inParams(params);
     await this.cmd.leController({ ocf, payload });
   }
 

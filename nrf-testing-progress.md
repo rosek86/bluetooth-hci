@@ -60,7 +60,7 @@ leSetPhy
 leReceiverTestV2
 leTransmitterTestV2
 * leSetAdvertisingSetRandomAddress
-* leSetExtendedAdvertisingParameters
+* leSetExtendedAdvertisingParametersV1
 * leSetExtendedAdvertisingData
 * leSetExtendedScanResponseData
 * leSetExtendedAdvertisingEnable
@@ -70,6 +70,6 @@ leRemoveAdvertisingSet
 leClearAdvertisingSets
 * leSetExtendedScanParameters
 * leSetExtendedScanEnable
-* leExtendedCreateConnection
+* leExtendedCreateConnectionV1
 * leReadTransmitPower
 leSetPrivacyMode

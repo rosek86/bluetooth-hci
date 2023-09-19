@@ -1346,7 +1346,7 @@ export interface LeExtendedCreateConnectionPhy {
   maxCeLengthMs:            number;
 }
 
-export interface LeExtendedCreateConnection {
+export interface LeExtendedCreateConnectionV1 {
   initiatorFilterPolicy: LeInitiatorFilterPolicy;
   ownAddressType:        LeOwnAddressType;
   peerAddressType:       LePeerAddressType;
@@ -1358,8 +1358,8 @@ export interface LeExtendedCreateConnection {
   }
 }
 
-export class LeExtendedCreateConnection {
-  static inParams(params: LeExtendedCreateConnection): Buffer {
+export class LeExtendedCreateConnectionV1 {
+  static inParams(params: LeExtendedCreateConnectionV1): Buffer {
     const physParams: LeExtendedCreateConnectionPhy[] = [];
 
     let physBitmask = 0;
@@ -1421,7 +1421,7 @@ export class LeExtendedCreateConnection {
 }
 
 
-export interface LeExtendedCreateConnectionV2 extends LeExtendedCreateConnection {
+export interface LeExtendedCreateConnectionV2 extends LeExtendedCreateConnectionV1 {
   // Advertising_Handle identifying the periodic advertising train. Range: 0x00 to 0xEF or 0xFF
   advertisingHandle?: number;
   // Subevent where the connection request is to be sent. Range: 0x00 to 0x7F or 0xFF
@@ -1434,7 +1434,7 @@ export class LeExtendedCreateConnectionV2 {
     params.subevent          = params.subevent          ?? 0xFF;
     return Buffer.concat([
       Buffer.from([ params.advertisingHandle, params.subevent ]),
-      LeExtendedCreateConnection.inParams(params),
+      LeExtendedCreateConnectionV1.inParams(params),
     ]);
   };
 }
@@ -1503,7 +1503,7 @@ export class LeExtendedScanResponseData {
   }
 }
 
-export interface LeExtendedAdvertisingParameters {
+export interface LeExtendedAdvertisingParametersV1 {
   advertisingEventProperties: LeAdvertisingEventProperties[];
   primaryAdvertisingIntervalMinMs: number;
   primaryAdvertisingIntervalMaxMs: number;
@@ -1520,8 +1520,8 @@ export interface LeExtendedAdvertisingParameters {
   scanRequestNotificationEnable: boolean;
 }
 
-export class LeExtendedAdvertisingParameters {
-  static inParams(advertisingHandle: number, params: LeExtendedAdvertisingParameters): Buffer {
+export class LeExtendedAdvertisingParametersV1 {
+  static inParams(advertisingHandle: number, params: LeExtendedAdvertisingParametersV1): Buffer {
     const advertisingEventProperties    = buildBitfield(params.advertisingEventProperties);
     const primaryAdvertisingIntervalMin = Math.round(params.primaryAdvertisingIntervalMinMs / 0.625);
     const primaryAdvertisingIntervalMax = Math.round(params.primaryAdvertisingIntervalMaxMs / 0.625);
@@ -1569,7 +1569,7 @@ export enum AdvertisingPhyOptions {
   RequireS8,
 }
 
-export interface LeExtendedAdvertisingParametersV2 extends LeExtendedAdvertisingParameters {
+export interface LeExtendedAdvertisingParametersV2 extends LeExtendedAdvertisingParametersV1 {
   primaryAdvertisingPhyOptions?: AdvertisingPhyOptions;
   secondaryAdvertisingPhyOptions?: AdvertisingPhyOptions;
 }
@@ -1579,13 +1579,13 @@ export class LeExtendedAdvertisingParametersV2 {
     params.primaryAdvertisingPhyOptions   = params.primaryAdvertisingPhyOptions   ?? 0;
     params.secondaryAdvertisingPhyOptions = params.secondaryAdvertisingPhyOptions ?? 0;
     return Buffer.concat([
-      LeExtendedAdvertisingParameters.inParams(advertisingHandle, params),
+      LeExtendedAdvertisingParametersV1.inParams(advertisingHandle, params),
       Buffer.from([ params.primaryAdvertisingPhyOptions, params.secondaryAdvertisingPhyOptions ]),
     ]);
   }
 
   static outParams(params?: Buffer): number {
-    return LeExtendedAdvertisingParameters.outParams(params);
+    return LeExtendedAdvertisingParametersV1.outParams(params);
   }
 }
 

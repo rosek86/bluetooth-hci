@@ -104,7 +104,7 @@ function checkRequest(req: string): boolean {
     });
 
     prepareResult('0e050136200000');
-    const selectedTxPower = await hci.leSetExtendedAdvertisingParameters(0, {
+    const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {
       advertisingEventProperties: [LeAdvertisingEventProperties.UseLegacyPDUs],
       primaryAdvertisingIntervalMinMs: 1280,
       primaryAdvertisingIntervalMaxMs: 1280,

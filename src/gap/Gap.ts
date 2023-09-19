@@ -11,7 +11,7 @@ import {
 } from '../hci/HciEvent';
 import {
   LeConnectionUpdate,
-  LeExtendedCreateConnection,
+  LeExtendedCreateConnectionV1,
   LeExtendedCreateConnectionPhy,
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
   LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
@@ -24,7 +24,7 @@ import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
-export type GapConnectParams = Partial<Omit<LeExtendedCreateConnection, 'peerAddress'>> & { peerAddress: Address };
+export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerAddress'>> & { peerAddress: Address };
 
 export interface GapAdvertReport {
   address: Address;
@@ -209,7 +209,7 @@ export class Gap extends EventEmitter {
       maxCeLengthMs: 3.75,
     };
     if (this.extended) {
-      await this.hci.leExtendedCreateConnection({
+      await this.hci.leExtendedCreateConnectionV1({
         ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
         initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
         peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
