@@ -83,8 +83,7 @@ export declare interface GapCentral {
 }
 
 interface GapDeviceInfo {
-  connComplete?: LeConnectionCompleteEvent;
-  enhConnComplete?: LeEnhConnectionCompleteEvent;
+  connComplete?: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent;
   channelSelectionAlgorithm?: LeChannelSelAlgoEvent;
   versionInformation?: ReadRemoteVersionInformationCompleteEvent;
   leRemoteFeatures?: LeReadRemoteFeaturesCompleteEvent;
@@ -353,73 +352,54 @@ export class GapCentral extends EventEmitter {
     }
   };
 
-  private onLeConnectionCompleteCommon(
+  private async onLeConnectionCompleteCommon(
     err: NodeJS.ErrnoException|null,
     event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent
-  ): void {
-    debug('onLeConnectionCompleteCommon');
-
-    this.scanning = false;
-    clearTimeout(this.pendingCreateConnection?.timeoutId);
-    this.pendingCreateConnection = null;
-
-    /*
-      If the cancellation was successful then,
-      after the HCI_Command_Complete event for the HCI_LE_Create_Connection_Cancel command,
-      either an HCI_LE_Connection_Complete or an HCI_LE_Enhanced_Connection_Complete event shall be generated.
-      In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
-    */
-
-    if (err?.errno === HciErrorCode.UnknownConnectionId) {
-      debug(chalk.red(`Connection cancelled (${err.message})`));
-      this.emit('GapConnectionCancelled');
-      return;
-    }
-
-    debug('Connected to', event.peerAddress.toString());
-    // onLeChannelSelectionAlgorithm should follow
-  }
-
-  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
-    this.onLeConnectionCompleteCommon(err, event);
-    this.connectedDevices.set(event.connectionHandle, { connComplete: event });
-  };
-
-  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
-    this.onLeConnectionCompleteCommon(err, event);
-    this.connectedDevices.set(event.connectionHandle, { enhConnComplete: event });
-  };
-
-  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
+  ): Promise<void> {
     try {
-      debug('Channel selection algorithm detected', event.algorithm);
+      debug('onLeConnectionCompleteCommon');
+
+      this.scanning = false;
+      clearTimeout(this.pendingCreateConnection?.timeoutId);
+      this.pendingCreateConnection = null;
+
+      /*
+        If the cancellation was successful then,
+        after the HCI_Command_Complete event for the HCI_LE_Create_Connection_Cancel command,
+        either an HCI_LE_Connection_Complete or an HCI_LE_Enhanced_Connection_Complete event shall be generated.
+        In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
+      */
+
+      if (err?.errno === HciErrorCode.UnknownConnectionId) {
+        debug(chalk.red(`Connection cancelled (${err.message})`));
+        this.emit('GapConnectionCancelled');
+        return;
+      }
+
       this.scanning = false;
 
-      const device = this.connectedDevices.get(event.connectionHandle);
-      assert(device, new Error('Device not found'));
+      const device: GapDeviceInfo = {
+        connComplete: event,
+        att: new Att(this.l2cap, event.connectionHandle),
+      };
+      this.connectedDevices.set(event.connectionHandle, device);
 
-      const connComplete = device.enhConnComplete ?? device.connComplete;
-      assert(connComplete, new Error('Connection complete event not found'));
-
-      const connectionIntervalMs = connComplete.connectionIntervalMs;
+      const connectionIntervalMs = event.connectionIntervalMs;
       debug(`Connection interval ${connectionIntervalMs} ms`);
 
-      device.att = new Att(this.l2cap, event.connectionHandle);
-      device.channelSelectionAlgorithm = event;
-
       if (this.options.cacheRemoteInfo) {
-        const cache = this.remoteInfoCache.get(connComplete.peerAddress.toNumeric());
+        const cache = this.remoteInfoCache.get(event.peerAddress.toNumeric());
         if (cache) {
           device.versionInformation = cache.version;
           device.leRemoteFeatures = cache.features;
         } else {
-          const { version, features } = await this.getRemoteInfo(connComplete);
+          const { version, features } = await this.getRemoteInfo(event);
           device.versionInformation = version;
           device.leRemoteFeatures = features;
-          this.remoteInfoCache.set(connComplete.peerAddress.toNumeric(), { version, features });
+          this.remoteInfoCache.set(event.peerAddress.toNumeric(), { version, features });
         }
       } else {
-        const { version, features } = await this.getRemoteInfo(connComplete);
+        const { version, features } = await this.getRemoteInfo(event);
         device.versionInformation = version;
         device.leRemoteFeatures = features;
       }
@@ -430,11 +410,29 @@ export class GapCentral extends EventEmitter {
       const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
       assert(gapEvent);
 
+      debug('Connected to', event.peerAddress.toString());
+
       this.emit('GapConnected', gapEvent);
     } catch (err) {
       this.hci.disconnect(event.connectionHandle)
         .catch(() => {});
       debug(err);
+    }
+  }
+
+  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
+  };
+
+  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
+  };
+
+  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
+    debug('Channel selection algorithm detected', event.algorithm);
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.channelSelectionAlgorithm = event;
     }
   };
 
@@ -462,7 +460,7 @@ export class GapCentral extends EventEmitter {
       return null;
     }
 
-    const conn = device.connComplete ?? device.enhConnComplete;
+    const conn = device.connComplete;
     if (!conn) {
       return null;
     }
@@ -492,9 +490,9 @@ export class GapCentral extends EventEmitter {
       leRemoteFeatures: features.leFeatures,
     };
 
-    if (this.extended) {
-      event.localResolvablePrivateAddress = device.enhConnComplete?.localResolvablePrivateAddress;
-      event.peerResolvablePrivateAddress = device.enhConnComplete?.peerResolvablePrivateAddress;
+    if (this.extended && device.connComplete?.type === 'enhanced') {
+      event.localResolvablePrivateAddress = device.connComplete?.localResolvablePrivateAddress;
+      event.peerResolvablePrivateAddress = device.connComplete?.peerResolvablePrivateAddress;
     }
 
     return event;

@@ -417,6 +417,7 @@ export enum LeConnectionRole {
 }
 
 export interface LeConnectionCompleteEvent extends ConnEvent {
+  type: 'standard';
   role: LeConnectionRole;
   peerAddressType: LeConnPeerAddressType;
   peerAddress: Address;
@@ -444,6 +445,7 @@ export class LeConnectionComplete {
     const masterClockAccuracy = data.readUIntLE(o, 1); o += 1;
 
     const event: LeConnectionCompleteEvent = {
+      type:                 'standard',
       connectionHandle,
       role,
       peerAddressType,
@@ -458,7 +460,8 @@ export class LeConnectionComplete {
   }
 }
 
-export interface LeEnhConnectionCompleteEvent extends LeConnectionCompleteEvent {
+export interface LeEnhConnectionCompleteEvent extends Omit<LeConnectionCompleteEvent, 'type'> {
+  type: 'enhanced';
   localResolvablePrivateAddress: Address;
   peerResolvablePrivateAddress: Address;
 }
@@ -483,6 +486,7 @@ export class LeEnhConnectionComplete {
     const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
 
     const event: LeEnhConnectionCompleteEvent = {
+      type:                           'enhanced',
       connectionHandle,
       role,
       peerAddressType,
