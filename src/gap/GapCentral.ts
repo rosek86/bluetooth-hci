@@ -22,6 +22,7 @@ import { Address } from '../utils/Address';
 import { Att } from '../att/Att';
 import { L2CAP } from '../l2cap/L2CAP';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
+import { HciErrorCode } from '../hci/HciError';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
@@ -256,10 +257,21 @@ export class GapCentral extends EventEmitter {
 
       if (timeoutMs) {
         this.pendingCreateConnection.timeoutId = setTimeout(() => {
-          this.hci.leCreateConnectionCancel().finally(() => {
-            debug(chalk.red('Cancelled connection'));
-            this.pendingCreateConnection = null;
-          });
+          this.hci.leCreateConnectionCancel()
+            .then(() => {
+              debug(chalk.red('Connection cancelled'));
+            })
+            .catch((err: NodeJS.ErrnoException) => {
+              if (err.errno == HciErrorCode.CommandDisallowed) {
+                // ignore, we are already connected
+              } else {
+                debug(chalk.red('Failed to cancel connection'));
+                debug(err);
+              }
+            })
+            .finally(() => {
+              this.pendingCreateConnection = null;
+            });
         }, timeoutMs);
       }
 
@@ -352,7 +364,7 @@ export class GapCentral extends EventEmitter {
       In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
     */
 
-    if (err?.errno === 0x02) {
+    if (err?.errno === HciErrorCode.UnknownConnectionId) {
       debug(chalk.red(`Connection cancelled (${err.message})`));
       this.emit('GapConnectionCancelled');
       return;
