@@ -9,8 +9,8 @@ import {
   LeScanFilterDuplicates
 } from '../src/hci/HciLeController';
 import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
-import { Gap, GapAdvertReport, GapConnectEvent } from '../src/gap/Gap';
-import { Gatt, GattClient } from '../src/gatt/GattClient';
+import { GapCentral, GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
+import { GattClient } from '../src/gatt/GattClient';
 import { Profile } from '../src/gatt/GattDirectory';
 import { amendProfileWithUuidNames } from '../src/utils/Profile';
 
@@ -23,7 +23,7 @@ interface GattProfileStore {
 }
 const gattProfileStore = new Map<number, GattProfileStore>();
 
-async function startScanning(gap: Gap) {
+async function startScanning(gap: GapCentral) {
   await gap.setScanParameters({
     ownAddressType: LeOwnAddressType.RandomDeviceAddress,
     scanningFilterPolicy: LeScanningFilterPolicy.All,
@@ -46,7 +46,7 @@ async function startScanning(gap: Gap) {
     await Utils.defaultAdapterSetup(hci);
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    const gap = new Gap(hci);
+    const gap = new GapCentral(hci);
     gap.on('GapLeScanState', (scanning) => console.log('scanning', scanning));
     gap.on('GapLeAdvReport', onAdvert);
     gap.on('GapConnected', onConnected);
@@ -134,12 +134,12 @@ async function startScanning(gap: Gap) {
     function onConnectionCancelled() {
       console.log('Connection cancelled');
       startScanning(gap)
-        .catch((err) => console.log(err));
+        .catch((err) => console.log('connection cancelled - start scanning', err));
       state = 'idle';
     }
 
   } catch (e) {
     const err = e as Error;
-    console.log(err.message);
+    console.log('le-discover-cache', err.message);
   }
 })();

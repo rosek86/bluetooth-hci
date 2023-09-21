@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import chalk from 'chalk';
 import { AdvData } from './AdvData';
 import { Hci } from '../hci/Hci';
 import {
@@ -21,7 +22,6 @@ import { Address } from '../utils/Address';
 import { Att } from '../att/Att';
 import { L2CAP } from '../l2cap/L2CAP';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
-import chalk from 'chalk';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
@@ -59,7 +59,7 @@ export interface GapConnectEvent {
 
 const debug = Debug('nble-gap');
 
-export declare interface Gap {
+export declare interface GapCentral {
   on(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
   once(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
   removeListener(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
@@ -90,7 +90,7 @@ interface GapDeviceInfo {
   att?: Att;
 };
 
-export class Gap extends EventEmitter {
+export class GapCentral extends EventEmitter {
   private extended = false;
   private scanning = false;
 
@@ -353,12 +353,13 @@ export class Gap extends EventEmitter {
     */
 
     if (err?.errno === 0x02) {
-      debug(chalk.red('Connection cancelled (Unknown Connection Identifier)'));
+      debug(chalk.red(`Connection cancelled (${err.message})`));
       this.emit('GapConnectionCancelled');
       return;
     }
 
     debug('Connected to', event.peerAddress.toString());
+    // onLeChannelSelectionAlgorithm should follow
   }
 
   private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
@@ -390,8 +391,9 @@ export class Gap extends EventEmitter {
 
       const timeoutMs = connectionIntervalMs * 10;
       const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs)
-        .catch(() => {
+        .catch((err) => {
           debug(chalk.red('Failed to read remote version information'));
+          debug(err);
           return this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs);
         });
       debug('Remote Version Information', JSON.stringify(version));

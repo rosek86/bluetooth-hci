@@ -26,7 +26,7 @@ export enum  GattProfileAttributeType {
   CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
 }
 
-export interface Gatt {
+export interface GattClient {
   on(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
   once(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
   removeListener(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;

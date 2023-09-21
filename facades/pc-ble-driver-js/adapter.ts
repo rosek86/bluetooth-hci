@@ -1,9 +1,8 @@
 import EventEmitter from "events";
 import { HciAdapter } from "../../examples/utils/HciAdapterFactory";
 import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
-import { LeAdvReport } from "../../src/hci/HciEvent";
 import { Address } from "../../src/utils/Address";
-import { Gap } from "../../src/gap/Gap";
+import { GapCentral } from "../../src/gap/GapCentral";
 
 interface ScanParams {
   active: boolean;
@@ -58,11 +57,11 @@ interface Device {
 }
 
 export class Adapter extends EventEmitter {
-  private gap: Gap;
+  private gap: GapCentral;
 
   constructor(private hciAdapter: HciAdapter) {
     super();
-    this.gap = new Gap(hciAdapter.Hci);
+    this.gap = new GapCentral(hciAdapter.Hci);
   }
 
   public async open(): Promise<void> {

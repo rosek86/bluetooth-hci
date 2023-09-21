@@ -8,7 +8,7 @@ import {
   LeScanFilterDuplicates
 } from '../src/hci/HciLeController';
 
-import { Gap } from '../src/gap/Gap';
+import { GapCentral } from '../src/gap/GapCentral';
 
 (async () => {
   try {
@@ -18,7 +18,7 @@ import { Gap } from '../src/gap/Gap';
     await Utils.defaultAdapterSetup(hci);
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    const gap = new Gap(hci);
+    const gap = new GapCentral(hci);
 
     await gap.init();
     await gap.setScanParameters({

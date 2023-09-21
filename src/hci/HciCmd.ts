@@ -249,7 +249,7 @@ export class HciCmd {
         }
       }
 
-      return cmd.onResult(evt);
+      cmd.onResult(evt);
     }
   }
 

@@ -1,7 +1,7 @@
 import { Utils } from './utils/Utils';
 
-import { Gap } from '../src/gap/Gap';
-import { Gatt, GattClient } from '../src/gatt/GattClient';
+import { GapCentral } from '../src/gap/GapCentral';
+import { GattClient } from '../src/gatt/GattClient';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 import { amendProfileWithUuidNames, uuidInfo } from '../src/utils/Profile';
 import { GattService } from '../src/gatt/GattService';
@@ -12,7 +12,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
     const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
 
-    const gap = new Gap(adapter.Hci);
+    const gap = new GapCentral(adapter.Hci);
     await gap.init();
 
     await gap.setScanParameters();

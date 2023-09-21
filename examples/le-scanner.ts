@@ -1,6 +1,6 @@
 import { Utils } from './utils/Utils';
 
-import { Gap, GapAdvertReport } from '../src/gap/Gap';
+import { GapCentral, GapAdvertReport } from '../src/gap/GapCentral';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
 (async () => {
@@ -11,7 +11,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
     const adapter = await Utils.createHciAdapter();
     await Utils.defaultAdapterSetup(adapter.Hci);
 
-    const gap = new Gap(adapter.Hci);
+    const gap = new GapCentral(adapter.Hci);
     await gap.init();
 
     await gap.setScanParameters();

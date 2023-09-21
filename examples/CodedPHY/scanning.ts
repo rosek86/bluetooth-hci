@@ -1,7 +1,7 @@
 import { Utils } from '../utils/Utils';
 import { Address } from '../../src/utils/Address';
 
-import { Gap } from '../../src/gap/Gap';
+import { GapCentral } from '../../src/gap/GapCentral';
 
 import {
   LeOwnAddressType,
@@ -22,7 +22,7 @@ import {
       address:      Address.from(0x1429c386d3a9),
     });
 
-    const gap = new Gap(hci);
+    const gap = new GapCentral(hci);
     await gap.init();
 
     await gap.setScanParameters({
