@@ -352,6 +352,15 @@ export class GapCentral extends EventEmitter {
     }
   };
 
+  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
+  };
+
+  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
+  };
+
+
   private async onLeConnectionCompleteCommon(
     err: NodeJS.ErrnoException|null,
     event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent
@@ -420,22 +429,6 @@ export class GapCentral extends EventEmitter {
     }
   }
 
-  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
-    this.onLeConnectionCompleteCommon(err, event);
-  };
-
-  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
-    this.onLeConnectionCompleteCommon(err, event);
-  };
-
-  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
-    debug('Channel selection algorithm detected', event.algorithm);
-    const device = this.connectedDevices.get(event.connectionHandle);
-    if (device) {
-      device.channelSelectionAlgorithm = event;
-    }
-  };
-
   private async getRemoteInfo(connComplete: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent) {
     // NOTE: don't know why but sometimes first request to remote device gives no response
     //       so we try to read remote version information twice
@@ -497,6 +490,14 @@ export class GapCentral extends EventEmitter {
 
     return event;
   }
+
+  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
+    debug('Channel selection algorithm detected', event.algorithm);
+    const device = this.connectedDevices.get(event.connectionHandle);
+    if (device) {
+      device.channelSelectionAlgorithm = event;
+    }
+  };
 
   private onDisconnectionComplete = (_err: Error|null, event: DisconnectionCompleteEvent) => {
     this.scanning = false;
