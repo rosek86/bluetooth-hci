@@ -50,6 +50,7 @@ async function startScanning(gap: Gap) {
     gap.on('GapLeScanState', (scanning) => console.log('scanning', scanning));
     gap.on('GapLeAdvReport', onAdvert);
     gap.on('GapConnected', onConnected);
+    gap.on('GapConnectionCancelled', onConnectionCancelled);
     gap.on('GapDisconnected', onDisconnected);
 
     let state = 'idle';
@@ -77,7 +78,8 @@ async function startScanning(gap: Gap) {
 
       try {
         await gap.stopScanning();
-        await gap.connect({ peerAddress: report.address });
+        const connectionTimeoutMs = 2000;
+        await gap.connect({ peerAddress: report.address }, connectionTimeoutMs);
         console.log(`Connecting to ${report.address.toString()}`);
       } catch (e) {
         console.log(e);
@@ -124,6 +126,13 @@ async function startScanning(gap: Gap) {
 
     function onDisconnected(reason: DisconnectionCompleteEvent) {
       console.log('Disconnected', reason.connectionHandle, reason.reason);
+      startScanning(gap)
+        .catch((err) => console.log(err));
+      state = 'idle';
+    }
+
+    function onConnectionCancelled() {
+      console.log('Connection cancelled');
       startScanning(gap)
         .catch((err) => console.log(err));
       state = 'idle';

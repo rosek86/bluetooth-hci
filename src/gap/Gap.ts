@@ -21,6 +21,7 @@ import { Address } from '../utils/Address';
 import { Att } from '../att/Att';
 import { L2CAP } from '../l2cap/L2CAP';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
+import chalk from 'chalk';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
@@ -71,6 +72,10 @@ export declare interface Gap {
   once(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
   removeListener(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
 
+  on(event: 'GapConnectionCancelled', listener: () => void): this;
+  once(event: 'GapConnectionCancelled', listener: () => void): this;
+  removeListener(event: 'GapConnectionCancelled', listener: () => void): this;
+
   on(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
   once(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
   removeListener(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
@@ -91,6 +96,7 @@ export class Gap extends EventEmitter {
 
   private l2cap: L2CAP;
 
+  private pendingCreateConnection: { timeoutId?: NodeJS.Timer } | null = null;
   private connectedDevices: Map<number, GapDeviceInfo> = new Map();
 
   public getRemoteVersionInformation(connectionHandle: number) {
@@ -211,47 +217,56 @@ export class Gap extends EventEmitter {
   }
 
   public async connect(params: GapConnectParams, timeoutMs?: number): Promise<void> {
-    const defaultScanParams: LeExtendedCreateConnectionPhy = {
-      scanIntervalMs: 100,
-      scanWindowMs: 100,
-      connectionIntervalMinMs: 7.5,
-      connectionIntervalMaxMs: 100,
-      connectionLatency: 0,
-      supervisionTimeoutMs: 4000,
-      minCeLengthMs: 2.5,
-      maxCeLengthMs: 3.75,
-    };
-    if (this.extended) {
-      await this.hci.leExtendedCreateConnectionV1({
-        ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
-        initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
-        peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
-        peerAddress: params.peerAddress,
-        initiatingPhy: params?.initiatingPhy ?? { Phy1M: defaultScanParams },
-      });
-    } else {
-      if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
-        throw new Error('Extended connection parameters are not supported');
-      }
-      await this.hci.leCreateConnection({
-        ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
-        initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
-        peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
-        peerAddress: params.peerAddress,
-        ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
-      });
+    if (this.pendingCreateConnection) {
+      throw new Error('Connection already in progress');
     }
-    // if (timeoutMs) {
-    //   setTimeout(() => {
-    //     this.hci.leCreateConnectionCancel()
-    //       .catch(() => {});
-    //   }, timeoutMs);
-    // }
-    debug('Connecting to', params.peerAddress.toString());
-  }
+    this.pendingCreateConnection = {};
 
-  public async cancelConnect(): Promise<void> {
-    await this.hci.leCreateConnectionCancel();
+    try {
+      const defaultScanParams: LeExtendedCreateConnectionPhy = {
+        scanIntervalMs: 100,
+        scanWindowMs: 100,
+        connectionIntervalMinMs: 7.5,
+        connectionIntervalMaxMs: 100,
+        connectionLatency: 0,
+        supervisionTimeoutMs: 4000,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      };
+      if (this.extended) {
+        await this.hci.leExtendedCreateConnectionV1({
+          ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
+          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+          peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
+          peerAddress: params.peerAddress,
+          initiatingPhy: params?.initiatingPhy ?? { Phy1M: defaultScanParams },
+        });
+      } else {
+        if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
+          throw new Error('Extended connection parameters are not supported');
+        }
+        await this.hci.leCreateConnection({
+          ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
+          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
+          peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
+          peerAddress: params.peerAddress,
+          ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
+        });
+      }
+
+      if (timeoutMs) {
+        this.pendingCreateConnection.timeoutId = setTimeout(() => {
+          this.hci.leCreateConnectionCancel().finally(() => {
+            debug(chalk.red('Cancelled connection'));
+            this.pendingCreateConnection = null;
+          });
+        }, timeoutMs);
+      }
+
+      debug('Connecting to', params.peerAddress.toString());
+    } catch {
+      this.pendingCreateConnection = null;
+    }
   }
 
   public async connectionUpdate(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
@@ -320,15 +335,39 @@ export class Gap extends EventEmitter {
     }
   };
 
-  private onLeConnectionComplete = (_: Error|null, event: LeConnectionCompleteEvent) => {
-    debug('Connected to', event.peerAddress.toString());
+  private onLeConnectionCompleteCommon(
+    err: NodeJS.ErrnoException|null,
+    event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent
+  ): void {
+    debug('onLeConnectionCompleteCommon');
+
     this.scanning = false;
+    clearTimeout(this.pendingCreateConnection?.timeoutId);
+    this.pendingCreateConnection = null;
+
+    /*
+      If the cancellation was successful then,
+      after the HCI_Command_Complete event for the HCI_LE_Create_Connection_Cancel command,
+      either an HCI_LE_Connection_Complete or an HCI_LE_Enhanced_Connection_Complete event shall be generated.
+      In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
+    */
+
+    if (err?.errno === 0x02) {
+      debug(chalk.red('Connection cancelled (Unknown Connection Identifier)'));
+      this.emit('GapConnectionCancelled');
+      return;
+    }
+
+    debug('Connected to', event.peerAddress.toString());
+  }
+
+  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
     this.connectedDevices.set(event.connectionHandle, { connComplete: event });
   };
 
-  private onLeEnhancedConnectionComplete = (_: Error|null, event: LeEnhConnectionCompleteEvent) => {
-    debug('Connected to', event.peerAddress.toString());
-    this.scanning = false;
+  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
+    this.onLeConnectionCompleteCommon(err, event);
     this.connectedDevices.set(event.connectionHandle, { enhConnComplete: event });
   };
 
@@ -343,7 +382,7 @@ export class Gap extends EventEmitter {
       const connectionIntervalMs = device.enhConnComplete?.connectionIntervalMs ?? device?.connComplete?.connectionIntervalMs;
       assert(connectionIntervalMs, new Error('Connection interval not found'));
 
-      debug('Connection interval', connectionIntervalMs);
+      debug(`Connection interval ${connectionIntervalMs} ms`);
 
       // NOTE: don't know why but sometimes first request to remote device gives no response
       //       so we try to read remote version information twice
@@ -352,7 +391,7 @@ export class Gap extends EventEmitter {
       const timeoutMs = connectionIntervalMs * 10;
       const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs)
         .catch(() => {
-          debug('Failed to read remote version information');
+          debug(chalk.red('Failed to read remote version information'));
           return this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs);
         });
       debug('Remote Version Information', JSON.stringify(version));
