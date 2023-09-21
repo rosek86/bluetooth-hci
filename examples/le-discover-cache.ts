@@ -11,17 +11,8 @@ import {
 import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
 import { GapCentral, GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
 import { GattClient } from '../src/gatt/GattClient';
-import { Profile } from '../src/gatt/GattDirectory';
 import { amendProfileWithUuidNames } from '../src/utils/Profile';
-
-interface GattProfileStore {
-  address: string;
-  rssi: number | null;
-  profile?: Profile;
-  advertisement?: GapAdvertReport;
-  scanResponse?: GapAdvertReport;
-}
-const gattProfileStore = new Map<number, GattProfileStore>();
+import { GapProfileStorage } from '../src/gap/GapProfileStore';
 
 async function startScanning(gap: GapCentral) {
   await gap.setScanParameters({
@@ -61,16 +52,7 @@ async function startScanning(gap: GapCentral) {
 
     async function onAdvert(report: GapAdvertReport) {
       try {
-        let storeValue = gattProfileStore.get(report.address.toNumeric());
-        if (!storeValue) {
-          storeValue = { address: report.address.toString(), rssi: report.rssi };
-        }
-        if (!report.scanResponse) {
-          storeValue.advertisement = report;
-        } else {
-          storeValue.scanResponse = report;
-        }
-        gattProfileStore.set(report.address.toNumeric(), storeValue);
+        GapProfileStorage.saveAdvertReport(report);
 
         if (report.scanResponse === false && report.scannableAdvertising === true) {
           return;
@@ -97,10 +79,7 @@ async function startScanning(gap: GapCentral) {
         const versionInformation = gap.getRemoteVersionInformation(event.connectionHandle);
         console.log('Manufacturer: ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
 
-        let storeValue = gattProfileStore.get(event.address.toNumeric());
-        if (!storeValue) {
-          storeValue = { address: event.address.toString(), rssi: null };
-        }
+        const storeValue = GapProfileStorage.loadProfile(event.address);
 
         console.log('Discovering...');
         const att = gap.getAtt(event.connectionHandle);
@@ -112,11 +91,10 @@ async function startScanning(gap: GapCentral) {
         await hci.disconnect(event.connectionHandle);
 
         amendProfileWithUuidNames(profile);
-        storeValue.profile = profile;
-        gattProfileStore.set(event.address.toNumeric(), storeValue);
+        GapProfileStorage.saveProfile(event.address, profile);
 
-        console.log('writing gatt-profiles.json', gattProfileStore.size);
-        fs.writeFile('gatt-profiles.json', JSON.stringify(Array.from(gattProfileStore.values()), null, 2))
+        console.log('writing gatt-profiles.json', GapProfileStorage.Size);
+        fs.writeFile('gatt-profiles.json', JSON.stringify(Array.from(GapProfileStorage.Storage.values()), null, 2))
           .catch((err) => console.log(err));
       } catch (err) {
         console.log('on connected', err);
