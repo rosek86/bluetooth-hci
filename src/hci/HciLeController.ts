@@ -6,6 +6,10 @@ import {
 } from './HciError';
 import { bitGet, bitSet, buildBitfield } from '../utils/Utils';
 
+const msToValue = (ms: number, factor: number): number => {
+  return Math.round(ms / factor);
+};
+
 export interface LeSupportedFeaturesInfo {
   leEncryption:                               boolean;
   connectionParametersRequestProcedure:       boolean;
@@ -394,13 +398,13 @@ export class LeCreateConnection {
   static inParams(params: LeCreateConnection): Buffer {
     const payload = Buffer.alloc(2+2+1+1+6+1+2+2+2+2+2+2);
 
-    const scanInterval       = this.msToValue(params.scanIntervalMs,          0.625);
-    const scanWindow         = this.msToValue(params.scanWindowMs,            0.625);
-    const connIntervalMin    = this.msToValue(params.connectionIntervalMinMs, 1.25);
-    const connIntervalMax    = this.msToValue(params.connectionIntervalMaxMs, 1.25);
-    const supervisionTimeout = this.msToValue(params.supervisionTimeoutMs,    10);
-    const minConnEvtLength   = this.msToValue(params.minCeLengthMs,           0.625);
-    const maxConnEvtLength   = this.msToValue(params.maxCeLengthMs,           0.625);
+    const scanInterval       = msToValue(params.scanIntervalMs,          0.625);
+    const scanWindow         = msToValue(params.scanWindowMs,            0.625);
+    const connIntervalMin    = msToValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = msToValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = msToValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = msToValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = msToValue(params.maxCeLengthMs,           0.625);
 
     let o = 0;
     o = payload.writeUIntLE(scanInterval,                         o, 2);
@@ -418,10 +422,6 @@ export class LeCreateConnection {
 
     return payload;
   }
-
-  private static msToValue(ms: number, factor: number): number {
-    return Math.round(ms / factor);
-  }
 }
 
 export interface LeConnectionUpdate {
@@ -438,11 +438,11 @@ export class LeConnectionUpdate {
   static inParams(params: LeConnectionUpdate): Buffer {
     const payload = Buffer.alloc(2+2+2+2+2+2+2);
 
-    const connIntervalMin    = this.msToValue(params.connectionIntervalMinMs, 1.25);
-    const connIntervalMax    = this.msToValue(params.connectionIntervalMaxMs, 1.25);
-    const supervisionTimeout = this.msToValue(params.supervisionTimeoutMs,    10);
-    const minConnEvtLength   = this.msToValue(params.minCeLengthMs,           0.625);
-    const maxConnEvtLength   = this.msToValue(params.maxCeLengthMs,           0.625);
+    const connIntervalMin    = msToValue(params.connectionIntervalMinMs, 1.25);
+    const connIntervalMax    = msToValue(params.connectionIntervalMaxMs, 1.25);
+    const supervisionTimeout = msToValue(params.supervisionTimeoutMs,    10);
+    const minConnEvtLength   = msToValue(params.minCeLengthMs,           0.625);
+    const maxConnEvtLength   = msToValue(params.maxCeLengthMs,           0.625);
 
     let o = 0;
     o = payload.writeUIntLE(params.connectionLatency,     o, 2);
@@ -454,10 +454,6 @@ export class LeConnectionUpdate {
     o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     return payload;
-  }
-
-  private static msToValue(ms: number, factor: number): number {
-    return Math.round(ms / factor);
   }
 }
 
@@ -908,11 +904,11 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
     connectionHandle: number,
     params: LeRemoteConnectionParameterRequestReply
   ): Buffer {
-    const intervalMin   = this.msToValue(params.intervalMinMs, 1.25);
-    const intervalMax   = this.msToValue(params.intervalMaxMs, 1.25);
-    const timeout       = this.msToValue(params.timeoutMs,     10);
-    const minCeLength   = this.msToValue(params.minCeLengthMs, 0.625);
-    const maxCeLength   = this.msToValue(params.maxCeLengthMs, 0.625);
+    const intervalMin   = msToValue(params.intervalMinMs, 1.25);
+    const intervalMax   = msToValue(params.intervalMaxMs, 1.25);
+    const timeout       = msToValue(params.timeoutMs,     10);
+    const minCeLength   = msToValue(params.minCeLengthMs, 0.625);
+    const maxCeLength   = msToValue(params.maxCeLengthMs, 0.625);
 
     const payload = Buffer.alloc(2+2+2+2+2+2);
 
@@ -925,10 +921,6 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
     o = payload.writeUIntLE(maxCeLength,      o, 2);
 
     return payload;
-  }
-
-  private static msToValue(ms: number, factor: number): number {
-    return Math.round(ms / factor);
   }
 }
 
@@ -1393,14 +1385,14 @@ export class LeExtendedCreateConnectionV1 {
     o = payload.writeUIntLE(physBitmask,                          o, 1);
 
     for (const phyParams of physParams) {
-      const scanIntervalMs          = this.msToValue(phyParams.scanIntervalMs,          0.625);
-      const scanWindowMs            = this.msToValue(phyParams.scanWindowMs,            0.625);
-      const connectionIntervalMinMs = this.msToValue(phyParams.connectionIntervalMinMs, 1.25);
-      const connectionIntervalMaxMs = this.msToValue(phyParams.connectionIntervalMaxMs, 1.25);
+      const scanIntervalMs          = msToValue(phyParams.scanIntervalMs,          0.625);
+      const scanWindowMs            = msToValue(phyParams.scanWindowMs,            0.625);
+      const connectionIntervalMinMs = msToValue(phyParams.connectionIntervalMinMs, 1.25);
+      const connectionIntervalMaxMs = msToValue(phyParams.connectionIntervalMaxMs, 1.25);
       const connectionLatency       = phyParams.connectionLatency;
-      const supervisionTimeoutMs    = this.msToValue(phyParams.supervisionTimeoutMs,    10);
-      const minCeLengthMs           = this.msToValue(phyParams.minCeLengthMs,           0.625);
-      const maxCeLengthMs           = this.msToValue(phyParams.maxCeLengthMs,           0.625);
+      const supervisionTimeoutMs    = msToValue(phyParams.supervisionTimeoutMs,    10);
+      const minCeLengthMs           = msToValue(phyParams.minCeLengthMs,           0.625);
+      const maxCeLengthMs           = msToValue(phyParams.maxCeLengthMs,           0.625);
 
       o = payload.writeUIntLE(scanIntervalMs,           o, 2);
       o = payload.writeUIntLE(scanWindowMs,             o, 2);
@@ -1413,10 +1405,6 @@ export class LeExtendedCreateConnectionV1 {
     }
 
     return payload;
-  }
-
-  private static msToValue(ms: number, factor: number): number {
-    return Math.round(ms / factor);
   }
 }
 
@@ -1598,6 +1586,95 @@ export class LeNumberOfSupportedAdvertisingSets {
   }
 }
 
+export interface LePeriodicAdvertisingProperties {
+  includeTxPower: boolean;
+}
+
+export interface LeSetPeriodicAdvertisingParametersV1 {
+  advertisingHandle: number;
+  periodicAdvertisingIntervalMinMs: number;
+  periodicAdvertisingIntervalMaxMs: number;
+  periodicAdvertisingProperties: LePeriodicAdvertisingProperties;
+}
+
+export class LeSetPeriodicAdvertisingParametersV1 {
+  static inParams(params: LeSetPeriodicAdvertisingParametersV1): Buffer {
+    const buffer = Buffer.alloc(7);
+
+    let o = 0;
+    buffer.writeUInt8   (params.advertisingHandle,                                      o); o += 1;
+    buffer.writeUInt16LE(msToValue(params.periodicAdvertisingIntervalMinMs, 1.25),      o); o += 2;
+    buffer.writeUInt16LE(msToValue(params.periodicAdvertisingIntervalMaxMs, 1.25),      o); o += 2;
+    buffer.writeUInt16LE(this.inParamsProperties(params.periodicAdvertisingProperties), o); o += 2;
+
+    return buffer;
+  }
+
+  private static inParamsProperties(params: LePeriodicAdvertisingProperties): number {
+    let properties = 0;
+    properties |= params.includeTxPower ? 1 << 6 : 0;
+    return properties;
+  }
+
+  static outParams(params?: Buffer): { advertisingHandle: number } {
+    if (!params || params.length < 1) {
+      throw makeParserError(HciParserErrorType.InvalidPayloadSize);
+    }
+    return { advertisingHandle: params.readUInt8(0) };
+  }
+}
+
+export interface LeSetPeriodicAdvertisingParametersV2 extends LeSetPeriodicAdvertisingParametersV1 {
+  numSubevents: number;
+  subeventIntervalMs: number;
+  responseSlotDelayMs: number;
+  responseSlotSpacingMs: number;
+  numResponseSlots: number;
+}
+
+export class LeSetPeriodicAdvertisingParametersV2 {
+  static inParams(params: LeSetPeriodicAdvertisingParametersV2): Buffer {
+    return Buffer.concat([
+      LeSetPeriodicAdvertisingParametersV1.inParams(params),
+      Buffer.from([
+        params.numSubevents,
+        msToValue(params.subeventIntervalMs,    1.25),
+        msToValue(params.responseSlotDelayMs,   1.25),
+        msToValue(params.responseSlotSpacingMs, 0.125),
+        params.numResponseSlots,
+      ]),
+    ]);
+  }
+
+  static outParams(params?: Buffer): { advertisingHandle: number } {
+    return LeSetPeriodicAdvertisingParametersV1.outParams(params);
+  }
+}
+
+export interface LeSetPeriodicAdvertisingEnable {
+  enable: {
+    enablePeriodicAdvertising: boolean;
+    includeAdi: boolean;
+  };
+  advertisingHandle: number;
+}
+
+export class LeSetPeriodicAdvertisingEnable {
+  static inParams(params: LeSetPeriodicAdvertisingEnable): Buffer {
+    const buffer = Buffer.alloc(2);
+
+    let enable = 0;
+    enable |= params.enable.enablePeriodicAdvertising ? 1 << 0 : 0;
+    enable |= params.enable.includeAdi                ? 1 << 1 : 0;
+
+    let o = 0;
+    buffer.writeUInt8(enable,                   o); o += 1;
+    buffer.writeUInt8(params.advertisingHandle, o); o += 1;
+
+    return buffer;
+  }
+}
+
 export interface LeExtendedScanParameters {
   ownAddressType: LeOwnAddressType;
   scanningFilterPolicy: LeScanningFilterPolicy;
@@ -1633,8 +1710,8 @@ export class LeExtendedScanParameters {
 
     if (params.scanningPhy.Phy1M) {
       const type     = params.scanningPhy.Phy1M.type;
-      const interval = this.msToValue(params.scanningPhy.Phy1M.intervalMs);
-      const window   = this.msToValue(params.scanningPhy.Phy1M.windowMs);
+      const interval = msToValue(params.scanningPhy.Phy1M.intervalMs, 0.625);
+      const window   = msToValue(params.scanningPhy.Phy1M.windowMs,   0.625);
 
       o = payload.writeUIntLE(type,     o, 1);
       o = payload.writeUIntLE(interval, o, 2);
@@ -1642,8 +1719,8 @@ export class LeExtendedScanParameters {
     }
     if (params.scanningPhy.PhyCoded) {
       const type     = params.scanningPhy.PhyCoded.type;
-      const interval = this.msToValue(params.scanningPhy.PhyCoded.intervalMs);
-      const window   = this.msToValue(params.scanningPhy.PhyCoded.windowMs);
+      const interval = msToValue(params.scanningPhy.PhyCoded.intervalMs,  0.625);
+      const window   = msToValue(params.scanningPhy.PhyCoded.windowMs,    0.625);
 
       o = payload.writeUIntLE(type,     o, 1);
       o = payload.writeUIntLE(interval, o, 2);
@@ -1651,10 +1728,6 @@ export class LeExtendedScanParameters {
     }
 
     return payload;
-  }
-
-  private static msToValue(ms: number): number {
-    return Math.round(ms / 0.625);
   }
 }
 

@@ -44,7 +44,8 @@ import {
   LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
   LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
   LeTransmitPower, LeExtendedCreateConnectionV1, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
-  LeExtendedAdvertisingParametersV2,
+  LeExtendedAdvertisingParametersV2, LeSetPeriodicAdvertisingParametersV1, LeSetPeriodicAdvertisingParametersV2,
+  LeSetPeriodicAdvertisingEnable,
 } from './HciLeController';
 
 import {
@@ -714,6 +715,26 @@ export class Hci extends EventEmitter {
   public async leClearAdvertisingSets(): Promise<void> {
     const ocf = HciOcfLeControllerCommands.ClearAdvertisingSets;
     await this.cmd.leController({ ocf });
+  }
+
+  public async leSetPeriodicAdvertisingParametersV1(params: LeSetPeriodicAdvertisingParametersV1): Promise<{ advertisingHandle: number }> {
+    const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingParametersV1;
+    const payload = LeSetPeriodicAdvertisingParametersV1.inParams(params);
+    await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
+    return LeSetPeriodicAdvertisingParametersV1.outParams(payload);
+  }
+
+  public async leSetPeriodicAdvertisingParametersV2(params: LeSetPeriodicAdvertisingParametersV2): Promise<{ advertisingHandle: number }> {
+    const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingParametersV2;
+    const payload = LeSetPeriodicAdvertisingParametersV2.inParams(params);
+    await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
+    return LeSetPeriodicAdvertisingParametersV2.outParams(payload);
+  }
+
+  public async leSetPeriodicAdvertisingEnable(params: LeSetPeriodicAdvertisingEnable): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingEnable;
+    const payload = LeSetPeriodicAdvertisingEnable.inParams(params);
+    await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
   }
 
   public async leSetExtendedScanParameters(params: LeExtendedScanParameters): Promise<void> {

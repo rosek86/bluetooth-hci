@@ -285,9 +285,9 @@ export enum HciOcfLeControllerCommands {
   ReadNumberOfSupportedAdvertisingSets                = 0x003B, // * LE Read Number of Supported Advertising Sets
   RemoveAdvertisingSet                                = 0x003C, // * LE Remove Advertising Set
   ClearAdvertisingSets                                = 0x003D, // * LE Clear Advertising Sets
-  SetPeriodicAdvertisingParameters                    = 0x003E, // LE Set Periodic Advertising Parameters
+  SetPeriodicAdvertisingParametersV1                  = 0x003E, // * LE Set Periodic Advertising Parameters
   SetPeriodicAdvertisingData                          = 0x003F, // LE Set Periodic Advertising Data
-  SetPeriodicAdvertisingEnable                        = 0x0040, // LE Set Periodic Advertising Enable
+  SetPeriodicAdvertisingEnable                        = 0x0040, // * LE Set Periodic Advertising Enable
   SetExtendedScanParameters                           = 0x0041, // * LE Set Extended Scan Parameters
   SetExtendedScanEnable                               = 0x0042, // * LE Set Extended Scan Enable
   ExtendedCreateConnection                            = 0x0043, // * LE Extended Create Connection
@@ -357,5 +357,5 @@ export enum HciOcfLeControllerCommands {
   SetPeriodicAdvertisingResponseData                  = 0x0083, // LE Set Periodic Advertising Response Data
   SetPeriodicSyncSubevent                             = 0x0084, // LE Set Periodic Sync Transfer Subevent
   ExtendedCreateConnectionV2                          = 0x0085, // * LE Extended Create Connection V2
-  SetPeriodicAdvertisingParametersV2                  = 0x0086, // LE Set Periodic Advertising Parameters V2
+  SetPeriodicAdvertisingParametersV2                  = 0x0086, // * LE Set Periodic Advertising Parameters V2
 }

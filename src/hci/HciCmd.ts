@@ -23,8 +23,9 @@ type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 
 interface Command {
   opcode: { ogf: number; ocf: number; };
-  connectionHandle?: number;
   payload?: Buffer;
+  connectionHandle?: number;
+  advertisingHandle?: number;
 }
 
 class HciOpcode {
@@ -46,8 +47,15 @@ export interface HciCmdResult {
   returnParameters?: Buffer;
 }
 
+interface HciPendingCommand {
+  opcode: number;
+  connectionHandle?: number;
+  advertisingHandle?: number;
+  onResult: (evt: HciCmdResult) => void;
+}
+
 export class HciCmd {
-  private pendingCommands: { opcode: number; connectionHandle?: number; onResult: (evt: HciCmdResult) => void }[] = [];
+  private pendingCommands: HciPendingCommand[] = [];
 
   public constructor(private sendBuffer: HciSendFunction, public readonly timeout: number = 2_000) {
   }
@@ -155,9 +163,10 @@ export class HciCmd {
   }
 
   public async leController(params: {
-    ocf: HciOcfLeControllerCommands,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfLeControllerCommands;
+    payload?: Buffer;
+    connectionHandle?: number;
+    advertisingHandle?: number;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -166,6 +175,7 @@ export class HciCmd {
       },
       payload: params.payload,
       connectionHandle: params.connectionHandle,
+      advertisingHandle: params.advertisingHandle,
     });
   }
 
@@ -198,7 +208,12 @@ export class HciCmd {
           complete(undefined, evt);
         }
       };
-      this.pendingCommands.push({ opcode, connectionHandle: cmd.connectionHandle, onResult });
+      this.pendingCommands.push({
+        opcode,
+        onResult,
+        connectionHandle: cmd.connectionHandle,
+        advertisingHandle: cmd.advertisingHandle,
+      });
       this.sendCommand(opcode, cmd.payload);
     });
   }
@@ -216,15 +231,22 @@ export class HciCmd {
         continue;
       }
 
-      if (cmd.connectionHandle === undefined) {
-        return cmd.onResult(evt);
+      if (cmd.connectionHandle !== undefined) {
+        // parse connection handle
+        assert(evt.returnParameters, 'Return parameters are missing');
+        assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
+        if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
+          continue;
+        }
       }
 
-      // parse connection handle
-      assert(evt.returnParameters, 'Return parameters are missing');
-      assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
-      if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
-        continue;
+      if (cmd.advertisingHandle !== undefined) {
+        // parse advertising handle
+        assert(evt.returnParameters, 'Return parameters are missing');
+        assert(evt.returnParameters.length >= 1, 'Cannot parse advertising command complete event');
+        if (cmd.advertisingHandle !== evt.returnParameters.readUInt8(0)) {
+          continue;
+        }
       }
 
       return cmd.onResult(evt);
