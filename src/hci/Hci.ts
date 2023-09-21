@@ -46,6 +46,7 @@ import {
   LeTransmitPower, LeExtendedCreateConnectionV1, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
   LeExtendedAdvertisingParametersV2, LeSetPeriodicAdvertisingParametersV1, LeSetPeriodicAdvertisingParametersV2,
   LeSetPeriodicAdvertisingEnable,
+  LeSetPeriodicAdvertisingData,
 } from './HciLeController';
 
 import {
@@ -731,10 +732,16 @@ export class Hci extends EventEmitter {
     return LeSetPeriodicAdvertisingParametersV2.outParams(payload);
   }
 
+  public async leSetPeriodicAdvertisingData(params: LeSetPeriodicAdvertisingData): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingData;
+    const payload = LeSetPeriodicAdvertisingData.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
   public async leSetPeriodicAdvertisingEnable(params: LeSetPeriodicAdvertisingEnable): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingEnable;
     const payload = LeSetPeriodicAdvertisingEnable.inParams(params);
-    await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
+    await this.cmd.leController({ ocf, payload });
   }
 
   public async leSetExtendedScanParameters(params: LeExtendedScanParameters): Promise<void> {

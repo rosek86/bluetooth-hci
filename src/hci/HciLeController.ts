@@ -1651,6 +1651,25 @@ export class LeSetPeriodicAdvertisingParametersV2 {
   }
 }
 
+export interface LeSetPeriodicAdvertisingData {
+  advertisingHandle: number;
+  operation: LeAdvertisingDataOperation;
+  advertisingData: Buffer;
+}
+
+export class LeSetPeriodicAdvertisingData {
+  static inParams(params: LeSetPeriodicAdvertisingData): Buffer {
+    return Buffer.concat([
+      Buffer.from([
+        params.advertisingHandle,
+        params.operation,
+        params.advertisingData.length
+      ]),
+      params.advertisingData,
+    ]);
+  }
+}
+
 export interface LeSetPeriodicAdvertisingEnable {
   enable: {
     enablePeriodicAdvertising: boolean;

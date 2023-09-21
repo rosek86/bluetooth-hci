@@ -286,7 +286,7 @@ export enum HciOcfLeControllerCommands {
   RemoveAdvertisingSet                                = 0x003C, // * LE Remove Advertising Set
   ClearAdvertisingSets                                = 0x003D, // * LE Clear Advertising Sets
   SetPeriodicAdvertisingParametersV1                  = 0x003E, // * LE Set Periodic Advertising Parameters
-  SetPeriodicAdvertisingData                          = 0x003F, // LE Set Periodic Advertising Data
+  SetPeriodicAdvertisingData                          = 0x003F, // * LE Set Periodic Advertising Data
   SetPeriodicAdvertisingEnable                        = 0x0040, // * LE Set Periodic Advertising Enable
   SetExtendedScanParameters                           = 0x0041, // * LE Set Extended Scan Parameters
   SetExtendedScanEnable                               = 0x0042, // * LE Set Extended Scan Enable
