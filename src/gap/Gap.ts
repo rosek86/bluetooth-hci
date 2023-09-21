@@ -93,6 +93,16 @@ export class Gap extends EventEmitter {
 
   private connectedDevices: Map<number, GapDeviceInfo> = new Map();
 
+  public getRemoteVersionInformation(connectionHandle: number) {
+    const device = this.connectedDevices.get(connectionHandle);
+    return device?.versionInformation ?? null;
+  }
+
+  public getRemoteFeatures(connectionHandle: number) {
+    const device = this.connectedDevices.get(connectionHandle);
+    return device?.leRemoteFeatures ?? null;
+  }
+
   constructor(private hci: Hci) {
     super();
 
@@ -200,7 +210,7 @@ export class Gap extends EventEmitter {
     this.emit('GapLeScanState', false);
   }
 
-  public async connect(params: GapConnectParams): Promise<void> {
+  public async connect(params: GapConnectParams, timeoutMs?: number): Promise<void> {
     const defaultScanParams: LeExtendedCreateConnectionPhy = {
       scanIntervalMs: 100,
       scanWindowMs: 100,
@@ -231,7 +241,17 @@ export class Gap extends EventEmitter {
         ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
       });
     }
+    // if (timeoutMs) {
+    //   setTimeout(() => {
+    //     this.hci.leCreateConnectionCancel()
+    //       .catch(() => {});
+    //   }, timeoutMs);
+    // }
     debug('Connecting to', params.peerAddress.toString());
+  }
+
+  public async cancelConnect(): Promise<void> {
+    await this.hci.leCreateConnectionCancel();
   }
 
   public async connectionUpdate(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {

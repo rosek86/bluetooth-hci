@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import chalk from 'chalk';
 import { Utils } from './utils/Utils';
 import {
   LePhy,
@@ -93,13 +94,23 @@ async function startScanning(gap: Gap) {
         throw new Error('ATT layer not exists');
       }
 
+      const versionInformation = gap.getRemoteVersionInformation(event.connectionHandle);
+      if (!versionInformation) {
+        throw new Error('Version information not exists');
+      }
+      console.log('Manufacturer: ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
+
       let storeValue = gattProfileStore.get(event.address.toNumeric());
       if (!storeValue) {
         storeValue = { address: event.address.toString(), rssi: null };
       }
 
+      console.log('Discovering...');
       const gatt = new GattClient(att, storeValue?.profile);
       const profile = await gatt.discover();
+      console.log('Discovered');
+
+      console.log('Disconnecting...');
       await hci.disconnect(event.connectionHandle);
 
       amendProfileWithUuidNames(profile);
@@ -112,7 +123,7 @@ async function startScanning(gap: Gap) {
     }
 
     function onDisconnected(reason: DisconnectionCompleteEvent) {
-      console.log('disconnected', reason.connectionHandle, reason.reason);
+      console.log('Disconnected', reason.connectionHandle, reason.reason);
       startScanning(gap)
         .catch((err) => console.log(err));
       state = 'idle';
