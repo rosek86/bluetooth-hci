@@ -91,6 +91,11 @@ interface GapDeviceInfo {
   att?: Att;
 };
 
+interface RemoteInfoCache  {
+  version: ReadRemoteVersionInformationCompleteEvent;
+  features: LeReadRemoteFeaturesCompleteEvent;
+}
+
 export class GapCentral extends EventEmitter {
   private extended = false;
   private scanning = false;
@@ -99,6 +104,7 @@ export class GapCentral extends EventEmitter {
 
   private pendingCreateConnection: { timeoutId?: NodeJS.Timer } | null = null;
   private connectedDevices: Map<number, GapDeviceInfo> = new Map();
+  private remoteInfoCache: Map<number, RemoteInfoCache> = new Map();
 
   public getRemoteVersionInformation(connectionHandle: number) {
     const device = this.connectedDevices.get(connectionHandle);
@@ -110,7 +116,7 @@ export class GapCentral extends EventEmitter {
     return device?.leRemoteFeatures ?? null;
   }
 
-  constructor(private hci: Hci) {
+  constructor(private hci: Hci, private options: { cacheRemoteInfo?: boolean } = { cacheRemoteInfo: false }) {
     super();
 
     this.l2cap = new L2CAP(this.hci);
@@ -392,31 +398,34 @@ export class GapCentral extends EventEmitter {
       const device = this.connectedDevices.get(event.connectionHandle);
       assert(device, new Error('Device not found'));
 
-      const connectionIntervalMs = device.enhConnComplete?.connectionIntervalMs ?? device?.connComplete?.connectionIntervalMs;
-      assert(connectionIntervalMs, new Error('Connection interval not found'));
+      const connComplete = device.enhConnComplete ?? device.connComplete;
+      assert(connComplete, new Error('Connection complete event not found'));
 
+      const connectionIntervalMs = connComplete.connectionIntervalMs;
       debug(`Connection interval ${connectionIntervalMs} ms`);
-
-      // NOTE: don't know why but sometimes first request to remote device gives no response
-      //       so we try to read remote version information twice
-      //       problem occurs on nRF52840 Dongle with HCI controller
-
-      const timeoutMs = connectionIntervalMs * 10;
-      const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs)
-        .catch((err) => {
-          debug(chalk.red('Failed to read remote version information'));
-          debug(err);
-          return this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs);
-        });
-      debug('Remote Version Information', JSON.stringify(version));
-
-      const features = await this.hci.leReadRemoteFeaturesAwait(event.connectionHandle);
-      debug('Remote Features', features.leFeatures.toString());
 
       device.att = new Att(this.l2cap, event.connectionHandle);
       device.channelSelectionAlgorithm = event;
-      device.versionInformation = version;
-      device.leRemoteFeatures = features;
+
+      if (this.options.cacheRemoteInfo) {
+        const cache = this.remoteInfoCache.get(connComplete.peerAddress.toNumeric());
+        if (cache) {
+          device.versionInformation = cache.version;
+          device.leRemoteFeatures = cache.features;
+        } else {
+          const { version, features } = await this.getRemoteInfo(connComplete);
+          device.versionInformation = version;
+          device.leRemoteFeatures = features;
+          this.remoteInfoCache.set(connComplete.peerAddress.toNumeric(), { version, features });
+        }
+      } else {
+        const { version, features } = await this.getRemoteInfo(connComplete);
+        device.versionInformation = version;
+        device.leRemoteFeatures = features;
+      }
+
+      debug('Remote Version Information', JSON.stringify(device.versionInformation));
+      debug('Remote Features', device.leRemoteFeatures.leFeatures.toString());
 
       const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
       assert(gapEvent);
@@ -428,6 +437,24 @@ export class GapCentral extends EventEmitter {
       debug(err);
     }
   };
+
+  private async getRemoteInfo(connComplete: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent) {
+    // NOTE: don't know why but sometimes first request to remote device gives no response
+    //       so we try to read remote version information twice
+    //       problem occurs on nRF52840 Dongle with HCI controller
+
+    const timeoutMs = connComplete.connectionIntervalMs * 10;
+    const version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs)
+      .catch((err) => {
+        debug(chalk.red('Failed to read remote version information'));
+        debug(err);
+        return this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
+      });
+
+    const features = await this.hci.leReadRemoteFeaturesAwait(connComplete.connectionHandle);
+
+    return { version, features };
+  }
 
   private createGapConnectedEvent(connectionHandle: number): GapConnectEvent | null {
     const device = this.connectedDevices.get(connectionHandle);

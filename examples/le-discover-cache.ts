@@ -46,7 +46,9 @@ async function startScanning(gap: GapCentral) {
     await Utils.defaultAdapterSetup(hci);
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    const gap = new GapCentral(hci);
+    const gap = new GapCentral(hci, {
+      cacheRemoteInfo: true,
+    });
     gap.on('GapLeScanState', (scanning) => console.log('scanning', scanning));
     gap.on('GapLeAdvReport', onAdvert);
     gap.on('GapConnected', onConnected);
