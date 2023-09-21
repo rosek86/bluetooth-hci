@@ -9,10 +9,10 @@ import {
   LeScanFilterDuplicates
 } from '../src/hci/HciLeController';
 import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
-import { GapCentral, GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
-import { GattClient } from '../src/gatt/GattClient';
 import { amendProfileWithUuidNames } from '../src/utils/Profile';
-import { GapProfileStorage } from '../src/gap/GapProfileStore';
+import { GapCentral, GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
+import { GapProfileStorage } from '../src/gap/GapProfileStorage';
+import { GattClient } from '../src/gatt/GattClient';
 
 async function startScanning(gap: GapCentral) {
   await gap.setScanParameters({
