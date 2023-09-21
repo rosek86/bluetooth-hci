@@ -62,10 +62,7 @@ import { GapCentral } from '../src/gap/GapCentral';
         event.leRemoteFeatures.toString(),
       );
 
-      const att = gap.getATT(event.connectionHandle);
-      if (!att) {
-        throw new Error('ATT layer not exists');
-      }
+      const att = gap.getAtt(event.connectionHandle);
 
       const rssi = await hci.readRssi(event.connectionHandle);
       console.log(`RSSI: ${rssi} dBm`);

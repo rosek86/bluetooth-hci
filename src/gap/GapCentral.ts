@@ -105,14 +105,28 @@ export class GapCentral extends EventEmitter {
   private connectedDevices: Map<number, GapDeviceInfo> = new Map();
   private remoteInfoCache: Map<number, RemoteInfoCache> = new Map();
 
-  public getRemoteVersionInformation(connectionHandle: number) {
+  public getRemoteVersionInformation(connectionHandle: number): ReadRemoteVersionInformationCompleteEvent {
     const device = this.connectedDevices.get(connectionHandle);
-    return device?.versionInformation ?? null;
+    if (!device?.versionInformation) {
+      throw new Error('Version information not exists');
+    }
+    return device.versionInformation;
   }
 
-  public getRemoteFeatures(connectionHandle: number) {
+  public getLeRemoteFeatures(connectionHandle: number): LeReadRemoteFeaturesCompleteEvent {
     const device = this.connectedDevices.get(connectionHandle);
-    return device?.leRemoteFeatures ?? null;
+    if (!device?.leRemoteFeatures) {
+      throw new Error('LE Features not exists');
+    }
+    return device?.leRemoteFeatures;
+  }
+
+  public getAtt(connectionHandle: number): Att {
+    const device = this.connectedDevices.get(connectionHandle);
+    if (!device?.att) {
+      throw new Error('Device not connected');
+    }
+    return device.att;
   }
 
   constructor(private hci: Hci, private options: { cacheRemoteInfo?: boolean } = { cacheRemoteInfo: false }) {
@@ -304,13 +318,6 @@ export class GapCentral extends EventEmitter {
 
   public async disconnect(connectionHandle: number): Promise<void> {
     await this.hci.disconnect(connectionHandle);
-  }
-
-  public getATT(connectionHandle: number): Att | undefined {
-    const device = this.connectedDevices.get(connectionHandle);
-    if (device) {
-      return device.att;
-    }
   }
 
   private onLeScanTimeout = () => {

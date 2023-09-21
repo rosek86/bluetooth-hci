@@ -54,12 +54,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
       const rssi = await adapter.Hci.readRssi(event.connectionHandle);
       console.log(`RSSI: ${rssi} dBm`);
 
-      const att = gap.getATT(event.connectionHandle);
-      if (!att) {
-        throw new Error('ATT layer not exists');
-      }
-
-      const gatt = new GattClient(att);
+      const gatt = new GattClient(gap.getAtt(event.connectionHandle));
       const profile = await gatt.discover();
       const profileAmended = amendProfileWithUuidNames(profile);
 

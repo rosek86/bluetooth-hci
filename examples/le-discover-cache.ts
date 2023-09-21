@@ -49,11 +49,11 @@ async function startScanning(gap: GapCentral) {
     const gap = new GapCentral(hci, {
       cacheRemoteInfo: true,
     });
-    gap.on('GapLeScanState', (scanning) => console.log('scanning', scanning));
-    gap.on('GapLeAdvReport', onAdvert);
-    gap.on('GapConnected', onConnected);
-    gap.on('GapConnectionCancelled', onConnectionCancelled);
-    gap.on('GapDisconnected', onDisconnected);
+    gap.on('GapLeScanState',          (scanning) => console.log('scanning', scanning));
+    gap.on('GapLeAdvReport',          onAdvert);
+    gap.on('GapConnected',            onConnected);
+    gap.on('GapConnectionCancelled',  onConnectionCancelled);
+    gap.on('GapDisconnected',         onDisconnected);
 
     let state = 'idle';
     await gap.init();
@@ -94,15 +94,7 @@ async function startScanning(gap: GapCentral) {
         state = 'connected';
         console.log(`Connected to ${event.address.toString()}`);
 
-        const att = gap.getATT(event.connectionHandle);
-        if (!att) {
-          throw new Error('ATT layer not exists');
-        }
-
         const versionInformation = gap.getRemoteVersionInformation(event.connectionHandle);
-        if (!versionInformation) {
-          throw new Error('Version information not exists');
-        }
         console.log('Manufacturer: ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
 
         let storeValue = gattProfileStore.get(event.address.toNumeric());
@@ -111,6 +103,7 @@ async function startScanning(gap: GapCentral) {
         }
 
         console.log('Discovering...');
+        const att = gap.getAtt(event.connectionHandle);
         const gatt = new GattClient(att, storeValue?.profile);
         const profile = await gatt.discover();
         console.log('Discovered');
