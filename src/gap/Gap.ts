@@ -231,6 +231,7 @@ export class Gap extends EventEmitter {
         ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
       });
     }
+    debug('Connecting to', params.peerAddress.toString());
   }
 
   public async connectionUpdate(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
@@ -300,26 +301,44 @@ export class Gap extends EventEmitter {
   };
 
   private onLeConnectionComplete = (_: Error|null, event: LeConnectionCompleteEvent) => {
+    debug('Connected to', event.peerAddress.toString());
     this.scanning = false;
     this.connectedDevices.set(event.connectionHandle, { connComplete: event });
   };
 
   private onLeEnhancedConnectionComplete = (_: Error|null, event: LeEnhConnectionCompleteEvent) => {
+    debug('Connected to', event.peerAddress.toString());
     this.scanning = false;
     this.connectedDevices.set(event.connectionHandle, { enhConnComplete: event });
   };
 
   private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
     try {
+      debug('Channel selection algorithm detected', event.algorithm);
       this.scanning = false;
 
       const device = this.connectedDevices.get(event.connectionHandle);
-      assert(device);
+      assert(device, new Error('Device not found'));
 
-      const [version, features] = await Promise.all([
-        this.hci.readRemoteVersionInformationAwait(event.connectionHandle),
-        this.hci.leReadRemoteFeaturesAwait(event.connectionHandle),
-      ]);
+      const connectionIntervalMs = device.enhConnComplete?.connectionIntervalMs ?? device?.connComplete?.connectionIntervalMs;
+      assert(connectionIntervalMs, new Error('Connection interval not found'));
+
+      debug('Connection interval', connectionIntervalMs);
+
+      // NOTE: don't know why but sometimes first request to remote device gives no response
+      //       so we try to read remote version information twice
+      //       problem occurs on nRF52840 Dongle with HCI controller
+
+      const timeoutMs = connectionIntervalMs * 10;
+      const version = await this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs)
+        .catch(() => {
+          debug('Failed to read remote version information');
+          return this.hci.readRemoteVersionInformationAwait(event.connectionHandle, timeoutMs);
+        });
+      debug('Remote Version Information', JSON.stringify(version));
+
+      const features = await this.hci.leReadRemoteFeaturesAwait(event.connectionHandle);
+      debug('Remote Features', features.leFeatures.toString());
 
       device.att = new Att(this.l2cap, event.connectionHandle);
       device.channelSelectionAlgorithm = event;

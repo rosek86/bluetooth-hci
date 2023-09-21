@@ -155,8 +155,12 @@ export class Hci extends EventEmitter {
     await this.cmd.linkControl({ ocf, payload });
   }
 
-  public async readRemoteVersionInformationAwait(connectionHandle: number): Promise<ReadRemoteVersionInformationCompleteEvent> {
-    const waitEvent = this.waitEvent<ReadRemoteVersionInformationCompleteEvent>(connectionHandle, 'ReadRemoteVersionInformationComplete');
+  public async readRemoteVersionInformationAwait(connectionHandle: number, timeoutMs?: number): Promise<ReadRemoteVersionInformationCompleteEvent> {
+    const waitEvent = this.waitEvent<ReadRemoteVersionInformationCompleteEvent>({
+      connectionHandle,
+      event: 'ReadRemoteVersionInformationComplete',
+      timeoutMs,
+    });
     await this.readRemoteVersionInformation(connectionHandle);
     return await waitEvent;
   }
@@ -169,7 +173,10 @@ export class Hci extends EventEmitter {
   }
 
   public async readRemoteSupportedFeaturesAwait(connectionHandle: number): Promise<ReadRemoteSupportedFeaturesCompleteEvent> {
-    const waitEvent = this.waitEvent<ReadRemoteSupportedFeaturesCompleteEvent>(connectionHandle, 'ReadRemoteSupportedFeaturesComplete');
+    const waitEvent = this.waitEvent<ReadRemoteSupportedFeaturesCompleteEvent>({
+      connectionHandle,
+      event: 'ReadRemoteSupportedFeaturesComplete'
+    });
     await this.readRemoteSupportedFeatures(connectionHandle);
     return await waitEvent;
   }
@@ -394,9 +401,10 @@ export class Hci extends EventEmitter {
   }
 
   public async leConnectionUpdateAwait(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
-    const waitEvent = this.waitEvent<LeConnectionUpdateCompleteEvent>(
-      params.connectionHandle, 'LeConnectionUpdateComplete'
-    );
+    const waitEvent = this.waitEvent<LeConnectionUpdateCompleteEvent>({
+      connectionHandle: params.connectionHandle,
+      event: 'LeConnectionUpdateComplete',
+    });
     await this.leConnectionUpdate(params);
     return await waitEvent;
   }
@@ -423,7 +431,10 @@ export class Hci extends EventEmitter {
   }
 
   public async leReadRemoteFeaturesAwait(connectionHandle: number): Promise<LeReadRemoteFeaturesCompleteEvent> {
-    const waitEvent = this.waitEvent<LeReadRemoteFeaturesCompleteEvent>(connectionHandle, 'LeReadRemoteFeaturesComplete');
+    const waitEvent = this.waitEvent<LeReadRemoteFeaturesCompleteEvent>({
+      connectionHandle,
+      event: 'LeReadRemoteFeaturesComplete',
+    });
     await this.leReadRemoteFeatures(connectionHandle);
     return await waitEvent;
   }
@@ -538,7 +549,10 @@ export class Hci extends EventEmitter {
   }
 
   public async leSetDataLengthAwait(connectionHandle: number, params: LeDataLength): Promise<LeDataLengthChangeEvent> {
-    const waitEvent = this.waitEvent<LeDataLengthChangeEvent>(connectionHandle, 'LeDataLengthChange');
+    const waitEvent = this.waitEvent<LeDataLengthChangeEvent>({
+      connectionHandle,
+      event: 'LeDataLengthChange',
+    });
     await this.leSetDataLength(connectionHandle, params);
     return await waitEvent;
   }
@@ -1147,15 +1161,19 @@ export class Hci extends EventEmitter {
   }
 
   // Utils
-  public async waitEvent<T extends { connectionHandle: number }>(connectionHandle: number, event: HciConnEvent): Promise<T> {
+  public async waitEvent<T extends { connectionHandle: number }>(params: {
+    connectionHandle: number;
+    event: HciConnEvent;
+    timeoutMs?: number;
+  }): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const cleanup = () => {
         clearTimeout(timerId);
-        this.off(event, onEvent);
+        this.off(params.event, onEvent);
         this.off('DisconnectionComplete', onDisconnected);
       };
       const onEvent = (err: Error | null, res: T) => {
-        if (res.connectionHandle === connectionHandle) {
+        if (res.connectionHandle === params.connectionHandle) {
           cleanup();
           err ? reject(err) : resolve(res);
         }
@@ -1165,13 +1183,13 @@ export class Hci extends EventEmitter {
         reject(makeParserError(HciParserErrorType.Timeout));
       };
       const onDisconnected = (err: Error | null, event: DisconnectionCompleteEvent) => {
-        if (connectionHandle === event.connectionHandle) {
+        if (params.connectionHandle === event.connectionHandle) {
           cleanup();
           reject(new HciError(event.reason.code));
         }
       };
-      const timerId = setTimeout(onTimeout, this.cmd.timeout);
-      this.on(event, onEvent);
+      const timerId = setTimeout(onTimeout, params.timeoutMs ?? this.cmd.timeout);
+      this.on(params.event, onEvent);
       this.on('DisconnectionComplete', onDisconnected);
     });
   }
