@@ -47,14 +47,14 @@ export interface LeSupportedFeaturesInfo {
   lePowerControlRequest:                      boolean;
   lePowerChangeIndication:                    boolean;
   lePathLossMonitoring:                       boolean;
-  PeriodicAdvertisingAdiSupport:              boolean;
-  ConnectionSubrating:                        boolean;
-  ConnectionSubratingHostSupport:             boolean;
-  ChannelClassification:                      boolean;
-  AdvertisingCodingSelection:                 boolean;
-  AdvertisingCodingSelectionHostSupport:      boolean;
-  PeriodicAdvertisingWithResponsesAdvertiser: boolean;
-  PeriodicAdvertisingWithResponsesScanner:    boolean;
+  periodicAdvertisingAdiSupport:              boolean;
+  connectionSubrating:                        boolean;
+  connectionSubratingHostSupport:             boolean;
+  channelClassification:                      boolean;
+  advertisingCodingSelection:                 boolean;
+  advertisingCodingSelectionHostSupport:      boolean;
+  periodicAdvertisingWithResponsesAdvertiser: boolean;
+  periodicAdvertisingWithResponsesScanner:    boolean;
 }
 
 export class LeSupportedFeatures {
@@ -102,14 +102,14 @@ export class LeSupportedFeatures {
       lePowerControlRequest:                      bitGet(mask, 33n),
       lePowerChangeIndication:                    bitGet(mask, 34n),
       lePathLossMonitoring:                       bitGet(mask, 35n),
-      PeriodicAdvertisingAdiSupport:              bitGet(mask, 36n),
-      ConnectionSubrating:                        bitGet(mask, 37n),
-      ConnectionSubratingHostSupport:             bitGet(mask, 38n),
-      ChannelClassification:                      bitGet(mask, 39n),
-      AdvertisingCodingSelection:                 bitGet(mask, 40n),
-      AdvertisingCodingSelectionHostSupport:      bitGet(mask, 41n),
-      PeriodicAdvertisingWithResponsesAdvertiser: bitGet(mask, 43n),
-      PeriodicAdvertisingWithResponsesScanner:    bitGet(mask, 44n),
+      periodicAdvertisingAdiSupport:              bitGet(mask, 36n),
+      connectionSubrating:                        bitGet(mask, 37n),
+      connectionSubratingHostSupport:             bitGet(mask, 38n),
+      channelClassification:                      bitGet(mask, 39n),
+      advertisingCodingSelection:                 bitGet(mask, 40n),
+      advertisingCodingSelectionHostSupport:      bitGet(mask, 41n),
+      periodicAdvertisingWithResponsesAdvertiser: bitGet(mask, 43n),
+      periodicAdvertisingWithResponsesScanner:    bitGet(mask, 44n),
     });
   }
 
