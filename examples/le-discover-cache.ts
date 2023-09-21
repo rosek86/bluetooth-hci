@@ -77,8 +77,6 @@ async function startScanning(gap: GapCentral) {
         console.log(`Connected to ${event.address.toString()}`);
 
         const versionInformation = gap.getRemoteVersionInformation(event.connectionHandle);
-        console.log('Manufacturer: ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
-
         const storeValue = GapProfileStorage.loadProfile(event.address);
 
         console.log('Discovering...');
@@ -87,10 +85,16 @@ async function startScanning(gap: GapCentral) {
         const profile = await gatt.discover();
         console.log('Discovered');
 
+        console.log('Manufacturer (RF):   ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
+        const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
+                           storeValue.scanResponse?.data?.manufacturerData?.ident;
+        if (identifier) {
+          console.log('Manufacturer (PROD): ', chalk.blue(Utils.manufacturerNameFromCode(identifier)));
+        }
         console.log('Disconnecting...');
         await hci.disconnect(event.connectionHandle);
 
-        amendProfileWithUuidNames(profile);
+        amendProfileWithUuidNames(profile); // optional
         GapProfileStorage.saveProfile(event.address, profile);
 
         console.log('writing gatt-profiles.json', GapProfileStorage.Size);
