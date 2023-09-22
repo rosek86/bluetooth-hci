@@ -88,7 +88,7 @@ export abstract class NbleGapCentral {
   protected async onAdvert(_: GapAdvertReport): Promise<void> {}
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       this.onConnected(event),
       Promise.resolve().then(() => {
         if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === true) {
@@ -99,13 +99,18 @@ export abstract class NbleGapCentral {
         this.onServicesDiscovered(event, gatt);
       }),
     ]);
+    for (const [i, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        console.log(i, result.reason);
+      }
+    }
   }
   protected async onConnected(_: GapConnectEvent): Promise<void> {}
 
   protected async onServicesDiscovered(_e: GapConnectEvent, _p: GattClient): Promise<void> {}
 
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       this.onDisconnected(reason),
       Promise.resolve().then(() => {
         if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === false) {
@@ -113,15 +118,28 @@ export abstract class NbleGapCentral {
         }
       }),
     ]);
+    for (const [i, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        console.log(i, result.reason);
+      }
+    }
   }
   protected async onDisconnected(_: DisconnectionCompleteEvent): Promise<void> {}
 
   private async _onConnectionCancelled(): Promise<void> {
-    if (this.options.autoscan) {
-      await this.startScanning()
-        .catch((err) => console.log('connection cancelled - start scanning', err));
+    const results = await Promise.allSettled([
+      this.onConnectionCancelled(),
+      Promise.resolve().then(() => {
+        if (this.options.autoscan) {
+          return this.startScanning();
+        }
+      }),
+    ]);
+    for (const [i, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        console.log(i, result.reason);
+      }
     }
-    await this.onConnectionCancelled();
   }
   protected async onConnectionCancelled(): Promise<void> {}
 }
