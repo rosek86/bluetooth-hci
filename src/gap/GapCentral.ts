@@ -197,47 +197,56 @@ export class GapCentral extends EventEmitter {
   }
 
   public async startScanning(opts?: GapScanStartOptions): Promise<void> {
-    if (this.scanning === true) {
-      return;
-    }
-
-    const filterDuplicates = opts?.filterDuplicates ?? LeScanFilterDuplicates.Disabled;
-    const durationMs       = opts?.durationMs       ?? 0;
-    const periodSec        = opts?.periodSec        ?? 0;
-
-    if (this.extended) {
-      await this.hci.leSetExtendedScanEnable({
-        enable: true, filterDuplicates, durationMs, periodSec,
-      });
-    } else {
-      if (durationMs > 0) {
-        setTimeout(() => this.onLeScanTimeout, durationMs);
-      }
-      const filterDuplicatesEnabled = filterDuplicates !== LeScanFilterDuplicates.Disabled;
-      await this.hci.leSetScanEnable(true, filterDuplicatesEnabled);
-    }
-
+    if (this.scanning === true) { return; }
     this.scanning = true;
-    this.emit('GapLeScanState', true);
+
+    try {
+      const filterDuplicates = opts?.filterDuplicates ?? LeScanFilterDuplicates.Disabled;
+      const durationMs       = opts?.durationMs       ?? 0;
+      const periodSec        = opts?.periodSec        ?? 0;
+
+      if (this.extended) {
+        await this.hci.leSetExtendedScanEnable({
+          enable: true, filterDuplicates, durationMs, periodSec,
+        });
+      } else {
+        if (durationMs > 0) {
+          setTimeout(() => this.onLeScanTimeout, durationMs);
+        }
+        const filterDuplicatesEnabled = filterDuplicates !== LeScanFilterDuplicates.Disabled;
+        await this.hci.leSetScanEnable(true, filterDuplicatesEnabled);
+      }
+
+      this.emit('GapLeScanState', true);
+    } catch (e) {
+      debug(e);
+      this.scanning = false;
+      throw e;
+    }
   }
 
   public async stopScanning(): Promise<void> {
-    if (this.scanning === false) {
-      return;
-    }
-
-    if (this.extended) {
-      await this.hci.leSetExtendedScanEnable({ enable: false });
-    } else {
-      await this.hci.leSetScanEnable(false);
-    }
-
+    if (this.scanning === false) { return; }
     this.scanning = false;
-    this.emit('GapLeScanState', false);
+
+    try {
+      if (this.extended) {
+        await this.hci.leSetExtendedScanEnable({ enable: false });
+      } else {
+        await this.hci.leSetScanEnable(false);
+      }
+
+      this.emit('GapLeScanState', false);
+    } catch (e) {
+      debug(e);
+      this.scanning = true;
+      throw e;
+    }
   }
 
   public async connect(params: GapConnectParams, timeoutMs?: number): Promise<void> {
     if (this.pendingCreateConnection) {
+      debug('Connection already in progress');
       throw new Error('Connection already in progress');
     }
     this.pendingCreateConnection = {};
@@ -275,6 +284,7 @@ export class GapCentral extends EventEmitter {
       }
 
       if (timeoutMs) {
+        debug('Connection timeout', timeoutMs);
         this.pendingCreateConnection.timeoutId = setTimeout(() => {
           this.hci.leCreateConnectionCancel()
             .then(() => {
@@ -295,8 +305,10 @@ export class GapCentral extends EventEmitter {
       }
 
       debug('Connecting to', params.peerAddress.toString());
-    } catch {
+    } catch (e) {
+      debug(e);
       this.pendingCreateConnection = null;
+      throw e;
     }
   }
 
@@ -375,7 +387,6 @@ export class GapCentral extends EventEmitter {
     try {
       debug('onLeConnectionCompleteCommon');
 
-      this.scanning = false;
       clearTimeout(this.pendingCreateConnection?.timeoutId);
       this.pendingCreateConnection = null;
 
@@ -391,8 +402,6 @@ export class GapCentral extends EventEmitter {
         this.emit('GapConnectionCancelled');
         return;
       }
-
-      this.scanning = false;
 
       const device: GapDeviceInfo = {
         connComplete: event,
@@ -508,8 +517,6 @@ export class GapCentral extends EventEmitter {
   };
 
   private onDisconnectionComplete = (_err: Error|null, event: DisconnectionCompleteEvent) => {
-    this.scanning = false;
-
     const device = this.connectedDevices.get(event.connectionHandle);
     if (device) {
       this.connectedDevices.delete(event.connectionHandle);

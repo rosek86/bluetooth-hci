@@ -9,7 +9,8 @@ import { Address } from "../utils/Address";
 
 export interface NbleGapCentralOptions {
   autoscan?: boolean;
-  scanOptions?: {
+  autoScanOptions?: {
+    scanWhenConnected?: boolean;
     parameters?: GapScanParamsOptions;
     start?: GapScanStartOptions;
   };
@@ -20,8 +21,10 @@ export abstract class NbleGapCentral {
 
   public constructor(protected hci: Hci, protected readonly options: NbleGapCentralOptions = {}) {
     options.autoscan = options.autoscan ?? true;
-    options.scanOptions = options.scanOptions ?? {
-      start: { filterDuplicates: LeScanFilterDuplicates.Enabled },
+    options.autoScanOptions = options.autoScanOptions ?? {};
+    options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
+    options.autoScanOptions.start = options.autoScanOptions.start ?? {
+      filterDuplicates: LeScanFilterDuplicates.Enabled,
     };
   
     this.gap = new GapCentral(hci, {
@@ -66,16 +69,16 @@ export abstract class NbleGapCentral {
     await this.hci.disconnect(connectionHandle);
   }
 
-  public async discover(params: { connectionHandle: number; address: Address}) {
+  public async discover(params: { connectionHandle: number; address: Address }) {
     const storeValue = GapProfileStorage.loadProfile(params.address);
     const att = this.gap.getAtt(params.connectionHandle);
     const gatt = new GattClient(att, storeValue?.profile);
     const profile = await gatt.discover();
     GapProfileStorage.saveProfile(params.address, profile);
-    return gatt; // TODO: deliver profile
+    return gatt;
   }
 
-  protected async _onAdvert(report: GapAdvertReport): Promise<void> {
+  private async _onAdvert(report: GapAdvertReport): Promise<void> {
     try {
       await this.onAdvert(report);
     } catch (e) {
@@ -85,26 +88,37 @@ export abstract class NbleGapCentral {
   protected async onAdvert(_: GapAdvertReport): Promise<void> {}
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
-    try {
-      await this.onConnected(event);
-    } catch (e) {
-      console.log(e);
-    }
+    await Promise.allSettled([
+      this.onConnected(event),
+      Promise.resolve().then(() => {
+        if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === true) {
+          return this.startScanning();
+        }
+      }),
+      this.discover(event).then((gatt) => {
+        this.onServicesDiscovered(event, gatt);
+      }),
+    ]);
   }
   protected async onConnected(_: GapConnectEvent): Promise<void> {}
 
+  protected async onServicesDiscovered(_e: GapConnectEvent, _p: GattClient): Promise<void> {}
+
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    if (this.options.autoscan) {
-      this.startScanning()
-        .catch((err) => console.log('disconnected', err));
-    }
-    await this.onDisconnected(reason);
+    await Promise.allSettled([
+      this.onDisconnected(reason),
+      Promise.resolve().then(() => {
+        if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === false) {
+          return this.startScanning();
+        }
+      }),
+    ]);
   }
   protected async onDisconnected(_: DisconnectionCompleteEvent): Promise<void> {}
 
   private async _onConnectionCancelled(): Promise<void> {
     if (this.options.autoscan) {
-      this.startScanning()
+      await this.startScanning()
         .catch((err) => console.log('connection cancelled - start scanning', err));
     }
     await this.onConnectionCancelled();

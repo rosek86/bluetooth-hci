@@ -12,6 +12,7 @@ import { GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
 import { GapProfileStorage } from '../src/gap/GapProfileStorage';
 import { NbleGapCentral } from '../src/nble/NbleGapCentral';
 import { Hci } from '../src/hci/Hci';
+import { GattClient } from '../src/gatt/GattClient';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -20,7 +21,8 @@ class App extends NbleGapCentral {
   constructor(hci: Hci) {
     super(hci, {
       autoscan: true,
-      scanOptions: {
+      autoScanOptions: {
+        scanWhenConnected: false,
         parameters: {
           ownAddressType: LeOwnAddressType.RandomDeviceAddress,
           scanningFilterPolicy: LeScanningFilterPolicy.All,
@@ -47,6 +49,7 @@ class App extends NbleGapCentral {
         return;
       }
       if (report.connectableAdvertising === false) { return; }
+
       if (this.state !== 'idle') { return; }
       this.state = 'connecting';
 
@@ -56,6 +59,44 @@ class App extends NbleGapCentral {
     } catch (e) {
       console.log(e);
       this.state = 'idle';
+    }
+  }
+
+  protected async onConnected(event: GapConnectEvent): Promise<void> {
+    this.state = 'connected';
+    console.log(`Connected to ${event.address.toString()}`);
+  }
+
+  protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
+    console.log('Discovered services on', event.address.toString());
+
+    this.printManufacturerInfo(event);
+
+    console.log('Disconnecting...');
+    await this.disconnect(event.connectionHandle);
+
+    await this.saveProfilesToFile();
+  }
+
+  protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
+    console.log('Disconnected', reason.connectionHandle, reason.reason);
+    this.state = 'idle';
+  }
+
+  protected async onConnectionCancelled(): Promise<void> {
+    console.log('Connection cancelled');
+    this.state = 'idle';
+  }
+
+  private printManufacturerInfo(event: GapConnectEvent) {
+    const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
+    console.log('Manufacturer (RF):   ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
+
+    const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
+    const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
+                       storeValue.scanResponse?.data?.manufacturerData?.ident;
+    if (identifier) {
+      console.log('Manufacturer (PROD): ', chalk.blue(Utils.manufacturerNameFromCode(identifier)));
     }
   }
 
@@ -70,28 +111,8 @@ class App extends NbleGapCentral {
     this.advReportStorage.set(numericAddress, storageValue);
   }
 
-  protected async onConnected(event: GapConnectEvent): Promise<void> {
+  private async saveProfilesToFile() {
     try {
-      this.state = 'connected';
-      console.log(`Connected to ${event.address.toString()}`);
-
-      console.log('Discovering...');
-      await this.discover(event);
-      console.log('Discovered');
-
-      const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
-      console.log('Manufacturer (RF):   ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
-
-      const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
-      const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
-                         storeValue.scanResponse?.data?.manufacturerData?.ident;
-      if (identifier) {
-        console.log('Manufacturer (PROD): ', chalk.blue(Utils.manufacturerNameFromCode(identifier)));
-      }
-
-      console.log('Disconnecting...');
-      await this.disconnect(event.connectionHandle);
-
       const entries = Array.from(GapProfileStorage.Storage.entries()).map(([key, entry]) => {
         return {
           address: entry.address,
@@ -101,19 +122,10 @@ class App extends NbleGapCentral {
         }
       });
       console.log('writing gatt-profiles.json', GapProfileStorage.Size);
-      fs.writeFile('gatt-profiles.json', JSON.stringify(entries, null, 2))
-        .catch((err) => console.log(err));
-    } catch (err) {
-      console.log('on connected', err);
+      await fs.writeFile('gatt-profiles.json', JSON.stringify(entries, null, 2));
+    } catch (e) {
+      console.log(e);
     }
-  }
-
-  protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    this.state = 'idle';
-  }
-
-  protected async onConnectionCancelled(): Promise<void> {
-    this.state = 'idle';
   }
 }
 
