@@ -442,14 +442,15 @@ export class GapCentral extends EventEmitter {
     //       problem occurs on nRF52840 Dongle with HCI controller
 
     const timeoutMs = connComplete.connectionIntervalMs * 10;
-    const version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs)
-      .catch((err) => {
-        debug(chalk.red('Failed to read remote version information'));
-        debug(err);
-        return this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
-      });
 
-    const features = await this.hci.leReadRemoteFeaturesAwait(connComplete.connectionHandle);
+    let version: ReadRemoteVersionInformationCompleteEvent;
+    try {
+      version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
+    } catch {
+      version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
+    }
+
+    const features = await this.hci.leReadRemoteFeaturesAwait(connComplete.connectionHandle, timeoutMs);
 
     return { version, features };
   }

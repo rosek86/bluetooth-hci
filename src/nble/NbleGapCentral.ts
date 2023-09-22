@@ -1,7 +1,10 @@
+import { Utils } from "../../examples/utils/Utils";
 import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral";
+import { GapProfileStorage } from "../gap/GapProfileStorage";
+import { GattClient } from "../gatt/GattClient";
 import { Hci } from "../hci/Hci";
 import { DisconnectionCompleteEvent } from "../hci/HciEvent";
-import { LeScanFilterDuplicates } from "../hci/HciLeController";
+import { LePhy, LeScanFilterDuplicates } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
 
 export interface NbleGapCentralOptions {
@@ -33,6 +36,11 @@ export abstract class NbleGapCentral {
   }
 
   public async start() {
+    // TODO: migrate default setup from examples
+    await Utils.defaultAdapterSetup(this.hci);
+
+    await this.hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
+
     await this.gap.init();
     
     if (this.options.autoscan) {
@@ -58,6 +66,15 @@ export abstract class NbleGapCentral {
     await this.hci.disconnect(connectionHandle);
   }
 
+  public async discover(params: { connectionHandle: number; address: Address}) {
+    const storeValue = GapProfileStorage.loadProfile(params.address);
+    const att = this.gap.getAtt(params.connectionHandle);
+    const gatt = new GattClient(att, storeValue?.profile);
+    const profile = await gatt.discover();
+    GapProfileStorage.saveProfile(params.address, profile);
+    return gatt; // TODO: deliver profile
+  }
+
   protected async _onAdvert(report: GapAdvertReport): Promise<void> {
     try {
       await this.onAdvert(report);
@@ -65,7 +82,7 @@ export abstract class NbleGapCentral {
       console.log(e);
     }
   }
-  protected async onAdvert(report: GapAdvertReport): Promise<void> {}
+  protected async onAdvert(_: GapAdvertReport): Promise<void> {}
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
     try {
@@ -74,7 +91,7 @@ export abstract class NbleGapCentral {
       console.log(e);
     }
   }
-  protected async onConnected(event: GapConnectEvent): Promise<void> {}
+  protected async onConnected(_: GapConnectEvent): Promise<void> {}
 
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
     if (this.options.autoscan) {
@@ -83,7 +100,7 @@ export abstract class NbleGapCentral {
     }
     await this.onDisconnected(reason);
   }
-  protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {}
+  protected async onDisconnected(_: DisconnectionCompleteEvent): Promise<void> {}
 
   private async _onConnectionCancelled(): Promise<void> {
     if (this.options.autoscan) {

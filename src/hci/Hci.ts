@@ -430,10 +430,11 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leReadRemoteFeaturesAwait(connectionHandle: number): Promise<LeReadRemoteFeaturesCompleteEvent> {
+  public async leReadRemoteFeaturesAwait(connectionHandle: number, timeoutMs: number): Promise<LeReadRemoteFeaturesCompleteEvent> {
     const waitEvent = this.waitEvent<LeReadRemoteFeaturesCompleteEvent>({
       connectionHandle,
       event: 'LeReadRemoteFeaturesComplete',
+      timeoutMs,
     });
     await this.leReadRemoteFeatures(connectionHandle);
     return await waitEvent;
