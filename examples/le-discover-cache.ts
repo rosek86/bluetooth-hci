@@ -20,7 +20,7 @@ class App extends NbleGapCentral {
 
   constructor(hci: Hci) {
     super(hci, {
-      autoscan: true,
+      autoScan: true,
       autoScanOptions: {
         scanWhenConnected: false,
         parameters: {
@@ -140,7 +140,7 @@ class App extends NbleGapCentral {
   }
 })();
 
-process.on("unhandledRejection", (error) => {
-  console.error(error); // This prints error with stack included (as for normal errors)
-  throw error; // Following best practices re-throw error and let the process exit with error code
+process.on('unhandledRejection', (error) => {
+  console.error('unhandledRejection', error);
+  throw error;
 });

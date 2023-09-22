@@ -8,7 +8,7 @@ import { LePhy, LeScanFilterDuplicates } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
 
 export interface NbleGapCentralOptions {
-  autoscan?: boolean;
+  autoScan?: boolean;
   autoScanOptions?: {
     scanWhenConnected?: boolean;
     parameters?: GapScanParamsOptions;
@@ -20,7 +20,7 @@ export abstract class NbleGapCentral {
   protected readonly gap: GapCentral;
 
   public constructor(protected hci: Hci, protected readonly options: NbleGapCentralOptions = {}) {
-    options.autoscan = options.autoscan ?? true;
+    options.autoScan = options.autoScan ?? true;
     options.autoScanOptions = options.autoScanOptions ?? {};
     options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
     options.autoScanOptions.start = options.autoScanOptions.start ?? {
@@ -46,14 +46,20 @@ export abstract class NbleGapCentral {
 
     await this.gap.init();
     
-    if (this.options.autoscan) {
+    if (this.options.autoScan) {
       await this.startScanning();
     }
   }
 
-  public async startScanning(opts?: GapScanParamsOptions) {
-    await this.gap.setScanParameters(opts);
-    await this.gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
+  public async startScanning(params?: GapScanParamsOptions, start?: GapScanStartOptions) {
+    if (!params && this.options.autoScan && this.options.autoScanOptions?.parameters) {
+      params = this.options.autoScanOptions.parameters;
+    }
+    if (!start && this.options.autoScan && this.options.autoScanOptions?.start) {
+      start = this.options.autoScanOptions.start;
+    }
+    await this.gap.setScanParameters(params);
+    await this.gap.startScanning(start);
   }
 
   public async stopScanning() {
@@ -62,7 +68,14 @@ export abstract class NbleGapCentral {
 
   public async connect(address: Address, connectionTimeoutMs: number) {
     await this.stopScanning();
-    await this.gap.connect({ peerAddress: address }, connectionTimeoutMs);
+    try {
+      await this.gap.connect({ peerAddress: address }, connectionTimeoutMs);
+    } catch (e) {
+      if (this.options.autoScan) {
+        await this.startScanning();
+      }
+      throw e;
+    }
   }
 
   public async disconnect(connectionHandle: number) {
@@ -91,7 +104,7 @@ export abstract class NbleGapCentral {
     const results = await Promise.allSettled([
       this.onConnected(event),
       Promise.resolve().then(() => {
-        if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === true) {
+        if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === true) {
           return this.startScanning();
         }
       }),
@@ -113,7 +126,7 @@ export abstract class NbleGapCentral {
     const results = await Promise.allSettled([
       this.onDisconnected(reason),
       Promise.resolve().then(() => {
-        if (this.options.autoscan && this.options.autoScanOptions?.scanWhenConnected === false) {
+        if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === false) {
           return this.startScanning();
         }
       }),
@@ -130,7 +143,7 @@ export abstract class NbleGapCentral {
     const results = await Promise.allSettled([
       this.onConnectionCancelled(),
       Promise.resolve().then(() => {
-        if (this.options.autoscan) {
+        if (this.options.autoScan) {
           return this.startScanning();
         }
       }),
