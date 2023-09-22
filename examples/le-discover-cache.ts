@@ -46,25 +46,33 @@ class App extends NbleGapCentral {
       this.saveAdvertReport(report);
 
       if (report.scanResponse === false && report.scannableAdvertising === true) {
+        // Wait for scan response
         return;
       }
-      if (report.connectableAdvertising === false) { return; }
+      if (report.connectableAdvertising === false) {
+        // Skip non-connectable devices
+        return;
+      }
 
+      // Prevent multiple connections requests
       if (this.state !== 'idle') { return; }
       this.state = 'connecting';
 
-      const connectionTimeoutMs = 2000;
-      await this.connect(report.address, connectionTimeoutMs);
-      console.log(`Connecting to ${report.address.toString()}`);
+      // Connect to device with timeout
+      await this.connect(report.address, { connectionTimeoutMs: 2000 });
+      console.log(`Connecting to ${report.address.toString()}...`);
+
     } catch (e) {
-      console.log(e);
+      console.log(`Error while connecting to ${report.address.toString()}`, e);
       this.state = 'idle';
     }
   }
 
   protected async onConnected(event: GapConnectEvent): Promise<void> {
+    // Device connected, discovering services
     this.state = 'connected';
     console.log(`Connected to ${event.address.toString()}`);
+    console.log(`Discovering services on ${event.address.toString()}...`);
   }
 
   protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
@@ -84,7 +92,7 @@ class App extends NbleGapCentral {
   }
 
   protected async onConnectionCancelled(): Promise<void> {
-    console.log('Connection cancelled');
+    console.log('Connection cancelled (timeout)');
     this.state = 'idle';
   }
 

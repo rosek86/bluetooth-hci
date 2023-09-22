@@ -66,10 +66,10 @@ export abstract class NbleGapCentral {
     await this.gap.stopScanning();
   }
 
-  public async connect(address: Address, connectionTimeoutMs: number) {
+  public async connect(address: Address, opts?: { connectionTimeoutMs?: number }) {
     await this.stopScanning();
     try {
-      await this.gap.connect({ peerAddress: address }, connectionTimeoutMs);
+      await this.gap.connect({ peerAddress: address }, opts?.connectionTimeoutMs);
     } catch (e) {
       if (this.options.autoScan) {
         await this.startScanning();
