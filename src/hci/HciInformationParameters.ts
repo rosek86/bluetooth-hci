@@ -507,7 +507,7 @@ export interface LocalSupportedCommandsFields {
   readLocalSupportedControllerDelay:                      boolean;
   configureDataPath:                                      boolean;
   leSetDataRelatedAddressChanges:                         boolean;
-  SetMinEncryptionKeySize:                                boolean;
+  setMinEncryptionKeySize:                                boolean;
   leSetDefaultSubrate:                                    boolean;
   leSubrateRequest:                                       boolean;
   leSetExtendedAdvertisingParametersV2:                   boolean;
@@ -875,7 +875,7 @@ export class LocalSupportedCommands {
       readLocalSupportedControllerDelay:                      bitGet(params[45], 4),
       configureDataPath:                                      bitGet(params[45], 5),
       leSetDataRelatedAddressChanges:                         bitGet(params[45], 6),
-      SetMinEncryptionKeySize:                                bitGet(params[45], 7),
+      setMinEncryptionKeySize:                                bitGet(params[45], 7),
       leSetDefaultSubrate:                                    bitGet(params[46], 0),
       leSubrateRequest:                                       bitGet(params[46], 1),
       leSetExtendedAdvertisingParametersV2:                   bitGet(params[46], 2),

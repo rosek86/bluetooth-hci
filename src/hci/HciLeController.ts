@@ -159,13 +159,13 @@ export interface LeEvents {
   pathLossThreshold:                          boolean;
   transmitPowerReporting:                     boolean;
   bigInfoAdvertisingReport:                   boolean;
-  SubrateChange:                              boolean;
-  PeriodicAdvertisingSyncEstablishedV2:       boolean;
-  PeriodicAdvertisingReportV2:                boolean;
-  PeriodicAdvertisingSyncTransferReceivedV2:  boolean;
-  PeriodicAdvertisingSubeventDataRequest:     boolean;
-  PeriodicAdvertisingResponseReport:          boolean;
-  EnhancedConnectionCompleteV2:               boolean;
+  subrateChange:                              boolean;
+  periodicAdvertisingSyncEstablishedV2:       boolean;
+  periodicAdvertisingReportV2:                boolean;
+  periodicAdvertisingSyncTransferReceivedV2:  boolean;
+  periodicAdvertisingSubeventDataRequest:     boolean;
+  periodicAdvertisingResponseReport:          boolean;
+  enhancedConnectionCompleteV2:               boolean;
 }
 
 export class LeSetEventsMask {
@@ -205,13 +205,13 @@ export class LeSetEventsMask {
     mask = bitSet(mask, 31n, events.pathLossThreshold);
     mask = bitSet(mask, 32n, events.transmitPowerReporting);
     mask = bitSet(mask, 33n, events.bigInfoAdvertisingReport);
-    mask = bitSet(mask, 34n, events.SubrateChange);
-    mask = bitSet(mask, 35n, events.PeriodicAdvertisingSyncEstablishedV2);
-    mask = bitSet(mask, 36n, events.PeriodicAdvertisingReportV2);
-    mask = bitSet(mask, 37n, events.PeriodicAdvertisingSyncTransferReceivedV2);
-    mask = bitSet(mask, 38n, events.PeriodicAdvertisingSubeventDataRequest);
-    mask = bitSet(mask, 39n, events.PeriodicAdvertisingResponseReport);
-    mask = bitSet(mask, 40n, events.EnhancedConnectionCompleteV2);
+    mask = bitSet(mask, 34n, events.subrateChange);
+    mask = bitSet(mask, 35n, events.periodicAdvertisingSyncEstablishedV2);
+    mask = bitSet(mask, 36n, events.periodicAdvertisingReportV2);
+    mask = bitSet(mask, 37n, events.periodicAdvertisingSyncTransferReceivedV2);
+    mask = bitSet(mask, 38n, events.periodicAdvertisingSubeventDataRequest);
+    mask = bitSet(mask, 39n, events.periodicAdvertisingResponseReport);
+    mask = bitSet(mask, 40n, events.enhancedConnectionCompleteV2);
 
     const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
