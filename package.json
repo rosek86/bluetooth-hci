@@ -1,5 +1,5 @@
 {
-  "name": "@rosek86/bluetooth-hci",
+  "name": "bluetooth-hci",
   "version": "0.0.1",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
