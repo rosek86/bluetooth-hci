@@ -1,4 +1,4 @@
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 
 import { GapCentral } from '../src/gap/GapCentral';
 import { GattClient } from '../src/gatt/GattClient';
@@ -9,8 +9,8 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
-    await Utils.defaultAdapterSetup(adapter.Hci);
+    const adapter = await HciAdapterUtils.createHciAdapter();
+    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
 
     const gap = new GapCentral(adapter.Hci);
     await gap.init();
@@ -47,7 +47,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
         event.connectionHandle,
         event.connectionParams,
         event.versionInfo,
-        Utils.manufacturerNameFromCode(event.versionInfo.manufacturerName),
+        HciAdapterUtils.manufacturerNameFromCode(event.versionInfo.manufacturerName),
         event.leRemoteFeatures.toString(),
       );
 

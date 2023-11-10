@@ -1,4 +1,4 @@
-import { entries } from '../../assigned numbers/16-bit UUID Numbers.json';
+import { entries } from '../assigned numbers/16-bit UUID Numbers.json';
 import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory';
 
 interface Entries {

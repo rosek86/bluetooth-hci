@@ -1,4 +1,4 @@
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 
 import {
   LePhy,
@@ -12,10 +12,10 @@ import { GapCentral } from '../src/gap/GapCentral';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
+    const adapter = await HciAdapterUtils.createHciAdapter();
     const hci = adapter.Hci;
 
-    await Utils.defaultAdapterSetup(hci);
+    await HciAdapterUtils.defaultAdapterSetup(hci);
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
     const gap = new GapCentral(hci);

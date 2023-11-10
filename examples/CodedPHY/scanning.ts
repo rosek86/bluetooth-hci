@@ -1,4 +1,4 @@
-import { Utils } from '../utils/Utils';
+import { HciAdapterUtils } from '../../src/utils/HciAdapterUtils';
 import { Address } from '../../src/utils/Address';
 
 import { GapCentral } from '../../src/gap/GapCentral';
@@ -13,8 +13,8 @@ import {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
-    await Utils.defaultAdapterSetup(adapter.Hci);
+    const adapter = await HciAdapterUtils.createHciAdapter();
+    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
     const hci = adapter.Hci;
 
     await hci.leAddDeviceToWhiteList({

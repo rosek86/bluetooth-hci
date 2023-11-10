@@ -1,4 +1,4 @@
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
 
@@ -18,10 +18,10 @@ import { Att } from '../src/att/Att';
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
+    const adapter = await HciAdapterUtils.createHciAdapter();
     const hci = adapter.Hci;
 
-    await Utils.defaultAdapterSetup(hci);
+    await HciAdapterUtils.defaultAdapterSetup(hci);
 
     const l2cap = new L2CAP(hci);
     await l2cap.init();

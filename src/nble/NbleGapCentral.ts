@@ -1,4 +1,4 @@
-import { Utils } from "../../examples/utils/Utils";
+import { HciAdapterUtils } from "../utils/HciAdapterUtils";
 import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral";
 import { GapProfileStorage } from "../gap/GapProfileStorage";
 import { GattClient } from "../gatt/GattClient";
@@ -40,7 +40,7 @@ export abstract class NbleGapCentral {
 
   public async start() {
     // TODO: migrate default setup from examples
-    await Utils.defaultAdapterSetup(this.hci);
+    await HciAdapterUtils.defaultAdapterSetup(this.hci);
 
     await this.hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 

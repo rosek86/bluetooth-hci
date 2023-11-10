@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import chalk from 'chalk';
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 import {
   LeOwnAddressType,
   LeScanningFilterPolicy,
@@ -98,13 +98,13 @@ class App extends NbleGapCentral {
 
   private printManufacturerInfo(event: GapConnectEvent) {
     const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
-    console.log('Manufacturer (RF):   ', chalk.blue(Utils.manufacturerNameFromCode(versionInformation.manufacturerName)));
+    console.log('Manufacturer (RF):   ', chalk.blue(HciAdapterUtils.manufacturerNameFromCode(versionInformation.manufacturerName)));
 
     const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
     const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
                        storeValue.scanResponse?.data?.manufacturerData?.ident;
     if (identifier) {
-      console.log('Manufacturer (PROD): ', chalk.blue(Utils.manufacturerNameFromCode(identifier)));
+      console.log('Manufacturer (PROD): ', chalk.blue(HciAdapterUtils.manufacturerNameFromCode(identifier)));
     }
   }
 
@@ -139,7 +139,7 @@ class App extends NbleGapCentral {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
+    const adapter = await HciAdapterUtils.createHciAdapter();
     const app = new App(adapter.Hci);
     await app.start();
   } catch (e) {

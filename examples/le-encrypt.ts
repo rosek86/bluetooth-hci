@@ -1,8 +1,8 @@
 import { LeDhKeyV2KeyType } from '../src/hci/HciLeController';
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 
 (async () => {
-  const adapter = await Utils.createHciAdapter();
+  const adapter = await HciAdapterUtils.createHciAdapter();
   const hci = adapter.Hci;
 
   const commands = await hci.readLocalSupportedCommands();

@@ -1,4 +1,4 @@
-# n-ble - Bluetooth 5 Host Library Documentation
+# bluetooth-hci
 
 This library is written in TypeScript and implements the Bluetooth 5 host. 
 

@@ -3,9 +3,9 @@ import { Address } from '../../src/utils/Address';
 import { ArgsParser, DefaultInputArgs } from './ArgsParser';
 import { HciAdapter, HciAdapterFactory } from './HciAdapterFactory';
 
-import companies from '../../assigned numbers/Company Identifiers.json';
+import companies from '../assigned numbers/Company Identifiers.json';
 
-export class Utils {
+export class HciAdapterUtils {
   public static async createHciAdapter(defaults?: DefaultInputArgs): Promise<HciAdapter> {
     const argsParser = new ArgsParser();
 

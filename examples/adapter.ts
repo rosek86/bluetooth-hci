@@ -1,8 +1,8 @@
 import { Adapter } from '../facades/pc-ble-driver-js/adapter';
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 
 (async () => {
-  const hciAdapter = await Utils.createHciAdapter();
+  const hciAdapter = await HciAdapterUtils.createHciAdapter();
 
   const adapter = new Adapter(hciAdapter);
   await adapter.open();

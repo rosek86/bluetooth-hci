@@ -1,6 +1,6 @@
-# Getting Started with n-ble Library
+# Getting Started with bluetooth-hci Library
 
-Follow this guide to set up and start using the `n-ble` library.
+Follow this guide to set up and start using the `bluetooth-hci` library.
 
 ## 1. Order nRF52840 Dongle
 
@@ -59,4 +59,4 @@ Execute the example with:
 npx ts-node examples/le-scanner.ts
 ```
 
-With these steps, you're now set up and running with the `n-ble` library!
+With these steps, you're now set up and running with the `bluetooth-hci` library!

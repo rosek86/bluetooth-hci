@@ -1,6 +1,6 @@
 {
-  "name": "@rosek86/n-ble",
-  "version": "1.0.0",
+  "name": "@rosek86/bluetooth-hci",
+  "version": "0.0.1",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
   "author": {
@@ -11,13 +11,17 @@
   "engines": {
     "node": ">= 18.0.0"
   },
+  "files": [
+    "lib/*"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/rosek86/n-ble"
+    "url": "https://github.com/rosek86/bluetooth-hci"
   },
   "scripts": {
     "start": "node lib/index.js",
     "build": "tsc",
+    "build.dev": "tsc -p tsconfig.dev.json",
     "watch": "tsc -w",
     "test": "mocha"
   },

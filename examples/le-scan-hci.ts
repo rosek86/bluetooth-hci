@@ -1,4 +1,4 @@
-import { Utils } from './utils/Utils';
+import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 import { AdvData } from '../src/gap/AdvData';
 
 import {
@@ -9,8 +9,8 @@ import {
 
 (async () => {
   try {
-    const adapter = await Utils.createHciAdapter();
-    await Utils.defaultAdapterSetup(adapter.Hci);
+    const adapter = await HciAdapterUtils.createHciAdapter();
+    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
 
     await adapter.Hci.leSetScanParameters({
       type: LeScanType.Active,

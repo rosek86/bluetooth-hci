@@ -6,9 +6,9 @@ import { PortInfo } from '@serialport/bindings-interface';
 import { AutoDetectTypes } from '@serialport/bindings-cpp';
 
 import { EventEmitter } from 'events';
-import { Hci } from '../../src/hci/Hci';
-import { H4 } from '../../src/transport/H4';
-import { delay } from '../../src/utils/Utils';
+import { Hci } from '../hci/Hci';
+import { H4 } from '../transport/H4';
+import { delay } from './Utils';
 
 export interface AdapterSerialParams {
   type: 'serial';
