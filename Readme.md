@@ -1,12 +1,12 @@
 # bluetooth-hci
 
-NOTE: This is initial library version, simple functionalities like advertising and scanning are operational. It is possible to acquire establish connection but additional development is required to bring this library to production level.
+NOTE: This is the initial version of the library, with basic functionalities such as advertising and scanning operational. It is possible to establish a connection, but further development is required to bring this library to a production-ready level.
 
-The library implements Bluetooth 5 HCI host focusing mainly on Bluetooth LE.
+The library implements a Bluetooth 5 HCI host, focusing mainly on Bluetooth Low Energy (LE).
 
 ## Getting started
 
-The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply use the pre-compiled firmware located at `/zephyr/hci_uart/zephyr.hex`. Detailed description which explains how to prepare nRF52840 Dongle can be found  [here](docs/GettingStarted.md).
+The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply load the pre-compiled firmware located at `/zephyr/hci_uart/zephyr.hex`. A detailed description explaining how to prepare the nRF52840 Dongle can be found [here](docs/GettingStarted.md).
 
 ```
 npm install bluetooth-hci
@@ -28,7 +28,7 @@ import {
 
 (async () => {
   try {
-    const adapter = new HciAdapter(await createHciSerial(0, {}));
+    const adapter = new HciAdapter(await createHciSerial());
     await adapter.open();
 
     await adapter.defaultAdapterSetup();
@@ -59,19 +59,19 @@ import {
 })();
 ```
 
-Additional examples can be found in examples directory
+Additional examples are available in the 'examples' directory.
 
 ## Alternative setup options
 
-While the nRF52840 dongle offers an easy-to-use solution, there are other alternatives. However, keep in mind that these methods may depend on your operating system and might need additional development for full compatibility.
+While the nRF52840 dongle provides an easy-to-use solution, other alternatives are available. However, keep in mind that these methods may vary depending on your operating system and might require additional development to ensure full compatibility.
 
-1. **Linux HCI Interface**: This interface allows the use of the Linux Host Controller Interface for Bluetooth.
-2. **Standard Bluetooth USB Subsystem**: This provides a common interface for Bluetooth USB devices.
-3. **HCI Controller via UART**: This method requires either a direct UART connection or using a third-party UART to USB adapter.
+1. **Linux HCI Interface**: This interface enables the use of the Linux Host Controller Interface (HCI) for Bluetooth connectivity.
+2. **Standard Bluetooth USB Subsystem**: This offers a universal interface for Bluetooth USB devices.
+3. **HCI Controller via UART**: This method necessitates either a direct UART (Universal Asynchronous Receiver-Transmitter) connection or the use of a third-party UART-to-USB adapter.
 
 ## Run example
 
-Simple LE Bluetooth scanner
+Simple LE Bluetooth scanner:
 
 ```
 npx ts-node examples/le-scanner.ts
