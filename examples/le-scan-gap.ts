@@ -10,7 +10,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
+    await adapter.defaultAdapterSetup();
 
     const gap = new GapCentral(adapter.Hci);
     await gap.init();
@@ -47,7 +47,7 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
         event.connectionHandle,
         event.connectionParams,
         event.versionInfo,
-        HciAdapterUtils.manufacturerNameFromCode(event.versionInfo.manufacturerName),
+        adapter.manufacturerNameFromCode(event.versionInfo.manufacturerName),
         event.leRemoteFeatures.toString(),
       );
 

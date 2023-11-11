@@ -1,5 +1,7 @@
 # bluetooth-hci
 
+NOTE: This is very initial version, do not try it unless you'd like to help with library development.
+
 This library is written in TypeScript and implements the Bluetooth 5 host. 
 
 ## Getting Started

@@ -79,7 +79,7 @@ export class ArgsParser {
         type: 'serial',
         deviceId: args.deviceId,
         serial: {
-          path:     args.serialPath,
+          path:     args.serialPath ?? undefined,
           baudRate: args.serialBaudRate,
           dataBits: args.serialDataBits,
           parity:   args.serialParity,

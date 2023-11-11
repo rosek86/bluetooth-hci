@@ -10,7 +10,7 @@ import {
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
+    await adapter.defaultAdapterSetup();
 
     await adapter.Hci.leSetScanParameters({
       type: LeScanType.Active,

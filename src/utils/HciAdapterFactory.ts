@@ -1,19 +1,17 @@
 process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
 import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetooth-hci-socket';
 
-import { SerialPort, SerialPortOpenOptions } from 'serialport';
-import { PortInfo } from '@serialport/bindings-interface';
+import { SerialPortOpenOptions } from 'serialport';
 import { AutoDetectTypes } from '@serialport/bindings-cpp';
 
-import { EventEmitter } from 'events';
-import { Hci } from '../hci/Hci';
-import { H4 } from '../transport/H4';
 import { delay } from './Utils';
+import { HciAdapter, HciDevice } from './HciAdapter';
+import { SerialHciDevice, createHciSerial } from './SerialHciDevice';
 
 export interface AdapterSerialParams {
   type: 'serial';
   deviceId: number;
-  serial: Omit<SerialPortOpenOptions<AutoDetectTypes>, 'path'> & { path: string | null };
+  serial: Partial<SerialPortOpenOptions<AutoDetectTypes>>;
 }
 
 export interface AdapterUsbParams {
@@ -33,54 +31,6 @@ export interface AdapterNativeHciParams {
 }
 
 export type AdapterParams = AdapterSerialParams | AdapterUsbParams | AdapterNativeHciParams;
-
-export interface HciDevice {
-  open(): Promise<void>;
-  close(): Promise<void>;
-  write(data: Buffer): void;
-  on(evt: 'data', listener: (data: Buffer) => void): void;
-  on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
-}
-
-export class SerialHciDevice implements HciDevice {
-  private port: SerialPort;
-
-  constructor(options: SerialPortOpenOptions<AutoDetectTypes>) {
-    options.autoOpen = false;
-    options.parity = options.parity ?? 'none';
-    options.rtscts = options.rtscts ?? true;
-    options.baudRate = options.baudRate ?? 1_000_000;
-    options.dataBits = options.dataBits ?? 8;
-    options.stopBits = options.stopBits ?? 1;
-    this.port = new SerialPort(options);
-    this.port.on('error', (err) => console.log(err));
-    // this.port.on('data', (data) => console.log(data.toString('hex')));
-    this.port.on('close', () => console.log('close'));
-  }
-
-  async open() {
-    await new Promise<void>((resolve,  reject) => {
-      this.port.once('open', () => resolve());
-      this.port.open((err) => reject(err));
-    });
-  }
-
-  async close() {
-    await new Promise<void>((resolve,  reject) => {
-      this.port.close((err) => err ? reject(err) : resolve());
-    });
-  }
-
-  write(data: Buffer): void {
-    this.port.write(data);
-  }
-
-  on(evt: 'data', listener: (data: Buffer) => void): void;
-  on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
-  on(evt: any, listener: (data: any) => void): void {
-    this.port.on(evt, listener);
-  }
-}
 
 export class UsbHciSocket implements HciDevice {
   private port: BluetoothHciSocket;
@@ -147,52 +97,6 @@ export class NativeHciSocket implements HciDevice {
   }
 }
 
-export class HciAdapter extends EventEmitter {
-  private readonly hci: Hci;
-  private readonly h4: H4;
-
-  constructor(private device: HciDevice) {
-    super();
-
-    this.hci = new Hci({
-      send: (packetType, data) => {
-        const packet = Buffer.concat([Buffer.from([packetType]), data, Buffer.from([0])]);
-        device.write(packet);
-      },
-    });
-
-    this.h4 = new H4();
-
-    device.on('data', (data) => {
-      let result = this.h4.parse(data);
-      do {
-        if (result) {
-          this.hci.onData(result.type, result.packet);
-          result = this.h4.parse(Buffer.alloc(0));
-        }
-      } while (result);
-    });
-
-    device.on('error', (err) => this.emit('error', err));
-  }
-
-  public async open() {
-    await this.device.open();
-  }
-
-  public async close() {
-    await this.device.close();
-  }
-
-  public write(data: Buffer) {
-    this.device.write(data);
-  }
-
-  public get Hci(): Hci {
-    return this.hci;
-  }
-}
-
 export abstract class HciAdapterFactory {
 
   public static async create(params: AdapterParams): Promise<HciAdapter> {
@@ -202,15 +106,7 @@ export abstract class HciAdapterFactory {
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {
     if (params.type === 'serial') {
-      const serial = params.serial;
-      if (serial.path === null) {
-        const path = (await this.findHciSerialPort(params.deviceId))?.path;
-        if (!path) {
-          throw new Error('Cannot find appropriate port');
-        }
-        serial.path = path;
-      }
-      return new SerialHciDevice({ ...serial, path: serial.path });
+      return createHciSerial(params.deviceId, params.serial);
     }
     if (params.type === 'usb') {
       return new UsbHciSocket(params.deviceId, params.usb);
@@ -219,26 +115,5 @@ export abstract class HciAdapterFactory {
       return new NativeHciSocket(params.deviceId);
     }
     throw new Error('Unknown adapter interface');
-  }
-
-  public static async findHciSerialPort(deviceId: number = 0): Promise<PortInfo | null> {
-    const portInfos = await SerialPort.list();
-
-    const hciPortInfos = portInfos.filter((port) => {
-      if (port.manufacturer === 'SEGGER') {
-        return true;
-      }
-      // Zephyr HCI UART
-      if (port.vendorId === '2fe3' && port.productId === '0100') {
-        return true;
-      }
-      return false;
-    });
-
-    if (hciPortInfos.length === 0) {
-      throw new Error(`Cannot find appropriate port`);
-    }
-
-    return hciPortInfos[deviceId] ?? null;
   }
 }

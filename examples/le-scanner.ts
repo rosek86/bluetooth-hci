@@ -2,6 +2,7 @@ import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
 
 import { GapCentral, GapAdvertReport } from '../src/gap/GapCentral';
 import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
+import { HciAdapter } from '../src/utils/HciAdapter';
 
 (async () => {
   let printTime = Date.now();
@@ -9,7 +10,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
+    await adapter.defaultAdapterSetup();
 
     const gap = new GapCentral(adapter.Hci);
     await gap.init();
@@ -35,7 +36,7 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
 
       if ((Date.now() - printTime) > 1000) {
         printTime = Date.now();
-        print(adverts);
+        print(adapter, adverts);
       }
     });
   } catch (e) {
@@ -44,13 +45,13 @@ import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
   }
 })();
 
-function print(adverts: Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>) {
+function print(adapter: HciAdapter, adverts: Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>) {
   console.log();
   console.log('adverts', adverts.size);
   for (const [ address, { adv, sr } ] of adverts.entries()) {
     const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
 
-    console.log(address, ident ? HciAdapterUtils.manufacturerNameFromCode(ident) : '');
+    console.log(address, ident ? adapter.manufacturerNameFromCode(ident) : '');
 
     if (adv) {
       console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));

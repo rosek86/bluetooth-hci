@@ -11,15 +11,15 @@ import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
 import { GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
 import { GapProfileStorage } from '../src/gap/GapProfileStorage';
 import { NbleGapCentral } from '../src/nble/NbleGapCentral';
-import { Hci } from '../src/hci/Hci';
 import { GattClient } from '../src/gatt/GattClient';
+import { HciAdapter } from '../src/utils/HciAdapter';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
   private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();
 
-  constructor(hci: Hci) {
-    super(hci, {
+  constructor(adapter: HciAdapter) {
+    super(adapter, {
       autoScan: true,
       autoScanOptions: {
         scanWhenConnected: false,
@@ -98,13 +98,13 @@ class App extends NbleGapCentral {
 
   private printManufacturerInfo(event: GapConnectEvent) {
     const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
-    console.log('Manufacturer (RF):   ', chalk.blue(HciAdapterUtils.manufacturerNameFromCode(versionInformation.manufacturerName)));
+    console.log('Manufacturer (RF):   ', chalk.blue(this.adapter.manufacturerNameFromCode(versionInformation.manufacturerName)));
 
     const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
     const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
                        storeValue.scanResponse?.data?.manufacturerData?.ident;
     if (identifier) {
-      console.log('Manufacturer (PROD): ', chalk.blue(HciAdapterUtils.manufacturerNameFromCode(identifier)));
+      console.log('Manufacturer (PROD): ', chalk.blue(this.adapter.manufacturerNameFromCode(identifier)));
     }
   }
 
@@ -140,7 +140,7 @@ class App extends NbleGapCentral {
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    const app = new App(adapter.Hci);
+    const app = new App(adapter);
     await app.start();
   } catch (e) {
     const err = e as Error;

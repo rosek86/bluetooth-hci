@@ -19,9 +19,9 @@ import { Att } from '../src/att/Att';
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    const hci = adapter.Hci;
+    await adapter.defaultAdapterSetup();
 
-    await HciAdapterUtils.defaultAdapterSetup(hci);
+    const hci = adapter.Hci;
 
     const l2cap = new L2CAP(hci);
     await l2cap.init();

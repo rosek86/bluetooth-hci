@@ -17,7 +17,7 @@ import {
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
+    await adapter.defaultAdapterSetup();
     const hci = adapter.Hci;
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {

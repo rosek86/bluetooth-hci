@@ -1,5 +1,5 @@
 import EventEmitter from "events";
-import { HciAdapter } from "../../src/utils/HciAdapterFactory";
+import { HciAdapter } from "../../src/utils/HciAdapter";
 import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
 import { Address } from "../../src/utils/Address";
 import { GapCentral } from "../../src/gap/GapCentral";

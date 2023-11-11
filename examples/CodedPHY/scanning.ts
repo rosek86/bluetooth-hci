@@ -14,9 +14,9 @@ import {
 (async () => {
   try {
     const adapter = await HciAdapterUtils.createHciAdapter();
-    await HciAdapterUtils.defaultAdapterSetup(adapter.Hci);
-    const hci = adapter.Hci;
+    await adapter.defaultAdapterSetup();
 
+    const hci = adapter.Hci;
     await hci.leAddDeviceToWhiteList({
       addressType:  LeWhiteListAddressType.Random,
       address:      Address.from(0x1429c386d3a9),

@@ -1,4 +1,3 @@
-import { HciAdapterUtils } from "../utils/HciAdapterUtils";
 import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral";
 import { GapProfileStorage } from "../gap/GapProfileStorage";
 import { GattClient } from "../gatt/GattClient";
@@ -6,6 +5,7 @@ import { Hci } from "../hci/Hci";
 import { DisconnectionCompleteEvent } from "../hci/HciEvent";
 import { LePhy, LeScanFilterDuplicates } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
+import { HciAdapter } from "../utils/HciAdapter";
 
 export interface NbleGapCentralOptions {
   autoScan?: boolean;
@@ -18,16 +18,19 @@ export interface NbleGapCentralOptions {
 
 export abstract class NbleGapCentral {
   protected readonly gap: GapCentral;
+  protected readonly hci: Hci;
 
-  public constructor(protected hci: Hci, protected readonly options: NbleGapCentralOptions = {}) {
+  public constructor(protected adapter: HciAdapter, protected readonly options: NbleGapCentralOptions = {}) {
     options.autoScan = options.autoScan ?? true;
     options.autoScanOptions = options.autoScanOptions ?? {};
     options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
     options.autoScanOptions.start = options.autoScanOptions.start ?? {
       filterDuplicates: LeScanFilterDuplicates.Enabled,
     };
+
+    this.hci = adapter.Hci;
   
-    this.gap = new GapCentral(hci, {
+    this.gap = new GapCentral(this.hci, {
       cacheRemoteInfo: true,
     });
 
@@ -40,7 +43,7 @@ export abstract class NbleGapCentral {
 
   public async start() {
     // TODO: migrate default setup from examples
-    await HciAdapterUtils.defaultAdapterSetup(this.hci);
+    await this.adapter.defaultAdapterSetup();
 
     await this.hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
