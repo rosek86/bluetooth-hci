@@ -21,7 +21,7 @@
     "build.dev": "tsc -p tsconfig.dev.json",
     "watch": "tsc -w",
     "test": "mocha",
-    "publish": "./scripts/publish.sh"
+    "do-publish": "./scripts/publish.sh"
   },
   "keywords": [
     "bluetooth",
