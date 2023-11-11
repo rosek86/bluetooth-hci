@@ -100,8 +100,7 @@ export class NativeHciSocket implements HciDevice {
 export abstract class HciAdapterFactory {
 
   public static async create(params: AdapterParams): Promise<HciAdapter> {
-    const device = await this.createDevice(params);
-    return new HciAdapter(device);
+    return new HciAdapter(await this.createDevice(params));
   }
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {

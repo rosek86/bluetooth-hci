@@ -202,6 +202,7 @@ export class HciCmd {
         () => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout
       );
       const onResult = (evt: HciCmdResult) => {
+        debug(evt);
         if (evt.status !== HciErrorCode.Success) {
           complete(makeHciError(evt.status));
         } else {
@@ -214,6 +215,7 @@ export class HciCmd {
         connectionHandle: cmd.connectionHandle,
         advertisingHandle: cmd.advertisingHandle,
       });
+      debug(opcode, cmd.payload);
       this.sendCommand(opcode, cmd.payload);
     });
   }
