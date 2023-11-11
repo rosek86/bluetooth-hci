@@ -1,4 +1,4 @@
-# Getting Started with bluetooth-hci Library
+# Getting started with bluetooth-hci library
 
 Follow this guide to set up and start using the `bluetooth-hci` library.
 
@@ -25,24 +25,24 @@ Download and install the **nRF Connect for Desktop** from the following link: [N
 
 ![Programmer Tool Image](imgs/nrf-select-device.png)
 
-## 4. Connect and Flash the nRF52840 Dongle
+## 4. Connect and program the nRF52840 Dongle
 
 - Open the `Programmer` tool.
 - Connect the **nRF52840 dongle** to your computer.
 - Click on `Select Devices` and choose the dongle for flashing. It should appear on the list as **Open DFU Bootloader**.
 
-## 5. Add Firmware File
+## 5. Add firmware file
 
 Locate and select the firmware file from `/zephyr/hci_usb/zephyr.hex`.
 
-## 6. Flash the Firmware
+## 6. Flash the firmware
 
 - Click on the `Write` button.
 - Patiently wait for the flashing operation to complete.
 
 ![Programmer Tool Image](imgs/nrf-flashing.png)
 
-## 7. Install Dependencies and Build
+## 7. Install dependencies and build
 
 Run the following commands:
 
@@ -51,7 +51,7 @@ npm ci
 npm run build
 ```
 
-## 8. Run the Example
+## 8. Run the example
 
 Execute the example with:
 
