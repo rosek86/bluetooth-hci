@@ -101,7 +101,7 @@ export class GapCentral extends EventEmitter {
 
   private l2cap: L2CAP;
 
-  private pendingCreateConnection: { timeoutId?: NodeJS.Timer } | null = null;
+  private pendingCreateConnection: { timeoutId?: NodeJS.Timeout } | null = null;
   private connectedDevices: Map<number, GapDeviceInfo> = new Map();
   private remoteInfoCache: Map<number, RemoteInfoCache> = new Map();
 

@@ -42,16 +42,15 @@
   ],
   "devDependencies": {
     "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d7ac57eb3dd69cfe5bcd075977b24888dc3bd555",
-    "@types/chai": "^4.3.6",
-    "@types/debug": "^4.1.8",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^18.17.18",
-    "@types/serialport": "^8.0.2",
-    "@types/yargs": "^17.0.24",
-    "chai": "^4.3.8",
+    "@types/chai": "^4.3.10",
+    "@types/debug": "^4.1.12",
+    "@types/mocha": "^10.0.4",
+    "@types/node": "^18.18.9",
+    "@types/serialport": "^8.0.5",
+    "@types/yargs": "^17.0.31",
+    "chai": "^4.3.10",
     "chalk": "^4.1.2",
     "mocha": "^10.2.0",
-    "serialport": "^12.0.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
     "yargs": "^17.7.2"
@@ -59,6 +58,7 @@
   "dependencies": {
     "crc": "^4.3.2",
     "debug": "^4.3.4",
-    "ts-essentials": "^9.4.0"
+    "serialport": "^12.0.0",
+    "ts-essentials": "^9.4.1"
   }
 }
