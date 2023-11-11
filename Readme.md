@@ -4,7 +4,7 @@ NOTE: This is initial library version, simple functionalities like advertising a
 
 The library implements Bluetooth 5 HCI host focusing mainly on Bluetooth LE.
 
-## Getting Started
+## Getting started
 
 The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply use the pre-compiled firmware located at `/zephyr/hci_uart/zephyr.hex`. Detailed description which explains how to prepare nRF52840 Dongle can be found  [here](docs/GettingStarted.md).
 
@@ -61,7 +61,7 @@ import {
 
 Additional examples can be found in examples directory
 
-## Alternative Setup Options
+## Alternative setup options
 
 While the nRF52840 dongle offers an easy-to-use solution, there are other alternatives. However, keep in mind that these methods may depend on your operating system and might need additional development for full compatibility.
 
@@ -77,7 +77,7 @@ Simple LE Bluetooth scanner
 npx ts-node examples/le-scanner.ts
 ```
 
-## Further Reading
+## Further reading
 
 - Getting Started Guide [GettingStarted.md](docs/GettingStarted.md)
 - Advertising and scanning using Coded PHY [CodedPHY.md](docs/CodedPHY.md)
