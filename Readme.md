@@ -1,8 +1,8 @@
 # bluetooth-hci
 
-NOTE: This is very initial version, do not try it unless you'd like to help with library development.
+NOTE: This is initial library version, simple functionalities like advertising and scanning are operational. It is possible to acquire establish connection but additional development is required to bring this library to production level.
 
-This library is written in TypeScript and implements the Bluetooth 5 host.
+The library implements Bluetooth 5 HCI host focusing mainly on Bluetooth LE.
 
 ## Getting Started
 
