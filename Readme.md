@@ -24,7 +24,7 @@ import {
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates
-} from 'bluetooth-hci/lib/hci/HciLeController';
+} from 'bluetooth-hci/hci/HciLeController';
 
 (async () => {
   try {
