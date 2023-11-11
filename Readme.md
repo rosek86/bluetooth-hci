@@ -15,9 +15,9 @@ npm install bluetooth-hci
 ## Simple scanning example
 
 ```ts
-import { createHciSerial } from 'bluetooth-hci/lib/utils/SerialHciDevice';
-import { HciAdapter } from 'bluetooth-hci/lib/utils/HciAdapter';
-import { AdvData } from 'bluetooth-hci/lib/gap/AdvData';
+import { createHciSerial } from 'bluetooth-hci/utils/SerialHciDevice';
+import { HciAdapter } from 'bluetooth-hci/utils/HciAdapter';
+import { AdvData } from 'bluetooth-hci/gap/AdvData';
 
 import {
   LeOwnAddressType,

@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
   "author": {
@@ -11,9 +11,6 @@
   "engines": {
     "node": ">= 18.0.0"
   },
-  "files": [
-    "lib/*"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rosek86/bluetooth-hci"
@@ -23,7 +20,8 @@
     "build": "tsc -p tsconfig.json",
     "build.dev": "tsc -p tsconfig.dev.json",
     "watch": "tsc -w",
-    "test": "mocha"
+    "test": "mocha",
+    "publish": "./scripts/publish.sh"
   },
   "keywords": [
     "bluetooth",

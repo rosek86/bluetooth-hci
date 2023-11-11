@@ -48,7 +48,7 @@ Run the following commands:
 
 ```sh
 npm ci
-npm run build
+npm run build.dev
 ```
 
 ## 8. Run the example

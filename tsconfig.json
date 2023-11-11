@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "incremental": true,
     "target": "es2021",
     "module": "CommonJS",
     "lib": ["ES2021"],
     "sourceMap": true,
-    "outDir": "./lib",
+    "outDir": "lib",
     "rootDir": "./src",
     "removeComments": true,
     "strict": true,
