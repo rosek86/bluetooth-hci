@@ -13,6 +13,7 @@ import { GapProfileStorage } from '../src/gap/GapProfileStorage';
 import { NbleGapCentral } from '../src/nble/NbleGapCentral';
 import { GattClient } from '../src/gatt/GattClient';
 import { HciAdapter } from '../src/utils/HciAdapter';
+import { printProfile } from '../src/utils/Profile';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -79,6 +80,8 @@ class App extends NbleGapCentral {
     console.log('Discovered services on', event.address.toString());
 
     this.printManufacturerInfo(event);
+
+    printProfile(gatt.Profile);
 
     console.log('Disconnecting...');
     await this.disconnect(event.connectionHandle);
