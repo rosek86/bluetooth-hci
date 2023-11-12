@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import chalk from 'chalk';
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
+
 import {
   LeOwnAddressType,
   LeScanningFilterPolicy,
@@ -14,6 +14,8 @@ import { NbleGapCentral } from '../src/nble/NbleGapCentral';
 import { GattClient } from '../src/gatt/GattClient';
 import { HciAdapter } from '../src/utils/HciAdapter';
 import { printProfile } from '../src/utils/Profile';
+import { Address } from '../src/utils/Address';
+import { createHciSerial } from '../src/utils/SerialHciDevice';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -61,12 +63,30 @@ class App extends NbleGapCentral {
 
       // Connect to device with timeout
       await this.connect(report.address, { connectionTimeoutMs: 2000 });
-      console.log(`Connecting to ${report.address.toString()}...`);
+
+      const name = '(' + this.getCompleteLocalName(report.address) + ')';
+      console.log(`Connecting to ${report.address.toString()} ${name} at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {
       console.log(`Error while connecting to ${report.address.toString()}`, e);
       this.state = 'idle';
     }
+  }
+
+  private saveAdvertReport(report: GapAdvertReport) {
+    const numericAddress = report.address.toNumeric();
+    const storageValue = this.advReportStorage.get(numericAddress) ?? {};
+    if (!report.scanResponse) {
+      storageValue.advertisement = report;
+    } else {
+      storageValue.scanResponse = report;
+    }
+    this.advReportStorage.set(numericAddress, storageValue);
+  }
+
+  private getCompleteLocalName(address: Address) {
+    const storeValue = this.advReportStorage.get(address.toNumeric()) ?? {};
+    return storeValue.advertisement?.data?.completeLocalName ?? storeValue.scanResponse?.data?.completeLocalName ?? 'N/A';
   }
 
   protected async onConnected(event: GapConnectEvent): Promise<void> {
@@ -80,23 +100,12 @@ class App extends NbleGapCentral {
     console.log('Discovered services on', event.address.toString());
 
     this.printManufacturerInfo(event);
-
     printProfile(gatt.Profile);
 
     console.log('Disconnecting...');
     await this.disconnect(event.connectionHandle);
 
     await this.saveProfilesToFile();
-  }
-
-  protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    console.log('Disconnected', reason.connectionHandle, reason.reason);
-    this.state = 'idle';
-  }
-
-  protected async onConnectionCancelled(): Promise<void> {
-    console.log('Connection cancelled (timeout)');
-    this.state = 'idle';
   }
 
   private printManufacturerInfo(event: GapConnectEvent) {
@@ -111,15 +120,14 @@ class App extends NbleGapCentral {
     }
   }
 
-  private saveAdvertReport(report: GapAdvertReport) {
-    const numericAddress = report.address.toNumeric();
-    const storageValue = this.advReportStorage.get(numericAddress) ?? {};
-    if (!report.scanResponse) {
-      storageValue.advertisement = report;
-    } else {
-      storageValue.scanResponse = report;
-    }
-    this.advReportStorage.set(numericAddress, storageValue);
+  protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
+    console.log('Disconnected', reason.connectionHandle, reason.reason);
+    this.state = 'idle';
+  }
+
+  protected async onConnectionCancelled(): Promise<void> {
+    console.log('Connection cancelled (timeout)');
+    this.state = 'idle';
   }
 
   private async saveProfilesToFile() {
@@ -142,7 +150,8 @@ class App extends NbleGapCentral {
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     const app = new App(adapter);
     await app.start();
   } catch (e) {

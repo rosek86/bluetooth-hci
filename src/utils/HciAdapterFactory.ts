@@ -6,7 +6,7 @@ import { AutoDetectTypes } from '@serialport/bindings-cpp';
 
 import { delay } from './Utils';
 import { HciAdapter, HciDevice } from './HciAdapter';
-import { SerialHciDevice, createHciSerial } from './SerialHciDevice';
+import { createHciSerial } from './SerialHciDevice';
 
 export interface AdapterSerialParams {
   type: 'serial';
