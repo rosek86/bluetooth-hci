@@ -1,3 +1,5 @@
+import { EOL } from 'os';
+import chalk from 'chalk';
 import { entries } from '../assigned numbers/16-bit UUID Numbers.json';
 import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory';
 
@@ -37,26 +39,30 @@ export const amendProfileWithUuidNames = (p: Profile): Profile => {
 
 export const printProfile = (p: Profile): void => {
   const padding = (level: number) => ''.padStart(level, ' ');
+  const print = (ident: 'S' | 'C' | 'D', uuid: string, uuidInfo: string | undefined, level: number) => {
+    process.stdout.write(padding(level));
+    process.stdout.write('- ' + chalk.yellow(ident) + ': ');
+    process.stdout.write(chalk.green(uuid));
+    process.stdout.write(uuidInfo ? ` (${chalk.blue(uuidInfo)})` : '');
+    process.stdout.write(EOL);
+  }
   const printDescriptor = (e: Descriptor, level: number): void => {
     if (!e.descriptor.uuidInfo) {
       e.descriptor.uuidInfo = uuidInfo(e.descriptor.uuid);
     }
-    const description = e.descriptor.uuidInfo?.for ? ` (${e.descriptor.uuidInfo?.for})` : '';
-    console.log(padding(level) + `- D: ${e.descriptor.uuid}${description}`);
+    print('D', e.descriptor.uuid, e.descriptor.uuidInfo?.for, level);
   };
   const printCharacteristic = (e: Characteristic, level: number): void => {
+    if (!e.characteristic.uuidInfo) {
+      e.characteristic.uuidInfo = uuidInfo(e.characteristic.uuid);
+    }
+
+    print('C', e.characteristic.uuid, e.characteristic.uuidInfo?.for, level);
+
     const properties = Object.entries(e.characteristic.properties)
       .filter(([_, value]) => value === true)
       .map(([key]) => key)
       .join(',');
-
-    if (!e.characteristic.uuidInfo) {
-      e.characteristic.uuidInfo = uuidInfo(e.characteristic.uuid);
-    }
-    const description = e.characteristic.uuidInfo?.for ? ` (${e.characteristic.uuidInfo?.for})` : '';
-
-    console.log(padding(level) + `- C: ${e.characteristic.uuid}${description}`);
-
     if (properties.length > 0) {
       console.log(padding(level) + `     (${properties})`);
     }
@@ -69,9 +75,8 @@ export const printProfile = (p: Profile): void => {
     if (!e.service.uuidInfo) {
       e.service.uuidInfo = uuidInfo(e.service.uuid);
     }
-    const description = e.service.uuidInfo?.for ? ` (${e.service.uuidInfo?.for})` : '';
 
-    console.log(padding(level) + `- S: ${e.service.uuid}${description}`);
+    print('S', e.service.uuid, e.service.uuidInfo?.for, level);
 
     for (const includedService of Object.values(e.includedServices ?? {})) {
       printService(includedService, level + 1);
