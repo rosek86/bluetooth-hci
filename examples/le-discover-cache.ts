@@ -57,15 +57,16 @@ class App extends NbleGapCentral {
         return;
       }
 
+      const name = this.getCompleteLocalName(report.address);
+      // if (name !== 'Nordic_LBS') { return; }
+
       // Prevent multiple connections requests
       if (this.state !== 'idle') { return; }
       this.state = 'connecting';
 
       // Connect to device with timeout
       await this.connect(report.address, { connectionTimeoutMs: 2000 });
-
-      const name = '(' + this.getCompleteLocalName(report.address) + ')';
-      console.log(`Connecting to ${report.address.toString()} ${name} at RSSI ${report.rssi} dBm...`);
+      console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {
       console.log(`Error while connecting to ${report.address.toString()}`, e);
@@ -101,6 +102,9 @@ class App extends NbleGapCentral {
 
     this.printManufacturerInfo(event);
     printProfile(gatt.Profile);
+
+    // console.log(18, await gatt.read({ handle: 18 }));
+    // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
 
     console.log('Disconnecting...');
     await this.disconnect(event.connectionHandle);
