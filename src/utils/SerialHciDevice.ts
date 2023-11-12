@@ -47,9 +47,6 @@ export class SerialHciDevice implements HciDevice {
     const portInfos = await SerialPort.list();
 
     const hciPortInfos = portInfos.filter((port) => {
-      if (port.manufacturer === 'SEGGER') {
-        return true;
-      }
       // Zephyr HCI UART
       if (port.vendorId === '2fe3' && port.productId === '0100') {
         return true;
