@@ -1,7 +1,4 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
-import { Address } from '../src/utils/Address';
 import { AdvData } from '../src/gap/AdvData';
-
 import {
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
@@ -13,10 +10,15 @@ import {
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation
 } from '../src/hci/HciLeController';
+import { Address } from '../src/utils/Address';
+import { HciAdapter } from '../src/utils/HciAdapter';
+import { createHciSerial } from '../src/utils/SerialHciDevice';
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
+
     await adapter.defaultAdapterSetup();
     const hci = adapter.Hci;
 
@@ -50,7 +52,7 @@ import {
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Zephyr Ctrl',
+      completeLocalName: 'Bluetooth HCI',
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -83,7 +85,7 @@ import {
       sets: [{ advertHandle: 0 }],
     });
 
-    console.log('end');
+    console.log('advertising...');
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
