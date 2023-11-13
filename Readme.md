@@ -19,16 +19,15 @@ Additional examples are available in the 'examples' directory.
 ### Simple scanning
 
 ```ts
-import { createHciSerial } from 'bluetooth-hci/utils/SerialHciDevice';
-import { HciAdapter } from 'bluetooth-hci/utils/HciAdapter';
-import { AdvData } from 'bluetooth-hci/gap/AdvData';
+import { createHciSerial, HciAdapter } from 'bluetooth-hci';
+import { AdvData } from 'bluetooth-hci';
 
 import {
   LeOwnAddressType,
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates
-} from 'bluetooth-hci/hci/HciLeController';
+} from 'bluetooth-hci';
 
 (async () => {
   try {
@@ -66,7 +65,6 @@ import {
 ### Simple advertising
 
 ```ts
-import { AdvData } from 'bluetooth-hci/gap/AdvData';
 import {
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
@@ -77,10 +75,9 @@ import {
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation
-} from 'bluetooth-hci/hci/HciLeController';
-import { Address } from 'bluetooth-hci/utils/Address';
-import { HciAdapter } from 'bluetooth-hci/utils/HciAdapter';
-import { createHciSerial } from 'bluetooth-hci/utils/SerialHciDevice';
+} from 'bluetooth-hci';
+import { Address, AdvData } from 'bluetooth-hci';
+import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 
 (async () => {
   try {
@@ -170,15 +167,12 @@ import {
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates
-} from 'bluetooth-hci/hci/HciLeController';
-import { DisconnectionCompleteEvent } from 'bluetooth-hci/hci/HciEvent';
-import { Address } from 'bluetooth-hci/utils/Address';
-import { printProfile } from 'bluetooth-hci/utils/Profile';
-import { HciAdapter } from 'bluetooth-hci/utils/HciAdapter';
-import { createHciSerial } from 'bluetooth-hci/utils/SerialHciDevice';
-import { GattClient } from 'bluetooth-hci/gatt/GattClient';
-import { GapAdvertReport, GapConnectEvent } from 'bluetooth-hci/gap/GapCentral';
-import { NbleGapCentral } from 'bluetooth-hci/nble/NbleGapCentral';
+} from 'bluetooth-hci';
+import { DisconnectionCompleteEvent } from 'bluetooth-hci';
+import { Address, printProfile } from 'bluetooth-hci';
+import { createHciSerial, HciAdapter } from 'bluetooth-hci';
+import { GattClient, GapAdvertReport, GapConnectEvent } from 'bluetooth-hci';
+import { NbleGapCentral } from 'bluetooth-hci';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
