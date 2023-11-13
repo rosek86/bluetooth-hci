@@ -163,6 +163,10 @@ export class GattClient extends EventEmitter {
     return result.mtu;
   }
 
+  public findDescriptorByUuid(serviceUuid: string, descriptorUuid: string): GattDescriptor.AsObject | null {
+    return this.directory.findDescriptorByUuids(serviceUuid, descriptorUuid);
+  }
+
   public async read(attribute: { handle: number }): Promise<Buffer> {
     const handle = attribute.handle;
     const blob = await this.att.readReq({ attributeHandle: handle });

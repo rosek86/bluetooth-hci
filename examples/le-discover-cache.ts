@@ -16,6 +16,7 @@ import { HciAdapter } from '../src/utils/HciAdapter';
 import { printProfile } from '../src/utils/Profile';
 import { Address } from '../src/utils/Address';
 import { createHciSerial } from '../src/utils/SerialHciDevice';
+import { delay } from '../src/utils/Utils';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -105,8 +106,15 @@ class App extends NbleGapCentral {
       printProfile(gatt.Profile);
       await this.saveProfilesToFile();
 
-      // console.log(18, await gatt.read({ handle: 18 }));
-      // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
+      // Example for Nordic_LBS
+      const descriptor = gatt.findDescriptorByUuid('000015231212efde1523785feabcd123', '000015241212efde1523785feabcd123');
+      if (descriptor) {
+        for (let i = 0; i < 60; i++) {
+          console.log(await gatt.read(descriptor));
+          delay(1000);
+        }
+        // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
+      }
     } catch (e) {
       console.log(e);
     } finally {

@@ -298,4 +298,39 @@ export class GattDirectory {
 
     return { service: sEntry.service, characteristic: cEntry.characteristic, descriptor: dEntry.descriptor };
   }
+
+  public findServiceByUuid(uuid: string): GattService.AsObject | null {
+    for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
+      if (!sEntry) { continue; }
+      if (sEntry.service.uuid === uuid) {
+        return sEntry.service;
+      }
+    }
+    return null;
+  }
+
+  public findDescriptorByUuids(serviceUuid: string, descriptorUuid: string): GattDescriptor.AsObject | null {
+    let service: Service | null = null;
+    for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
+      if (!sEntry) { continue; }
+      if (sEntry.service.uuid === serviceUuid) {
+        service = sEntry;
+        break;
+      }
+    }
+
+    if (!service) { return null; }
+
+    for (const cEntry of Object.values(service.characteristics ?? {})) {
+      if (!cEntry) { continue; }
+      for (const dEntry of Object.values(cEntry.descriptors ?? {})) {
+        if (!dEntry) { continue; }
+        if (dEntry.descriptor.uuid === descriptorUuid) {
+          return dEntry.descriptor;
+        }
+      }
+    }
+
+    return null;
+  }
 }
