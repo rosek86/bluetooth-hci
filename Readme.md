@@ -264,6 +264,8 @@ class App extends NbleGapCentral {
       console.log('Discovered services on', event.address.toString());
       this.printManufacturerInfo(event);
       printProfile(gatt.Profile);
+    } catch (e) {
+      console.log(e);
     } finally {
       console.log('Disconnecting...');
       await this.disconnect(event.connectionHandle);
