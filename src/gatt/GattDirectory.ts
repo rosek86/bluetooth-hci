@@ -309,11 +309,11 @@ export class GattDirectory {
     return null;
   }
 
-  public findDescriptorByUuids(serviceUuid: string, descriptorUuid: string): GattDescriptor.AsObject | null {
+  public findDescriptorByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptor.AsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
       if (!sEntry) { continue; }
-      if (sEntry.service.uuid === serviceUuid) {
+      if (sEntry.service.uuid === uuids.serviceUuid) {
         service = sEntry;
         break;
       }
@@ -325,7 +325,7 @@ export class GattDirectory {
       if (!cEntry) { continue; }
       for (const dEntry of Object.values(cEntry.descriptors ?? {})) {
         if (!dEntry) { continue; }
-        if (dEntry.descriptor.uuid === descriptorUuid) {
+        if (dEntry.descriptor.uuid === uuids.descriptorUuid) {
           return dEntry.descriptor;
         }
       }

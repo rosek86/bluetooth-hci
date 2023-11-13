@@ -107,7 +107,10 @@ class App extends NbleGapCentral {
       await this.saveProfilesToFile();
 
       // Example for Nordic_LBS
-      const descriptor = gatt.findDescriptorByUuid('000015231212efde1523785feabcd123', '000015241212efde1523785feabcd123');
+      const descriptor = gatt.findDescriptorByUuid({
+        serviceUuid: '000015231212efde1523785feabcd123',
+        descriptorUuid: '000015241212efde1523785feabcd123',
+      });
       if (descriptor) {
         for (let i = 0; i < 60; i++) {
           console.log(await gatt.read(descriptor));
