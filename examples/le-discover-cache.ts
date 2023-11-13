@@ -98,18 +98,21 @@ class App extends NbleGapCentral {
   }
 
   protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
-    console.log('Discovered services on', event.address.toString());
+    try {
+      console.log('Discovered services on', event.address.toString());
 
-    this.printManufacturerInfo(event);
-    printProfile(gatt.Profile);
+      this.printManufacturerInfo(event);
+      printProfile(gatt.Profile);
+      await this.saveProfilesToFile();
 
-    // console.log(18, await gatt.read({ handle: 18 }));
-    // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
-
-    console.log('Disconnecting...');
-    await this.disconnect(event.connectionHandle);
-
-    await this.saveProfilesToFile();
+      // console.log(18, await gatt.read({ handle: 18 }));
+      // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
+    } catch (e) {
+      console.log(e);
+    } finally {
+      console.log('Disconnecting...');
+      await this.disconnect(event.connectionHandle);
+    }
   }
 
   private printManufacturerInfo(event: GapConnectEvent) {

@@ -260,13 +260,14 @@ class App extends NbleGapCentral {
   }
 
   protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
-    console.log('Discovered services on', event.address.toString());
-
-    this.printManufacturerInfo(event);
-    printProfile(gatt.Profile);
-
-    console.log('Disconnecting...');
-    await this.disconnect(event.connectionHandle);
+    try {
+      console.log('Discovered services on', event.address.toString());
+      this.printManufacturerInfo(event);
+      printProfile(gatt.Profile);
+    } finally {
+      console.log('Disconnecting...');
+      await this.disconnect(event.connectionHandle);
+    }
   }
 
   private printManufacturerInfo(event: GapConnectEvent) {
