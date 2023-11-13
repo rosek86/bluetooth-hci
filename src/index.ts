@@ -20,7 +20,6 @@ export * from './utils/UUID';
 export * from './utils/ArgsParser';
 export * from './utils/Utils';
 export * from './utils/Profile';
-export * from './utils/HciAdapterFactory';
 export * from './utils/HciAdapter';
 export * from './utils/Address';
 export * from './utils/SerialHciDevice';
