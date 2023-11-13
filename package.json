@@ -3,13 +3,17 @@
   "version": "0.0.16",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
-  "author": {
-    "name": "Krzysztof Rosinski",
-    "url": "https://github.com/rosek86"
-  },
+  "types": "lib/index.d.ts",
+  "maintainers": [
+    {
+      "name": "Krzysztof Rosinski",
+      "email": "rosek86@gmail.com",
+      "url": "https://github.com/rosek86"
+    }
+  ],
   "license": "MIT",
   "engines": {
-    "node": ">= 18.0.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
