@@ -35,7 +35,7 @@ export function buildBitfield(bits: number[]): number {
   return bitfield;
 }
 
-export function readBigUInt128LE(buffer: Buffer, offset = 0): bigint {
+export function readBigUInt128LE(buffer: Uint8Array, offset = 0): bigint {
   const first = buffer[offset];
   const last = buffer[offset + 15];
   if (first === undefined || last === undefined)
@@ -55,7 +55,7 @@ export function readBigUInt128LE(buffer: Buffer, offset = 0): bigint {
   return value;
 }
 
-export function writeBigUInt128LE(buf: Buffer, value: bigint, offset: number): number {
+export function writeBigUInt128LE(buf: Uint8Array, value: bigint, offset: number): number {
   for (let shift = 0n; shift < 128n; shift += 32n) {
     let dw = Number((value >> shift) & 0xffffffffn);
     buf[offset++] = dw;

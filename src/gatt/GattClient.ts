@@ -26,14 +26,21 @@ export enum  GattProfileAttributeType {
   CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
 }
 
-export interface GattClient {
-  on(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
-  once(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
-  removeListener(event: 'GattNotification', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+interface GattHvxParams {
+  service: GattService.AsObject;
+  characteristic: GattCharacteristic.AsObject;
+  descriptor: GattDescriptor.AsObject;
+  attributeValue: Buffer;
+};
 
-  on(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
-  once(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
-  removeListener(event: 'GattIndication', listener: (s: GattService.AsObject, c: GattCharacteristic.AsObject, d: GattDescriptor.AsObject, b: Buffer) => void): this;
+export interface GattClient {
+  on(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
+  once(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
+  removeListener(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
+
+  on(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
+  once(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
+  removeListener(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
 }
 
 export class GattClient extends EventEmitter {
@@ -67,11 +74,12 @@ export class GattClient extends EventEmitter {
     if (!entry) {
       return;
     }
-    this.emit('GattIndication',
-      entry.service,
-      entry.characteristic,
-      entry.descriptor,
-      msg.attributeValue);
+    this.emit('GattIndication', {
+      service: entry.service,
+      characteristic: entry.characteristic,
+      descriptor: entry.descriptor,
+      attributeValue: msg.attributeValue,
+    });
   };
 
   private onValueNotification = (msg: AttHandleValueNtfMsg): void => {
@@ -79,11 +87,12 @@ export class GattClient extends EventEmitter {
     if (!entry) {
       return;
     }
-    this.emit('GattNotification',
-      entry.service,
-      entry.characteristic,
-      entry.descriptor,
-      msg.attributeValue);
+    this.emit('GattNotification', {
+      service: entry.service,
+      characteristic: entry.characteristic,
+      descriptor: entry.descriptor,
+      attributeValue: msg.attributeValue,
+    });
   };
 
   public async discover(): Promise<Profile> {
@@ -161,6 +170,10 @@ export class GattClient extends EventEmitter {
     const result = await this.att.exchangeMtuReq({ mtu });
     this.mtu = result.mtu;
     return result.mtu;
+  }
+
+  public findCharacteristicByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattCharacteristic.AsObject | null {
+    return this.directory.findCharacteristicByUuids(uuids);
   }
 
   public findDescriptorByUuid(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptor.AsObject | null {

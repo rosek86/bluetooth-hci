@@ -83,13 +83,13 @@ import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
 
       if (hr) {
         await gatt.startCharacteristicsNotifications(hr.characteristic, false);
-        gatt.on('GattNotification', (s, c, d, b) => {
-          const flags = b[0];
+        gatt.on('GattNotification', (event) => {
+          const flags = event.attributeValue[0];
           const v16 = flags & 1;
-          const value = v16 ? b.readUIntLE(1, 2) : b.readUIntLE(1, 1);
+          const value = v16 ? event.attributeValue.readUIntLE(1, 2) : event.attributeValue.readUIntLE(1, 1);
           console.log(`
-            ${s.uuid}, ${uuidInfo(s.uuid)?.for}
-            ${d.uuid}, ${uuidInfo(d.uuid)?.for}
+            ${event.service.uuid}, ${uuidInfo(event.service.uuid)?.for}
+            ${event.descriptor.uuid}, ${uuidInfo(event.descriptor.uuid)?.for}
             ${value} bpm
           `);
         });
