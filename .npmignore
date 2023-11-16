@@ -1,0 +1,13 @@
+/.github
+/dist
+/docs
+/examples
+/facades
+/node_modules
+/scripts
+/src
+/tests
+/zephyr
+/tsconfig.json
+/tsconfig.prod.json
+/gatt-profiles.json
