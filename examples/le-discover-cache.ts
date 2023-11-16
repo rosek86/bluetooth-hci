@@ -90,15 +90,14 @@ class App extends NbleGapCentral {
     return storeValue.advertisement?.data?.completeLocalName ?? storeValue.scanResponse?.data?.completeLocalName ?? 'N/A';
   }
 
-  protected async onConnected(event: GapConnectEvent): Promise<void> {
-    // Device connected, discovering services
-    this.state = 'connected';
-    console.log(`Connected to ${event.address.toString()}`);
-    console.log(`Discovering services on ${event.address.toString()}...`);
-  }
-
-  protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
+  protected async onConnected(event: GapConnectEvent, gatt: GattClient): Promise<void> {
     try {
+      this.state = 'connected';
+      console.log(`Connected to ${event.address.toString()}`);
+
+      console.log(`Discovering services on ${event.address.toString()}...`);
+      const profile = await gatt.discover();
+      this.saveProfile(event.address, profile); // cache profile
       console.log('Discovered services on', event.address.toString());
 
       this.printManufacturerInfo(event);

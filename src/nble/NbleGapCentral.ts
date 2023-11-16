@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+import Debug from "debug";
 import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral";
 import { GapProfileStorage } from "../gap/GapProfileStorage";
 import { GattClient } from "../gatt/GattClient";
@@ -6,6 +8,8 @@ import { DisconnectionCompleteEvent } from "../hci/HciEvent";
 import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
 import { HciAdapter } from "../utils/HciAdapter";
+
+const debug = Debug('NbleGapCentral');
 
 export interface NbleGapCentralOptions {
   autoScan?: boolean;
@@ -16,11 +20,13 @@ export interface NbleGapCentralOptions {
   };
 }
 
-export abstract class NbleGapCentral {
+export abstract class NbleGapCentral extends EventEmitter {
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
 
   public constructor(protected adapter: HciAdapter, protected readonly options: NbleGapCentralOptions = {}) {
+    super();
+
     options.autoScan = options.autoScan ?? true;
     options.autoScanOptions = options.autoScanOptions ?? {};
     options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
@@ -53,7 +59,6 @@ export abstract class NbleGapCentral {
   }
 
   public async start() {
-    // TODO: migrate default setup from examples
     await this.adapter.defaultAdapterSetup();
 
     await this.hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
@@ -65,7 +70,7 @@ export abstract class NbleGapCentral {
     }
   }
 
-  public async startScanning(params?: GapScanParamsOptions, start?: GapScanStartOptions) {
+  protected async startScanning(params?: GapScanParamsOptions, start?: GapScanStartOptions) {
     if (!params && this.options.autoScan && this.options.autoScanOptions?.parameters) {
       params = this.options.autoScanOptions.parameters;
     }
@@ -76,97 +81,91 @@ export abstract class NbleGapCentral {
     await this.gap.startScanning(start);
   }
 
-  public async stopScanning() {
+  protected async stopScanning() {
     await this.gap.stopScanning();
   }
 
-  public async connect(address: Address, opts?: { connectionTimeoutMs?: number }) {
+  protected async connect(address: Address, opts?: { connectionTimeoutMs?: number }) {
     await this.stopScanning();
-    try {
-      await this.gap.connect({ peerAddress: address }, opts?.connectionTimeoutMs);
-    } catch (e) {
+    await this.gap.connect({ peerAddress: address }, opts?.connectionTimeoutMs).catch(async (e) => {
       if (this.options.autoScan) {
         await this.startScanning();
       }
       throw e;
-    }
+    });
   }
 
-  public async disconnect(connectionHandle: number) {
+  protected async disconnect(connectionHandle: number) {
     await this.hci.disconnect(connectionHandle);
   }
 
-  public async discover(params: { connectionHandle: number; address: Address }) {
-    const storeValue = GapProfileStorage.loadProfile(params.address);
-    const att = this.gap.getAtt(params.connectionHandle);
-    const gatt = new GattClient(att, storeValue?.profile);
-    const profile = await gatt.discover();
-    GapProfileStorage.saveProfile(params.address, profile);
-    return gatt;
+  protected saveProfile(address: Address, profile: GattClient['Profile']) {
+    GapProfileStorage.saveProfile(address, profile);
   }
 
   private async _onAdvert(report: GapAdvertReport): Promise<void> {
     try {
       await this.onAdvert(report);
     } catch (e) {
-      console.log(e);
+      debug('onAdvert error', e);
+      this.emit('error', e);
     }
   }
-  protected async onAdvert(_: GapAdvertReport): Promise<void> {}
+  protected abstract onAdvert(_: GapAdvertReport): Promise<void>;
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
-    const results = await Promise.allSettled([
-      this.onConnected(event),
-      Promise.resolve().then(() => {
-        if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === true) {
-          return this.startScanning();
-        }
-      }),
-      this.discover(event).then((gatt) => {
-        this.onServicesDiscovered(event, gatt);
-      }),
-    ]);
-    for (const [i, result] of results.entries()) {
-      if (result.status === 'rejected') {
-        console.log(i, result.reason);
-      }
+    try {
+      const att = this.gap.getAtt(event.connectionHandle);
+
+      const storeValue = GapProfileStorage.loadProfile(event.address);
+      const gattClient = new GattClient(att, storeValue?.profile);
+
+      await Promise.all([
+        this.onConnected(event, gattClient),
+        Promise.resolve().then(() => {
+          if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === true) {
+            return this.startScanning();
+          }
+        }),
+      ]);
+    } catch (e) {
+      debug('onConnected error', e);
+      this.emit('error', e);
     }
   }
-  protected async onConnected(_: GapConnectEvent): Promise<void> {}
-
-  protected async onServicesDiscovered(_e: GapConnectEvent, _p: GattClient): Promise<void> {}
+  protected abstract onConnected(event: GapConnectEvent, client: GattClient): Promise<void>;
 
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    const results = await Promise.allSettled([
-      this.onDisconnected(reason),
-      Promise.resolve().then(() => {
-        if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === false) {
-          return this.startScanning();
-        }
-      }),
-    ]);
-    for (const [i, result] of results.entries()) {
-      if (result.status === 'rejected') {
-        console.log(i, result.reason);
-      }
+    try {
+      await Promise.all([
+        this.onDisconnected(reason),
+        Promise.resolve().then(() => {
+          if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === false) {
+            return this.startScanning();
+          }
+        }),
+      ]);
+    } catch (e) {
+      debug('onDisconnected error', e);
+      this.emit('error', e);
     }
   }
-  protected async onDisconnected(_: DisconnectionCompleteEvent): Promise<void> {}
+  protected abstract onDisconnected(_: DisconnectionCompleteEvent): Promise<void>;
 
   private async _onConnectionCancelled(): Promise<void> {
-    const results = await Promise.allSettled([
-      this.onConnectionCancelled(),
-      Promise.resolve().then(() => {
-        if (this.options.autoScan) {
-          return this.startScanning();
-        }
-      }),
-    ]);
-    for (const [i, result] of results.entries()) {
-      if (result.status === 'rejected') {
-        console.log(i, result.reason);
-      }
+    try {
+      await Promise.all([
+        this.onConnectionCancelled(),
+        Promise.resolve().then(() => {
+          if (this.options.autoScan) {
+            return this.startScanning();
+          }
+        }),
+      ]);
+    } catch (e) {
+      debug('onConnectionCancelled error', e);
+      this.emit('error', e);
     }
   }
-  protected async onConnectionCancelled(): Promise<void> {}
+  protected abstract onConnectionCancelled(): Promise<void>;
 }

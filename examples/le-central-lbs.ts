@@ -6,6 +6,8 @@ import { HciAdapter } from '../src/utils/HciAdapter';
 import { printProfile } from '../src/utils/Profile';
 import { createHciSerial } from '../src/utils/SerialHciDevice';
 import { delay } from '../src/utils/Utils';
+import { GapProfileStorage } from '../src/gap/GapProfileStorage';
+import { LeConnectionUpdate } from '../src/hci/HciLeController';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -38,44 +40,70 @@ class App extends NbleGapCentral {
     }
   }
 
-  protected async onConnected(event: GapConnectEvent): Promise<void> {
-    // Device connected, discovering services
-    this.state = 'connected';
-    console.log(`Connected to ${event.address.toString()}`);
-    console.log(`Discovering services on ${event.address.toString()}...`);
-  }
-
-  protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
+  protected async onConnected(event: GapConnectEvent, gatt: GattClient): Promise<void> {
     try {
+      this.state = 'connected';
+      console.log(`Connected to ${event.address.toString()}`);
+
+      const connectionParameters: LeConnectionUpdate = {
+        connectionHandle: event.connectionHandle,
+        connectionIntervalMinMs: event.connectionParams.connectionIntervalMs,
+        connectionIntervalMaxMs: event.connectionParams.connectionIntervalMs,
+        connectionLatency: event.connectionParams.connectionLatency,
+        supervisionTimeoutMs: event.connectionParams.supervisionTimeoutMs,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      };
+
+      // Update connection parameters to speed up discovery
+      await this.gap.connectionUpdate({
+        ...connectionParameters,
+        connectionIntervalMinMs: 7.5,
+        connectionIntervalMaxMs: 7.5,
+      });
+
+      console.log(`Discovering services on ${event.address.toString()}...`);
+      const profile = await gatt.discover();
+      this.saveProfile(event.address, profile); // cache profile
       console.log('Discovered services on', event.address.toString());
 
       printProfile(gatt.Profile);
 
+      // Update connection parameters to decrease power consumption
+      console.log(
+        await this.gap.connectionUpdate({
+          ...connectionParameters,
+          connectionIntervalMinMs: 100,
+          connectionIntervalMaxMs: 100,
+        })
+      );
+
+      // Find button characteristic
       const characteristic = gatt.findCharacteristicByUuids({
         serviceUuid: '000015231212efde1523785feabcd123',
         descriptorUuid: '000015241212efde1523785feabcd123',
       });
 
-      if (characteristic) {
-        console.log('Reading initial button state...');
-        const initialButtonState = await gatt.read({ handle: characteristic.valueHandle });
-        console.log(`Initial button state: ${initialButtonState[0] ? 'pressed' : 'released'}`);
-
-        console.log('Waiting for button press...');
-
-        await gatt.startCharacteristicsNotifications(characteristic, false);
-        gatt.on('GattNotification', (event) => {
-          if (event.descriptor.uuid !== '000015241212efde1523785feabcd123') {
-            return;
-          }
-          const state = event.attributeValue[0];
-          console.log(state ? 'Button pressed' : 'Button released');
-        });
-
-        for (let i = 0; i < 60; i++) {
-          await delay(1000);
-        }
+      if (!characteristic) {
+        throw new Error('Button characteristic not found');
       }
+
+      console.log('Reading initial button state...');
+      const initialButtonState = await gatt.read({ handle: characteristic.valueHandle });
+      console.log(`Initial button state: ${initialButtonState[0] ? 'pressed' : 'released'}`);
+
+      console.log('Waiting for button press...');
+
+      await gatt.startCharacteristicsNotifications(characteristic, false);
+      gatt.on('GattNotification', (event) => {
+        if (event.descriptor.uuid !== '000015241212efde1523785feabcd123') {
+          return;
+        }
+        const state = event.attributeValue[0];
+        console.log(state ? 'Button pressed' : 'Button released');
+      });
+
+      await delay(30_000);
     } catch (e) {
       console.log(e);
     } finally {

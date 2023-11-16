@@ -116,7 +116,10 @@ export class GattClient extends EventEmitter {
         }
       }
     }
-    return this.directory.Profile;
+
+    const profile = this.directory.Profile;
+    this.emit('GattDiscovery', { profile });
+    return profile;
   }
 
   public async discoverServices(): Promise<GattService.AsObject[]> {
