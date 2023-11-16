@@ -3,7 +3,7 @@ import { GapProfileStorage } from "../gap/GapProfileStorage";
 import { GattClient } from "../gatt/GattClient";
 import { Hci } from "../hci/Hci";
 import { DisconnectionCompleteEvent } from "../hci/HciEvent";
-import { LePhy, LeScanFilterDuplicates } from "../hci/HciLeController";
+import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
 import { HciAdapter } from "../utils/HciAdapter";
 
@@ -24,6 +24,17 @@ export abstract class NbleGapCentral {
     options.autoScan = options.autoScan ?? true;
     options.autoScanOptions = options.autoScanOptions ?? {};
     options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
+    options.autoScanOptions.parameters = options.autoScanOptions.parameters ?? {
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      scanningFilterPolicy: LeScanningFilterPolicy.All,
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 100,
+          windowMs: 100,
+        },
+      },
+    };
     options.autoScanOptions.start = options.autoScanOptions.start ?? {
       filterDuplicates: LeScanFilterDuplicates.Enabled,
     };

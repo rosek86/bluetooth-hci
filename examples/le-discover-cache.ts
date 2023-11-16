@@ -59,7 +59,6 @@ class App extends NbleGapCentral {
       }
 
       const name = this.getCompleteLocalName(report.address);
-      // if (name !== 'Nordic_LBS') { return; }
 
       // Prevent multiple connections requests
       if (this.state !== 'idle') { return; }
@@ -105,30 +104,6 @@ class App extends NbleGapCentral {
       this.printManufacturerInfo(event);
       printProfile(gatt.Profile);
       await this.saveProfilesToFile();
-
-      // Example for Nordic_LBS
-      const characteristic = gatt.findCharacteristicByUuids({
-        serviceUuid: '000015231212efde1523785feabcd123',
-        descriptorUuid: '000015241212efde1523785feabcd123',
-      });
-      const descriptor = gatt.findDescriptorByUuid({
-        serviceUuid: '000015231212efde1523785feabcd123',
-        descriptorUuid: '000015241212efde1523785feabcd123',
-      });
-
-      if (characteristic && descriptor) {
-        await gatt.startCharacteristicsNotifications(characteristic, false);
-
-        gatt.on('GattNotification', (event) => {
-          console.log('Notification', event);
-        });
-
-        for (let i = 0; i < 60; i++) {
-          console.log(await gatt.read(descriptor));
-          delay(1000);
-        }
-        // await gatt.write({ handle: 21 }, Buffer.from([0x01]));
-      }
     } catch (e) {
       console.log(e);
     } finally {
