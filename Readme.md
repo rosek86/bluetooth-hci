@@ -163,7 +163,7 @@ import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 ```ts
 import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 import { GapAdvertReport, GapConnectEvent } from 'bluetooth-hci';
-import { GattClient, printProfile } from 'bluetooth-hci';
+import { GattClient } from 'bluetooth-hci';
 import { NbleGapCentral } from 'bluetooth-hci';
 import { DisconnectionCompleteEvent, LeConnectionUpdate } from 'bluetooth-hci';
 import { delay } from 'bluetooth-hci';
@@ -226,7 +226,7 @@ class App extends NbleGapCentral {
       this.saveProfile(event.address, profile); // cache profile
       console.log('Discovered services on', event.address.toString());
 
-      printProfile(gatt.Profile);
+      this.printProfile(gatt.Profile);
 
       // Update connection parameters to decrease power consumption
       console.log(
@@ -240,7 +240,7 @@ class App extends NbleGapCentral {
       // Find button characteristic
       const characteristic = gatt.findCharacteristicByUuids({
         serviceUuid: '000015231212efde1523785feabcd123',
-        descriptorUuid: '000015241212efde1523785feabcd123',
+        characteristicUuid: '000015241212efde1523785feabcd123',
       });
 
       if (!characteristic) {
@@ -248,7 +248,7 @@ class App extends NbleGapCentral {
       }
 
       console.log('Reading initial button state...');
-      const initialButtonState = await gatt.read({ handle: characteristic.valueHandle });
+      const initialButtonState = await gatt.read(characteristic);
       console.log(`Initial button state: ${initialButtonState[0] ? 'pressed' : 'released'}`);
 
       console.log('Waiting for button press...');

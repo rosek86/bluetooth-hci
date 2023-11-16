@@ -8,6 +8,7 @@ import { DisconnectionCompleteEvent } from "../hci/HciEvent";
 import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController";
 import { Address } from "../utils/Address";
 import { HciAdapter } from "../utils/HciAdapter";
+import { printProfile } from "../utils/Profile";
 
 const debug = Debug('NbleGapCentral');
 
@@ -101,6 +102,10 @@ export abstract class NbleGapCentral extends EventEmitter {
 
   protected saveProfile(address: Address, profile: GattClient['Profile']) {
     GapProfileStorage.saveProfile(address, profile);
+  }
+
+  protected printProfile(profile: GattClient['Profile']) {
+    printProfile(profile);
   }
 
   private async _onAdvert(report: GapAdvertReport): Promise<void> {

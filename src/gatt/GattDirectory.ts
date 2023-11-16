@@ -309,7 +309,7 @@ export class GattDirectory {
     return null;
   }
 
-  public findCharacteristicByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattCharacteristic.AsObject | null {
+  public findCharacteristicByUuids(uuids: { serviceUuid: string; characteristicUuid: string }): GattCharacteristic.AsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
       if (!sEntry) { continue; }
@@ -325,7 +325,7 @@ export class GattDirectory {
       if (!cEntry) { continue; }
       for (const dEntry of Object.values(cEntry.descriptors ?? {})) {
         if (!dEntry) { continue; }
-        if (dEntry.descriptor.uuid === uuids.descriptorUuid) {
+        if (dEntry.descriptor.uuid === uuids.characteristicUuid) {
           return cEntry.characteristic;
         }
       }

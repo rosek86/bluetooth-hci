@@ -175,7 +175,7 @@ export class GattClient extends EventEmitter {
     return result.mtu;
   }
 
-  public findCharacteristicByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattCharacteristic.AsObject | null {
+  public findCharacteristicByUuids(uuids: { serviceUuid: string; characteristicUuid: string }): GattCharacteristic.AsObject | null {
     return this.directory.findCharacteristicByUuids(uuids);
   }
 
@@ -183,8 +183,8 @@ export class GattClient extends EventEmitter {
     return this.directory.findDescriptorByUuids(uuids);
   }
 
-  public async read(attribute: { handle: number }): Promise<Buffer> {
-    const handle = attribute.handle;
+  public async read(char: GattCharacteristic.AsObject): Promise<Buffer> {
+    const handle = char.valueHandle;
     const blob = await this.att.readReq({ attributeHandle: handle });
 
     let part = blob.attributeValue;
@@ -203,13 +203,13 @@ export class GattClient extends EventEmitter {
     return value;
   }
 
-  public async write(attribute: { handle: number }, value: Buffer): Promise<void> {
-    const handle = attribute.handle;
+  public async write(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
+    const handle = char.valueHandle;
     await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async writeWithoutResponse(attribute: { handle: number }, value: Buffer): Promise<void> {
-    const handle = attribute.handle;
+  public async writeWithoutResponse(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
+    const handle = char.valueHandle;
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
