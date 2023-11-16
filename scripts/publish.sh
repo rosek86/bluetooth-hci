@@ -14,6 +14,7 @@ cp -r lib/* $TMP_DIR/
 cp package.json $TMP_DIR/
 cp README.md $TMP_DIR/
 cp LICENSE $TMP_DIR/
+cp CHANGELOG.md $TMP_DIR/
 
 # Change to the temporary directory and publish
 (
