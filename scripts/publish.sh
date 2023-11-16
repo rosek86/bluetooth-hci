@@ -5,7 +5,7 @@ TMP_DIR=$(mktemp -d)
 echo $TMP_DIR
 
 rm -fr lib/
-npm run build
+npm run build.prod
 
 # Copy the contents of /lib to the temporary directory
 cp -r lib/* $TMP_DIR/

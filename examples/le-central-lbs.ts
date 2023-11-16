@@ -57,9 +57,13 @@ class App extends NbleGapCentral {
       });
 
       if (characteristic) {
-        await gatt.startCharacteristicsNotifications(characteristic, false);
+        console.log('Reading initial button state...');
+        const initialButtonState = await gatt.read({ handle: characteristic.valueHandle });
+        console.log(`Initial button state: ${initialButtonState[0] ? 'pressed' : 'released'}`);
 
         console.log('Waiting for button press...');
+
+        await gatt.startCharacteristicsNotifications(characteristic, false);
         gatt.on('GattNotification', (event) => {
           if (event.descriptor.uuid !== '000015241212efde1523785feabcd123') {
             return;
@@ -69,7 +73,6 @@ class App extends NbleGapCentral {
         });
 
         for (let i = 0; i < 60; i++) {
-          // console.log(await gatt.read({ handle: characteristic.valueHandle }));
           await delay(1000);
         }
       }

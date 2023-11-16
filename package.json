@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -22,7 +22,7 @@
   "scripts": {
     "start": "node lib/index.js",
     "build": "tsc -p tsconfig.json",
-    "build.dev": "tsc -p tsconfig.dev.json",
+    "build.prod": "tsc -p tsconfig.prod.json",
     "watch": "tsc -w",
     "test": "mocha",
     "do-publish": "./scripts/publish.sh"

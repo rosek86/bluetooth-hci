@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "target": "ES2022",
     "module": "CommonJS",
-    "lib": ["ES2021"],
+    "lib": ["ES2022"],
     "sourceMap": true,
-    "outDir": "lib",
-    "rootDir": "./src",
+    "outDir": "./dist",
+    "rootDir": "./",
     "removeComments": true,
     "strict": true,
     "moduleResolution": "Node",
@@ -19,11 +19,11 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "test/**/*",
+    "examples/**/*"
   ],
   "exclude": [
     "node_modules",
-    "test/**/*",
-    "examples/**/*"
   ]
 }
