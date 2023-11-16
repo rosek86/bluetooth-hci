@@ -1,13 +1,9 @@
-import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
-import { GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
-import { NbleGapCentral } from '../src/nble/NbleGapCentral';
-import { GattClient } from '../src/gatt/GattClient';
-import { HciAdapter } from '../src/utils/HciAdapter';
-import { printProfile } from '../src/utils/Profile';
-import { createHciSerial } from '../src/utils/SerialHciDevice';
-import { delay } from '../src/utils/Utils';
-import { GapProfileStorage } from '../src/gap/GapProfileStorage';
-import { LeConnectionUpdate } from '../src/hci/HciLeController';
+import { createHciSerial, HciAdapter } from '../src/index';
+import { GapAdvertReport, GapConnectEvent } from '../src/index';
+import { GattClient, printProfile } from '../src/index';
+import { NbleGapCentral } from '../src/index';
+import { DisconnectionCompleteEvent, LeConnectionUpdate } from '../src/index';
+import { delay } from '../src/index';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
@@ -123,12 +119,12 @@ class App extends NbleGapCentral {
   }
 }
 
-(async () => {
-  try {
-    const adapter = new HciAdapter(await createHciSerial());
-    await adapter.open();
-    await (new App(adapter)).start();
-  } catch (e) {
-    console.log(e);
-  }
-})();
+createHciSerial().then(async (serial) => {
+  const adapter = new HciAdapter(serial);
+  await adapter.open();
+
+  const app = new App(adapter);
+  await app.start();
+}).catch((e) => {
+  console.log(e);
+});

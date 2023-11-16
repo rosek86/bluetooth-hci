@@ -158,61 +158,32 @@ import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 })();
 ```
 
-### Connect, discover services
+### Central connection (Nordic_LBS example)
 
 ```ts
-import chalk from 'chalk';
-import {
-  LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates
-} from 'bluetooth-hci';
-import { DisconnectionCompleteEvent } from 'bluetooth-hci';
-import { Address, printProfile } from 'bluetooth-hci';
 import { createHciSerial, HciAdapter } from 'bluetooth-hci';
-import { GattClient, GapAdvertReport, GapConnectEvent } from 'bluetooth-hci';
+import { GapAdvertReport, GapConnectEvent } from 'bluetooth-hci';
+import { GattClient, printProfile } from 'bluetooth-hci';
 import { NbleGapCentral } from 'bluetooth-hci';
+import { DisconnectionCompleteEvent, LeConnectionUpdate } from 'bluetooth-hci';
+import { delay } from 'bluetooth-hci';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
-  private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();
 
   constructor(adapter: HciAdapter) {
-    super(adapter, {
-      autoScan: true,
-      autoScanOptions: {
-        scanWhenConnected: false,
-        parameters: {
-          ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-          scanningFilterPolicy: LeScanningFilterPolicy.All,
-          scanningPhy: {
-            Phy1M: {
-              type: LeScanType.Active,
-              intervalMs: 100,
-              windowMs: 100,
-            },
-          },
-        },
-        start: {
-          filterDuplicates: LeScanFilterDuplicates.Enabled,
-        },
-      },
-    });
+    super(adapter);
   }
 
   protected async onAdvert(report: GapAdvertReport): Promise<void> {
     try {
-      this.saveAdvertReport(report);
-
-      if (report.scanResponse === false && report.scannableAdvertising === true) {
-        // Wait for scan response
-        return;
-      }
       if (report.connectableAdvertising === false) {
         // Skip non-connectable devices
         return;
       }
+
+      const name = report.data.completeLocalName;
+      if (name !== 'Nordic_LBS') { return; }
 
       // Prevent multiple connections requests
       if (this.state !== 'idle') { return; }
@@ -220,9 +191,7 @@ class App extends NbleGapCentral {
 
       // Connect to device with timeout
       await this.connect(report.address, { connectionTimeoutMs: 2000 });
-
-      const name = '(' + this.getCompleteLocalName(report.address) + ')';
-      console.log(`Connecting to ${report.address.toString()} ${name} at RSSI ${report.rssi} dBm...`);
+      console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {
       console.log(`Error while connecting to ${report.address.toString()}`, e);
@@ -230,51 +199,75 @@ class App extends NbleGapCentral {
     }
   }
 
-  private saveAdvertReport(report: GapAdvertReport) {
-    const numericAddress = report.address.toNumeric();
-    const storageValue = this.advReportStorage.get(numericAddress) ?? {};
-    if (!report.scanResponse) {
-      storageValue.advertisement = report;
-    } else {
-      storageValue.scanResponse = report;
-    }
-    this.advReportStorage.set(numericAddress, storageValue);
-  }
-
-  private getCompleteLocalName(address: Address) {
-    const storeValue = this.advReportStorage.get(address.toNumeric()) ?? {};
-    return storeValue.advertisement?.data?.completeLocalName ?? storeValue.scanResponse?.data?.completeLocalName ?? 'N/A';
-  }
-
-  protected async onConnected(event: GapConnectEvent): Promise<void> {
-    // Device connected, discovering services
-    this.state = 'connected';
-    console.log(`Connected to ${event.address.toString()}`);
-    console.log(`Discovering services on ${event.address.toString()}...`);
-  }
-
-  protected async onServicesDiscovered(event: GapConnectEvent, gatt: GattClient): Promise<void> {
+  protected async onConnected(event: GapConnectEvent, gatt: GattClient): Promise<void> {
     try {
+      this.state = 'connected';
+      console.log(`Connected to ${event.address.toString()}`);
+
+      const connectionParameters: LeConnectionUpdate = {
+        connectionHandle: event.connectionHandle,
+        connectionIntervalMinMs: event.connectionParams.connectionIntervalMs,
+        connectionIntervalMaxMs: event.connectionParams.connectionIntervalMs,
+        connectionLatency: event.connectionParams.connectionLatency,
+        supervisionTimeoutMs: event.connectionParams.supervisionTimeoutMs,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      };
+
+      // Update connection parameters to speed up discovery
+      await this.gap.connectionUpdate({
+        ...connectionParameters,
+        connectionIntervalMinMs: 7.5,
+        connectionIntervalMaxMs: 7.5,
+      });
+
+      console.log(`Discovering services on ${event.address.toString()}...`);
+      const profile = await gatt.discover();
+      this.saveProfile(event.address, profile); // cache profile
       console.log('Discovered services on', event.address.toString());
-      this.printManufacturerInfo(event);
+
       printProfile(gatt.Profile);
+
+      // Update connection parameters to decrease power consumption
+      console.log(
+        await this.gap.connectionUpdate({
+          ...connectionParameters,
+          connectionIntervalMinMs: 100,
+          connectionIntervalMaxMs: 100,
+        })
+      );
+
+      // Find button characteristic
+      const characteristic = gatt.findCharacteristicByUuids({
+        serviceUuid: '000015231212efde1523785feabcd123',
+        descriptorUuid: '000015241212efde1523785feabcd123',
+      });
+
+      if (!characteristic) {
+        throw new Error('Button characteristic not found');
+      }
+
+      console.log('Reading initial button state...');
+      const initialButtonState = await gatt.read({ handle: characteristic.valueHandle });
+      console.log(`Initial button state: ${initialButtonState[0] ? 'pressed' : 'released'}`);
+
+      console.log('Waiting for button press...');
+
+      await gatt.startCharacteristicsNotifications(characteristic, false);
+      gatt.on('GattNotification', (event) => {
+        if (event.descriptor.uuid !== '000015241212efde1523785feabcd123') {
+          return;
+        }
+        const state = event.attributeValue[0];
+        console.log(state ? 'Button pressed' : 'Button released');
+      });
+
+      await delay(30_000);
     } catch (e) {
       console.log(e);
     } finally {
       console.log('Disconnecting...');
       await this.disconnect(event.connectionHandle);
-    }
-  }
-
-  private printManufacturerInfo(event: GapConnectEvent) {
-    const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
-    console.log('Manufacturer (RF):   ', chalk.blue(this.adapter.manufacturerNameFromCode(versionInformation.manufacturerName)));
-
-    const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
-    const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
-                       storeValue.scanResponse?.data?.manufacturerData?.ident;
-    if (identifier) {
-      console.log('Manufacturer (PROD): ', chalk.blue(this.adapter.manufacturerNameFromCode(identifier)));
     }
   }
 
@@ -289,21 +282,14 @@ class App extends NbleGapCentral {
   }
 }
 
-(async () => {
-  try {
-    const adapter = new HciAdapter(await createHciSerial());
-    await adapter.open();
-    const app = new App(adapter);
-    await app.start();
-  } catch (e) {
-    const err = e as Error;
-    console.log('le-discover-cache', err.message);
-  }
-})();
+createHciSerial().then(async (serial) => {
+  const adapter = new HciAdapter(serial);
+  await adapter.open();
 
-process.on('unhandledRejection', (error) => {
-  console.error('unhandledRejection', error);
-  throw error;
+  const app = new App(adapter);
+  await app.start();
+}).catch((e) => {
+  console.log(e);
 });
 ```
 
