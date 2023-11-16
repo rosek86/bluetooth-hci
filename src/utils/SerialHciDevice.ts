@@ -1,8 +1,11 @@
+import Debug from 'debug';
 import { SerialPort, SerialPortOpenOptions } from 'serialport';
 import { AutoDetectTypes } from '@serialport/bindings-cpp';
 import { PortInfo } from '@serialport/bindings-interface';
 
 import { HciDevice } from "./HciAdapter";
+
+const debug = Debug('bt-hci-uart');
 
 export class SerialHciDevice implements HciDevice {
   private port: SerialPort;
@@ -15,9 +18,9 @@ export class SerialHciDevice implements HciDevice {
     options.dataBits = options.dataBits ?? 8;
     options.stopBits = options.stopBits ?? 1;
     this.port = new SerialPort(options);
-    this.port.on('error', (err) => console.log(err));
-    // this.port.on('data', (data) => console.log(data.toString('hex')));
-    this.port.on('close', () => console.log('close'));
+    this.port.on('error', (err) => debug(err));
+    // this.port.on('data', (data) => debug(data.toString('hex')));
+    this.port.on('close', () => debug('close'));
   }
 
   async open() {

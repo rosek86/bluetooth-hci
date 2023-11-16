@@ -11,7 +11,7 @@ import { UUID } from '../utils/UUID';
 import { HciError } from '../hci/HciError';
 import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
 
-const debug = Debug('nble-gatt');
+const debug = Debug('bt-hci-gatt');
 
 export enum  GattProfileAttributeType {
   PrimaryService                    = 0x2800, // Primary Service Declaration

@@ -16,7 +16,6 @@ import { HciAdapter } from '../src/utils/HciAdapter';
 import { printProfile } from '../src/utils/Profile';
 import { Address } from '../src/utils/Address';
 import { createHciSerial } from '../src/utils/SerialHciDevice';
-import { delay } from '../src/utils/Utils';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';

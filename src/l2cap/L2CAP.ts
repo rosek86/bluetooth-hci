@@ -9,7 +9,7 @@ import { DisconnectionCompleteEvent, NumberOfCompletedPacketsEntry } from '../hc
 import { LeBufferSize } from '../hci/HciLeController';
 import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from '../acl/Acl';
 
-const debug = Debug('nble-l2cap');
+const debug = Debug('bt-hci-l2cap');
 
 interface AclQueueEntry {
   connectionHandle: number;

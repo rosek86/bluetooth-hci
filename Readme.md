@@ -1,6 +1,6 @@
 # bluetooth-hci
 
-NOTE: This is the initial version of the library, with basic functionalities such as advertising and scanning operational. It is possible to establish a connection, but further development is required to bring this library to a production-ready level.
+NOTE: This is the initial version of the library, with basic functionalities such as advertising, scanning and central connection are operational, however further development is required to bring this library to a production-ready level.
 
 The library implements a Bluetooth 5 HCI host, focusing mainly on Bluetooth Low Energy (LE).
 

@@ -69,7 +69,6 @@ export class NativeHciSocket implements HciDevice {
   }
 
   public async open() {
-    console.log(this.devId);
     await this.port.bindRaw(this.devId);
     this.port.start();
 

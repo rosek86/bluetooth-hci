@@ -17,7 +17,7 @@ import {
 } from './HciOgfOcf';
 import assert from 'assert';
 
-const debug = Debug('nble-hci-cmd');
+const debug = Debug('bt-hci-hci-cmd');
 
 type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 

@@ -58,7 +58,7 @@ export interface GapConnectEvent {
   leRemoteFeatures: LeSupportedFeatures;
 };
 
-const debug = Debug('nble-gap');
+const debug = Debug('bt-hci-gap');
 
 export declare interface GapCentral {
   on(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;

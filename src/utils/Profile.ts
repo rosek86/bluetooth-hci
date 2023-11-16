@@ -47,7 +47,7 @@ export const printProfile = (p: Profile): void => {
   const padding = (level: number) => ''.padStart(level, ' ');
   const print = (ident: 'S' | 'C' | 'D', info: EntryInfo, level: number) => {
     process.stdout.write(padding(level));
-    process.stdout.write('- ' + chalk.yellow(ident) + ': ');
+    process.stdout.write(`- ${chalk.yellow(ident)}: `);
     process.stdout.write(chalk.green(info.uuid));
     process.stdout.write(` @ ${chalk.green(info.handle.toString())}`);
     process.stdout.write(info.uuidInfo?.for ? ` (${chalk.blue(info.uuidInfo?.for)})` : '');
@@ -71,7 +71,7 @@ export const printProfile = (p: Profile): void => {
       .map(([key]) => key)
       .join(',');
     if (properties.length > 0) {
-      console.log(padding(level) + `     (${properties})`);
+      process.stdout.write(`${padding(level)}     (${properties})${EOL}`);
     }
 
     for (const descriptor of Object.values(e.descriptors ?? {})) {

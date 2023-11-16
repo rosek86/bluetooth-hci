@@ -26,7 +26,7 @@ import {
 } from './AttSerDes';
 import { HciError } from '../hci/HciError';
 
-const debug = Debug('nble-att');
+const debug = Debug('bt-hci-att');
 
 type AttEvents = keyof typeof AttOpcode;
 

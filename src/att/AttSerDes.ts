@@ -3,7 +3,7 @@ import { AttErrorCode } from './AttError';
 
 import Debug from 'debug';
 
-const debug = Debug('nble-att-serdes');
+const debug = Debug('bt-hci-att-serdes');
 
 export interface AttSerDes<T> {
   serialize(data: T): Buffer;

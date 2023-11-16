@@ -69,7 +69,7 @@ import {
 
 import { AclDataPacket } from '../acl/Acl';
 
-const debug = Debug('nble-hci');
+const debug = Debug('bt-hci-hci');
 
 interface HciInit {
   cmdTimeout?: number;

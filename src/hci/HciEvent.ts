@@ -4,7 +4,7 @@ import { Address } from '../utils/Address';
 import { HciErrorCode } from './HciError';
 import { LeSupportedFeatures } from './HciLeController';
 
-const debug = Debug('nble-hci-event');
+const debug = Debug('bt-hci-hci-event');
 
 export enum HciEvent {
   InquiryComplete                                     = 0x01, // Inquiry Complete

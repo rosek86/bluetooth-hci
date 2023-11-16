@@ -52,7 +52,7 @@ export abstract class NbleGapCentral extends EventEmitter {
       cacheRemoteInfo: true,
     });
 
-    this.gap.on('GapLeScanState',          (scanning) => console.log('scanning', scanning));
+    this.gap.on('GapLeScanState',          (scanning) => debug('scanning', scanning));
     this.gap.on('GapLeAdvReport',          (report)   => this._onAdvert(report));
     this.gap.on('GapConnected',            (event)    => this._onConnected(event));
     this.gap.on('GapConnectionCancelled',  ()         => this._onConnectionCancelled());
