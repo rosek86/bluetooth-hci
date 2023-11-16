@@ -56,6 +56,7 @@ export class UsbHciSocket implements HciDevice {
 
   public on(evt: 'data', listener: (data: Buffer) => void): void;
   public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
   }
@@ -91,6 +92,7 @@ export class NativeHciSocket implements HciDevice {
 
   public on(evt: 'data', listener: (data: Buffer) => void): void;
   public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
   }

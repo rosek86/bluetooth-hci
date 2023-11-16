@@ -261,7 +261,7 @@ export class HciCmd {
 
     let o = 0;
     o = buffer.writeUIntLE(opcode,        o, 2);
-    o = buffer.writeUIntLE(payloadLength, o, 1);
+        buffer.writeUIntLE(payloadLength, o, 1);
 
     if (payload && payloadLength > 0) {
       payload.copy(buffer, 3);

@@ -67,8 +67,8 @@ export class HciAdapter extends EventEmitter {
     ]);
     console.log('Local Version:', localVersion);
     console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
-    console.log('Local Supported Commands:', Object.entries(localCommands.Commands).filter(([_, value]) => value).map(([key]) => key));
-    console.log('Local Supported Features', Object.entries(localFeatures).filter(([_, value]) => value).map(([key]) => key));
+    console.log('Local Supported Commands:', Object.entries(localCommands.Commands).filter(([, value]) => value).map(([key]) => key));
+    console.log('Local Supported Features', Object.entries(localFeatures).filter(([, value]) => value).map(([key]) => key));
 
     if (localCommands.isSupported('readBdAddr')) {
       const bdAddress = await this.hci.readBdAddr();
@@ -84,7 +84,7 @@ export class HciAdapter extends EventEmitter {
       this.hci.leReadSupportedStates(),
       this.hci.leReadBufferSize(),
     ]);
-    console.log('LE Features:', Object.entries(leFeatures.Features).filter(([_, value]) => value).map(([key]) => key));
+    console.log('LE Features:', Object.entries(leFeatures.Features).filter(([, value]) => value).map(([key]) => key));
     console.log('LE States:', leStates);
     console.log('LE Buffer Size:', leBufferSize);
 
@@ -161,7 +161,7 @@ export class HciAdapter extends EventEmitter {
     const hexcode = code.toString(16).padStart(4, '0');
     const manufacturers = Object.entries(companies.entries)
       .filter(([k]) => k === hexcode)
-      .map(([_,v]) => v);
+      .map(([, v]) => v);
     return manufacturers.at(0);
   }
 }

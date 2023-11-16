@@ -8,7 +8,6 @@ import { GattDescriptor } from './GattDescriptor';
 import { Profile, GattDirectory } from './GattDirectory';
 
 import { UUID } from '../utils/UUID';
-import { HciError } from '../hci/HciError';
 import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
 
 const debug = Debug('bt-hci-gatt');
@@ -31,7 +30,7 @@ interface GattHvxParams {
   characteristic: GattCharacteristic.AsObject;
   descriptor: GattDescriptor.AsObject;
   attributeValue: Buffer;
-};
+}
 
 export interface GattClient {
   on(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
@@ -66,7 +65,7 @@ export class GattClient extends EventEmitter {
     this.removeAllListeners();
   }
 
-  private onDisconnected = (_: HciError): void => this.destroy();
+  private onDisconnected = (): void => this.destroy();
 
   private onValueIndication = async (msg: AttHandleValueIndMsg): Promise<void> => {
     await this.att.handleValueCfm();

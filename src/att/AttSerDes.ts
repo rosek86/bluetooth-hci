@@ -25,7 +25,7 @@ export class AttErrorRsp {
     o = buffer.writeUIntLE(AttOpcode.ErrorRsp,          o, 1);
     o = buffer.writeUIntLE(data.requestOpcodeInError,   o, 1);
     o = buffer.writeUIntLE(data.attributeHandleInError, o, 2);
-    o = buffer.writeUIntLE(data.errorCode,              o, 1);
+        buffer.writeUIntLE(data.errorCode,              o, 1);
     return buffer;
   }
 
@@ -53,7 +53,7 @@ export class AttExchangeMtuReq {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuReq, o, 1);
-    o = buffer.writeUIntLE(req.mtu,                  o, 2);
+        buffer.writeUIntLE(req.mtu,                  o, 2);
     return buffer;
   }
 
@@ -77,7 +77,7 @@ export class AttExchangeMtuRsp {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuRsp, o, 1);
-    o = buffer.writeUIntLE(req.mtu,                  o, 2);
+        buffer.writeUIntLE(req.mtu,                  o, 2);
     return buffer;
   }
 
@@ -103,7 +103,7 @@ export class AttFindInformationReq {
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.FindInformationReq,  o, 1);
     o = buffer.writeUIntLE(req.startingHandle,            o, 2);
-    o = buffer.writeUIntLE(req.endingHandle,              o, 2);
+        buffer.writeUIntLE(req.endingHandle,              o, 2);
     return buffer;
   }
 
@@ -406,7 +406,7 @@ export class AttReadReq {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadReq,     o, 1);
-    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+        buffer.writeUIntLE(data.attributeHandle,  o, 2);
 
     return buffer;
   }
@@ -455,7 +455,7 @@ export class AttReadBlobReq {
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadBlobReq, o, 1);
     o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
-    o = buffer.writeUIntLE(data.valueOffset,      o, 2);
+        buffer.writeUIntLE(data.valueOffset,      o, 2);
 
     return buffer;
   }
@@ -687,7 +687,7 @@ export class AttWriteReq {
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.WriteReq,    o, 1);
     o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
-    o += data.attributeValue.copy(buffer, o);
+    data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -712,6 +712,7 @@ export interface AttWriteRspMsg {
 
 export class AttWriteRsp {
   static serialize(_: AttWriteRspMsg): Buffer {
+    void _;
     return Buffer.from([ AttOpcode.WriteRsp ]);
   }
 
@@ -740,7 +741,7 @@ export class AttPrepareWriteReq {
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteReq, o, 1);
     o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
     o = buffer.writeUIntLE(data.valueOffset,          o, 2);
-    o += data.partAttributeValue.copy(buffer, o);
+    data.partAttributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -777,7 +778,7 @@ export class AttPrepareWriteRsp {
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteRsp, o, 1);
     o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
     o = buffer.writeUIntLE(data.valueOffset,          o, 2);
-    o += data.partAttributeValue.copy(buffer, o);
+    data.partAttributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -830,6 +831,7 @@ export interface AttExecuteWriteRspMsg {
 
 export class AttExecuteWriteRsp {
   static serialize(_: AttExecuteWriteRspMsg): Buffer {
+    void _;
     return Buffer.from([ AttOpcode.ExecuteWriteRsp ]);
   }
 
@@ -852,7 +854,7 @@ export class AttReadMultipleVariableReq {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableReq, o, 1);
-    o += data.setOfHandles.copy(buffer, o);
+    data.setOfHandles.copy(buffer, o);
 
     return buffer;
   }
@@ -922,7 +924,7 @@ export class AttWriteCmd {
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.WriteCmd,    o, 1);
     o  = buffer.writeUIntLE(data.attributeHandle,  o, 2);
-    o += data.attributeValue.copy(buffer, o);
+    data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -952,7 +954,7 @@ export class AttSignedWriteCmd {
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.SignedWriteCmd, o, 1);
     o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
-    o += data.attributeValue.copy(buffer, o);
+    data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -982,7 +984,7 @@ export class AttHandleValueNtf {
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.HandleValueNtf, o, 1);
     o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
-    o += data.attributeValue.copy(buffer, o);
+    data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -1012,7 +1014,7 @@ export class AttHandleValueInd {
     let o = 0;
     o  = buffer.writeUIntLE(AttOpcode.HandleValueInd, o, 1);
     o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
-    o += data.attributeValue.copy(buffer, o);
+    data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
@@ -1035,6 +1037,7 @@ export interface AttHandleValueCfmMsg {
 
 export class AttHandleValueCfm {
   static serialize(_: AttHandleValueCfmMsg): Buffer {
+    void _;
     return Buffer.from([AttOpcode.HandleValueCfm]);
   }
 

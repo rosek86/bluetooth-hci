@@ -56,7 +56,7 @@ export interface GapConnectEvent {
     subversion: number;
   };
   leRemoteFeatures: LeSupportedFeatures;
-};
+}
 
 const debug = Debug('bt-hci-gap');
 
@@ -88,7 +88,7 @@ interface GapDeviceInfo {
   versionInformation?: ReadRemoteVersionInformationCompleteEvent;
   leRemoteFeatures?: LeReadRemoteFeaturesCompleteEvent;
   att?: Att;
-};
+}
 
 interface RemoteInfoCache  {
   version: ReadRemoteVersionInformationCompleteEvent;

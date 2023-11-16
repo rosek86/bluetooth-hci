@@ -67,7 +67,7 @@ export const printProfile = (p: Profile): void => {
     print('C', e.characteristic, level);
 
     const properties = Object.entries(e.characteristic.properties)
-      .filter(([_, value]) => value === true)
+      .filter(([, value]) => value === true)
       .map(([key]) => key)
       .join(',');
     if (properties.length > 0) {

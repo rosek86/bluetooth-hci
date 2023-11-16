@@ -8,6 +8,7 @@ export interface AdvDataField {
   data: Buffer;
 }
 
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 export enum AdvDataType {
   Flags                                   = 0x01, // *
   IncompleteListOf16bitServiceClassUuids  = 0x02, // *

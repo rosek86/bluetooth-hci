@@ -72,7 +72,7 @@ export enum HciErrorCode {
   PacketTooLong               = 0x45, // Packet Too Long
   TooLate                     = 0x46, // Too Late
   TooEarly                    = 0x47, // Too Early
-};
+}
 
 export enum HciDisconnectReason {
   AuthFailure                 = HciErrorCode.AuthFailure,

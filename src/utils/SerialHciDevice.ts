@@ -42,6 +42,7 @@ export class SerialHciDevice implements HciDevice {
 
   on(evt: 'data', listener: (data: Buffer) => void): void;
   on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
   }

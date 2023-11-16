@@ -304,7 +304,7 @@ export class LeSetAdvertisingParameters {
     o = payload.writeUIntLE(params.peerAddressType,         o, 1);
     o = payload.writeUIntLE(params.peerAddress.toNumeric(), o, 6);
     o = payload.writeUIntLE(advertisingChannelMap,          o, 1);
-    o = payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
+        payload.writeUIntLE(params.advertisingFilterPolicy, o, 1);
 
     return payload;
   }
@@ -363,7 +363,7 @@ export class LeSetScanParameters {
     o = payload.writeUIntLE(interval,                    o, 2);
     o = payload.writeUIntLE(window,                      o, 2);
     o = payload.writeUIntLE(params.ownAddressType,       o, 1);
-    o = payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
+        payload.writeUIntLE(params.scanningFilterPolicy, o, 1);
 
     return payload;
   }
@@ -418,7 +418,7 @@ export class LeCreateConnection {
     o = payload.writeUIntLE(params.connectionLatency,             o, 2);
     o = payload.writeUIntLE(supervisionTimeout,                   o, 2);
     o = payload.writeUIntLE(minConnEvtLength,                     o, 2);
-    o = payload.writeUIntLE(maxConnEvtLength,                     o, 2);
+        payload.writeUIntLE(maxConnEvtLength,                     o, 2);
 
     return payload;
   }
@@ -451,7 +451,7 @@ export class LeConnectionUpdate {
     o = payload.writeUIntLE(params.connectionLatency,     o, 2);
     o = payload.writeUIntLE(supervisionTimeout,           o, 2);
     o = payload.writeUIntLE(minConnEvtLength,             o, 2);
-    o = payload.writeUIntLE(maxConnEvtLength,             o, 2);
+        payload.writeUIntLE(maxConnEvtLength,             o, 2);
 
     return payload;
   }
@@ -549,7 +549,7 @@ export class LeEnableEncryption {
     o  = payload.writeUIntLE(connectionHandle, o, 2);
     o += params.randomNumber.reverse().copy(payload, o);
     o  = payload.writeUIntLE(params.encryptedDiversifier, o, 2);
-    o += params.longTermKey.reverse().copy(payload, o);
+         params.longTermKey.reverse().copy(payload, o);
 
     return payload;
   }
@@ -564,7 +564,7 @@ export class LeLongTermKeyRequestReply {
 
     let o = 0;
     o  = payload.writeUIntLE(connectionHandle, o, 2);
-    o += longTermKey.reverse().copy(payload, o);
+    longTermKey.reverse().copy(payload, o);
 
     return payload;
   }
@@ -713,7 +713,7 @@ export class LeReceiverTestV2 extends LeTest {
     let o = 0;
     o = payload.writeUIntLE(rxChannel,              o, 1);
     o = payload.writeUIntLE(params.phy,             o, 1);
-    o = payload.writeUIntLE(params.modulationIndex, o, 1);
+        payload.writeUIntLE(params.modulationIndex, o, 1);
 
     return payload;
   }
@@ -779,7 +779,7 @@ export class LeTransmitterTestV1 extends LeTest {
     let o = 0;
     o = payload.writeUIntLE(txChannel,              o, 1);
     o = payload.writeUIntLE(params.testDataLength,  o, 1);
-    o = payload.writeUIntLE(params.packetPayload,   o, 1);
+        payload.writeUIntLE(params.packetPayload,   o, 1);
 
     return payload;
   }
@@ -802,7 +802,7 @@ export class LeTransmitterTestV2 extends LeTest {
     o = payload.writeUIntLE(txChannel,              o, 1);
     o = payload.writeUIntLE(params.testDataLength,  o, 1);
     o = payload.writeUIntLE(params.packetPayload,   o, 1);
-    o = payload.writeUIntLE(params.phy,             o, 1);
+        payload.writeUIntLE(params.phy,             o, 1);
 
     return payload;
   }
@@ -918,7 +918,7 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
     o = payload.writeUIntLE(intervalMax,      o, 2);
     o = payload.writeUIntLE(timeout,          o, 2);
     o = payload.writeUIntLE(minCeLength,      o, 2);
-    o = payload.writeUIntLE(maxCeLength,      o, 2);
+        payload.writeUIntLE(maxCeLength,      o, 2);
 
     return payload;
   }
@@ -933,7 +933,7 @@ export class LeRemoteConnectionParameterRequestNegativeReply extends LeTest {
 
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
-    o = payload.writeUIntLE(reason,           o, 1);
+        payload.writeUIntLE(reason,           o, 1);
 
     return payload;
   }
@@ -951,7 +951,7 @@ export class LeDataLength {
     let o = 0;
     o = payload.writeUIntLE(connectionHandle, o, 2);
     o = payload.writeUIntLE(params.txOctets,  o, 2);
-    o = payload.writeUIntLE(params.txTime,    o, 2);
+        payload.writeUIntLE(params.txTime,    o, 2);
 
     return payload;
   }
@@ -1042,7 +1042,7 @@ export class LeAddDeviceToResolvingList {
     o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
     o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
     o += params.peerIrk.reverse().copy(payload, o);
-    o += params.localIrk.reverse().copy(payload, o);
+         params.localIrk.reverse().copy(payload, o);
 
     return payload;
   }
@@ -1058,8 +1058,8 @@ export class LeRemoveDeviceFromResolvingList {
     const payload = Buffer.alloc(7);
 
     let o = 0;
-    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
-    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+        payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
 
     return payload;
   }
@@ -1084,8 +1084,8 @@ export class LeReadPeerResolvableAddress {
     const payload = Buffer.alloc(7);
 
     let o = 0;
-    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
-    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+        payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
 
     return payload;
   }
@@ -1108,8 +1108,8 @@ export class LeLocalPeerResolvableAddress {
     const payload = Buffer.alloc(7);
 
     let o = 0;
-    o  = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
-    o  = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
+        payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
 
     return payload;
   }
@@ -1194,7 +1194,7 @@ export class DefaultTxRxPhy {
     let o = 0;
     o = payload.writeUInt8(allPhys, o);
     o = payload.writeUInt8(txPhys,  o);
-    o = payload.writeUInt8(rxPhys,  o);
+        payload.writeUInt8(rxPhys,  o);
 
     return payload;
   }
@@ -1239,7 +1239,7 @@ export class LeSetTxRxPhy {
     o = payload.writeUIntLE(allPhys,          o, 1);
     o = payload.writeUIntLE(txPhys,           o, 1);
     o = payload.writeUIntLE(rxPhys,           o, 1);
-    o = payload.writeUIntLE(opts,             o, 2);
+        payload.writeUIntLE(opts,             o, 2);
 
     return payload;
   }
@@ -1251,7 +1251,7 @@ export class LeAdvertisingSetRandomAddress {
 
     let o = 0;
     o = payload.writeUIntLE(advertHandle,               o, 1);
-    o = payload.writeUIntLE(randomAddress.toNumeric(),  o, 6);
+        payload.writeUIntLE(randomAddress.toNumeric(),  o, 6);
 
     return payload;
   }
@@ -1424,7 +1424,7 @@ export class LeExtendedCreateConnectionV2 {
       Buffer.from([ params.advertisingHandle, params.subevent ]),
       LeExtendedCreateConnectionV1.inParams(params),
     ]);
-  };
+  }
 }
 
 export interface LeTransmitPower {
@@ -1457,7 +1457,7 @@ export class LePrivacyMode {
     let o = 0;
     o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
     o = payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
-    o = payload.writeUIntLE(params.privacyMode,                     o, 1);
+        payload.writeUIntLE(params.privacyMode,                     o, 1);
 
     return payload;
   }
@@ -1534,7 +1534,7 @@ export class LeExtendedAdvertisingParametersV1 {
     o = payload.writeUIntLE(params.secondaryAdvertisingMaxSkip, o, 1);
     o = payload.writeUIntLE(params.secondaryAdvertisingPhy,     o, 1);
     o = payload.writeUIntLE(params.advertisingSid,              o, 1);
-    o = payload.writeUIntLE(scanRequestNotificationEnable,      o, 1);
+        payload.writeUIntLE(scanRequestNotificationEnable,      o, 1);
 
     return payload;
   }
@@ -1743,7 +1743,7 @@ export class LeExtendedScanParameters {
 
       o = payload.writeUIntLE(type,     o, 1);
       o = payload.writeUIntLE(interval, o, 2);
-      o = payload.writeUIntLE(window,   o, 2);
+          payload.writeUIntLE(window,   o, 2);
     }
 
     return payload;
@@ -1779,7 +1779,7 @@ export class LeExtendedScanEnabled {
     o = payload.writeUIntLE(params.enable ? 1 : 0,  o, 1);
     o = payload.writeUIntLE(filterDuplicates,       o, 1);
     o = payload.writeUIntLE(duration,               o, 2);
-    o = payload.writeUIntLE(period,                 o, 2);
+        payload.writeUIntLE(period,                 o, 2);
 
     return payload;
   }

@@ -533,14 +533,14 @@ export class LocalSupportedCommands {
 
   public toString(): string {
     return Object.entries(this.commands)
-      .filter(([_, supported]) => supported)
+      .filter(([, supported]) => supported)
       .map(([command]) => command)
       .join(', ');
   }
 
   public toStringSorted(): string {
     return Object.entries(this.commands)
-      .filter(([_, supported]) => supported)
+      .filter(([, supported]) => supported)
       .map(([command]) => command)
       .sort()
       .join(', ');
