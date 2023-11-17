@@ -1,6 +1,6 @@
-import { GattService } from './GattService';
-import { GattCharacteristic } from './GattCharacteristic';
-import { GattDescriptor } from './GattDescriptor';
+import { GattService } from './GattService.js';
+import { GattCharacteristic } from './GattCharacteristic.js';
+import { GattDescriptor } from './GattDescriptor.js';
 
 // General concept:
 // - GattDirectory is a tree of services, characteristics and descriptors

@@ -1,6 +1,6 @@
-import { HciParserErrorType, makeParserError } from "./HciError";
-import { bitSet } from "../utils/Utils";
-import { HciOcfControlAndBasebandCommands } from "./HciOgfOcf";
+import { HciParserErrorType, makeParserError } from "./HciError.js";
+import { bitSet } from "../utils/Utils.js";
+import { HciOcfControlAndBasebandCommands } from "./HciOgfOcf.js";
 
 export interface EventMask {
   inquiryComplete: boolean;

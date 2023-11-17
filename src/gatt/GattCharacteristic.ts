@@ -1,7 +1,7 @@
-import { AttDataEntry } from './AttGlue';
+import { AttDataEntry } from './AttGlue.js';
 
-import { UUID } from '../utils/UUID';
-import { bitGet } from '../utils/Utils';
+import { UUID } from '../utils/UUID.js';
+import { bitGet } from '../utils/Utils.js';
 
 enum CharacteristicPropertiesBits {
   // If set, permits broadcasts of the Characteristic Value using

@@ -8,8 +8,8 @@ import {
   AttReadByTypeReqMsg, AttReadByTypeRspMsg, AttReadMultipleReqMsg, AttReadMultipleRspMsg,
   AttReadMultipleVariableReqMsg, AttReadMultipleVariableRspMsg, AttReadReqMsg, AttReadRspMsg,
   AttSignedWriteCmdMsg, AttWriteCmdMsg, AttWriteReqMsg, AttWriteRspMsg
-} from "../att/AttSerDes";
-import { HciError } from "../hci/HciError";
+} from "../att/AttSerDes.js";
+import { HciError } from "../hci/HciError.js";
 
 export interface AttDataEntry {
   handle: number;

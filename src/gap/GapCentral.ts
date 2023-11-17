@@ -2,14 +2,14 @@ import assert from 'assert';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import chalk from 'chalk';
-import { AdvData } from './AdvData';
-import { Hci } from '../hci/Hci';
+import { AdvData } from './AdvData.js';
+import { Hci } from '../hci/Hci.js';
 import {
   DisconnectionCompleteEvent,
   LeAdvEventType, LeAdvReport, LeChannelSelAlgoEvent, LeConnectionCompleteEvent,
   LeConnectionRole, LeConnectionUpdateCompleteEvent, LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy,
   LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
-} from '../hci/HciEvent';
+} from '../hci/HciEvent.js';
 import {
   LeConnectionUpdate,
   LeExtendedCreateConnectionV1,
@@ -17,12 +17,12 @@ import {
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
   LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
-} from '../hci/HciLeController';
-import { Address } from '../utils/Address';
-import { Att } from '../att/Att';
-import { L2CAP } from '../l2cap/L2CAP';
-import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband';
-import { HciErrorCode } from '../hci/HciError';
+} from '../hci/HciLeController.js';
+import { Address } from '../utils/Address.js';
+import { Att } from '../att/Att.js';
+import { L2CAP } from '../l2cap/L2CAP.js';
+import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband.js';
+import { HciErrorCode } from '../hci/HciError.js';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;

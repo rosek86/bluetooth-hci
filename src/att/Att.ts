@@ -2,10 +2,10 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 
-import { L2capChannelId } from '../l2cap/L2capChannelId';
+import { L2capChannelId } from '../l2cap/L2capChannelId.js';
 
-import { AttOpcode } from './AttOpcode';
-import { AttErrorCode } from './AttError';
+import { AttOpcode } from './AttOpcode.js';
+import { AttErrorCode } from './AttError.js';
 import {
   AttSerDes, AttErrorRsp, AttErrorRspMsg,
   AttExchangeMtuReq, AttExchangeMtuReqMsg, AttExchangeMtuRsp, AttExchangeMtuRspMsg,
@@ -23,8 +23,8 @@ import {
   AttWriteCmd, AttWriteCmdMsg, AttSignedWriteCmd, AttSignedWriteCmdMsg,
   AttHandleValueNtf, AttHandleValueNtfMsg, AttHandleValueInd, AttHandleValueIndMsg,
   AttHandleValueCfm, AttHandleValueCfmMsg, AttMultipleHandleValueNtf, AttMultipleHandleValueNtfMsg
-} from './AttSerDes';
-import { HciError } from '../hci/HciError';
+} from './AttSerDes.js';
+import { HciError } from '../hci/HciError.js';
 
 const debug = Debug('bt-hci-att');
 

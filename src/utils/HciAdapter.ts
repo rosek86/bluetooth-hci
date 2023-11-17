@@ -1,7 +1,7 @@
-import EventEmitter from "events";
-import { Hci } from "../hci/Hci";
-import { H4 } from "../transport/H4";
-import { Address } from "./Address";
+import EventEmitter from "node:events";
+import { Hci } from "../hci/Hci.js";
+import { H4 } from "../transport/H4.js";
+import { Address } from "./Address.js";
 import companies from '../assigned numbers/Company Identifiers.json';
 
 export interface HciDevice {

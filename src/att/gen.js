@@ -52,7 +52,7 @@ function genImports() {
     imports += genImport(msg);
   }
   console.log(`
-    import {${imports}    } from './AttSerDes';`
+    import {${imports}    } from './AttSerDes.js';`
   );
 }
 

@@ -3,7 +3,7 @@ import { SerialPort, SerialPortOpenOptions } from 'serialport';
 import { AutoDetectTypes } from '@serialport/bindings-cpp';
 import { PortInfo } from '@serialport/bindings-interface';
 
-import { HciDevice } from "./HciAdapter";
+import { HciDevice } from "./HciAdapter.js";
 
 const debug = Debug('bt-hci-uart');
 

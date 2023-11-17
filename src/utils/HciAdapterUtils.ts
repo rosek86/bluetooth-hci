@@ -1,6 +1,6 @@
-import { ArgsParser, DefaultInputArgs } from './ArgsParser';
-import { HciAdapterFactory } from './HciAdapterFactory';
-import { HciAdapter } from './HciAdapter';
+import { ArgsParser, DefaultInputArgs } from './ArgsParser.js';
+import { HciAdapterFactory } from './HciAdapterFactory.js';
+import { HciAdapter } from './HciAdapter.js';
 
 export class HciAdapterUtils {
   public static async createHciAdapter(defaults?: DefaultInputArgs): Promise<HciAdapter> {

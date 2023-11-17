@@ -1,7 +1,7 @@
-import { EOL } from 'os';
+import { EOL } from 'node:os';
 import chalk from 'chalk';
 import { entries } from '../assigned numbers/16-bit UUID Numbers.json';
-import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory';
+import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory.js';
 
 interface Entries {
   [id: string]: { type: string; for: string; } | undefined;

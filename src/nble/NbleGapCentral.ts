@@ -1,14 +1,15 @@
 import EventEmitter from "events";
 import Debug from "debug";
-import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral";
-import { GapProfileStorage } from "../gap/GapProfileStorage";
-import { GattClient } from "../gatt/GattClient";
-import { Hci } from "../hci/Hci";
-import { DisconnectionCompleteEvent } from "../hci/HciEvent";
-import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController";
-import { Address } from "../utils/Address";
-import { HciAdapter } from "../utils/HciAdapter";
-import { printProfile } from "../utils/Profile";
+
+import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral.js";
+import { GapProfileStorage } from "../gap/GapProfileStorage.js";
+import { GattClient } from "../gatt/GattClient.js";
+import { Hci } from "../hci/Hci.js";
+import { DisconnectionCompleteEvent } from "../hci/HciEvent.js";
+import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController.js";
+import { Address } from "../utils/Address.js";
+import { HciAdapter } from "../utils/HciAdapter.js";
+import { printProfile } from "../utils/Profile.js";
 
 const debug = Debug('NbleGapCentral');
 

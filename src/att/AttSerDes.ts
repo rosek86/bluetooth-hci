@@ -1,5 +1,5 @@
-import { AttOpcode } from './AttOpcode';
-import { AttErrorCode } from './AttError';
+import { AttOpcode } from './AttOpcode.js';
+import { AttErrorCode } from './AttError.js';
 
 import Debug from 'debug';
 
