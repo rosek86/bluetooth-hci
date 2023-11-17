@@ -1,9 +1,10 @@
 import Debug from 'debug';
+import assert from 'assert';
 
-import { HciPacketType } from "./HciPacketType";
+import { HciPacketType } from "./HciPacketType.js";
 
-import { HciErrorCode, HciParserErrorType } from "./HciError";
-import { makeHciError, makeParserError} from "./HciError";
+import { HciErrorCode, HciParserErrorType } from "./HciError.js";
+import { makeHciError, makeParserError} from "./HciError.js";
 
 import {
   HciOgf,
@@ -14,8 +15,7 @@ import {
   HciOcfStatusParameters,
   HciOcfTestingCommands,
   HicOcfLinkPolicyCommands
-} from './HciOgfOcf';
-import assert from 'assert';
+} from './HciOgfOcf.js';
 
 const debug = Debug('bt-hci-hci-cmd');
 

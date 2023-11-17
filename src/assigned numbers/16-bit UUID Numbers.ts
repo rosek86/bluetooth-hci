@@ -1,4 +1,4 @@
-{
+export const uuids: { revision: string; entries: { [id: string]: { type: string; for: string } } } = {
   "revision": "2022-01-04",
   "entries": {
     "fcf5": { "type": "16‐bit UUID for Members", "for": "Trident Communication Technology, LLC" },

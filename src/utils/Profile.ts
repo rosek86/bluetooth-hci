@@ -1,13 +1,9 @@
-import { EOL } from 'os';
+import { EOL } from 'node:os';
 import chalk from 'chalk';
-import { entries } from '../assigned numbers/16-bit UUID Numbers.json';
-import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory';
+import { uuids } from '../assigned numbers/16-bit UUID Numbers.js';
+import { Profile, Service, Characteristic, IncludedService, Descriptor } from '../gatt/GattDirectory.js';
 
-interface Entries {
-  [id: string]: { type: string; for: string; } | undefined;
-}
-
-export const uuidInfo = (uuid: string): { type: string; for: string; } | undefined => (entries as Entries)[uuid];
+export const uuidInfo = (uuid: string): { type: string; for: string; } | undefined => uuids.entries[uuid];
 
 export const amendProfileWithUuidNames = (p: Profile): Profile => {
   const amendDescriptor = (e: Descriptor): Descriptor => {  

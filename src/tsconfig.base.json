@@ -3,9 +3,9 @@
     "target": "ES2022",
     "module": "CommonJS",
     "lib": ["ES2022"],
-    "sourceMap": false,
-    "outDir": "lib",
-    "rootDir": "./src",
+    "outDir": "../lib/esm",
+    "rootDir": "./",
+    "baseUrl": "./",
     "removeComments": true,
     "strict": true,
     "moduleResolution": "Node",
@@ -19,11 +19,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "test/**/*",
-    "examples/**/*"
+    "**/*"
   ]
 }

@@ -1,14 +1,14 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 
-import { Att, AttDataEntry } from './AttGlue';
-import { GattService } from './GattService';
-import { GattCharacteristic } from './GattCharacteristic';
-import { GattDescriptor } from './GattDescriptor';
-import { Profile, GattDirectory } from './GattDirectory';
+import { Att, AttDataEntry } from './AttGlue.js';
+import { GattService } from './GattService.js';
+import { GattCharacteristic } from './GattCharacteristic.js';
+import { GattDescriptor } from './GattDescriptor.js';
+import { Profile, GattDirectory } from './GattDirectory.js';
 
-import { UUID } from '../utils/UUID';
-import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes';
+import { UUID } from '../utils/UUID.js';
+import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes.js';
 
 const debug = Debug('bt-hci-gatt');
 

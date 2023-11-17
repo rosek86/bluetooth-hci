@@ -1,32 +1,32 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 
-import { HciPacketType } from './HciPacketType';
+import { HciPacketType } from './HciPacketType.js';
 
-import { getHciErrorMessage, HciError, HciErrorCode, HciParserErrorType, makeHciError } from './HciError';
-import { HciDisconnectReason } from './HciError';
-import { makeParserError } from './HciError';
+import { getHciErrorMessage, HciError, HciErrorCode, HciParserErrorType, makeHciError } from './HciError.js';
+import { HciDisconnectReason } from './HciError.js';
+import { makeParserError } from './HciError.js';
 
-import { Address } from '../utils/Address';
-import { HciCmd } from './HciCmd';
+import { Address } from '../utils/Address.js';
+import { HciCmd } from './HciCmd.js';
 import {
    HciOcfInformationParameters,
    HciOcfControlAndBasebandCommands,
    HciOcfLeControllerCommands,
    HciOcfStatusParameters,
    HciOcfLinkControlCommands
-} from './HciOgfOcf'
+} from './HciOgfOcf.js'
 import {
   CompletedPackets, EventMask, EventMask2, FlowControlEnable, HostBufferSize,
   HostNumberOfCompletedPackets, ReadAuthenticatedPayloadTimeout, ReadLeHostSupport,
   ReadTransmitPowerLevel, ReadTransmitPowerLevelType, SetControllerToHostFlowControl,
   SetEventMask, SetEventMask2, WriteAuthenticatedPayloadTimeout, WriteLeHostSupported
-} from './HciControlAndBaseband';
+} from './HciControlAndBaseband.js';
 import {
   LocalSupportedFeatures, LocalVersionInformation, ReadLocalSupportedFeatures,
   ReadLocalVersionInformation, ReadBufferSize, BufferSize, ReadBdAddr, LocalSupportedCommands,
   ReadLocalSupportedCommands, ReadRssi
-} from './HciInformationParameters';
+} from './HciInformationParameters.js';
 import {
   LeSupportedStates, LeEvents, LeSetEventsMask,
   LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
@@ -47,7 +47,7 @@ import {
   LeExtendedAdvertisingParametersV2, LeSetPeriodicAdvertisingParametersV1, LeSetPeriodicAdvertisingParametersV2,
   LeSetPeriodicAdvertisingEnable,
   LeSetPeriodicAdvertisingData,
-} from './HciLeController';
+} from './HciLeController.js';
 
 import {
   DisconnectionCompleteEvent, EncryptionChangeEvent, HciEvent, HciLeEvent,
@@ -65,9 +65,9 @@ import {
   NumberOfCompletedPacketsEntry,
   LeReadLocalP256PublicKeyCompleteEvent,
   ReadRemoteSupportedFeaturesCompleteEvent
-} from './HciEvent';
+} from './HciEvent.js';
 
-import { AclDataPacket } from '../acl/Acl';
+import { AclDataPacket } from '../acl/Acl.js';
 
 const debug = Debug('bt-hci-hci');
 

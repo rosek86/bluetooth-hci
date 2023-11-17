@@ -1,10 +1,10 @@
-import { Address } from '../utils/Address';
+import { Address } from '../utils/Address.js';
 import {
   HciErrorCode,
   HciParserErrorType,
   makeHciError, makeParserError
-} from './HciError';
-import { bitGet, bitSet, buildBitfield } from '../utils/Utils';
+} from './HciError.js';
+import { bitGet, bitSet, buildBitfield } from '../utils/Utils.js';
 
 const msToValue = (ms: number, factor: number): number => {
   return Math.round(ms / factor);

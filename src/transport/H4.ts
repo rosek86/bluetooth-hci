@@ -1,4 +1,4 @@
-import { HciPacketType } from '../hci/HciPacketType';
+import { HciPacketType } from '../hci/HciPacketType.js';
 
 enum ParserState {
   Type, Header, Payload,

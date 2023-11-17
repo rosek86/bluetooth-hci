@@ -1,8 +1,8 @@
 import Debug from 'debug';
 
-import { Address } from '../utils/Address';
-import { HciErrorCode } from './HciError';
-import { LeSupportedFeatures } from './HciLeController';
+import { Address } from '../utils/Address.js';
+import { HciErrorCode } from './HciError.js';
+import { LeSupportedFeatures } from './HciLeController.js';
 
 const debug = Debug('bt-hci-hci-event');
 
