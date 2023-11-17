@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
@@ -16,16 +16,11 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "exports": {
-    "types": "./lib/cjs/index.d.ts",
-    "require": "./lib/cjs/index.js",
-    "default": "./lib/esm/index.js"
-  },
   "scripts": {
     "start": "node lib/index.js",
     "build": "tsc -p tsconfig.json",
     "prebuild.prod": "npm run lint && rm -fr lib",
-    "build.prod": "npm run build.cjs && npm run build.esm",
+    "build.prod": "npm run build.cjs",
     "build.cjs": "tsc -p src/tsconfig.cjs.json",
     "build.esm": "tsc -p src/tsconfig.esm.json",
     "lint": "eslint . --ext .ts",
