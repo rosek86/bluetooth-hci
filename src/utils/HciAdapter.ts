@@ -2,7 +2,7 @@ import EventEmitter from "node:events";
 import { Hci } from "../hci/Hci.js";
 import { H4 } from "../transport/H4.js";
 import { Address } from "./Address.js";
-import companies from '../assigned numbers/Company Identifiers.json';
+import { companies } from '../assigned numbers/Company Identifiers.js';
 
 export interface HciDevice {
   open(): Promise<void>;
@@ -159,9 +159,10 @@ export class HciAdapter extends EventEmitter {
 
   public manufacturerNameFromCode(code: number): string | undefined {
     const hexcode = code.toString(16).padStart(4, '0');
-    const manufacturers = Object.entries(companies.entries)
-      .filter(([k]) => k === hexcode)
-      .map(([, v]) => v);
-    return manufacturers.at(0);
+    return companies.entries[hexcode];
+    // const manufacturers = Object.entries(companies.entries)
+    //   .filter(([k]) => k === hexcode)
+    //   .map(([, v]) => v);
+    // return manufacturers.at(0);
   }
 }

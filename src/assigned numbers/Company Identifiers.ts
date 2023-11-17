@@ -1,4 +1,4 @@
-{
+export const companies: { revision: string; entries: { [id: string]: string } } = {
   "revision": "2022-01-09",
   "entries": {
     "0b01": "RESIDEO TECHNOLOGIES, INC.",
