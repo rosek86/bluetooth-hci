@@ -69,15 +69,15 @@ export class SerialHciDevice implements HciDevice {
 export async function createHciSerial(deviceId?: number, serial?: Partial<SerialPortOpenOptions<AutoDetectTypes>>) {
   deviceId = deviceId ?? 0;
   serial = serial ?? {};
-  if (!serial.path) {
-    const path = (await SerialHciDevice.findSerial(deviceId))?.path;
-    if (!path) {
+
+  const serialPath = serial.path ?? await (async () => {
+    const portInfo = await SerialHciDevice.findSerial(deviceId);
+    if (!portInfo) {
       throw new Error('Cannot find appropriate port');
     }
-    serial.path = path;
-  }
-  if (!serial.baudRate) {
-    serial.baudRate = 1_000_000;
-  }
-  return new SerialHciDevice({ ...serial, path: serial.path, baudRate: serial.baudRate });
+    return portInfo.path;
+  })();
+  const serialBaudRate = serial.baudRate ?? 1_000_000;
+
+  return new SerialHciDevice({ ...serial, path: serialPath, baudRate: serialBaudRate });
 }
