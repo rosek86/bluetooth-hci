@@ -1,0 +1,18 @@
+/ {
+  chosen {
+    zephyr,bt-c2h-uart = &cdc_acm_uart0;
+    /delete-property/ zephyr,console;
+    /delete-property/ zephyr,bt-mon-uart;
+    /delete-property/ zephyr,uart-mcumgr;
+    /delete-property/ zephyr,shell-uart;
+  };
+};
+
+&zephyr_udc0 {
+  cdc_acm_uart0: cdc_acm_uart0 {
+    compatible = "zephyr,cdc-acm-uart";
+    label = "CDC_ACM_0";
+    current-speed = <1000000>;
+    hw-flow-control;
+  };
+};

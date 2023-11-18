@@ -303,7 +303,7 @@ While the nRF52840 dongle provides an easy-to-use solution, other alternatives a
 
 ## Run example
 
-Simple LE Bluetooth scanner:
+Simple Bluetooth LE scanner:
 
 ```
 npm run build
