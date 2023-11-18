@@ -1,15 +1,19 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
-
-import { GapCentral } from '../src/gap/GapCentral';
-import { GattClient } from '../src/gatt/GattClient';
-import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
-import { amendProfileWithUuidNames, uuidInfo } from '../src/utils/Profile';
-import { GattService } from '../src/gatt/GattService';
-import { GattCharacteristic } from '../src/gatt/GattCharacteristic';
+import {
+  HciAdapter,
+  createHciSerial,
+  GapCentral,
+  GattClient,
+  LeScanFilterDuplicates,
+  amendProfileWithUuidNames,
+  uuidInfo,
+  GattService,
+  GattCharacteristic
+} from '../src';
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     await adapter.defaultAdapterSetup();
 
     const gap = new GapCentral(adapter.Hci);

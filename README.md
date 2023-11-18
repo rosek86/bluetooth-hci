@@ -306,7 +306,8 @@ While the nRF52840 dongle provides an easy-to-use solution, other alternatives a
 Simple LE Bluetooth scanner:
 
 ```
-npx ts-node examples/le-scanner.ts
+npm run build
+node dist/examples/le-scanner.ts
 ```
 
 ## Further reading

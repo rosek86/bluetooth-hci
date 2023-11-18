@@ -1,8 +1,8 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
+import { HciAdapter, createHciSerial } from '../src';
 
 (async () => {
-  const adapter = await HciAdapterUtils.createHciAdapter();
+  const adapter = new HciAdapter(await createHciSerial());
+  await adapter.open();
   console.log('Random:', await adapter.Hci.leRand());
   await adapter.close();
-  process.exit(0);
 })();

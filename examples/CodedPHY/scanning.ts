@@ -1,19 +1,19 @@
-import { HciAdapterUtils } from '../../src/utils/HciAdapterUtils';
-import { Address } from '../../src/utils/Address';
-
-import { GapCentral } from '../../src/gap/GapCentral';
-
 import {
+  HciAdapter,
+  createHciSerial,
+  Address,
   LeOwnAddressType,
+  LeWhiteListAddressType,
+  GapCentral,
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
-  LeWhiteListAddressType
-} from '../../src/hci/HciLeController';
+} from '../../src';
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     await adapter.defaultAdapterSetup();
 
     const hci = adapter.Hci;

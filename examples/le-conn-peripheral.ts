@@ -1,8 +1,5 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
-import { Address } from '../src/utils/Address';
-import { AdvData } from '../src/gap/AdvData';
-
 import {
+  HciAdapter, createHciSerial,
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
   LeOwnAddressType,
@@ -11,14 +8,14 @@ import {
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
-  LeScanResponseDataOperation
-} from '../src/hci/HciLeController';
-import { L2CAP } from '../src/l2cap/L2CAP';
-import { Att } from '../src/att/Att';
+  LeScanResponseDataOperation,
+  Address, AdvData, L2CAP, Att
+} from '../src';
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     await adapter.defaultAdapterSetup();
 
     const hci = adapter.Hci;

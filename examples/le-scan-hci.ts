@@ -1,15 +1,16 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
-import { AdvData } from '../src/gap/AdvData';
-
 import {
+  HciAdapter,
+  createHciSerial,
   LeOwnAddressType,
   LeScanningFilterPolicy,
-  LeScanType
-} from '../src/hci/HciLeController';
+  LeScanType,
+  AdvData
+} from '../src';
 
 (async () => {
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     await adapter.defaultAdapterSetup();
 
     await adapter.Hci.leSetScanParameters({

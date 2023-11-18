@@ -1,9 +1,9 @@
-import { createHciSerial, HciAdapter } from '../src/index';
-import { GapAdvertReport, GapConnectEvent } from '../src/index';
-import { GattClient } from '../src/index';
-import { NbleGapCentral } from '../src/index';
-import { DisconnectionCompleteEvent, LeConnectionUpdate } from '../src/index';
-import { delay } from '../src/index';
+import { createHciSerial, HciAdapter } from '../src';
+import { GapAdvertReport, GapConnectEvent } from '../src';
+import { GattClient } from '../src';
+import { NbleGapCentral } from '../src';
+import { DisconnectionCompleteEvent, LeConnectionUpdate } from '../src';
+import { delay } from '../src';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';
