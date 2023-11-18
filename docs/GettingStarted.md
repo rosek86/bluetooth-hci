@@ -33,7 +33,7 @@ Download and install the **nRF Connect for Desktop** from the following link: [N
 
 ## 5. Add firmware file
 
-Locate and select the firmware file from `/zephyr/hci_uart/zephyr.hex`.
+Locate and select the firmware file from `/zephyr/hci_uart/nrf52840dongle_nrf52840.hex`.
 
 ## 6. Flash the firmware
 
