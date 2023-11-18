@@ -1,15 +1,16 @@
-import { HciAdapterUtils } from '../src/utils/HciAdapterUtils';
-
-import { GapCentral, GapAdvertReport } from '../src/gap/GapCentral';
-import { LeScanFilterDuplicates } from '../src/hci/HciLeController';
-import { HciAdapter } from '../src/utils/HciAdapter';
+import {
+  HciAdapter, createHciSerial,
+  GapCentral, GapAdvertReport,
+  LeScanFilterDuplicates
+} from '../src';
 
 (async () => {
   let printTime = Date.now();
   const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
 
   try {
-    const adapter = await HciAdapterUtils.createHciAdapter();
+    const adapter = new HciAdapter(await createHciSerial());
+    await adapter.open();
     await adapter.defaultAdapterSetup();
 
     const gap = new GapCentral(adapter.Hci);

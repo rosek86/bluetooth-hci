@@ -1,8 +1,8 @@
 import EventEmitter from "events";
-import { HciAdapter } from "../../src/utils/HciAdapter";
-import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../src/hci/HciLeController";
-import { Address } from "../../src/utils/Address";
-import { GapCentral } from "../../src/gap/GapCentral";
+import { HciAdapter } from "../../utils/HciAdapter.js";
+import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../hci/HciLeController.js";
+import { Address } from "../../utils/Address.js";
+import { GapCentral } from "../../gap/GapCentral.js";
 
 interface ScanParams {
   active: boolean;
@@ -56,7 +56,7 @@ interface Device {
   // processEventData(evt: ProcessEventData): void;
 }
 
-export class Adapter extends EventEmitter {
+export class PcBleDriverJsAdapter extends EventEmitter {
   private gap: GapCentral;
 
   constructor(private hciAdapter: HciAdapter) {

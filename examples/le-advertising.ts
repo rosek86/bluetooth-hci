@@ -1,4 +1,4 @@
-import { AdvData } from '../src/gap/AdvData';
+import { AdvData } from '../src';
 import {
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
@@ -9,17 +9,17 @@ import {
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation
-} from '../src/hci/HciLeController';
-import { Address } from '../src/utils/Address';
-import { HciAdapter } from '../src/utils/HciAdapter';
-import { createHciSerial } from '../src/utils/SerialHciDevice';
+} from '../src';
+import { Address } from '../src';
+import { HciAdapter } from '../src';
+import { createHciSerial } from '../src';
 
 (async () => {
   try {
     const adapter = new HciAdapter(await createHciSerial());
     await adapter.open();
-
     await adapter.defaultAdapterSetup();
+
     const hci = adapter.Hci;
 
     const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {

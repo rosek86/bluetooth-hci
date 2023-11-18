@@ -2,20 +2,21 @@ import fs from 'fs/promises';
 import chalk from 'chalk';
 
 import {
+  createHciSerial,
+  HciAdapter,
   LeOwnAddressType,
   LeScanningFilterPolicy,
   LeScanType,
-  LeScanFilterDuplicates
-} from '../src/hci/HciLeController';
-import { DisconnectionCompleteEvent } from '../src/hci/HciEvent';
-import { GapAdvertReport, GapConnectEvent } from '../src/gap/GapCentral';
-import { GapProfileStorage } from '../src/gap/GapProfileStorage';
-import { NbleGapCentral } from '../src/nble/NbleGapCentral';
-import { GattClient } from '../src/gatt/GattClient';
-import { HciAdapter } from '../src/utils/HciAdapter';
-import { printProfile } from '../src/utils/Profile';
-import { Address } from '../src/utils/Address';
-import { createHciSerial } from '../src/utils/SerialHciDevice';
+  LeScanFilterDuplicates,
+  DisconnectionCompleteEvent,
+  GapAdvertReport,
+  GapConnectEvent,
+  GapProfileStorage,
+  GattClient,
+  NbleGapCentral,
+  printProfile,
+  Address
+} from '../src';
 
 class App extends NbleGapCentral {
   private state: 'idle' | 'connecting' | 'connected' = 'idle';

@@ -33,3 +33,4 @@ export * from './att/AttError.js';
 export * from './att/AttSerDes.js';
 export * from './att/AttOpcode.js';
 export * from './acl/Acl.js';
+export * from './facades/pc-ble-driver-js/adapter.js';

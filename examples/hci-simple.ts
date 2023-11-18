@@ -1,23 +1,9 @@
-process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
-import { bluetoothHciSocketFactory } from '@rosek86/bluetooth-hci-socket';
-// import BluetoothHciSocket from '@rosek86/bluetooth-hci-socket';
-
-import { Hci } from '../src/hci/Hci';
-import { H4 } from '../src/transport/H4';
-import { delay } from '../src/utils/Utils';
+import { createHciSerial } from '../src';
+import { Hci, H4 } from '../src';
 
 (async () => {
-  const port = bluetoothHciSocketFactory('native');
-  // const port = new BluetoothHciSocket();
-
-  await port.bindRaw(0);
-  port.start();
-
-  while (port.isDevUp() === false) {
-    await delay(1000);
-  }
-
-  port.setFilter(Buffer.from('1600000020c10800000000400000', 'hex'));
+  const port = await createHciSerial();
+  await port.open();
 
   const hci = new Hci({
     send: (packetType, data) => {
@@ -39,4 +25,6 @@ import { delay } from '../src/utils/Utils';
 
   const commands = await hci.readLocalSupportedCommands();
   console.log(commands);
+
+  port.close();
 })();

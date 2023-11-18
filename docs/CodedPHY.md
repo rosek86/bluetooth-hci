@@ -5,11 +5,12 @@ To run this example it is necessary to have two nRF52840 dongles connected to yo
 Open two terminals and run:
 
 ```sh
-npx ts-node examples/CodedPHY/advertising.ts --device-id 0
+npm run build
+node dist/examples/CodedPHY/advertising.ts --device-id 0
 ```
 
 ```sh
-npx ts-node examples/CodedPHY/scanning.ts --device-id 1
+node dist/examples/CodedPHY/scanning.ts --device-id 1
 ```
 
 ![Coded PHY example](./imgs/coded-phy.png)
