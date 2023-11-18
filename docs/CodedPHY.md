@@ -6,11 +6,11 @@ Open two terminals and run:
 
 ```sh
 npm run build
-node dist/examples/CodedPHY/advertising.ts --device-id 0
+node dist/examples/CodedPHY/advertising.js --device-id 0
 ```
 
 ```sh
-node dist/examples/CodedPHY/scanning.ts --device-id 1
+node dist/examples/CodedPHY/scanning.js --device-id 1
 ```
 
 ![Coded PHY example](./imgs/coded-phy.png)

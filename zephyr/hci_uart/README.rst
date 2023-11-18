@@ -1,3 +1,5 @@
+NOTE: compiled with nRF Connect SDK 2.5.0
+
 .. _bluetooth-hci-uart-sample:
 
 Bluetooth: HCI UART
