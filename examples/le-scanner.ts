@@ -3,13 +3,19 @@ import {
   GapCentral, GapAdvertReport,
   LeScanFilterDuplicates
 } from '../src';
+import { ArgsParser } from './utils/ArgsParser';
 
 (async () => {
   let printTime = Date.now();
   const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
 
   try {
-    const adapter = new HciAdapter(await createHciSerial());
+    const args = await ArgsParser.getOptions();
+    if (!args || args.type !== 'serial') {
+      throw new Error('Invalid input parameters');
+    }
+
+    const adapter = new HciAdapter(await createHciSerial(args.deviceId, args.serial));
     await adapter.open();
     await adapter.defaultAdapterSetup();
 
