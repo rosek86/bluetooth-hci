@@ -6,7 +6,7 @@ Follow this guide to set up and start using the `bluetooth-hci` library.
 
 Order the **nRF52840 Dongle**. It's recommended to order two pieces so one can function as the Bluetooth central and the other as the Bluetooth peripheral.
 
-![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.webp)
+![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.png)
 
 [nRF52840 Dongle Documentation](https://www.nordicsemi.com/Products/Development-hardware/nrf52840-dongle)
 
