@@ -2,15 +2,20 @@
 
 Follow this guide to set up and start using the `bluetooth-hci` library.
 
-## 1. Order nRF52840 Dongle
+## 1. nRF52840 Dongle
 
-Order the **nRF52840 Dongle**. It's recommended to order two pieces so one can function as the Bluetooth central and the other as the Bluetooth peripheral.
+This guide requires **nRF52840 Dongle**, two dongles are required to try some examples. One dongle works as a central device and the second as peripheral.
 
 ![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.png)
 
 [nRF52840 Dongle Documentation](https://www.nordicsemi.com/Products/Development-hardware/nrf52840-dongle)
 
-**Note**: The nRF52840 Dongle can also be ordered through electronics distributors like [Mouser](https://www.mouser.com/), [Digi-Key](https://www.digikey.com/), [Farnell](https://www.farnell.com/), or [RS Components](https://www.rs-online.com/).
+**Note**: The nRF52840 Dongle can be ordered through electronics distributors like:
+
+- [Digi-Key](https://www.digikey.com/),
+- [Farnell](https://www.farnell.com/),
+- [Mouser](https://www.mouser.com/),
+- [RS Components](https://www.rs-online.com/).
 
 ## 2. Install nRF Connect for Desktop
 
@@ -56,7 +61,6 @@ npm run build
 Execute the example with:
 
 ```sh
-npm run build
 node dist/examples/le-scanner.ts
 ```
 
