@@ -9,10 +9,16 @@ import {
   LeScanType,
   LeScanFilterDuplicates,
 } from '../../src';
+import { ArgsParser } from '../utils/ArgsParser';
 
 (async () => {
   try {
-    const adapter = new HciAdapter(await createHciSerial());
+    const args = await ArgsParser.getOptions();
+    if (!args || args.type !== 'serial') {
+      throw new Error('Invalid input parameters');
+    }
+
+    const adapter = new HciAdapter(await createHciSerial(args.deviceId, args.serial));
     await adapter.open();
     await adapter.defaultAdapterSetup();
 
