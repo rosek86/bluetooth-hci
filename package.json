@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Bluetooth HCI host implementation",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -59,7 +59,7 @@
     "@typescript-eslint/parser": "^6.11.0",
     "chai": "^4.3.10",
     "chalk": "^4.1.2",
-    "eslint": "^8.53.0",
+    "eslint": "^8.54.0",
     "mocha": "^10.2.0",
     "typescript": "^5.2.2",
     "yargs": "^17.7.2"

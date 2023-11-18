@@ -6,7 +6,7 @@ The library implements a Bluetooth 5 HCI host, focusing mainly on Bluetooth Low 
 
 ## Getting started
 
-The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply load the pre-compiled firmware located at `/zephyr/hci_uart/zephyr.hex`. A detailed description explaining how to prepare the nRF52840 Dongle can be found [here](docs/GettingStarted.md).
+The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply load the pre-compiled firmware located at `/zephyr/hci_uart/nrf52840dongle_nrf52840.hex`. A detailed description explaining how to prepare the nRF52840 Dongle can be found [here](docs/GettingStarted.md).
 
 ```
 npm install bluetooth-hci
@@ -307,7 +307,7 @@ Simple LE Bluetooth scanner:
 
 ```
 npm run build
-node dist/examples/le-scanner.ts
+node dist/examples/le-scanner.js
 ```
 
 ## Further reading

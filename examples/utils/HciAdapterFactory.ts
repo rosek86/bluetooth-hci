@@ -4,9 +4,9 @@ import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetoot
 import { SerialPortOpenOptions } from 'serialport';
 import { AutoDetectTypes } from '@serialport/bindings-cpp';
 
-import { delay } from './Utils.js';
-import { HciAdapter, HciDevice } from './HciAdapter.js';
-import { createHciSerial } from './SerialHciDevice.js';
+import { delay } from '../../src/utils/Utils.js';
+import { HciAdapter, HciDevice } from '../../src/utils/HciAdapter.js';
+import { createHciSerial } from '../../src/utils/SerialHciDevice.js';
 
 export interface AdapterSerialParams {
   type: 'serial';

@@ -2,15 +2,20 @@
 
 Follow this guide to set up and start using the `bluetooth-hci` library.
 
-## 1. Order nRF52840 Dongle
+## 1. nRF52840 Dongle
 
-Order the **nRF52840 Dongle**. It's recommended to order two pieces so one can function as the Bluetooth central and the other as the Bluetooth peripheral.
+This guide requires **nRF52840 Dongle**, two dongles are required to try some examples. One dongle works as a central device and the second as peripheral.
 
-![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.webp)
+![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.png)
 
 [nRF52840 Dongle Documentation](https://www.nordicsemi.com/Products/Development-hardware/nrf52840-dongle)
 
-**Note**: The nRF52840 Dongle can also be ordered through electronics distributors like [Mouser](https://www.mouser.com/), [Digi-Key](https://www.digikey.com/), [Farnell](https://www.farnell.com/), or [RS Components](https://www.rs-online.com/).
+**Note**: The nRF52840 Dongle can be ordered through electronics distributors like:
+
+- [Digi-Key](https://www.digikey.com/),
+- [Farnell](https://www.farnell.com/),
+- [Mouser](https://www.mouser.com/),
+- [RS Components](https://www.rs-online.com/).
 
 ## 2. Install nRF Connect for Desktop
 
@@ -33,7 +38,7 @@ Download and install the **nRF Connect for Desktop** from the following link: [N
 
 ## 5. Add firmware file
 
-Locate and select the firmware file from `/zephyr/hci_uart/zephyr.hex`.
+Locate and select the firmware file from `/zephyr/hci_uart/nrf52840dongle_nrf52840.hex`.
 
 ## 6. Flash the firmware
 
@@ -56,8 +61,7 @@ npm run build
 Execute the example with:
 
 ```sh
-npm run build
-node dist/examples/le-scanner.ts
+node dist/examples/le-scanner.js
 ```
 
 With these steps, you're now set up and running with the `bluetooth-hci` library!

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2023-11-18
+
+- Fix readme.
+- Fix CodedPHY example.
+- Deliver hex files in releases.
+
 ## [1.0.4] - 2023-11-18
 
 - Improve examples.

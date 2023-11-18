@@ -111,4 +111,17 @@ export class ArgsParser {
     }
     return null;
   }
+
+  static async getOptions() {
+    const argsParser = new ArgsParser();
+    const args = await argsParser.getInputArgs();
+    if (!args) {
+      return null;
+    }
+    const options = argsParser.getAdapterOptions(args);
+    if (!options) {
+      return null;
+    }
+    return options;
+  }
 }
