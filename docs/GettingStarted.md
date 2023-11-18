@@ -61,7 +61,7 @@ npm run build
 Execute the example with:
 
 ```sh
-node dist/examples/le-scanner.ts
+node dist/examples/le-scanner.js
 ```
 
 With these steps, you're now set up and running with the `bluetooth-hci` library!
