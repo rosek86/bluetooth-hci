@@ -43,4 +43,4 @@ Locate and select the firmware file from `/zephyr/hci_uart/nrf52840dongle_nrf528
 - Click on the `Write` button.
 - Patiently wait for the flashing operation to complete.
 
-![Programmer Tool Image](imgs/nrf-flashing.png)
+![Programmer Tool Image](imgs/nrf-flash.png)
