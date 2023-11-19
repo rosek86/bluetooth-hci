@@ -33,7 +33,7 @@ Locate and select the firmware file from `/zephyr/hci_uart/nrf5340dk_nrf5340.hex
 
 ## 6. Flash the firmware
 
-- Click on the `Write` button.
+- Click on the `Erase & Write` button.
 - Patiently wait for the flashing operation to complete.
 
 ![Programmer Tool Image](imgs/nrf53dk-flash.png)
