@@ -19,12 +19,12 @@ This guide explains how to flash **nRF52840 Dongle** with pre-compiled HCI contr
 
 Download and install the **nRF Connect for Desktop** from the following link: [NRF Connect for Desktop](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-Desktop/Download?lang=en#infotabs).
 
-![nRF Connect for Desktop Installation Image](imgs/nrf-connect.png)
-
 ## 3. Install the Programmer Tool
 
 - Start `nRF Connect for Desktop`.
 - Look for and install the `Programmer` tool.
+
+![nRF Connect for Desktop](imgs/nrf-connect.png)
 
 ## 4. Connect and program
 
