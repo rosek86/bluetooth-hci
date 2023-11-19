@@ -4,7 +4,7 @@
 
 This guide explains how to flash **nRF5340 dk** with pre-compiled HCI controller firmware.
 
-![nRF5340 DK Image](./imgs/nrf5340-dk.png)
+![nRF5340 DK Image](./imgs/nrf5340-dk.webp)
 
 [nRF5340 DK Documentation](https://www.nordicsemi.com/Products/Development-hardware/nrf5340-dk)
 

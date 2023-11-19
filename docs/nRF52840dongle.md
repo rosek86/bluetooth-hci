@@ -4,7 +4,7 @@
 
 This guide explains how to flash **nRF52840 Dongle** with pre-compiled HCI controller firmware.
 
-![nRF52840 Dongle Image](./imgs/nRF52840-Dongle.png)
+![nRF52840 Dongle Image](./imgs/nrf52840-dongle.png)
 
 [nRF52840 Dongle Documentation](https://www.nordicsemi.com/Products/Development-hardware/nrf52840-dongle)
 
