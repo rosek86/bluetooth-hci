@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Bluetooth HCI host implementation",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -36,6 +36,7 @@
   "keywords": [
     "bluetooth",
     "ble",
+    "bluetooth le",
     "bluetooth low energy",
     "bluetooth smart",
     "central",
