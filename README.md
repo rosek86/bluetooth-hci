@@ -313,4 +313,4 @@ node dist/examples/le-scanner.js
 ## Further reading
 
 - Advertising and scanning using Coded PHY [CodedPHY.md](docs/CodedPHY.md)
-- Build Zephyr HCI controller firmware [ZephyrHciController.md](docs/ZephyrHciController.md).
+- Build Zephyr HCI controller firmware [ZephyrHciController.md](docs/ZephyrHciController.md)
