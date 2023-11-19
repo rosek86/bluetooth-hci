@@ -6,7 +6,7 @@ The library implements a Bluetooth 5 HCI host, focusing mainly on Bluetooth Low 
 
 ## Getting started
 
-The most straightforward method to test this library is by utilizing the **nRF52840 Dongle**. Simply load the pre-compiled firmware located at `/zephyr/hci_uart/nrf52840dongle_nrf52840.hex`. A detailed description explaining how to prepare the nRF52840 Dongle can be found [here](docs/GettingStarted.md).
+The simplest way to use this library is by employing the **nRF52840 Dongle**, **nRF52840 DK**, or **nRF5340 DK**. You can find a detailed guide on the getting started process [here](docs/GettingStarted.md).
 
 ```
 npm install bluetooth-hci
@@ -14,7 +14,7 @@ npm install bluetooth-hci
 
 ## Examples
 
-Additional examples are available in the 'examples' directory.
+Additional examples are available in the [examples](examples) directory.
 
 ### Central connection (Nordic_LBS example)
 
@@ -295,7 +295,7 @@ import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 
 ## Alternative setup options
 
-While the nRF52840 dongle provides an easy-to-use solution, other alternatives are available. However, keep in mind that these methods may vary depending on your operating system and might require additional development to ensure full compatibility.
+While the Nordic Semiconductor boards provide an easy-to-use solution, other alternatives are available. However, keep in mind that these methods may vary depending on your operating system and might require additional development to ensure full compatibility.
 
 1. **Linux HCI Interface**: This interface enables the use of the Linux Host Controller Interface (HCI) for Bluetooth connectivity.
 2. **Standard Bluetooth USB Subsystem**: This offers a universal interface for Bluetooth USB devices.
@@ -303,7 +303,7 @@ While the nRF52840 dongle provides an easy-to-use solution, other alternatives a
 
 ## Run example
 
-Simple LE Bluetooth scanner:
+Simple Bluetooth LE scanner:
 
 ```
 npm run build
@@ -312,6 +312,5 @@ node dist/examples/le-scanner.js
 
 ## Further reading
 
-- Getting Started Guide [GettingStarted.md](docs/GettingStarted.md)
 - Advertising and scanning using Coded PHY [CodedPHY.md](docs/CodedPHY.md)
-- Build HCI firmware [ZephyrHciController.md](docs/ZephyrHciController.md).
+- Build Zephyr HCI controller firmware [ZephyrHciController.md](docs/ZephyrHciController.md)
