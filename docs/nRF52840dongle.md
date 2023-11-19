@@ -28,11 +28,11 @@ Download and install the **nRF Connect for Desktop** from the following link: [N
 
 ![Programmer Tool Image](imgs/nrf-select-device.png)
 
-## 4. Connect and program the nRF52840 Dongle
+## 4. Connect and program
 
 - Open the `Programmer` tool.
 - Connect the **nRF52840 dongle** to your computer.
-- Click on `Select Devices` and choose the dongle for flashing. It should appear on the list as **Open DFU Bootloader**.
+- Click on `Select Devices` and choose the device for flashing. It should appear on the list as **Open DFU Bootloader**.
 
 ## 5. Add firmware file
 
