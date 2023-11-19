@@ -14,7 +14,7 @@ npm install bluetooth-hci
 
 ## Examples
 
-Additional examples are available in the 'examples' directory.
+Additional examples are available in the [examples](examples) directory.
 
 ### Central connection (Nordic_LBS example)
 
