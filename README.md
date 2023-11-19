@@ -295,7 +295,7 @@ import { createHciSerial, HciAdapter } from 'bluetooth-hci';
 
 ## Alternative setup options
 
-While the nRF52840 dongle provides an easy-to-use solution, other alternatives are available. However, keep in mind that these methods may vary depending on your operating system and might require additional development to ensure full compatibility.
+While the Nordic Semiconductor boards provide an easy-to-use solution, other alternatives are available. However, keep in mind that these methods may vary depending on your operating system and might require additional development to ensure full compatibility.
 
 1. **Linux HCI Interface**: This interface enables the use of the Linux Host Controller Interface (HCI) for Bluetooth connectivity.
 2. **Standard Bluetooth USB Subsystem**: This offers a universal interface for Bluetooth USB devices.
@@ -312,6 +312,5 @@ node dist/examples/le-scanner.js
 
 ## Further reading
 
-- Getting Started Guide [GettingStarted.md](docs/GettingStarted.md)
 - Advertising and scanning using Coded PHY [CodedPHY.md](docs/CodedPHY.md)
-- Build HCI firmware [ZephyrHciController.md](docs/ZephyrHciController.md).
+- Build Zephyr HCI controller firmware [ZephyrHciController.md](docs/ZephyrHciController.md).
