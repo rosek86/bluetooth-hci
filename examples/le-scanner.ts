@@ -1,13 +1,21 @@
+import chalk from 'chalk';
 import {
   HciAdapter, createHciSerial,
   GapCentral, GapAdvertReport,
   LeScanFilterDuplicates
 } from '../src';
-import { ArgsParser } from './utils/ArgsParser';
+import { ArgsParser } from './utils/ArgsParser.js';
+import { getCompanyName } from '../assigned-numbers/Company Identifiers.js';
+import { getAppearanceSubcategoryName } from '../assigned-numbers/AppearanceValues.js';
+
+type GapAdvertReportExt = GapAdvertReport & {
+  timestamp?: Date;
+};
+
+const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReportExt }>();
 
 (async () => {
   let printTime = Date.now();
-  const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
 
   try {
     const args = await ArgsParser.getOptions();
@@ -31,19 +39,10 @@ import { ArgsParser } from './utils/ArgsParser';
     });
 
     gap.on('GapLeAdvReport', async (report) => {
-      const { address, scanResponse } = report;
-
-      const entry = adverts.get(address.toString()) ?? {};
-      if (scanResponse) {
-        entry.sr = report;
-      } else {
-        entry.adv = report;
-      }
-      adverts.set(address.toString(), entry);
-
+      saveReport(report);
       if ((Date.now() - printTime) > 1000) {
         printTime = Date.now();
-        print(adapter, adverts);
+        print();
       }
     });
   } catch (e) {
@@ -52,19 +51,77 @@ import { ArgsParser } from './utils/ArgsParser';
   }
 })();
 
-function print(adapter: HciAdapter, adverts: Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>) {
+function saveReport(report: GapAdvertReport) {
+  const entry = adverts.get(report.address.toString()) ?? {};
+
+  if (!report.scanResponse) {
+    entry.adv = report;
+    entry.adv.timestamp = new Date();
+  } else {
+    entry.sr = report;
+    entry.sr.timestamp = new Date();
+  }
+
+  adverts.set(report.address.toString(), entry);
+}
+
+function print() {
   console.log();
   console.log('adverts', adverts.size);
-  for (const [ address, { adv, sr } ] of adverts.entries()) {
-    const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
+  const sortedAdverts = [...adverts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [ address, info ] of sortedAdverts) {
+    printDeviceInfo(address, info);
+  }
+}
 
-    console.log(address, ident ? adapter.manufacturerNameFromCode(ident) : '');
+function printDeviceInfo(address: string, { adv, sr }: { adv?: GapAdvertReportExt; sr?: GapAdvertReportExt }) {
+  process.stdout.write(`${chalk.blue.bold(address)} ${chalk.magenta(adv?.timestamp?.toLocaleTimeString())}\n`);
 
-    if (adv) {
-      console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));
-    }
-    if (sr) {
-      console.log(`                 `, sr?.rssi, JSON.stringify(sr?.data));
-    }
+  if (adv) {
+    process.stdout.write(`                  Advertisement:\n`);
+    printReport(adv);
+  }
+  if (sr) {
+    process.stdout.write(`                  Scan Response:\n`);
+    printReport(sr);
+  }
+}
+
+function printReport(r: GapAdvertReport) {
+  const report = structuredClone(r);
+  process.stdout.write(`                    - RSSI: ${report.rssi} dBm\n`);
+  if (report.data?.completeLocalName) {
+    process.stdout.write(`                    - Name: ${report.data.completeLocalName}\n`);
+    delete report.data.completeLocalName;
+  }
+  if (report.data?.shortenedLocalName) {
+    process.stdout.write(`                    - Short Name: ${report.data.shortenedLocalName}\n`);
+    delete report.data.shortenedLocalName;
+  }
+  if (report.data?.manufacturerData) {
+    const companyName = getCompanyName(report.data?.manufacturerData.ident);
+    process.stdout.write(`                    - Company Name: ${chalk.green(companyName ?? 'unknown')}\n`);
+    process.stdout.write(`                    - Manufacturer Data: ${JSON.stringify([...report.data.manufacturerData.data])}\n`);
+    delete report.data.manufacturerData;
+  }
+  if (report.data?.appearance) {
+    const appearance = getAppearanceSubcategoryName(report.data.appearance.category, report.data.appearance.subcategory);
+    process.stdout.write(`                    - Appearance: ${chalk.yellow(appearance)}\n`);
+    delete report.data.appearance;
+  }
+  if (report.data?.txPowerLevel) {
+    process.stdout.write(`                    - Tx Power Level: ${report.data.txPowerLevel} dBm\n`);
+    delete report.data.txPowerLevel;
+  }
+  if (report.data?.completeListOf16bitServiceClassUuids) {
+    process.stdout.write(`                    - 16-bit UUIDs: ${report.data.completeListOf16bitServiceClassUuids}\n`);
+    delete report.data.completeListOf16bitServiceClassUuids;
+  }
+  if (report.data?.incompleteListOf16bitServiceClassUuids) {
+    process.stdout.write(`                    - Incomplete 16-bit UUIDs: ${report.data.incompleteListOf16bitServiceClassUuids}\n`);
+    delete report.data.incompleteListOf16bitServiceClassUuids;
+  }
+  if (Object.keys(report.data).length > 0) {
+    process.stdout.write(`                    - Data: ${JSON.stringify(report.data)}\n`);
   }
 }

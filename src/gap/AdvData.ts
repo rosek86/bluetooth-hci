@@ -35,7 +35,7 @@ export enum AdvDataType {
   ServiceData16bitUuid                    = 0x16, // *
   PublicTargetAddress                     = 0x17,
   RandomTargetAddress                     = 0x18,
-  Appearance                              = 0x19,
+  Appearance                              = 0x19, // *
   AdvertisingInterval                     = 0x1A,
   LeBluetoothDeviceAddress                = 0x1B,
   LeRole                                  = 0x1C,
@@ -116,6 +116,12 @@ interface AdvDataServcieData {
   data: Buffer;
 }
 
+export interface AdvDataAppearance {
+  category: number;
+  subcategory: number;
+  value: number;
+}
+
 export interface AdvData {
   flags?: number;
   incompleteListOf16bitServiceClassUuids?: string[];
@@ -137,6 +143,7 @@ export interface AdvData {
   serviceData16bitUuid?: AdvDataServcieData[];
   serviceData32bitUuid?: AdvDataServcieData[];
   serviceData128bitUuid?: AdvDataServcieData[];
+  appearance?: AdvDataAppearance;
   unparsed?: { [key: number]: Buffer; }
 }
 
@@ -228,6 +235,10 @@ export class AdvData {
         buffer = Buffer.concat([buffer, data]);
       }
     }
+    if (advData.appearance) {
+      const data = this.buildAppearance(advData.appearance);
+      buffer = Buffer.concat([buffer, data]);
+    }
     if (advData.serviceData32bitUuid) {
       for (const serviceData of advData.serviceData32bitUuid) {
         const data = this.buildServiceData(AdvDataType.ServiceData32bitUuid, serviceData, 32);
@@ -294,6 +305,15 @@ export class AdvData {
     buffer[1] = type;
     UUID.from(serviceData.uuid).copy(buffer, 2);
     serviceData.data.copy(buffer, 2 + uuidBits / 8);
+    return buffer;
+  }
+
+  private static buildAppearance(appearance: AdvDataAppearance): Buffer {
+    const buffer = Buffer.alloc(2 + 2);
+    buffer[0] = buffer.length - 1;
+    buffer[1] = AdvDataType.Appearance;
+    const value = (appearance.category << 6) | (appearance.subcategory << 0);
+    buffer.writeUint16LE(value, 2);
     return buffer;
   }
 
@@ -416,6 +436,15 @@ export class AdvData {
           uuid: field.data.subarray(0, 2).reverse().toString('hex'),
           data: field.data.subarray(2, field.data.length),
         });
+        break;
+      }
+      case AdvDataType.Appearance: {
+        const value = field.data.readUInt16LE(0);
+        advData.appearance = {
+          category:    ((value >> 6) & 0x3FF),
+          subcategory: ((value >> 0) & 0x03F),
+          value,
+        };
         break;
       }
       case AdvDataType.ServiceData32bitUuid: {
