@@ -1,3 +1,7 @@
+export function getCompanyName(code: number): string | undefined {
+  const hexcode = code.toString(16).padStart(4, '0');
+  return companies.entries[hexcode];
+}
 export const companies: { revision: string; entries: { [id: string]: string } } = {
   "revision": "2022-01-09",
   "entries": {

@@ -6,6 +6,10 @@ import {
 } from '../src';
 import { ArgsParser } from './utils/ArgsParser';
 
+import { getCompanyName } from '../src/assigned-numbers/Company Identifiers.js';
+import { getAppearanceSubcategoryName } from '../src/assigned-numbers/AppearanceValues.js';
+
+
 type GapAdvertReportExt = GapAdvertReport & {
   timestamp?: Date;
 };
@@ -40,7 +44,7 @@ const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReport
       saveReport(report);
       if ((Date.now() - printTime) > 1000) {
         printTime = Date.now();
-        print(adapter);
+        print();
       }
     });
   } catch (e) {
@@ -63,23 +67,63 @@ function saveReport(report: GapAdvertReport) {
   adverts.set(report.address.toString(), entry);
 }
 
-function print(adapter: HciAdapter) {
+function print() {
   console.log();
   console.log('adverts', adverts.size);
-  for (const [ address, { adv, sr } ] of adverts.entries()) {
-    const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
+  const sortedAdverts = [...adverts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [ address, info ] of sortedAdverts) {
+    printDeviceInfo(address, info);
+  }
+}
 
-    process.stdout.write(`${chalk.blue.bold(address)} at ${chalk.magenta(adv?.timestamp?.toLocaleTimeString())}`);
-    if (ident) {
-      process.stdout.write(` (${chalk.green(adapter.manufacturerNameFromCode(ident))})`);
-    }
-    process.stdout.write('\n');
+function printDeviceInfo(address: string, { adv, sr }: { adv?: GapAdvertReportExt; sr?: GapAdvertReportExt }) {
+  process.stdout.write(`${chalk.blue.bold(address)} ${chalk.magenta(adv?.timestamp?.toLocaleTimeString())}\n`);
 
-    if (adv) {
-      console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));
-    }
-    if (sr) {
-      console.log(`                 `, sr?.rssi, JSON.stringify(sr?.data));
-    }
+  if (adv) {
+    process.stdout.write(`                  Advertisement:\n`);
+    printReport(adv);
+  }
+  if (sr) {
+    process.stdout.write(`                  Scan Response:\n`);
+    printReport(sr);
+  }
+}
+
+function printReport(r: GapAdvertReport) {
+  const report = structuredClone(r);
+  process.stdout.write(`                    - RSSI: ${report.rssi} dBm\n`);
+  if (report.data?.completeLocalName) {
+    process.stdout.write(`                    - Name: ${report.data.completeLocalName}\n`);
+    delete report.data.completeLocalName;
+  }
+  if (report.data?.shortenedLocalName) {
+    process.stdout.write(`                    - Short Name: ${report.data.shortenedLocalName}\n`);
+    delete report.data.shortenedLocalName;
+  }
+  if (report.data?.manufacturerData) {
+    const companyName = getCompanyName(report.data?.manufacturerData.ident);
+    process.stdout.write(`                    - Company Name: ${chalk.green(companyName ?? 'unknown')}\n`);
+    process.stdout.write(`                    - Manufacturer Data: ${JSON.stringify([...report.data.manufacturerData.data])}\n`);
+    delete report.data.manufacturerData;
+  }
+  if (report.data?.appearance) {
+    const appearance = getAppearanceSubcategoryName(report.data.appearance.category, report.data.appearance.subcategory);
+    process.stdout.write(`                    - Appearance: ${chalk.yellow(appearance)}\n`);
+    delete report.data.appearance;
+  }
+  if (report.data?.txPowerLevel) {
+    process.stdout.write(`                    - Tx Power Level: ${report.data.txPowerLevel} dBm\n`);
+    delete report.data.txPowerLevel;
+  }
+  if (report.data?.completeListOf16bitServiceClassUuids) {
+    process.stdout.write(`                    - 16-bit UUIDs: ${report.data.completeListOf16bitServiceClassUuids}\n`);
+    delete report.data.completeListOf16bitServiceClassUuids;
+  }
+  if (report.data?.incompleteListOf16bitServiceClassUuids) {
+    process.stdout.write(`                    - Incomplete 16-bit UUIDs: ${report.data.incompleteListOf16bitServiceClassUuids}\n`);
+    delete report.data.incompleteListOf16bitServiceClassUuids;
+  }
+  if (Object.keys(report.data).length > 0) {
+    process.stdout.write(`                    - Data: ${JSON.stringify(report.data)}\n`);
   }
 }
