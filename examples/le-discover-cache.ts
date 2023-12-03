@@ -43,6 +43,8 @@ class App extends NbleGapCentral {
         },
       },
     });
+
+    this.on('error', (err) => console.log('NbleGapCentral Error:', err));
   }
 
   protected async onAdvert(report: GapAdvertReport): Promise<void> {
@@ -107,7 +109,8 @@ class App extends NbleGapCentral {
       console.log(e);
     } finally {
       console.log('Disconnecting...');
-      await this.disconnect(event.connectionHandle);
+      await this.disconnect(event.connectionHandle)
+        .catch(() => {});
     }
   }
 
