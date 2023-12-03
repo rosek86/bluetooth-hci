@@ -1,4 +1,4 @@
-import { Address } from "../utils/Address.js";
+import { Address, AddressType } from "../utils/Address.js";
 import { HciParserErrorType, makeParserError } from "./HciError.js";
 import { bitGet } from "../utils/Utils.js";
 
@@ -175,7 +175,7 @@ export class ReadBdAddr {
     if (!params || params.length < 6) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
-    return Address.from(params.readUIntLE(0, 6));
+    return Address.from(params.readUIntLE(0, 6), AddressType.PublicDeviceAddress);
   }
 }
 

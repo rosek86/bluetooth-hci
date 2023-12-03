@@ -2,7 +2,8 @@ import chalk from 'chalk';
 import {
   HciAdapter, createHciSerial,
   GapCentral, GapAdvertReport,
-  LeScanFilterDuplicates
+  LeScanFilterDuplicates,
+  LeScanType
 } from '../src';
 import { ArgsParser } from './utils/ArgsParser.js';
 import { getCompanyName } from '../assigned-numbers/Company Identifiers.js';
@@ -30,7 +31,15 @@ const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReport
     const gap = new GapCentral(adapter.Hci);
     await gap.init();
 
-    await gap.setScanParameters();
+    await gap.setScanParameters({
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 100,
+          windowMs: 50,
+        }
+      }
+    });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Disabled });
     console.log('scanning...');
 

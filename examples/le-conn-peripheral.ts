@@ -9,7 +9,7 @@ import {
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
-  Address, AdvData, L2CAP, Att
+  Address, AdvData, L2CAP, Att, AddressType
 } from '../src';
 
 (async () => {
@@ -38,7 +38,7 @@ import {
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: Address.from(0x000000000000),
+      peerAddress: Address.from(0x000000000000, AddressType.PublicDeviceAddress),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
@@ -49,7 +49,7 @@ import {
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from('AA:BB:CC:DD:EE:FF'));
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from('AA:BB:CC:DD:EE:FF', AddressType.RandomDeviceAddress));
 
     const advertisingData = AdvData.build({
       flags: 6,
