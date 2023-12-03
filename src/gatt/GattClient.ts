@@ -183,7 +183,7 @@ export class GattClient extends EventEmitter {
   }
 
   public async read(char: GattCharacteristic.AsObject): Promise<Buffer> {
-    const handle = char.valueHandle;
+    const handle = char.handle + 1;
     const blob = await this.att.readReq({ attributeHandle: handle });
 
     let part = blob.attributeValue;
@@ -203,12 +203,12 @@ export class GattClient extends EventEmitter {
   }
 
   public async write(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
-    const handle = char.valueHandle;
+    const handle = char.handle + 1;
     await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
   }
 
   public async writeWithoutResponse(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
-    const handle = char.valueHandle;
+    const handle = char.handle + 1;
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
