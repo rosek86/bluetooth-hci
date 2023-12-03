@@ -449,21 +449,9 @@ export class GapCentral extends EventEmitter {
   }
 
   private async getRemoteInfo(connComplete: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent) {
-    // NOTE: don't know why but sometimes first request to remote device gives no response
-    //       so we try to read remote version information twice
-    //       problem occurs on nRF52840 Dongle with HCI controller
-
     const timeoutMs = connComplete.connectionIntervalMs * 10;
-
-    let version: ReadRemoteVersionInformationCompleteEvent;
-    try {
-      version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
-    } catch {
-      version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
-    }
-
+    const version = await this.hci.readRemoteVersionInformationAwait(connComplete.connectionHandle, timeoutMs);
     const features = await this.hci.leReadRemoteFeaturesAwait(connComplete.connectionHandle, timeoutMs);
-
     return { version, features };
   }
 

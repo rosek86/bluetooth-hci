@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2023-12-03
+
+- Fixes
+
 ## [1.1.0] - 2023-12-03
 
 - Fix the problem of connection attempts using an incorrect address type
