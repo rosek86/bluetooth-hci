@@ -1,6 +1,6 @@
 {
   "name": "bluetooth-hci",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Bluetooth HCI host implementation",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",

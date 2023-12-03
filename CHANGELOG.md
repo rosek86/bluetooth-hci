@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2023-12-03
+
+- add chalk to production dependencies
+
 ## [1.0.8] - 2023-12-03
 
 - rename dist -> lib in release files structure
