@@ -491,8 +491,8 @@ export class LeEnhConnectionComplete {
       role,
       peerAddressType,
       peerAddress:                    Address.from(peerAddress, peerAddressType),
-      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress, peerAddressType), /* TODO: check if this is peerAddressType */
-      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress, peerAddressType), /* TODO: check if this is peerAddressType */
+      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress, peerAddressType),
+      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress, peerAddressType),
       connectionIntervalMs:           connectionInterval * 1.25,
       connectionLatency,
       supervisionTimeoutMs:           supervisionTimeout * 10,
