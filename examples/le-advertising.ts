@@ -1,4 +1,4 @@
-import { AdvData } from '../src';
+import { AddressType, AdvData } from '../src';
 import {
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
@@ -37,7 +37,7 @@ import { createHciSerial } from '../src';
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: Address.from(0x000000000000),
+      peerAddress: Address.from(0x000000000000, AddressType.PublicDeviceAddress),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
@@ -48,7 +48,7 @@ import { createHciSerial } from '../src';
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress));
 
     const advertisingData = AdvData.build({
       flags: 6,

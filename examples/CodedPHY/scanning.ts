@@ -8,6 +8,7 @@ import {
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
+  AddressType,
 } from '../../src';
 import { ArgsParser } from '../utils/ArgsParser';
 
@@ -25,7 +26,7 @@ import { ArgsParser } from '../utils/ArgsParser';
     const hci = adapter.Hci;
     await hci.leAddDeviceToWhiteList({
       addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from(0x1429c386d3a9),
+      address:      Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress),
     });
 
     const gap = new GapCentral(hci);

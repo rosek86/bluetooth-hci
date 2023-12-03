@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import { Hci } from "../hci/Hci.js";
 import { H4 } from "../transport/H4.js";
-import { Address } from "./Address.js";
+import { Address, AddressType } from "./Address.js";
 import { getCompanyName } from '../../assigned-numbers/Company Identifiers.js';
 
 export interface HciDevice {
@@ -152,7 +152,7 @@ export class HciAdapter extends EventEmitter {
       suggestedMaxTxTime: 328,
     });
 
-    await this.hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
+    await this.hci.leSetRandomAddress(Address.from(0x153c7f2c4b82, AddressType.RandomDeviceAddress));
 
     console.log('initialised');
   }

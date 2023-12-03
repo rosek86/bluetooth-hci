@@ -15,7 +15,7 @@ import {
   LeExtendedCreateConnectionV1,
   LeExtendedCreateConnectionPhy,
   LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
-  LeOwnAddressType, LePeerAddressType, LeScanFilterDuplicates,
+  LeOwnAddressType, LeScanFilterDuplicates,
   LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
 } from '../hci/HciLeController.js';
 import { Address } from '../utils/Address.js';
@@ -26,7 +26,10 @@ import { HciErrorCode } from '../hci/HciError.js';
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
-export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerAddress'>> & { peerAddress: Address };
+export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerAddress' | 'peerAddressType'>> & {
+  peerAddress: Address;
+  timeoutMs?: number;
+};
 
 export interface GapAdvertReport {
   address: Address;
@@ -244,7 +247,7 @@ export class GapCentral extends EventEmitter {
     }
   }
 
-  public async connect(params: GapConnectParams, timeoutMs?: number): Promise<void> {
+  public async connect(params: GapConnectParams): Promise<void> {
     if (this.pendingCreateConnection) {
       debug('Connection already in progress');
       throw new Error('Connection already in progress');
@@ -265,9 +268,9 @@ export class GapCentral extends EventEmitter {
       if (this.extended) {
         await this.hci.leExtendedCreateConnectionV1({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
-          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
-          peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
           peerAddress: params.peerAddress,
+          peerAddressType: params.peerAddress.getLePeerAddressType(),
+          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
           initiatingPhy: params?.initiatingPhy ?? { Phy1M: defaultScanParams },
         });
       } else {
@@ -276,15 +279,15 @@ export class GapCentral extends EventEmitter {
         }
         await this.hci.leCreateConnection({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
-          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
-          peerAddressType: params?.peerAddressType ?? LePeerAddressType.RandomDeviceAddress,
           peerAddress: params.peerAddress,
+          peerAddressType: params.peerAddress.getLePeerAddressType(),
+          initiatorFilterPolicy: params?.initiatorFilterPolicy ?? LeInitiatorFilterPolicy.PeerAddress,
           ...(params?.initiatingPhy?.Phy1M ?? defaultScanParams),
         });
       }
 
-      if (timeoutMs) {
-        debug('Connection timeout', timeoutMs);
+      if (params.timeoutMs) {
+        debug('Connection timeout', params.timeoutMs);
         this.pendingCreateConnection.timeoutId = setTimeout(() => {
           this.hci.leCreateConnectionCancel()
             .then(() => {
@@ -301,7 +304,7 @@ export class GapCentral extends EventEmitter {
             .finally(() => {
               this.pendingCreateConnection = null;
             });
-        }, timeoutMs);
+        }, params.timeoutMs);
       }
 
       debug('Connecting to', params.peerAddress.toString());

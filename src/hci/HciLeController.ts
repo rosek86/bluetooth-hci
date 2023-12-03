@@ -1,4 +1,4 @@
-import { Address } from '../utils/Address.js';
+import { Address, AddressType } from '../utils/Address.js';
 import {
   HciErrorCode,
   HciParserErrorType,
@@ -1080,21 +1080,23 @@ export interface LeReadPeerResolvableAddress {
 }
 
 export class LeReadPeerResolvableAddress {
-  static inParams(params: LeReadPeerResolvableAddress): Buffer {
+  static inParams(inParams: LeReadPeerResolvableAddress): Buffer {
     const payload = Buffer.alloc(7);
 
     let o = 0;
-    o = payload.writeUIntLE(params.peerIdentityAddressType,         o, 1);
-        payload.writeUIntLE(params.peerIdentityAddress.toNumeric(), o, 6);
+    o = payload.writeUIntLE(inParams.peerIdentityAddressType,         o, 1);
+        payload.writeUIntLE(inParams.peerIdentityAddress.toNumeric(), o, 6);
 
     return payload;
   }
 
-  static outParams(params?: Buffer): Address {
-    if (!params|| params.length < 6) {
+  static outParams(params: LeReadPeerResolvableAddress, result?: Buffer): Address {
+    if (!result|| result.length < 6) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
-    return Address.from(params.readUIntLE(0, 6));
+    const addressType = params.peerIdentityAddressType === LePeerAddressType.PublicDeviceAddress ?
+      AddressType.PublicDeviceAddress : AddressType.RandomDeviceAddress;
+    return Address.from(result.readUIntLE(0, 6), addressType);
   }
 }
 
@@ -1114,11 +1116,13 @@ export class LeLocalPeerResolvableAddress {
     return payload;
   }
 
-  static outParams(params?: Buffer): Address {
-    if (!params|| params.length < 6) {
+  static outParams(params: LeLocalPeerResolvableAddress, result?: Buffer): Address {
+    if (!result || result.length < 6) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
-    return Address.from(params.readUIntLE(0, 6));
+    const addressType = params.peerIdentityAddressType === LePeerAddressType.PublicDeviceAddress ?
+      AddressType.PublicDeviceAddress : AddressType.RandomDeviceAddress;
+    return Address.from(result.readUIntLE(0, 6), addressType);
   }
 }
 

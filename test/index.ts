@@ -6,7 +6,7 @@ import {
   LePrimaryAdvertisingPhy, LeSecondaryAdvertisingPhy, LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates } from '../src/hci/HciLeController';
-import { Address } from '../src/utils/Address';
+import { Address, AddressType } from '../src/utils/Address';
 
 let hci: Hci | null = null;
 let txBuffer: Buffer | null = null;
@@ -115,7 +115,7 @@ function checkRequest(req: string): boolean {
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: Address.from(0x000000000000),
+      peerAddress: Address.from(0x000000000000, AddressType.PublicDeviceAddress),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.Phy1M,
       secondaryAdvertisingMaxSkip: 0,
@@ -127,11 +127,11 @@ function checkRequest(req: string): boolean {
     console.log(`Selected Tx: ${selectedTxPower}`);
 
     prepareResult('0e0401352000');
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress));
     console.log(`Compare: ${checkRequest('35200700a9d386c32914')}`);
 
     prepareResult('0e0401052000');
-    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82));
+    await hci.leSetRandomAddress(Address.from(0x153c7f2c4b82, AddressType.RandomDeviceAddress));
     console.log(`Compare: ${checkRequest('052006824b2c7f3c15')}`);
 
     prepareResult('0e0401412000');

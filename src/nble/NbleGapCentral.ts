@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import Debug from "debug";
 
-import { GapAdvertReport, GapCentral, GapConnectEvent, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral.js";
+import { GapAdvertReport, GapCentral, GapConnectEvent, GapConnectParams, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral.js";
 import { GapProfileStorage } from "../gap/GapProfileStorage.js";
 import { GattClient } from "../gatt/GattClient.js";
 import { Hci } from "../hci/Hci.js";
@@ -87,9 +87,9 @@ export abstract class NbleGapCentral extends EventEmitter {
     await this.gap.stopScanning();
   }
 
-  protected async connect(address: Address, opts?: { connectionTimeoutMs?: number }) {
+  protected async connect(connParams: GapConnectParams) {
     await this.stopScanning();
-    await this.gap.connect({ peerAddress: address }, opts?.connectionTimeoutMs).catch(async (e) => {
+    await this.gap.connect(connParams).catch(async (e) => {
       if (this.options.autoScan) {
         await this.startScanning();
       }

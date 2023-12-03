@@ -320,7 +320,7 @@ export class LeAdvReport {
       reports.push({
         eventType,
         addressType,
-        address: Address.from(address),
+        address: Address.from(address, addressType),
         rssi: powerOrNull(rssi),
         data: advData,
       });
@@ -376,7 +376,7 @@ export class LeExtAdvReport {
       reports.push({
         eventType: LeExtAdvEventTypeParser.parse(eventType),
         addressType,
-        address: Address.from(address),
+        address: Address.from(address, addressType),
         primaryPhy,
         secondaryPhy,
         advertisingSid,
@@ -449,7 +449,7 @@ export class LeConnectionComplete {
       connectionHandle,
       role,
       peerAddressType,
-      peerAddress:          Address.from(peerAddress),
+      peerAddress:          Address.from(peerAddress, peerAddressType),
       connectionIntervalMs: connectionInterval * 1.25,
       connectionLatency,
       supervisionTimeoutMs: supervisionTimeout * 10,
@@ -490,9 +490,9 @@ export class LeEnhConnectionComplete {
       connectionHandle,
       role,
       peerAddressType,
-      peerAddress:                    Address.from(peerAddress),
-      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress),
-      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress),
+      peerAddress:                    Address.from(peerAddress, peerAddressType),
+      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress, peerAddressType),
+      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress, peerAddressType),
       connectionIntervalMs:           connectionInterval * 1.25,
       connectionLatency,
       supervisionTimeoutMs:           supervisionTimeout * 10,
@@ -762,9 +762,9 @@ export class LeDirectedAdvertisingReport {
       reports.push({
         eventType,
         addressType,
-        address: Address.from(address),
+        address: Address.from(address, addressType),
         directAddressType,
-        directAddress: Address.from(directAddress),
+        directAddress: Address.from(directAddress, directAddressType),
         rssi: powerOrNull(rssi),
       });
     }

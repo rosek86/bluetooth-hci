@@ -1,7 +1,16 @@
 import crypto from "node:crypto";
+import { LePeerAddressType } from "../hci/HciLeController.js";
+
+export enum AddressType {
+  PublicDeviceAddress   = 0x00, // Public Device Address
+  RandomDeviceAddress   = 0x01, // Random Device Address
+  PublicIdentityAddress = 0x02, // Public Identity Address
+  RandomIdentityAddress = 0x03, // Random (static) Identity Address
+  Anonymous             = 0xFF, // No address provided (anonymous advertisement)
+}
 
 export class Address {
-  constructor(private address: number) {
+  private constructor(private address: number, private type: AddressType) {
   }
 
   static random(): Address {
@@ -10,12 +19,12 @@ export class Address {
     addressBytes[6] = 0;
     addressBytes[7] = 0;
     const addressNumber = Number((new DataView(addressBytes.buffer)).getBigUint64(0, true));
-    return new Address(addressNumber);
+    return new Address(addressNumber, AddressType.RandomDeviceAddress);
   }
 
-  static from(address: string|number): Address {
+  static from(address: string|number, type: AddressType): Address {
     if (typeof address === 'number') {
-      return new Address(address);
+      return new Address(address, type);
     }
 
     const num = address
@@ -23,10 +32,10 @@ export class Address {
       .match(/.{1,2}/g)?.join('');
 
     if (!num) {
-      return new Address(0);
+      return new Address(0, type);
     }
 
-    return new Address(parseInt(num, 16));
+    return new Address(parseInt(num, 16), type);
   }
 
   public toId(): string {
@@ -57,6 +66,12 @@ export class Address {
       .padStart(12, '0')
       .match(/.{1,2}/g)!
       .join(':');
+  }
+
+  public getLePeerAddressType(): LePeerAddressType {
+    return this.type === AddressType.PublicDeviceAddress ?
+      LePeerAddressType.PublicDeviceAddress :
+      LePeerAddressType.RandomDeviceAddress;
   }
 
   get [Symbol.toStringTag]() {

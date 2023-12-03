@@ -27,7 +27,7 @@ class App extends NbleGapCentral {
       this.state = 'connecting';
 
       // Connect to device with timeout
-      await this.connect(report.address, { connectionTimeoutMs: 2000 });
+      await this.connect({ peerAddress: report.address, timeoutMs: 2000 });
       console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {

@@ -10,7 +10,8 @@ import {
   LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
-  LeAdvertisingDataOperation
+  LeAdvertisingDataOperation,
+  AddressType
 } from '../../src';
 import { ArgsParser } from '../utils/ArgsParser';
 
@@ -39,7 +40,7 @@ import { ArgsParser } from '../utils/ArgsParser';
       ],
       ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       peerAddressType: LePeerAddressType.PublicDeviceAddress,
-      peerAddress: Address.from(0x000000000000),
+      peerAddress: Address.from(0x000000000000, AddressType.PublicDeviceAddress),
       advertisingFilterPolicy: LeAdvertisingFilterPolicy.Any,
       primaryAdvertisingPhy: LePrimaryAdvertisingPhy.PhyCoded,
       secondaryAdvertisingMaxSkip: 0,
@@ -50,7 +51,7 @@ import { ArgsParser } from '../utils/ArgsParser';
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9));
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress));
 
     const advertisingData = AdvData.build({
       flags: 6,
