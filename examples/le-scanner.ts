@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import {
   HciAdapter, createHciSerial,
   GapCentral, GapAdvertReport,
@@ -5,9 +6,14 @@ import {
 } from '../src';
 import { ArgsParser } from './utils/ArgsParser';
 
+type GapAdvertReportExt = GapAdvertReport & {
+  timestamp?: Date;
+};
+
+const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReportExt }>();
+
 (async () => {
   let printTime = Date.now();
-  const adverts = new Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>();
 
   try {
     const args = await ArgsParser.getOptions();
@@ -31,19 +37,10 @@ import { ArgsParser } from './utils/ArgsParser';
     });
 
     gap.on('GapLeAdvReport', async (report) => {
-      const { address, scanResponse } = report;
-
-      const entry = adverts.get(address.toString()) ?? {};
-      if (scanResponse) {
-        entry.sr = report;
-      } else {
-        entry.adv = report;
-      }
-      adverts.set(address.toString(), entry);
-
+      saveReport(report);
       if ((Date.now() - printTime) > 1000) {
         printTime = Date.now();
-        print(adapter, adverts);
+        print(adapter);
       }
     });
   } catch (e) {
@@ -52,13 +49,31 @@ import { ArgsParser } from './utils/ArgsParser';
   }
 })();
 
-function print(adapter: HciAdapter, adverts: Map<string, { adv?: GapAdvertReport; sr?: GapAdvertReport }>) {
+function saveReport(report: GapAdvertReport) {
+  const entry = adverts.get(report.address.toString()) ?? {};
+
+  if (!report.scanResponse) {
+    entry.adv = report;
+    entry.adv.timestamp = new Date();
+  } else {
+    entry.sr = report;
+    entry.sr.timestamp = new Date();
+  }
+
+  adverts.set(report.address.toString(), entry);
+}
+
+function print(adapter: HciAdapter) {
   console.log();
   console.log('adverts', adverts.size);
   for (const [ address, { adv, sr } ] of adverts.entries()) {
     const ident = (adv?.data?.manufacturerData ?? sr?.data?.manufacturerData)?.ident;
 
-    console.log(address, ident ? adapter.manufacturerNameFromCode(ident) : '');
+    process.stdout.write(`${chalk.blue.bold(address)} at ${chalk.magenta(adv?.timestamp?.toLocaleTimeString())}`);
+    if (ident) {
+      process.stdout.write(` (${chalk.green(adapter.manufacturerNameFromCode(ident))})`);
+    }
+    process.stdout.write('\n');
 
     if (adv) {
       console.log(`                 `, adv?.rssi, JSON.stringify(adv?.data));
