@@ -1,9 +1,9 @@
 {
   "name": "bluetooth-hci",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Bluetooth HCI host implementation",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "author": "Krzysztof Rosiński",
   "maintainers": [
     {
@@ -18,11 +18,11 @@
   },
   "scripts": {
     "start": "node lib/index.js",
-    "prebuild": "rm -fr dist",
+    "prebuild": "rm -fr lib",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --ext .ts",
     "test": "mocha",
-    "prerelease": "rm -fr dist && npm run lint",
+    "prerelease": "rm -fr lib && npm run lint",
     "release": "tsc -p tsconfig.release.json"
   },
   "repository": {

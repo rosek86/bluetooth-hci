@@ -307,7 +307,7 @@ Simple Bluetooth LE scanner:
 
 ```
 npm run build
-node dist/examples/le-scanner.js
+node lib/examples/le-scanner.js
 ```
 
 ## Further reading

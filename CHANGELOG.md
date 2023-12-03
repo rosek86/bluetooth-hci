@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2023-12-03
+
+- Update package.json
+
 ## [1.0.7] - 2023-11-19
 
 - Update package.json

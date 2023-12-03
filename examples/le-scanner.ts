@@ -5,8 +5,8 @@ import {
   LeScanFilterDuplicates
 } from '../src';
 import { ArgsParser } from './utils/ArgsParser.js';
-import { getCompanyName } from '../src/assigned-numbers/Company Identifiers.js';
-import { getAppearanceSubcategoryName } from '../src/assigned-numbers/AppearanceValues.js';
+import { getCompanyName } from '../assigned-numbers/Company Identifiers.js';
+import { getAppearanceSubcategoryName } from '../assigned-numbers/AppearanceValues.js';
 
 type GapAdvertReportExt = GapAdvertReport & {
   timestamp?: Date;
