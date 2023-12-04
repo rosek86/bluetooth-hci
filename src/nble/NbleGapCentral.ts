@@ -10,6 +10,7 @@ import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanning
 import { Address } from "../utils/Address.js";
 import { HciAdapter } from "../utils/HciAdapter.js";
 import { printProfile } from "../utils/Profile.js";
+import { HciError, HciErrorCode } from "../hci/HciError.js";
 
 const debug = Debug('NbleGapCentral');
 
@@ -22,9 +23,23 @@ export interface NbleGapCentralOptions {
   };
 }
 
+export class NbleError extends Error implements NodeJS.ErrnoException {
+  errno?: number | undefined;
+  code?: string | undefined;
+  path?: string | undefined;
+  syscall?: string | undefined;
+
+  static create(message: string, code?: string) {
+    const error = new NbleError(message);
+    error.code = code;
+    return error;
+  }
+}
+
 export abstract class NbleGapCentral extends EventEmitter {
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
+  private connecting = false;
 
   public constructor(protected adapter: HciAdapter, protected readonly options: NbleGapCentralOptions = {}) {
     super();
@@ -79,8 +94,14 @@ export abstract class NbleGapCentral extends EventEmitter {
     if (!start && this.options.autoScan && this.options.autoScanOptions?.start) {
       start = this.options.autoScanOptions.start;
     }
-    await this.gap.setScanParameters(params);
-    await this.gap.startScanning(start);
+    try {
+      await this.gap.setScanParameters(params);
+      await this.gap.startScanning(start);
+    } catch (err) {
+      if (err instanceof HciError && err.errno === HciErrorCode.CommandDisallowed) {
+        return; // ignore - already scanning
+      }
+    }
   }
 
   protected async stopScanning() {
@@ -88,13 +109,21 @@ export abstract class NbleGapCentral extends EventEmitter {
   }
 
   protected async connect(connParams: GapConnectParams) {
-    await this.stopScanning();
-    await this.gap.connect(connParams).catch(async (e) => {
+    if (this.connecting) { // TODO: transfer this responsibility to GapCentral
+      throw NbleError.create('Already connecting', 'NBLE_ERR_ALREADY_CONNECTING');
+    }
+
+    try {
+      this.connecting = true;
+      await this.stopScanning();
+      await this.gap.connect(connParams);
+    } catch (err) {
+      this.connecting = false;
       if (this.options.autoScan) {
         await this.startScanning();
       }
-      throw e;
-    });
+      throw err;
+    }
   }
 
   protected async disconnect(connectionHandle: number) {
@@ -121,6 +150,7 @@ export abstract class NbleGapCentral extends EventEmitter {
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
     try {
+      this.connecting = false;
       const att = this.gap.getAtt(event.connectionHandle);
 
       const storeValue = GapProfileStorage.loadProfile(event.address);
@@ -142,11 +172,20 @@ export abstract class NbleGapCentral extends EventEmitter {
   protected abstract onConnected(event: GapConnectEvent, client: GattClient): Promise<void>;
 
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
+    if ([
+      HciErrorCode.AuthFailure,
+      HciErrorCode.UnsupportedFeature,
+      HciErrorCode.ConnectionNotEstablished,
+      HciErrorCode.UnitKeyNotSupported,
+      HciErrorCode.ConnectionParameters
+    ].includes(reason.reason.code)) {
+      this.connecting = false;
+    }
     try {
       await Promise.all([
         this.onDisconnected(reason),
         Promise.resolve().then(() => {
-          if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === false) {
+          if (this.options.autoScan) {
             return this.startScanning();
           }
         }),
@@ -160,6 +199,7 @@ export abstract class NbleGapCentral extends EventEmitter {
 
   private async _onConnectionCancelled(): Promise<void> {
     try {
+      this.connecting = false;
       await Promise.all([
         this.onConnectionCancelled(),
         Promise.resolve().then(() => {

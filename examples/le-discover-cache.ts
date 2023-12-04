@@ -15,11 +15,11 @@ import {
   GattClient,
   NbleGapCentral,
   printProfile,
-  Address
+  Address,
+  NbleError
 } from '../src';
 
 class App extends NbleGapCentral {
-  private state: 'idle' | 'connecting' | 'connected' = 'idle';
   private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();
 
   constructor(adapter: HciAdapter) {
@@ -60,19 +60,17 @@ class App extends NbleGapCentral {
         return;
       }
 
-      const name = this.getCompleteLocalName(report.address);
-
-      // Prevent multiple connections requests
-      if (this.state !== 'idle') { return; }
-      this.state = 'connecting';
-
       // Connect to device with timeout
       await this.connect({ peerAddress: report.address, timeoutMs: 2000 });
+
+      const name = this.getCompleteLocalName(report.address);
       console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {
+      if (e instanceof NbleError && e.code === 'NBLE_ERR_ALREADY_CONNECTING') {
+        return; // ignore
+      }
       console.log(`Error while connecting to ${report.address.toString()}`, e);
-      this.state = 'idle';
     }
   }
 
@@ -94,7 +92,6 @@ class App extends NbleGapCentral {
 
   protected async onConnected(event: GapConnectEvent, gatt: GattClient): Promise<void> {
     try {
-      this.state = 'connected';
       console.log(`Connected to ${event.address.toString()}`);
 
       console.log(`Discovering services on ${event.address.toString()}...`);
@@ -128,12 +125,10 @@ class App extends NbleGapCentral {
 
   protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
     console.log('Disconnected', reason.connectionHandle, reason.reason);
-    this.state = 'idle';
   }
 
   protected async onConnectionCancelled(): Promise<void> {
     console.log('Connection cancelled (timeout)');
-    this.state = 'idle';
   }
 
   private async saveProfilesToFile() {
