@@ -6,7 +6,7 @@ import { GapProfileStorage } from "../gap/GapProfileStorage.js";
 import { GattClient } from "../gatt/GattClient.js";
 import { Hci } from "../hci/Hci.js";
 import { DisconnectionCompleteEvent } from "../hci/HciEvent.js";
-import { LeOwnAddressType, LePhy, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../hci/HciLeController.js";
+import { LePhy } from "../hci/HciLeController.js";
 import { Address } from "../utils/Address.js";
 import { HciAdapter } from "../utils/HciAdapter.js";
 import { printProfile } from "../utils/Profile.js";
@@ -23,48 +23,17 @@ export interface NbleGapCentralOptions {
   };
 }
 
-export class NbleError extends Error implements NodeJS.ErrnoException {
-  errno?: number | undefined;
-  code?: string | undefined;
-  path?: string | undefined;
-  syscall?: string | undefined;
-
-  static create(message: string, code?: string) {
-    const error = new NbleError(message);
-    error.code = code;
-    return error;
-  }
-}
-
 export abstract class NbleGapCentral extends EventEmitter {
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
-  private connecting = false;
 
   public constructor(protected adapter: HciAdapter, protected readonly options: NbleGapCentralOptions = {}) {
     super();
 
-    options.autoScan = options.autoScan ?? true;
-    options.autoScanOptions = options.autoScanOptions ?? {};
-    options.autoScanOptions.scanWhenConnected = options.autoScanOptions.scanWhenConnected ?? false;
-    options.autoScanOptions.parameters = options.autoScanOptions.parameters ?? {
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: LeScanningFilterPolicy.All,
-      scanningPhy: {
-        Phy1M: {
-          type: LeScanType.Active,
-          intervalMs: 100,
-          windowMs: 100,
-        },
-      },
-    };
-    options.autoScanOptions.start = options.autoScanOptions.start ?? {
-      filterDuplicates: LeScanFilterDuplicates.Enabled,
-    };
-
     this.hci = adapter.Hci;
-  
+
     this.gap = new GapCentral(this.hci, {
+      ...options,
       cacheRemoteInfo: true,
     });
 
@@ -81,19 +50,13 @@ export abstract class NbleGapCentral extends EventEmitter {
     await this.hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
     await this.gap.init();
-    
-    if (this.options.autoScan) {
-      await this.startScanning();
-    }
+  }
+
+  protected async isScanning() {
+    return this.gap.isScanning();
   }
 
   protected async startScanning(params?: GapScanParamsOptions, start?: GapScanStartOptions) {
-    if (!params && this.options.autoScan && this.options.autoScanOptions?.parameters) {
-      params = this.options.autoScanOptions.parameters;
-    }
-    if (!start && this.options.autoScan && this.options.autoScanOptions?.start) {
-      start = this.options.autoScanOptions.start;
-    }
     try {
       await this.gap.setScanParameters(params);
       await this.gap.startScanning(start);
@@ -108,22 +71,12 @@ export abstract class NbleGapCentral extends EventEmitter {
     await this.gap.stopScanning();
   }
 
-  protected async connect(connParams: GapConnectParams) {
-    if (this.connecting) { // TODO: transfer this responsibility to GapCentral
-      throw NbleError.create('Already connecting', 'NBLE_ERR_ALREADY_CONNECTING');
-    }
+  protected isConnecting() {
+    return this.gap.isConnecting();
+  }
 
-    try {
-      this.connecting = true;
-      await this.stopScanning();
-      await this.gap.connect(connParams);
-    } catch (err) {
-      this.connecting = false;
-      if (this.options.autoScan) {
-        await this.startScanning();
-      }
-      throw err;
-    }
+  protected async connect(connParams: GapConnectParams) {
+    await this.gap.connect(connParams);
   }
 
   protected async disconnect(connectionHandle: number) {
@@ -150,20 +103,12 @@ export abstract class NbleGapCentral extends EventEmitter {
 
   protected async _onConnected(event: GapConnectEvent): Promise<void> {
     try {
-      this.connecting = false;
       const att = this.gap.getAtt(event.connectionHandle);
 
       const storeValue = GapProfileStorage.loadProfile(event.address);
       const gattClient = new GattClient(att, storeValue?.profile);
 
-      await Promise.all([
-        this.onConnected(event, gattClient),
-        Promise.resolve().then(() => {
-          if (this.options.autoScan && this.options.autoScanOptions?.scanWhenConnected === true) {
-            return this.startScanning();
-          }
-        }),
-      ]);
+      await this.onConnected(event, gattClient);
     } catch (e) {
       debug('onConnected error', e);
       this.emit('error', e);
@@ -172,24 +117,8 @@ export abstract class NbleGapCentral extends EventEmitter {
   protected abstract onConnected(event: GapConnectEvent, client: GattClient): Promise<void>;
 
   private async _onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    if ([
-      HciErrorCode.AuthFailure,
-      HciErrorCode.UnsupportedFeature,
-      HciErrorCode.ConnectionNotEstablished,
-      HciErrorCode.UnitKeyNotSupported,
-      HciErrorCode.ConnectionParameters
-    ].includes(reason.reason.code)) {
-      this.connecting = false;
-    }
     try {
-      await Promise.all([
-        this.onDisconnected(reason),
-        Promise.resolve().then(() => {
-          if (this.options.autoScan) {
-            return this.startScanning();
-          }
-        }),
-      ]);
+      await this.onDisconnected(reason);
     } catch (e) {
       debug('onDisconnected error', e);
       this.emit('error', e);
@@ -199,15 +128,7 @@ export abstract class NbleGapCentral extends EventEmitter {
 
   private async _onConnectionCancelled(): Promise<void> {
     try {
-      this.connecting = false;
-      await Promise.all([
-        this.onConnectionCancelled(),
-        Promise.resolve().then(() => {
-          if (this.options.autoScan) {
-            return this.startScanning();
-          }
-        }),
-      ]);
+      await this.onConnectionCancelled();
     } catch (e) {
       debug('onConnectionCancelled error', e);
       this.emit('error', e);

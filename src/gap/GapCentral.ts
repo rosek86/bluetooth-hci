@@ -24,6 +24,16 @@ import { L2CAP } from '../l2cap/L2CAP.js';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband.js';
 import { HciErrorCode } from '../hci/HciError.js';
 
+export interface GapCentralOptions {
+  autoScan?: boolean;
+  autoScanOptions?: {
+    scanWhenConnected?: boolean;
+    parameters?: GapScanParamsOptions;
+    start?: GapScanStartOptions;
+  };
+  cacheRemoteInfo?: boolean;
+}
+
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
 export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
 export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerAddress' | 'peerAddressType'>> & {
@@ -98,6 +108,20 @@ interface RemoteInfoCache  {
   features: LeReadRemoteFeaturesCompleteEvent;
 }
 
+export class GapError extends Error implements NodeJS.ErrnoException {
+  errno?: number | undefined;
+  code?: string | undefined;
+  path?: string | undefined;
+  syscall?: string | undefined;
+
+  static create(message: string, code?: string, errno?: number) {
+    const error = new GapError(message);
+    error.code = code;
+    error.errno = errno;
+    return error;
+  }
+}
+
 export class GapCentral extends EventEmitter {
   private extended = false;
   private scanning = false;
@@ -132,8 +156,27 @@ export class GapCentral extends EventEmitter {
     return device.att;
   }
 
-  constructor(private hci: Hci, private options: { cacheRemoteInfo?: boolean } = { cacheRemoteInfo: false }) {
+  constructor(private hci: Hci, private readonly options?: GapCentralOptions) {
     super();
+
+    this.options = options ?? {};
+    this.options.autoScan = this.options.autoScan ?? true;
+    this.options.autoScanOptions = this.options.autoScanOptions ?? {}
+    this.options.autoScanOptions.scanWhenConnected = this.options.autoScanOptions?.scanWhenConnected ?? false;
+    this.options.autoScanOptions.parameters = this.options.autoScanOptions?.parameters ?? {
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
+      scanningFilterPolicy: LeScanningFilterPolicy.All,
+      scanningPhy: {
+        Phy1M: {
+          type: LeScanType.Active,
+          intervalMs: 100,
+          windowMs: 100,
+        },
+      },
+    };
+    this.options.autoScanOptions.start = this.options.autoScanOptions?.start ?? {
+      filterDuplicates: LeScanFilterDuplicates.Disabled,
+    };
 
     this.l2cap = new L2CAP(this.hci);
 
@@ -155,6 +198,14 @@ export class GapCentral extends EventEmitter {
     }
 
     await this.l2cap.init();
+    await this.startAutoScanIfEnabled();
+  }
+
+  private async startAutoScanIfEnabled() {
+    if (this.options?.autoScan) {
+      await this.setScanParameters(this.options.autoScanOptions?.parameters);
+      await this.startScanning(this.options.autoScanOptions?.start);
+    }
   }
 
   public destroy(): void {
@@ -170,6 +221,10 @@ export class GapCentral extends EventEmitter {
 
   public isScanning(): boolean {
     return this.scanning;
+  }
+
+  public isConnecting(): boolean {
+    return this.pendingCreateConnection !== null;
   }
 
   public async setScanParameters(opts?: GapScanParamsOptions): Promise<void> {
@@ -222,15 +277,14 @@ export class GapCentral extends EventEmitter {
 
       this.emit('GapLeScanState', true);
     } catch (e) {
-      debug(e);
       this.scanning = false;
+      debug(e);
       throw e;
     }
   }
 
   public async stopScanning(): Promise<void> {
     if (this.scanning === false) { return; }
-    this.scanning = false;
 
     try {
       if (this.extended) {
@@ -239,10 +293,11 @@ export class GapCentral extends EventEmitter {
         await this.hci.leSetScanEnable(false);
       }
 
+      this.scanning = false;
       this.emit('GapLeScanState', false);
     } catch (e) {
-      debug(e);
       this.scanning = true;
+      debug(e);
       throw e;
     }
   }
@@ -250,11 +305,14 @@ export class GapCentral extends EventEmitter {
   public async connect(params: GapConnectParams): Promise<void> {
     if (this.pendingCreateConnection) {
       debug('Connection already in progress');
-      throw new Error('Connection already in progress');
+      throw GapError.create('Connection already in progress', 'GAP_ERR_ALREADY_IN_PROGRESS');
     }
     this.pendingCreateConnection = {};
 
     try {
+      if (this.scanning) {
+        await this.stopScanning();
+      }
       const defaultScanParams: LeExtendedCreateConnectionPhy = {
         scanIntervalMs: 100,
         scanWindowMs: 100,
@@ -275,7 +333,7 @@ export class GapCentral extends EventEmitter {
         });
       } else {
         if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
-          throw new Error('Extended connection parameters are not supported');
+          throw GapError.create('Extended connection parameters are not supported', 'GAP_ERR_INVALID_PARAMS');
         }
         await this.hci.leCreateConnection({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
@@ -300,9 +358,6 @@ export class GapCentral extends EventEmitter {
                 debug(chalk.red('Failed to cancel connection'));
                 debug(err);
               }
-            })
-            .finally(() => {
-              this.pendingCreateConnection = null;
             });
         }, params.timeoutMs);
       }
@@ -311,6 +366,7 @@ export class GapCentral extends EventEmitter {
     } catch (e) {
       debug(e);
       this.pendingCreateConnection = null;
+      await this.startAutoScanIfEnabled();
       throw e;
     }
   }
@@ -382,7 +438,6 @@ export class GapCentral extends EventEmitter {
     this.onLeConnectionCompleteCommon(err, event);
   };
 
-
   private async onLeConnectionCompleteCommon(
     err: NodeJS.ErrnoException|null,
     event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent
@@ -401,9 +456,15 @@ export class GapCentral extends EventEmitter {
       */
 
       if (err?.errno === HciErrorCode.UnknownConnectionId) {
+        await this.startAutoScanIfEnabled();
         debug(chalk.red(`Connection cancelled (${err.message})`));
         this.emit('GapConnectionCancelled');
         return;
+      }
+
+      if (this.options?.autoScanOptions?.scanWhenConnected) {
+        console.log('Restarting scan');
+        await this.startAutoScanIfEnabled();
       }
 
       const device: GapDeviceInfo = {
@@ -415,7 +476,7 @@ export class GapCentral extends EventEmitter {
       const connectionIntervalMs = event.connectionIntervalMs;
       debug(`Connection interval ${connectionIntervalMs} ms`);
 
-      if (this.options.cacheRemoteInfo) {
+      if (this.options?.cacheRemoteInfo) {
         const cache = this.remoteInfoCache.get(event.peerAddress.toNumeric());
         if (cache) {
           device.versionInformation = cache.version;
@@ -511,6 +572,12 @@ export class GapCentral extends EventEmitter {
     const device = this.connectedDevices.get(event.connectionHandle);
     if (device) {
       this.connectedDevices.delete(event.connectionHandle);
+    }
+
+    if (this.options?.autoScanOptions?.scanWhenConnected === false) {
+      this.startAutoScanIfEnabled().catch(() => {
+        console.log('Failed to start scanning');
+      });
     }
 
     this.emit('GapDisconnected', event);
