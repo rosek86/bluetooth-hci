@@ -22,7 +22,7 @@ import { Address } from '../utils/Address.js';
 import { Att } from '../att/Att.js';
 import { L2CAP } from '../l2cap/L2CAP.js';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband.js';
-import { HciErrorCode } from '../hci/HciError.js';
+import { HciErrorErrno, makeHciError } from '../hci/HciError.js';
 
 export interface GapCentralOptions {
   autoScan?: boolean;
@@ -106,20 +106,6 @@ interface GapDeviceInfo {
 interface RemoteInfoCache  {
   version: ReadRemoteVersionInformationCompleteEvent;
   features: LeReadRemoteFeaturesCompleteEvent;
-}
-
-export class GapError extends Error implements NodeJS.ErrnoException {
-  errno?: number | undefined;
-  code?: string | undefined;
-  path?: string | undefined;
-  syscall?: string | undefined;
-
-  static create(message: string, code?: string, errno?: number) {
-    const error = new GapError(message);
-    error.code = code;
-    error.errno = errno;
-    return error;
-  }
 }
 
 export class GapCentral extends EventEmitter {
@@ -305,7 +291,7 @@ export class GapCentral extends EventEmitter {
   public async connect(params: GapConnectParams): Promise<void> {
     if (this.pendingCreateConnection) {
       debug('Connection already in progress');
-      throw GapError.create('Connection already in progress', 'GAP_ERR_ALREADY_IN_PROGRESS');
+      throw makeHciError(HciErrorErrno.CommandDisallowed);
     }
     this.pendingCreateConnection = {};
 
@@ -333,7 +319,7 @@ export class GapCentral extends EventEmitter {
         });
       } else {
         if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
-          throw GapError.create('Extended connection parameters are not supported', 'GAP_ERR_INVALID_PARAMS');
+          throw makeHciError(HciErrorErrno.InvalidCommandParameter);
         }
         await this.hci.leCreateConnection({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
@@ -352,7 +338,7 @@ export class GapCentral extends EventEmitter {
               debug(chalk.red('Connection cancelled'));
             })
             .catch((err: NodeJS.ErrnoException) => {
-              if (err.errno == HciErrorCode.CommandDisallowed) {
+              if (err.errno == HciErrorErrno.CommandDisallowed) {
                 // ignore, we are already connected
               } else {
                 debug(chalk.red('Failed to cancel connection'));
@@ -455,7 +441,7 @@ export class GapCentral extends EventEmitter {
         In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
       */
 
-      if (err?.errno === HciErrorCode.UnknownConnectionId) {
+      if (err?.errno === HciErrorErrno.UnknownConnectionId) {
         await this.startAutoScanIfEnabled();
         debug(chalk.red(`Connection cancelled (${err.message})`));
         this.emit('GapConnectionCancelled');

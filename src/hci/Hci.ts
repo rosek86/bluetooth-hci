@@ -3,7 +3,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType.js';
 
-import { getHciErrorMessage, HciError, HciErrorCode, HciParserErrorType, makeHciError } from './HciError.js';
+import { getHciErrorMessage, HciError, HciErrorErrno, HciParserErrorType, makeHciError } from './HciError.js';
 import { HciDisconnectReason } from './HciError.js';
 import { makeParserError } from './HciError.js';
 
@@ -536,7 +536,7 @@ export class Hci extends EventEmitter {
 
   public async leRemoteConnectionParameterRequestNegativeReply(
     connectionHandle: number,
-    reason: HciErrorCode
+    reason: HciErrorErrno
   ): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
     const payload = LeRemoteConnectionParameterRequestNegativeReply.inParams(connectionHandle, reason);
@@ -872,8 +872,8 @@ export class Hci extends EventEmitter {
     }
   }
 
-  private emitEvent<T>(label: string, status: HciErrorCode, event: T): void {
-    if (status === HciErrorCode.Success) {
+  private emitEvent<T>(label: string, status: HciErrorErrno, event: T): void {
+    if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
       this.emit(label, makeHciError(status), event);

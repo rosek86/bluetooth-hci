@@ -17,8 +17,7 @@ import {
   printProfile,
   Address,
   HciError,
-  HciErrorCode,
-  GapError
+  HciErrorErrno
 } from '../src';
 
 class App extends NbleGapCentral {
@@ -69,10 +68,10 @@ class App extends NbleGapCentral {
       console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
 
     } catch (e) {
-      if (e instanceof GapError && e.code === 'GAP_ERR_ALREADY_IN_PROGRESS') {
+      if (e instanceof HciError && e.errno === HciErrorErrno.CommandDisallowed) {
         return; // ignore
       }
-      if (e instanceof HciError && e.errno === HciErrorCode.ConnectionExists) {
+      if (e instanceof HciError && e.errno === HciErrorErrno.ConnectionExists) {
         return; // ignore
       }
       console.log(`Error while connecting to ${report.address.toString()}`, e);

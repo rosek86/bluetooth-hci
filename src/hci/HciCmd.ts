@@ -3,7 +3,7 @@ import assert from 'assert';
 
 import { HciPacketType } from "./HciPacketType.js";
 
-import { HciErrorCode, HciParserErrorType } from "./HciError.js";
+import { HciErrorErrno, HciParserErrorType } from "./HciError.js";
 import { makeHciError, makeParserError} from "./HciError.js";
 
 import {
@@ -203,7 +203,7 @@ export class HciCmd {
       );
       const onResult = (evt: HciCmdResult) => {
         debug(evt);
-        if (evt.status !== HciErrorCode.Success) {
+        if (evt.status !== HciErrorErrno.Success) {
           complete(makeHciError(evt.status));
         } else {
           complete(undefined, evt);

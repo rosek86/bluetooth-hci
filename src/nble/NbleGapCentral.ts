@@ -10,7 +10,7 @@ import { LePhy } from "../hci/HciLeController.js";
 import { Address } from "../utils/Address.js";
 import { HciAdapter } from "../utils/HciAdapter.js";
 import { printProfile } from "../utils/Profile.js";
-import { HciError, HciErrorCode } from "../hci/HciError.js";
+import { HciError, HciErrorErrno } from "../hci/HciError.js";
 
 const debug = Debug('NbleGapCentral');
 
@@ -61,7 +61,7 @@ export abstract class NbleGapCentral extends EventEmitter {
       await this.gap.setScanParameters(params);
       await this.gap.startScanning(start);
     } catch (err) {
-      if (err instanceof HciError && err.errno === HciErrorCode.CommandDisallowed) {
+      if (err instanceof HciError && err.errno === HciErrorErrno.CommandDisallowed) {
         return; // ignore - already scanning
       }
     }

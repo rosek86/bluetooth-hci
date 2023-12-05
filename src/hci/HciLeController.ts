@@ -1,6 +1,6 @@
 import { Address, AddressType } from '../utils/Address.js';
 import {
-  HciErrorCode,
+  HciErrorErrno,
   HciParserErrorType,
   makeHciError, makeParserError
 } from './HciError.js';
@@ -322,7 +322,7 @@ export class LeReadAdvertisingPhysicalChannelTxPower {
 export class LeSetAdvertisingScanResponseData {
   static inParams(data: Buffer): Buffer {
     if (data.length > 31) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(1+31, 0);
@@ -504,7 +504,7 @@ export class LeReadChannelMap {
 export class LeEncrypt {
   static inParams(key: Buffer, plaintextData: Buffer): Buffer {
     if (key.length !== 16 || plaintextData.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(32);
@@ -541,7 +541,7 @@ export interface LeEnableEncryption {
 export class LeEnableEncryption {
   static inParams(connectionHandle: number, params: LeEnableEncryption): Buffer {
     if (params.randomNumber.length !== 8 || params.longTermKey.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
     const payload = Buffer.alloc(2+8+2+16);
 
@@ -558,7 +558,7 @@ export class LeEnableEncryption {
 export class LeLongTermKeyRequestReply {
   static inParams(connectionHandle: number, longTermKey: Buffer): Buffer {
     if (longTermKey.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
     const payload = Buffer.alloc(2+16);
 
@@ -927,7 +927,7 @@ export class LeRemoteConnectionParameterRequestReply extends LeTest {
 export class LeRemoteConnectionParameterRequestNegativeReply extends LeTest {
   static inParams(
     connectionHandle: number,
-    reason: HciErrorCode
+    reason: HciErrorErrno
   ): Buffer {
     const payload = Buffer.alloc(2+1);
 
@@ -988,7 +988,7 @@ export interface LeDhKeyV1 {
 export class LeDhKeyV1 {
   static inParams(params: LeDhKeyV1): Buffer {
     if (params.publicKey.length !== 64) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(64);
@@ -1011,7 +1011,7 @@ export interface LeDhKeyV2 {
 export class LeDhKeyV2 {
   static inParams(params: LeDhKeyV2): Buffer {
     if (params.publicKey.length !== 64) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
     const payload = Buffer.alloc(65);
     params.publicKey.reverse().copy(payload, 0);
@@ -1030,10 +1030,10 @@ export interface LeAddDeviceToResolvingList {
 export class LeAddDeviceToResolvingList {
   static inParams(params: LeAddDeviceToResolvingList): Buffer {
     if (params.peerIrk.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
     if (params.localIrk.length !== 16) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(39);
@@ -1374,7 +1374,7 @@ export class LeExtendedCreateConnectionV1 {
     }
 
     if (physBitmask === 0) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(
@@ -1721,7 +1721,7 @@ export class LeExtendedScanParameters {
     }
 
     if (phys.count === 0) {
-      throw makeHciError(HciErrorCode.InvalidCommandParameter);
+      throw makeHciError(HciErrorErrno.InvalidCommandParameter);
     }
 
     const payload = Buffer.alloc(3 + phys.count * (1+2+2));
