@@ -199,12 +199,14 @@ export class HciCmd {
         err ? reject(err) : resolve(evt!);
       };
       const timeoutId = setTimeout(
-        () => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout
+        () => complete(
+          makeParserError(HciParserErrorType.Timeout)
+        ), this.timeout
       );
       const onResult = (evt: HciCmdResult) => {
         debug(evt);
         if (evt.status !== HciErrorErrno.Success) {
-          complete(makeHciError(evt.status));
+          complete(makeHciError(evt.status, JSON.stringify(cmd)));
         } else {
           complete(undefined, evt);
         }

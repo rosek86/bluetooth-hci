@@ -3,7 +3,7 @@ import Debug from 'debug';
 
 import { HciPacketType } from './HciPacketType.js';
 
-import { getHciErrorMessage, HciError, HciErrorErrno, HciParserErrorType, makeHciError } from './HciError.js';
+import { getHciErrorMessage, HciErrorErrno, HciParserErrorType, makeHciError } from './HciError.js';
 import { HciDisconnectReason } from './HciError.js';
 import { makeParserError } from './HciError.js';
 
@@ -161,8 +161,11 @@ export class Hci extends EventEmitter {
       event: 'ReadRemoteVersionInformationComplete',
       timeoutMs,
     });
-    await this.readRemoteVersionInformation(connectionHandle);
-    return await waitEvent;
+    await this.readRemoteVersionInformation(connectionHandle).catch((err) => {
+      waitEvent.cancel();
+      throw err;
+    })
+    return await waitEvent.promise;
   }
 
   public async readRemoteSupportedFeatures(connectionHandle: number): Promise<void> {
@@ -177,8 +180,11 @@ export class Hci extends EventEmitter {
       connectionHandle,
       event: 'ReadRemoteSupportedFeaturesComplete'
     });
-    await this.readRemoteSupportedFeatures(connectionHandle);
-    return await waitEvent;
+    await this.readRemoteSupportedFeatures(connectionHandle).catch((err) => {
+      waitEvent.cancel();
+      throw err;
+    })
+    return await waitEvent.promise;
   }
 
   // Control and Baseband
@@ -405,8 +411,11 @@ export class Hci extends EventEmitter {
       connectionHandle: params.connectionHandle,
       event: 'LeConnectionUpdateComplete',
     });
-    await this.leConnectionUpdate(params);
-    return await waitEvent;
+    await this.leConnectionUpdate(params).catch((err) => {
+      waitEvent.cancel();
+      throw err;
+    })
+    return await waitEvent.promise;
   }
 
   public async leSetHostChannelClassification(channelMap: number): Promise<void> {
@@ -436,8 +445,11 @@ export class Hci extends EventEmitter {
       event: 'LeReadRemoteFeaturesComplete',
       timeoutMs,
     });
-    await this.leReadRemoteFeatures(connectionHandle);
-    return await waitEvent;
+    await this.leReadRemoteFeatures(connectionHandle).catch((err) => {
+      waitEvent.cancel();
+      throw err;
+    })
+    return await waitEvent.promise
   }
 
   public async leEncrypt(key: Buffer, plainTextData: Buffer): Promise<Buffer> {
@@ -554,8 +566,11 @@ export class Hci extends EventEmitter {
       connectionHandle,
       event: 'LeDataLengthChange',
     });
-    await this.leSetDataLength(connectionHandle, params);
-    return await waitEvent;
+    await this.leSetDataLength(connectionHandle, params).catch((err) => {
+      waitEvent.cancel();
+      throw err;
+    })
+    return await waitEvent.promise;
   }
 
   public async leReadSuggestedDefaultDataLength(): Promise<LeSuggestedDefaultDataLength> {
@@ -876,7 +891,7 @@ export class Hci extends EventEmitter {
     if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
-      this.emit(label, makeHciError(status), event);
+      this.emit(label, makeHciError(status, JSON.stringify(event)), event);
     }
   }
 
@@ -1162,36 +1177,41 @@ export class Hci extends EventEmitter {
   }
 
   // Utils
-  public async waitEvent<T extends { connectionHandle: number }>(params: {
+  public waitEvent<T extends { connectionHandle: number }>(params: {
     connectionHandle: number;
     event: HciConnEvent;
     timeoutMs?: number;
-  }): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      const cleanup = () => {
-        clearTimeout(timerId);
-        this.off(params.event, onEvent);
-        this.off('DisconnectionComplete', onDisconnected);
-      };
-      const onEvent = (err: Error | null, res: T) => {
-        if (res.connectionHandle === params.connectionHandle) {
-          cleanup();
-          err ? reject(err) : resolve(res);
-        }
-      };
-      const onTimeout = () => {
+  }): { promise: Promise<T>, cancel: () => void } {
+    let resolve: (res: T) => void = () => {};
+    let reject: (err: Error) => void = () => {};
+    const onTimeout = () => {
+      cleanup();
+      reject(makeParserError(HciParserErrorType.Timeout));
+    };
+    const timerId = setTimeout(onTimeout, params.timeoutMs ?? this.cmd.timeout);
+    const cleanup = () => {
+      clearTimeout(timerId);
+      this.off(params.event, onEvent);
+      this.off('DisconnectionComplete', onDisconnected);
+    };
+    const onEvent = (err: Error | null, res: T) => {
+      if (res.connectionHandle === params.connectionHandle) {
         cleanup();
-        reject(makeParserError(HciParserErrorType.Timeout));
-      };
-      const onDisconnected = (err: Error | null, event: DisconnectionCompleteEvent) => {
-        if (params.connectionHandle === event.connectionHandle) {
-          cleanup();
-          reject(new HciError(event.reason.code));
-        }
-      };
-      const timerId = setTimeout(onTimeout, params.timeoutMs ?? this.cmd.timeout);
+        err ? reject(err) : resolve(res);
+      }
+    };
+    const onDisconnected = (err: Error | null, event: DisconnectionCompleteEvent) => {
+      if (params.connectionHandle === event.connectionHandle) {
+        cleanup();
+        reject(makeHciError(event.reason.code, JSON.stringify(params.event)));
+      }
+    };
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
       this.on(params.event, onEvent);
       this.on('DisconnectionComplete', onDisconnected);
     });
+    return { promise, cancel: cleanup };
   }
 }

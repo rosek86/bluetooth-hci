@@ -22,7 +22,7 @@ import { Address } from '../utils/Address.js';
 import { Att } from '../att/Att.js';
 import { L2CAP } from '../l2cap/L2CAP.js';
 import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband.js';
-import { HciErrorErrno, makeHciError } from '../hci/HciError.js';
+import { HciError, HciErrorErrno, makeHciError } from '../hci/HciError.js';
 
 export interface GapCentralOptions {
   autoScan?: boolean;
@@ -449,7 +449,6 @@ export class GapCentral extends EventEmitter {
       }
 
       if (this.options?.autoScanOptions?.scanWhenConnected) {
-        console.log('Restarting scan');
         await this.startAutoScanIfEnabled();
       }
 
@@ -489,8 +488,10 @@ export class GapCentral extends EventEmitter {
 
       this.emit('GapConnected', gapEvent);
     } catch (err) {
-      this.hci.disconnect(event.connectionHandle)
-        .catch(() => {});
+      if (err instanceof HciError && err.errno !== HciErrorErrno.ConnectionNotEstablished) {
+        this.hci.disconnect(event.connectionHandle)
+          .catch(() => {});
+      }
       debug(err);
     }
   }
