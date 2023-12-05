@@ -166,7 +166,7 @@ export class HciError extends Error implements NodeJS.ErrnoException {
   public syscall?: string;
   public stack?: string;
 
-  constructor(errno: HciErrorErrno, path?: string) {
+  constructor(message: string, errno: HciErrorErrno, path?: string) {
     super()
 
     this.name = this.constructor.name;
@@ -179,7 +179,11 @@ export class HciError extends Error implements NodeJS.ErrnoException {
     this.code = HciError.errnoToString(errno);
     this.path = path;
 
-    this.message = `Error: ${this.code}${this.path ? `, '${this.path}'` : ''}`;
+    this.message = `Error: ${this.code}`;
+    if (this.path) {
+      this.message += `, '${this.path}'`;
+    }
+    this.message += `: ${message}`;
   }
 
   public static errnoToString(code: HciErrorErrno): string {
@@ -209,8 +213,8 @@ export enum HciParserErrorType {
   Timeout,
 }
 
-export function makeHciError(code: HciErrorErrno, path?: string): HciError {
-  return new HciError(code, path);
+export function makeHciError(message: string, code: HciErrorErrno, path?: string): HciError {
+  return new HciError(message, code, path);
 }
 
 export function makeParserError(code: HciParserErrorType): Error {

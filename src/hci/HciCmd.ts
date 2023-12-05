@@ -14,7 +14,8 @@ import {
   HciOcfLinkControlCommands,
   HciOcfStatusParameters,
   HciOcfTestingCommands,
-  HicOcfLinkPolicyCommands
+  HicOcfLinkPolicyCommands,
+  ocfOgfToString
 } from './HciOgfOcf.js';
 
 const debug = Debug('bt-hci-hci-cmd');
@@ -206,7 +207,11 @@ export class HciCmd {
       const onResult = (evt: HciCmdResult) => {
         debug(evt);
         if (evt.status !== HciErrorErrno.Success) {
-          complete(makeHciError(evt.status, JSON.stringify(cmd)));
+          const message = `${ocfOgfToString(cmd.opcode.ocf, cmd.opcode.ogf)}` +
+            ` failed with status ${HciErrorErrno[evt.status]}` +
+            `\n    -> cmd: ${JSON.stringify(cmd)}` +
+            `\n    -> evt: ${JSON.stringify(evt)}`;
+          complete(makeHciError(message, evt.status));
         } else {
           complete(undefined, evt);
         }

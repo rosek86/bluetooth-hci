@@ -290,7 +290,7 @@ export class Att extends EventEmitter {
     }
 
     this.destroy();
-    this.emit('Disconnected', makeHciError(reasonCode, 'Att.Disconnected'));
+    this.emit('Disconnected', makeHciError('Disconnected', reasonCode, 'Att.Disconnected'));
   };
 
   // Utils

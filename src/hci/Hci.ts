@@ -891,7 +891,9 @@ export class Hci extends EventEmitter {
     if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
-      this.emit(label, makeHciError(status, JSON.stringify(event)), event);
+      const message = `Failed ${label} with status ${HciErrorErrno[status]}` +
+        `\n    -> evt: ${JSON.stringify(event)}`;
+      this.emit(label, makeHciError(message, status), event);
     }
   }
 
@@ -1188,7 +1190,8 @@ export class Hci extends EventEmitter {
       cleanup();
       reject(makeParserError(HciParserErrorType.Timeout));
     };
-    const timerId = setTimeout(onTimeout, params.timeoutMs ?? this.cmd.timeout);
+    const defaultTimeoutMs = 10_000;
+    const timerId = setTimeout(onTimeout, params.timeoutMs ?? defaultTimeoutMs);
     const cleanup = () => {
       clearTimeout(timerId);
       this.off(params.event, onEvent);
@@ -1203,7 +1206,11 @@ export class Hci extends EventEmitter {
     const onDisconnected = (err: Error | null, event: DisconnectionCompleteEvent) => {
       if (params.connectionHandle === event.connectionHandle) {
         cleanup();
-        reject(makeHciError(event.reason.code, JSON.stringify(params.event)));
+        let message = `Connection terminated with reason ${event.reason.message}`;
+        message += `\n    -> params: ${JSON.stringify(params)}`;
+        message += `\n    -> evt: ${JSON.stringify(event)}`;
+        message += `\n    -> internal error: ${err}`;
+        reject(makeHciError(message, event.reason.code));
       }
     };
     const promise = new Promise<T>((res, rej) => {

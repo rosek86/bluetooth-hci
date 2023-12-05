@@ -290,8 +290,7 @@ export class GapCentral extends EventEmitter {
 
   public async connect(params: GapConnectParams): Promise<void> {
     if (this.pendingCreateConnection) {
-      debug('Connection already in progress');
-      throw makeHciError(HciErrorErrno.CommandDisallowed);
+      throw makeHciError('Connection already in progress', HciErrorErrno.CommandDisallowed);
     }
     this.pendingCreateConnection = {};
 
@@ -319,7 +318,7 @@ export class GapCentral extends EventEmitter {
         });
       } else {
         if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
-          throw makeHciError(HciErrorErrno.InvalidCommandParameter);
+          throw makeHciError('Invalid PHY parameter', HciErrorErrno.InvalidCommandParameter);
         }
         await this.hci.leCreateConnection({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,

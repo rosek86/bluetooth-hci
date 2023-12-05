@@ -17,7 +17,8 @@ import {
   printProfile,
   Address,
   HciError,
-  HciErrorErrno
+  HciErrorErrno,
+  LeConnectionUpdate
 } from '../src';
 
 class App extends NbleGapCentral {
@@ -98,6 +99,26 @@ class App extends NbleGapCentral {
     try {
       console.log(`Connected to ${event.address.toString()}`);
 
+      const connectionParameters: LeConnectionUpdate = {
+        connectionHandle: event.connectionHandle,
+        connectionIntervalMinMs: event.connectionParams.connectionIntervalMs,
+        connectionIntervalMaxMs: event.connectionParams.connectionIntervalMs,
+        connectionLatency: event.connectionParams.connectionLatency,
+        supervisionTimeoutMs: event.connectionParams.supervisionTimeoutMs,
+        minCeLengthMs: 2.5,
+        maxCeLengthMs: 3.75,
+      };
+
+      // Update connection parameters to speed up discovery
+      console.log(`Updating connection parameters...`);
+      console.log(
+        await this.gap.connectionUpdate({
+          ...connectionParameters,
+          connectionIntervalMinMs: 7.5,
+          connectionIntervalMaxMs: 7.5,
+        })
+      );
+
       console.log(`Discovering services on ${event.address.toString()}...`);
       const profile = await gatt.discover();
       this.saveProfile(event.address, profile); // cache profile
@@ -107,8 +128,10 @@ class App extends NbleGapCentral {
       printProfile(gatt.Profile);
       await this.saveProfilesToFile();
     } catch (e) {
+      if (e instanceof HciError && e.errno === HciErrorErrno.ConnectionTimeout) {
+        return; // ignore
+      }
       console.log(e);
-    } finally {
       console.log('Disconnecting...');
       await this.disconnect(event.connectionHandle)
         .catch(() => {});
