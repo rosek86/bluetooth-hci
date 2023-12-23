@@ -2,5 +2,5 @@
 /src/l2cap/L2capSignalingCommand.ts
 /src/hci/*
 /src/gatt/*
-/src/gap/*
+/src/gap/AdvData.ts
 /src/att/*

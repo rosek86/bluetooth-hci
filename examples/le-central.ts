@@ -10,7 +10,6 @@ import {
   HciError,
   HciErrorErrno,
   LeConnectionUpdate,
-  delay,
 } from "../src";
 
 class App extends NbleGapCentral {
@@ -27,14 +26,10 @@ class App extends NbleGapCentral {
         return;
       }
 
-      const name = report.data?.completeLocalName;
-      if (name !== "Nordic_LBS") {
-        return;
-      }
-
       // Connect to device with timeout
       await this.connect({ peerAddress: report.address, timeoutMs: 2000 });
 
+      const name = report.data?.completeLocalName ?? "N/A";
       console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
     } catch (e) {
       if (e instanceof HciError && e.errno === HciErrorErrno.CommandDisallowed) {
@@ -77,33 +72,6 @@ class App extends NbleGapCentral {
       console.log("Discovered services on", event.address.toString());
 
       printProfile(gatt.Profile);
-
-      // Find button characteristic
-      const characteristic = gatt.findCharacteristicByUuids({
-        serviceUuid: "000015231212efde1523785feabcd123",
-        characteristicUuid: "000015241212efde1523785feabcd123",
-      });
-
-      if (!characteristic) {
-        throw new Error("Button characteristic not found");
-      }
-
-      console.log("Reading initial button state...");
-      const initialButtonState = await gatt.read(characteristic);
-      console.log(`Initial button state: ${initialButtonState[0] ? "pressed" : "released"}`);
-
-      console.log("Waiting for button press...");
-
-      await gatt.startCharacteristicsNotifications(characteristic, false);
-      gatt.on("GattNotification", (event) => {
-        if (event.descriptor.uuid !== "000015241212efde1523785feabcd123") {
-          return;
-        }
-        const state = event.attributeValue[0];
-        console.log(state ? "Button pressed" : "Button released");
-      });
-
-      await delay(30_000);
     } catch (e) {
       if (e instanceof HciError && e.errno === HciErrorErrno.ConnectionTimeout) {
         return; // ignore

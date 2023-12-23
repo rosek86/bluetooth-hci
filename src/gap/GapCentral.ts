@@ -164,21 +164,23 @@ export class GapCentral extends EventEmitter {
     this.options = options ?? {};
     this.options.autoScan = this.options.autoScan ?? true;
     this.options.autoScanOptions = this.options.autoScanOptions ?? {};
-    this.options.autoScanOptions.scanWhenConnected = this.options.autoScanOptions?.scanWhenConnected ?? false;
-    this.options.autoScanOptions.parameters = this.options.autoScanOptions?.parameters ?? {
-      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
-      scanningFilterPolicy: LeScanningFilterPolicy.All,
-      scanningPhy: {
-        Phy1M: {
-          type: LeScanType.Active,
-          intervalMs: 100,
-          windowMs: 100,
-        },
+    this.options.autoScanOptions.scanWhenConnected = this.options.autoScanOptions.scanWhenConnected ?? true;
+    this.options.autoScanOptions.parameters = this.options.autoScanOptions.parameters ?? {};
+    this.options.autoScanOptions.parameters.ownAddressType =
+      this.options.autoScanOptions.parameters.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress;
+    this.options.autoScanOptions.parameters.scanningFilterPolicy =
+      this.options.autoScanOptions.parameters.scanningFilterPolicy ?? LeScanningFilterPolicy.All;
+    this.options.autoScanOptions.parameters.scanningPhy = this.options.autoScanOptions.parameters.scanningPhy ?? {
+      Phy1M: {
+        type: LeScanType.Active,
+        intervalMs: 100,
+        windowMs: 100,
       },
     };
     this.options.autoScanOptions.start = this.options.autoScanOptions?.start ?? {
       filterDuplicates: LeScanFilterDuplicates.Disabled,
     };
+    this.options.cacheRemoteInfo = this.options.cacheRemoteInfo ?? true;
 
     this.l2cap = new L2CAP(this.hci);
 
