@@ -1,12 +1,17 @@
-import { HciPacketType } from '../hci/HciPacketType.js';
+import { HciPacketType } from "../hci/HciPacketType.js";
 
 enum ParserState {
-  Type, Header, Payload,
+  Type,
+  Header,
+  Payload,
 }
 
 type PacketHdrSize = Partial<Record<number, number>>;
 
-export interface H4Packet { type: number; packet: Buffer; }
+export interface H4Packet {
+  type: number;
+  packet: Buffer;
+}
 
 export class H4 {
   private readonly headerSize: PacketHdrSize = {};
@@ -19,15 +24,15 @@ export class H4 {
   private parserPacketSize = 0;
 
   constructor() {
-    this.headerSize[HciPacketType.HciCommand]  = 3;
-    this.headerSize[HciPacketType.HciAclData]  = 4;
+    this.headerSize[HciPacketType.HciCommand] = 3;
+    this.headerSize[HciPacketType.HciAclData] = 4;
     this.headerSize[HciPacketType.HciSyncData] = 3;
-    this.headerSize[HciPacketType.HciEvent]    = 2;
-    this.headerSize[HciPacketType.HciIsoData]  = 4;
+    this.headerSize[HciPacketType.HciEvent] = 2;
+    this.headerSize[HciPacketType.HciIsoData] = 4;
   }
 
   public parse(data: Buffer): H4Packet | null {
-    this.parserPacketData = Buffer.concat([ this.parserPacketData, data ]);
+    this.parserPacketData = Buffer.concat([this.parserPacketData, data]);
 
     if (this.parserState === ParserState.Type) {
       if (this.parserPacketData.length > 0) {

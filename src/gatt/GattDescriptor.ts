@@ -1,6 +1,6 @@
-import { AttDataEntry } from './AttGlue.js';
+import { AttDataEntry } from "./AttGlue.js";
 
-import { UUID } from '../utils/UUID.js';
+import { UUID } from "../utils/UUID.js";
 
 export namespace GattDescriptor {
   export interface AsObject {
@@ -22,22 +22,32 @@ export class GattDescriptor {
   private uuidBuffer: Buffer;
   private uuid16?: number;
 
-  public get Handle(): number { return this.handle; }
-  public get EndingHandle(): number { return this.endingHandle; }
-  public get UUID(): string { return this.uuid; }
-  public get UUID16(): number | undefined { return this.uuid16; }
-  public get UUIDBuffer(): Buffer { return this.uuidBuffer; }
+  public get Handle(): number {
+    return this.handle;
+  }
+  public get EndingHandle(): number {
+    return this.endingHandle;
+  }
+  public get UUID(): string {
+    return this.uuid;
+  }
+  public get UUID16(): number | undefined {
+    return this.uuid16;
+  }
+  public get UUIDBuffer(): Buffer {
+    return this.uuidBuffer;
+  }
 
   public static fromAttData(data: AttDataEntry): GattDescriptor {
     return new GattDescriptor(data);
   }
 
   private constructor(data: AttDataEntry) {
-    this.handle       = data.handle;
+    this.handle = data.handle;
     this.endingHandle = data.endingHandle;
-    this.uuid         = UUID.toString(data.value);
-    this.uuidBuffer   = data.value;
-    this.uuid16       = data.value.length === 2 ? data.value.readUInt16LE(0) : undefined;
+    this.uuid = UUID.toString(data.value);
+    this.uuidBuffer = data.value;
+    this.uuid16 = data.value.length === 2 ? data.value.readUInt16LE(0) : undefined;
   }
 
   public toObject(): GattDescriptor.AsObject {

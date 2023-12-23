@@ -1,6 +1,6 @@
-import { AttDataEntry } from './AttGlue.js';
+import { AttDataEntry } from "./AttGlue.js";
 
-import { UUID } from '../utils/UUID.js';
+import { UUID } from "../utils/UUID.js";
 
 export namespace GattService {
   export interface AsObject {
@@ -19,9 +19,15 @@ export class GattService {
   private endingHandle: number;
   private uuid: string;
 
-  public get Handle(): number { return this.handle; }
-  public get EndingHandle(): number { return this.endingHandle; }
-  public get UUID(): string { return this.uuid; }
+  public get Handle(): number {
+    return this.handle;
+  }
+  public get EndingHandle(): number {
+    return this.endingHandle;
+  }
+  public get UUID(): string {
+    return this.uuid;
+  }
 
   public static fromAttData(data: AttDataEntry): GattService {
     return new GattService(data);

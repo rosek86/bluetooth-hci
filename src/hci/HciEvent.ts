@@ -1,7 +1,7 @@
 import Debug from 'debug';
 
 import { Address } from '../utils/Address.js';
-import { HciErrorCode } from './HciError.js';
+import { HciErrorErrno } from './HciError.js';
 import { LeSupportedFeatures } from './HciLeController.js';
 
 const debug = Debug('bt-hci-hci-event');
@@ -121,7 +121,7 @@ export interface ReadRemoteVersionInformationCompleteEvent extends ConnEvent {
 
 export class ReadRemoteVersionInformationComplete {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: ReadRemoteVersionInformationCompleteEvent,
   } {
     if (data.length !== 8) {
@@ -149,7 +149,7 @@ export interface ReadRemoteSupportedFeaturesCompleteEvent extends ConnEvent {
 
 export class ReadRemoteSupportedFeaturesComplete {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: ReadRemoteSupportedFeaturesCompleteEvent,
   } {
     if (data.length !== 11) {
@@ -428,7 +428,7 @@ export interface LeConnectionCompleteEvent extends ConnEvent {
 }
 
 export class LeConnectionComplete {
-  static parse(data: Buffer): { status: HciErrorCode, event: LeConnectionCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno, event: LeConnectionCompleteEvent } {
     if (data.length !== 18) {
       debug(`LeConnectionComplete: invalid size ${data.length}`);
     }
@@ -467,7 +467,7 @@ export interface LeEnhConnectionCompleteEvent extends Omit<LeConnectionCompleteE
 }
 
 export class LeEnhConnectionComplete {
-  static parse(data: Buffer): { status: HciErrorCode, event: LeEnhConnectionCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno, event: LeEnhConnectionCompleteEvent } {
     if (data.length !== 30) {
       debug(`LeEnhConnectionComplete: invalid size ${data.length}`);
     }
@@ -511,7 +511,7 @@ export interface LeAdvertisingSetTerminatedEvent {
 
 export class LeAdvertisingSetTerminated {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: LeAdvertisingSetTerminatedEvent,
   } {
     if (data.length !== 5) {
@@ -559,7 +559,7 @@ export interface LeConnectionUpdateCompleteEvent extends ConnEvent {
 }
 
 export class LeConnectionUpdateComplete {
-  static parse(data: Buffer): { status: HciErrorCode, event: LeConnectionUpdateCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno, event: LeConnectionUpdateCompleteEvent } {
     if (data.length !== 9) {
       debug(`LeConnectionUpdateComplete: invalid size ${data.length}`);
     }
@@ -587,7 +587,7 @@ export interface LeReadRemoteFeaturesCompleteEvent extends ConnEvent {
 }
 
 export class LeReadRemoteFeaturesComplete {
-  static parse(data: Buffer): { status: HciErrorCode, event: LeReadRemoteFeaturesCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno, event: LeReadRemoteFeaturesCompleteEvent } {
     if (data.length !== 11) {
       debug(`LeReadRemoteFeaturesComplete: invalid size ${data.length}`);
     }
@@ -692,7 +692,7 @@ export interface LeReadLocalP256PublicKeyCompleteEvent {
 
 export class LeReadLocalP256PublicKeyComplete {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: LeReadLocalP256PublicKeyCompleteEvent,
   } {
     if (data.length !== 65) {
@@ -712,7 +712,7 @@ export interface LeGenerateDhKeyCompleteEvent {
 
 export class LeGenerateDhKeyComplete {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: LeGenerateDhKeyCompleteEvent,
    } {
     if (data.length !== 33) {
@@ -780,7 +780,7 @@ export interface LePhyUpdateCompleteEvent extends ConnEvent {
 
 export class LePhyUpdateComplete {
   static parse(data: Buffer): {
-    status: HciErrorCode,
+    status: HciErrorErrno,
     event: LePhyUpdateCompleteEvent,
    } {
     if (data.length !== 5) {

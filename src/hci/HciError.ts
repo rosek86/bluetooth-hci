@@ -1,5 +1,5 @@
 // HCI Command Errors  [Ver5.2 | Vol1, Part F, 1.3]
-export enum HciErrorCode {
+export enum HciErrorErrno {
   Success                     = 0x00, // Success
   UnknownCommand              = 0x01, // Unknown HCI Command
   UnknownConnectionId         = 0x02, // Unknown Connection Identifier
@@ -75,16 +75,16 @@ export enum HciErrorCode {
 }
 
 export enum HciDisconnectReason {
-  AuthFailure                 = HciErrorCode.AuthFailure,
-  ConnTerminatedByRemoteUser  = HciErrorCode.ConnTerminatedByRemoteUser,
-  ConnTerminatedLowResources  = HciErrorCode.ConnTerminatedLowResources,
-  ConnTerminatedPowerOff      = HciErrorCode.ConnTerminatedPowerOff,
-  UnsupportedFeature          = HciErrorCode.UnsupportedFeature,
-  UnitKeyNotSupported         = HciErrorCode.UnitKeyNotSupported,
-  ConnectionParameters        = HciErrorCode.ConnectionParameters,
+  AuthFailure                 = HciErrorErrno.AuthFailure,
+  ConnTerminatedByRemoteUser  = HciErrorErrno.ConnTerminatedByRemoteUser,
+  ConnTerminatedLowResources  = HciErrorErrno.ConnTerminatedLowResources,
+  ConnTerminatedPowerOff      = HciErrorErrno.ConnTerminatedPowerOff,
+  UnsupportedFeature          = HciErrorErrno.UnsupportedFeature,
+  UnitKeyNotSupported         = HciErrorErrno.UnitKeyNotSupported,
+  ConnectionParameters        = HciErrorErrno.ConnectionParameters,
 }
 
-const HciErrorCodeToString: { [id: number]: string } = {
+const HciErrorErrnoToString: { [id: number]: string } = {
   0x00: "Success",
   0x01: "Unknown HCI Command",
   0x02: "Unknown Connection Identifier",
@@ -166,7 +166,7 @@ export class HciError extends Error implements NodeJS.ErrnoException {
   public syscall?: string;
   public stack?: string;
 
-  constructor(errno: HciErrorCode, path?: string) {
+  constructor(message: string, errno: HciErrorErrno, path?: string) {
     super()
 
     this.name = this.constructor.name;
@@ -176,20 +176,24 @@ export class HciError extends Error implements NodeJS.ErrnoException {
     }
 
     this.errno = errno;
-    this.code = HciError.codeToString(errno);
+    this.code = HciError.errnoToString(errno);
     this.path = path;
 
-    this.message = `Error: ${this.code}${this.path ? `, '${this.path}'` : ''}`;
+    this.message = `Error: ${this.code}`;
+    if (this.path) {
+      this.message += `, '${this.path}'`;
+    }
+    this.message += `: ${message}`;
   }
 
-  public static codeToString(code: HciErrorCode): string {
-    const error = HciErrorCodeToString[code];
+  public static errnoToString(code: HciErrorErrno): string {
+    const error = HciErrorErrnoToString[code];
 
     if (error === undefined) {
       // A Host shall consider any error
       // code that it does not explicitly understand equivalent to the error code
       // Unspecified Error (0x1F).
-      return HciErrorCodeToString[0x1F];
+      return HciErrorErrnoToString[0x1F];
     }
 
     return error;
@@ -209,8 +213,8 @@ export enum HciParserErrorType {
   Timeout,
 }
 
-export function makeHciError(code: HciErrorCode): HciError {
-  return new HciError(code);
+export function makeHciError(message: string, code: HciErrorErrno, path?: string): HciError {
+  return new HciError(message, code, path);
 }
 
 export function makeParserError(code: HciParserErrorType): Error {
@@ -218,16 +222,16 @@ export function makeParserError(code: HciParserErrorType): Error {
   if (code === HciParserErrorType.InvalidPayloadSize) {
     error.message = `Invalid payload size`;
     error.errno = code;
-    error.code = 'NBLE_INVALID_PAYLOAD_SIZE';
+    error.code = 'HCI_INVALID_PAYLOAD_SIZE';
   }
   if (code === HciParserErrorType.Timeout) {
     error.message = `Command timeout`;
     error.errno = code;
-    error.code = 'NBLE_COMMAND_TIMEOUT';
+    error.code = 'HCI_COMMAND_TIMEOUT';
   }
   return error;
 }
 
-export function getHciErrorMessage(code: HciErrorCode): string {
-  return HciErrorCodeToString[code];
+export function getHciErrorMessage(code: HciErrorErrno): string {
+  return HciErrorErrnoToString[code];
 }

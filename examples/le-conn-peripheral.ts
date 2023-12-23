@@ -1,5 +1,6 @@
 import {
-  HciAdapter, createHciSerial,
+  HciAdapter,
+  createHciSerial,
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
   LeOwnAddressType,
@@ -9,8 +10,12 @@ import {
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
-  Address, AdvData, L2CAP, Att, AddressType
-} from '../src';
+  Address,
+  AdvData,
+  L2CAP,
+  Att,
+  AddressType,
+} from "../src";
 
 (async () => {
   try {
@@ -49,11 +54,11 @@ import {
     });
     console.log(`TX Power: ${selectedTxPower}`);
 
-    await hci.leSetAdvertisingSetRandomAddress(0, Address.from('AA:BB:CC:DD:EE:FF', AddressType.RandomDeviceAddress));
+    await hci.leSetAdvertisingSetRandomAddress(0, Address.from("AA:BB:CC:DD:EE:FF", AddressType.RandomDeviceAddress));
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Zephyr Ctrl',
+      completeLocalName: "Zephyr Ctrl",
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -66,14 +71,14 @@ import {
     });
 
     const scanResponseData = AdvData.build({
-      completeListOf16bitServiceClassUuids: [ '1826', '1818' ],
-      completeListOf128bitServiceClassUuids: [
-        '669aa6050c08969ee21186ad5062675f'
+      completeListOf16bitServiceClassUuids: ["1826", "1818"],
+      completeListOf128bitServiceClassUuids: ["669aa6050c08969ee21186ad5062675f"],
+      serviceData16bitUuid: [
+        {
+          uuid: "1826",
+          data: Buffer.from([1, 0, 32]),
+        },
       ],
-      serviceData16bitUuid: [{
-        uuid: '1826',
-        data: Buffer.from([ 1, 0, 32 ]),
-      }],
     });
     await hci.leSetExtendedScanResponseData(0, {
       operation: LeScanResponseDataOperation.Complete,
@@ -86,49 +91,47 @@ import {
       sets: [{ advertHandle: 0 }],
     });
 
-    hci.on('LeEnhancedConnectionComplete', async (status, event) => {
-      console.log('LeEnhancedConnectionComplete', status, event);
+    hci.on("LeEnhancedConnectionComplete", async (status, event) => {
+      console.log("LeEnhancedConnectionComplete", status, event);
     });
-    hci.on('LeChannelSelectionAlgorithm', (status, event) => {
-      console.log('LeChannelSelectionAlgorithm', status, event);
+    hci.on("LeChannelSelectionAlgorithm", (status, event) => {
+      console.log("LeChannelSelectionAlgorithm", status, event);
 
       const att = new Att(l2cap, event.connectionHandle);
 
-      att.on('ExchangeMtuReq', (evt) => {
+      att.on("ExchangeMtuReq", (evt) => {
         console.log(evt);
         att.exchangeMtuRsp({
           mtu: evt.mtu,
         });
       });
 
-      att.on('FindInformationReq', (evt) => {
+      att.on("FindInformationReq", (evt) => {
         console.log(evt);
-        att.findInformationRsp([
-          { handle: 4, uuid: Buffer.from([11,2]) },
-        ]);
+        att.findInformationRsp([{ handle: 4, uuid: Buffer.from([11, 2]) }]);
       });
 
       const onDisconnectionComplete = () => {
-        hci.off('DisconnectionComplete', onDisconnectionComplete);
+        hci.off("DisconnectionComplete", onDisconnectionComplete);
       };
-      hci.on('DisconnectionComplete', onDisconnectionComplete);
+      hci.on("DisconnectionComplete", onDisconnectionComplete);
     });
-    hci.on('LeAdvertisingSetTerminated', (status, event) => {
-      console.log('LeAdvertisingSetTerminated', status, event);
+    hci.on("LeAdvertisingSetTerminated", (status, event) => {
+      console.log("LeAdvertisingSetTerminated", status, event);
     });
-    hci.on('LeConnectionUpdateComplete', async (status, event) => {
-      console.log('LeConnectionUpdateComplete', status, event);
+    hci.on("LeConnectionUpdateComplete", async (status, event) => {
+      console.log("LeConnectionUpdateComplete", status, event);
     });
 
-    hci.on('DisconnectionComplete', async (err, event) => {
-      console.log('DisconnectionComplete', err, event);
+    hci.on("DisconnectionComplete", async (err, event) => {
+      console.log("DisconnectionComplete", err, event);
       await hci.leSetExtendedAdvertisingEnable({
         enable: true,
         sets: [{ advertHandle: 0 }],
       });
     });
 
-    console.log('end');
+    console.log("end");
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

@@ -1,6 +1,6 @@
-import { GattService } from './GattService.js';
-import { GattCharacteristic } from './GattCharacteristic.js';
-import { GattDescriptor } from './GattDescriptor.js';
+import { GattService } from "./GattService.js";
+import { GattCharacteristic } from "./GattCharacteristic.js";
+import { GattDescriptor } from "./GattDescriptor.js";
 
 // General concept:
 // - GattDirectory is a tree of services, characteristics and descriptors
@@ -36,7 +36,7 @@ export interface Descriptor {
   descriptor: GattDescriptor.AsObject;
 }
 
-export interface FlatProfile  {
+export interface FlatProfile {
   services?: Record<number, Service>;
   includedServices?: Record<number, IncludedService>;
   characteristics?: Record<number, Characteristic>;
@@ -56,11 +56,15 @@ export class GattDirectory {
       return;
     }
     const fillDescriptor = (e: Descriptor, fp: FlatProfile) => {
-      if (fp.descriptors === undefined) { fp.descriptors = {}; }
+      if (fp.descriptors === undefined) {
+        fp.descriptors = {};
+      }
       fp.descriptors[e.descriptor.handle] = e;
     };
     const fillCharacteristic = (e: Characteristic, fp: FlatProfile) => {
-      if (fp.characteristics === undefined) { fp.characteristics = {}; }
+      if (fp.characteristics === undefined) {
+        fp.characteristics = {};
+      }
       fp.characteristics[e.characteristic.handle] = e;
       if (e.descriptors !== undefined) {
         for (const descriptor of Object.values(e.descriptors)) {
@@ -69,7 +73,9 @@ export class GattDirectory {
       }
     };
     const fillIncludedService = (e: IncludedService, fp: FlatProfile) => {
-      if (fp.includedServices === undefined) { fp.includedServices = {}; }
+      if (fp.includedServices === undefined) {
+        fp.includedServices = {};
+      }
       fp.includedServices[e.service.handle] = e;
       if (e.characteristics !== undefined) {
         for (const characteristic of Object.values(e.characteristics)) {
@@ -81,9 +87,11 @@ export class GattDirectory {
           fillIncludedService(includedService, fp);
         }
       }
-    }
+    };
     const fillService = (e: Service, fp: FlatProfile) => {
-      if (fp.services === undefined) { fp.services = {}; }
+      if (fp.services === undefined) {
+        fp.services = {};
+      }
       fp.services[e.service.handle] = e;
       if (e.characteristics !== undefined) {
         for (const characteristic of Object.values(e.characteristics)) {
@@ -204,8 +212,12 @@ export class GattDirectory {
       this.flatProfile.includedServices = {};
     }
     for (const includedService of includedServices) {
-      profileService.includedServices[includedService.handle] = { parent: new WeakRef(profileService), service: includedService };
-      this.flatProfile.includedServices[includedService.handle] = profileService.includedServices[includedService.handle];
+      profileService.includedServices[includedService.handle] = {
+        parent: new WeakRef(profileService),
+        service: includedService,
+      };
+      this.flatProfile.includedServices[includedService.handle] =
+        profileService.includedServices[includedService.handle];
     }
     return true;
   }
@@ -213,7 +225,7 @@ export class GattDirectory {
   public getCharacteristics(handle: number): GattCharacteristic.AsObject[] | undefined {
     const profileService = this.flatProfile.services?.[handle] ?? this.flatProfile.includedServices?.[handle];
     if (!profileService) {
-      return undefined
+      return undefined;
     }
     if (!profileService.characteristics) {
       return undefined;
@@ -270,15 +282,21 @@ export class GattDirectory {
 
   public findCharacteristic(handle: number): GattCharacteristic.AsObject | null {
     const eChar = this.flatProfile.characteristics?.[handle];
-    if (!eChar) { return null; }
+    if (!eChar) {
+      return null;
+    }
     return eChar.characteristic;
   }
 
   public findDescriptor(charHandle: number, type: number): GattDescriptor.AsObject | null {
     const char = this.flatProfile.characteristics?.[charHandle];
-    if (!char || !char.descriptors) { return null; }
+    if (!char || !char.descriptors) {
+      return null;
+    }
     for (const desc of Object.values(char.descriptors)) {
-      if (!desc) { continue; }
+      if (!desc) {
+        continue;
+      }
       if (desc.descriptor.uuid16 === type) {
         return desc.descriptor;
       }
@@ -288,20 +306,28 @@ export class GattDirectory {
 
   public findByDescriptorHandle(handle: number) {
     const dEntry = this.flatProfile.descriptors?.[handle];
-    if (!dEntry) { return null; }
+    if (!dEntry) {
+      return null;
+    }
 
     const cEntry = dEntry.parent?.deref();
-    if (!cEntry) { return null; }
+    if (!cEntry) {
+      return null;
+    }
 
     const sEntry = cEntry.parent?.deref();
-    if (!sEntry) { return null; }
+    if (!sEntry) {
+      return null;
+    }
 
     return { service: sEntry.service, characteristic: cEntry.characteristic, descriptor: dEntry.descriptor };
   }
 
   public findServiceByUuid(uuid: string): GattService.AsObject | null {
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
-      if (!sEntry) { continue; }
+      if (!sEntry) {
+        continue;
+      }
       if (sEntry.service.uuid === uuid) {
         return sEntry.service;
       }
@@ -309,22 +335,33 @@ export class GattDirectory {
     return null;
   }
 
-  public findCharacteristicByUuids(uuids: { serviceUuid: string; characteristicUuid: string }): GattCharacteristic.AsObject | null {
+  public findCharacteristicByUuids(uuids: {
+    serviceUuid: string;
+    characteristicUuid: string;
+  }): GattCharacteristic.AsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
-      if (!sEntry) { continue; }
+      if (!sEntry) {
+        continue;
+      }
       if (sEntry.service.uuid === uuids.serviceUuid) {
         service = sEntry;
         break;
       }
     }
 
-    if (!service) { return null; }
+    if (!service) {
+      return null;
+    }
 
     for (const cEntry of Object.values(service.characteristics ?? {})) {
-      if (!cEntry) { continue; }
+      if (!cEntry) {
+        continue;
+      }
       for (const dEntry of Object.values(cEntry.descriptors ?? {})) {
-        if (!dEntry) { continue; }
+        if (!dEntry) {
+          continue;
+        }
         if (dEntry.descriptor.uuid === uuids.characteristicUuid) {
           return cEntry.characteristic;
         }
@@ -337,19 +374,27 @@ export class GattDirectory {
   public findDescriptorByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptor.AsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
-      if (!sEntry) { continue; }
+      if (!sEntry) {
+        continue;
+      }
       if (sEntry.service.uuid === uuids.serviceUuid) {
         service = sEntry;
         break;
       }
     }
 
-    if (!service) { return null; }
+    if (!service) {
+      return null;
+    }
 
     for (const cEntry of Object.values(service.characteristics ?? {})) {
-      if (!cEntry) { continue; }
+      if (!cEntry) {
+        continue;
+      }
       for (const dEntry of Object.values(cEntry.descriptors ?? {})) {
-        if (!dEntry) { continue; }
+        if (!dEntry) {
+          continue;
+        }
         if (dEntry.descriptor.uuid === uuids.descriptorUuid) {
           return dEntry.descriptor;
         }

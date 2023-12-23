@@ -359,3 +359,34 @@ export enum HciOcfLeControllerCommands {
   ExtendedCreateConnectionV2                          = 0x0085, // * LE Extended Create Connection V2
   SetPeriodicAdvertisingParametersV2                  = 0x0086, // * LE Set Periodic Advertising Parameters V2
 }
+
+export function ocfOgfToString(ocf: number, ogf: number) {
+  let s = `${HciOgf[ogf]}.`;
+  switch (ogf) {
+    case HciOgf.LinkControlCommands:
+      s += HciOcfLinkControlCommands[ocf];
+      break;
+    case HciOgf.LinkPolicyCommands:
+      s += HicOcfLinkPolicyCommands[ocf];
+      break;
+    case HciOgf.ControlAndBasebandCommands:
+      s += HciOcfControlAndBasebandCommands[ocf];
+      break;
+    case HciOgf.InformationParameters:
+      s += HciOcfInformationParameters[ocf];
+      break;
+    case HciOgf.StatusParameters:
+      s += HciOcfStatusParameters[ocf];
+      break;
+    case HciOgf.TestingCommands:
+      s += HciOcfTestingCommands[ocf];
+      break;
+    case HciOgf.LeControllerCommands:
+      s += HciOcfLeControllerCommands[ocf];
+      break;
+    default:
+      s += 'Unknown';
+  }
+
+  return s;
+}

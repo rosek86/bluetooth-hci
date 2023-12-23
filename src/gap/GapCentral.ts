@@ -1,32 +1,55 @@
-import assert from 'assert';
-import { EventEmitter } from 'events';
-import Debug from 'debug';
-import chalk from 'chalk';
-import { AdvData } from './AdvData.js';
-import { Hci } from '../hci/Hci.js';
+import assert from "assert";
+import { EventEmitter } from "events";
+import Debug from "debug";
+import chalk from "chalk";
+import { AdvData } from "./AdvData.js";
+import { Hci } from "../hci/Hci.js";
 import {
   DisconnectionCompleteEvent,
-  LeAdvEventType, LeAdvReport, LeChannelSelAlgoEvent, LeConnectionCompleteEvent,
-  LeConnectionRole, LeConnectionUpdateCompleteEvent, LeEnhConnectionCompleteEvent, LeExtAdvReport, LeMasterClockAccuracy,
-  LeReadRemoteFeaturesCompleteEvent, ReadRemoteVersionInformationCompleteEvent
-} from '../hci/HciEvent.js';
+  LeAdvEventType,
+  LeAdvReport,
+  LeChannelSelAlgoEvent,
+  LeConnectionCompleteEvent,
+  LeConnectionRole,
+  LeConnectionUpdateCompleteEvent,
+  LeEnhConnectionCompleteEvent,
+  LeExtAdvReport,
+  LeMasterClockAccuracy,
+  LeReadRemoteFeaturesCompleteEvent,
+  ReadRemoteVersionInformationCompleteEvent,
+} from "../hci/HciEvent.js";
 import {
   LeConnectionUpdate,
   LeExtendedCreateConnectionV1,
   LeExtendedCreateConnectionPhy,
-  LeExtendedScanEnabled, LeExtendedScanParameters, LeInitiatorFilterPolicy,
-  LeOwnAddressType, LeScanFilterDuplicates,
-  LeScanningFilterPolicy, LeScanType, LeSupportedFeatures
-} from '../hci/HciLeController.js';
-import { Address } from '../utils/Address.js';
-import { Att } from '../att/Att.js';
-import { L2CAP } from '../l2cap/L2CAP.js';
-import { ReadTransmitPowerLevelType } from '../hci/HciControlAndBaseband.js';
-import { HciErrorCode } from '../hci/HciError.js';
+  LeExtendedScanEnabled,
+  LeExtendedScanParameters,
+  LeInitiatorFilterPolicy,
+  LeOwnAddressType,
+  LeScanFilterDuplicates,
+  LeScanningFilterPolicy,
+  LeScanType,
+  LeSupportedFeatures,
+} from "../hci/HciLeController.js";
+import { Address } from "../utils/Address.js";
+import { Att } from "../att/Att.js";
+import { L2CAP } from "../l2cap/L2CAP.js";
+import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.js";
+import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
+
+export interface GapCentralOptions {
+  autoScan?: boolean;
+  autoScanOptions?: {
+    scanWhenConnected?: boolean;
+    parameters?: GapScanParamsOptions;
+    start?: GapScanStartOptions;
+  };
+  cacheRemoteInfo?: boolean;
+}
 
 export type GapScanParamsOptions = Partial<LeExtendedScanParameters>;
-export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, 'enable'>>;
-export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, 'peerAddress' | 'peerAddressType'>> & {
+export type GapScanStartOptions = Partial<Omit<LeExtendedScanEnabled, "enable">>;
+export type GapConnectParams = Partial<Omit<LeExtendedCreateConnectionV1, "peerAddress" | "peerAddressType">> & {
   peerAddress: Address;
   timeoutMs?: number;
 };
@@ -48,7 +71,7 @@ export interface GapConnectEvent {
     connectionIntervalMs: number;
     supervisionTimeoutMs: number;
     connectionLatency: number;
-  }
+  };
   role: LeConnectionRole;
   masterClockAccuracy: LeMasterClockAccuracy;
   localResolvablePrivateAddress?: Address;
@@ -61,28 +84,31 @@ export interface GapConnectEvent {
   leRemoteFeatures: LeSupportedFeatures;
 }
 
-const debug = Debug('bt-hci-gap');
+const debug = Debug("bt-hci-gap");
 
 export declare interface GapCentral {
-  on(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
-  once(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
-  removeListener(event: 'GapLeAdvReport', listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
+  on(event: "GapLeAdvReport", listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
+  once(event: "GapLeAdvReport", listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void): this;
+  removeListener(
+    event: "GapLeAdvReport",
+    listener: (report: GapAdvertReport, raw: LeAdvReport | LeExtAdvReport) => void,
+  ): this;
 
-  on(event: 'GapLeScanState', listener: (scanning: boolean) => void): this;
-  once(event: 'GapLeScanState', listener: (scanning: boolean) => void): this;
-  removeListener(event: 'GapLeScanState', listener: (scanning: boolean) => void): this;
+  on(event: "GapLeScanState", listener: (scanning: boolean) => void): this;
+  once(event: "GapLeScanState", listener: (scanning: boolean) => void): this;
+  removeListener(event: "GapLeScanState", listener: (scanning: boolean) => void): this;
 
-  on(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
-  once(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
-  removeListener(event: 'GapConnected', listener: (event: GapConnectEvent) => void): this;
+  on(event: "GapConnected", listener: (event: GapConnectEvent) => void): this;
+  once(event: "GapConnected", listener: (event: GapConnectEvent) => void): this;
+  removeListener(event: "GapConnected", listener: (event: GapConnectEvent) => void): this;
 
-  on(event: 'GapConnectionCancelled', listener: () => void): this;
-  once(event: 'GapConnectionCancelled', listener: () => void): this;
-  removeListener(event: 'GapConnectionCancelled', listener: () => void): this;
+  on(event: "GapConnectionCancelled", listener: () => void): this;
+  once(event: "GapConnectionCancelled", listener: () => void): this;
+  removeListener(event: "GapConnectionCancelled", listener: () => void): this;
 
-  on(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
-  once(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
-  removeListener(event: 'GapDisconnected', listener: (reason: DisconnectionCompleteEvent) => void): this;
+  on(event: "GapDisconnected", listener: (reason: DisconnectionCompleteEvent) => void): this;
+  once(event: "GapDisconnected", listener: (reason: DisconnectionCompleteEvent) => void): this;
+  removeListener(event: "GapDisconnected", listener: (reason: DisconnectionCompleteEvent) => void): this;
 }
 
 interface GapDeviceInfo {
@@ -93,7 +119,7 @@ interface GapDeviceInfo {
   att?: Att;
 }
 
-interface RemoteInfoCache  {
+interface RemoteInfoCache {
   version: ReadRemoteVersionInformationCompleteEvent;
   features: LeReadRemoteFeaturesCompleteEvent;
 }
@@ -111,7 +137,7 @@ export class GapCentral extends EventEmitter {
   public getRemoteVersionInformation(connectionHandle: number): ReadRemoteVersionInformationCompleteEvent {
     const device = this.connectedDevices.get(connectionHandle);
     if (!device?.versionInformation) {
-      throw new Error('Version information not exists');
+      throw new Error("Version information not exists");
     }
     return device.versionInformation;
   }
@@ -119,7 +145,7 @@ export class GapCentral extends EventEmitter {
   public getLeRemoteFeatures(connectionHandle: number): LeReadRemoteFeaturesCompleteEvent {
     const device = this.connectedDevices.get(connectionHandle);
     if (!device?.leRemoteFeatures) {
-      throw new Error('LE Features not exists');
+      throw new Error("LE Features not exists");
     }
     return device?.leRemoteFeatures;
   }
@@ -127,44 +153,72 @@ export class GapCentral extends EventEmitter {
   public getAtt(connectionHandle: number): Att {
     const device = this.connectedDevices.get(connectionHandle);
     if (!device?.att) {
-      throw new Error('Device not connected');
+      throw new Error("Device not connected");
     }
     return device.att;
   }
 
-  constructor(private hci: Hci, private options: { cacheRemoteInfo?: boolean } = { cacheRemoteInfo: false }) {
+  constructor(private hci: Hci, private readonly options?: GapCentralOptions) {
     super();
+
+    this.options = options ?? {};
+    this.options.autoScan = this.options.autoScan ?? true;
+    this.options.autoScanOptions = this.options.autoScanOptions ?? {};
+    this.options.autoScanOptions.scanWhenConnected = this.options.autoScanOptions.scanWhenConnected ?? true;
+    this.options.autoScanOptions.parameters = this.options.autoScanOptions.parameters ?? {};
+    this.options.autoScanOptions.parameters.ownAddressType =
+      this.options.autoScanOptions.parameters.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress;
+    this.options.autoScanOptions.parameters.scanningFilterPolicy =
+      this.options.autoScanOptions.parameters.scanningFilterPolicy ?? LeScanningFilterPolicy.All;
+    this.options.autoScanOptions.parameters.scanningPhy = this.options.autoScanOptions.parameters.scanningPhy ?? {
+      Phy1M: {
+        type: LeScanType.Active,
+        intervalMs: 100,
+        windowMs: 100,
+      },
+    };
+    this.options.autoScanOptions.start = this.options.autoScanOptions?.start ?? {
+      filterDuplicates: LeScanFilterDuplicates.Disabled,
+    };
+    this.options.cacheRemoteInfo = this.options.cacheRemoteInfo ?? true;
 
     this.l2cap = new L2CAP(this.hci);
 
-    this.hci.on('LeAdvertisingReport',                  this.onLeAdvertisingReport);
-    this.hci.on('LeExtendedAdvertisingReport',          this.onLeExtendedAdvertisingReport);
-    this.hci.on('LeScanTimeout',                        this.onLeScanTimeout);
-    this.hci.on('LeConnectionComplete',                 this.onLeConnectionComplete);
-    this.hci.on('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
-    this.hci.on('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
-    this.hci.on('DisconnectionComplete',                this.onDisconnectionComplete);
+    this.hci.on("LeAdvertisingReport", this.onLeAdvertisingReport);
+    this.hci.on("LeExtendedAdvertisingReport", this.onLeExtendedAdvertisingReport);
+    this.hci.on("LeScanTimeout", this.onLeScanTimeout);
+    this.hci.on("LeConnectionComplete", this.onLeConnectionComplete);
+    this.hci.on("LeEnhancedConnectionComplete", this.onLeEnhancedConnectionComplete);
+    this.hci.on("LeChannelSelectionAlgorithm", this.onLeChannelSelectionAlgorithm);
+    this.hci.on("DisconnectionComplete", this.onDisconnectionComplete);
   }
 
   public async init() {
     const commands = await this.hci.readLocalSupportedCommands();
 
-    if (commands.isSupported('leSetExtendedScanParameters') &&
-        commands.isSupported('leSetExtendedScanEnable')) {
+    if (commands.isSupported("leSetExtendedScanParameters") && commands.isSupported("leSetExtendedScanEnable")) {
       this.extended = true;
     }
 
     await this.l2cap.init();
+    await this.startAutoScanIfEnabled();
+  }
+
+  private async startAutoScanIfEnabled() {
+    if (this.options?.autoScan) {
+      await this.setScanParameters(this.options.autoScanOptions?.parameters);
+      await this.startScanning(this.options.autoScanOptions?.start);
+    }
   }
 
   public destroy(): void {
-    this.hci.removeListener('LeAdvertisingReport',                  this.onLeAdvertisingReport);
-    this.hci.removeListener('LeExtendedAdvertisingReport',          this.onLeExtendedAdvertisingReport);
-    this.hci.removeListener('LeScanTimeout',                        this.onLeScanTimeout);
-    this.hci.removeListener('LeConnectionComplete',                 this.onLeConnectionComplete);
-    this.hci.removeListener('LeEnhancedConnectionComplete',         this.onLeEnhancedConnectionComplete);
-    this.hci.removeListener('LeChannelSelectionAlgorithm',          this.onLeChannelSelectionAlgorithm);
-    this.hci.removeListener('DisconnectionComplete',                this.onDisconnectionComplete);
+    this.hci.removeListener("LeAdvertisingReport", this.onLeAdvertisingReport);
+    this.hci.removeListener("LeExtendedAdvertisingReport", this.onLeExtendedAdvertisingReport);
+    this.hci.removeListener("LeScanTimeout", this.onLeScanTimeout);
+    this.hci.removeListener("LeConnectionComplete", this.onLeConnectionComplete);
+    this.hci.removeListener("LeEnhancedConnectionComplete", this.onLeEnhancedConnectionComplete);
+    this.hci.removeListener("LeChannelSelectionAlgorithm", this.onLeChannelSelectionAlgorithm);
+    this.hci.removeListener("DisconnectionComplete", this.onDisconnectionComplete);
     this.removeAllListeners();
   }
 
@@ -172,26 +226,33 @@ export class GapCentral extends EventEmitter {
     return this.scanning;
   }
 
+  public isConnecting(): boolean {
+    return this.pendingCreateConnection !== null;
+  }
+
   public async setScanParameters(opts?: GapScanParamsOptions): Promise<void> {
-    const ownAddressType       = opts?.ownAddressType       ?? LeOwnAddressType.RandomDeviceAddress;
+    const ownAddressType = opts?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress;
     const scanningFilterPolicy = opts?.scanningFilterPolicy ?? LeScanningFilterPolicy.All;
     const scanningPhy = this.getScanningPhy(opts);
 
     if (this.extended) {
       await this.hci.leSetExtendedScanParameters({
-        scanningPhy, ownAddressType, scanningFilterPolicy,
+        scanningPhy,
+        ownAddressType,
+        scanningFilterPolicy,
       });
     } else {
       await this.hci.leSetScanParameters({
-        type:       opts?.scanningPhy?.Phy1M?.type       ?? LeScanType.Active,
+        type: opts?.scanningPhy?.Phy1M?.type ?? LeScanType.Active,
         intervalMs: opts?.scanningPhy?.Phy1M?.intervalMs ?? 100,
-        windowMs:   opts?.scanningPhy?.Phy1M?.windowMs   ?? 100,
-        ownAddressType, scanningFilterPolicy,
+        windowMs: opts?.scanningPhy?.Phy1M?.windowMs ?? 100,
+        ownAddressType,
+        scanningFilterPolicy,
       });
     }
   }
 
-  private getScanningPhy(opts?: GapScanParamsOptions): LeExtendedScanParameters['scanningPhy'] {
+  private getScanningPhy(opts?: GapScanParamsOptions): LeExtendedScanParameters["scanningPhy"] {
     if (opts?.scanningPhy?.Phy1M || opts?.scanningPhy?.PhyCoded) {
       return opts.scanningPhy;
     } else {
@@ -200,17 +261,22 @@ export class GapCentral extends EventEmitter {
   }
 
   public async startScanning(opts?: GapScanStartOptions): Promise<void> {
-    if (this.scanning === true) { return; }
+    if (this.scanning === true) {
+      return;
+    }
     this.scanning = true;
 
     try {
       const filterDuplicates = opts?.filterDuplicates ?? LeScanFilterDuplicates.Disabled;
-      const durationMs       = opts?.durationMs       ?? 0;
-      const periodSec        = opts?.periodSec        ?? 0;
+      const durationMs = opts?.durationMs ?? 0;
+      const periodSec = opts?.periodSec ?? 0;
 
       if (this.extended) {
         await this.hci.leSetExtendedScanEnable({
-          enable: true, filterDuplicates, durationMs, periodSec,
+          enable: true,
+          filterDuplicates,
+          durationMs,
+          periodSec,
         });
       } else {
         if (durationMs > 0) {
@@ -220,17 +286,18 @@ export class GapCentral extends EventEmitter {
         await this.hci.leSetScanEnable(true, filterDuplicatesEnabled);
       }
 
-      this.emit('GapLeScanState', true);
+      this.emit("GapLeScanState", true);
     } catch (e) {
-      debug(e);
       this.scanning = false;
+      debug(e);
       throw e;
     }
   }
 
   public async stopScanning(): Promise<void> {
-    if (this.scanning === false) { return; }
-    this.scanning = false;
+    if (this.scanning === false) {
+      return;
+    }
 
     try {
       if (this.extended) {
@@ -239,22 +306,25 @@ export class GapCentral extends EventEmitter {
         await this.hci.leSetScanEnable(false);
       }
 
-      this.emit('GapLeScanState', false);
+      this.scanning = false;
+      this.emit("GapLeScanState", false);
     } catch (e) {
-      debug(e);
       this.scanning = true;
+      debug(e);
       throw e;
     }
   }
 
   public async connect(params: GapConnectParams): Promise<void> {
     if (this.pendingCreateConnection) {
-      debug('Connection already in progress');
-      throw new Error('Connection already in progress');
+      throw makeHciError("Connection already in progress", HciErrorErrno.CommandDisallowed);
     }
     this.pendingCreateConnection = {};
 
     try {
+      if (this.scanning) {
+        await this.stopScanning();
+      }
       const defaultScanParams: LeExtendedCreateConnectionPhy = {
         scanIntervalMs: 100,
         scanWindowMs: 100,
@@ -275,7 +345,7 @@ export class GapCentral extends EventEmitter {
         });
       } else {
         if (params?.initiatingPhy?.Phy2M || params?.initiatingPhy?.PhyCoded) {
-          throw new Error('Extended connection parameters are not supported');
+          throw makeHciError("Invalid PHY parameter", HciErrorErrno.InvalidCommandParameter);
         }
         await this.hci.leCreateConnection({
           ownAddressType: params?.ownAddressType ?? LeOwnAddressType.RandomDeviceAddress,
@@ -287,30 +357,29 @@ export class GapCentral extends EventEmitter {
       }
 
       if (params.timeoutMs) {
-        debug('Connection timeout', params.timeoutMs);
+        debug("Connection timeout", params.timeoutMs);
         this.pendingCreateConnection.timeoutId = setTimeout(() => {
-          this.hci.leCreateConnectionCancel()
+          this.hci
+            .leCreateConnectionCancel()
             .then(() => {
-              debug(chalk.red('Connection cancelled'));
+              debug(chalk.red("Connection cancelled"));
             })
             .catch((err: NodeJS.ErrnoException) => {
-              if (err.errno == HciErrorCode.CommandDisallowed) {
+              if (err.errno == HciErrorErrno.CommandDisallowed) {
                 // ignore, we are already connected
               } else {
-                debug(chalk.red('Failed to cancel connection'));
+                debug(chalk.red("Failed to cancel connection"));
                 debug(err);
               }
-            })
-            .finally(() => {
-              this.pendingCreateConnection = null;
             });
         }, params.timeoutMs);
       }
 
-      debug('Connecting to', params.peerAddress.toString());
+      debug("Connecting to", params.peerAddress.toString());
     } catch (e) {
       debug(e);
       this.pendingCreateConnection = null;
+      await this.startAutoScanIfEnabled();
       throw e;
     }
   }
@@ -320,14 +389,8 @@ export class GapCentral extends EventEmitter {
   }
 
   public async readTransmitPowerLevels(connectionHandle: number) {
-    const current = await this.hci.readTransmitPowerLevel(
-      connectionHandle,
-      ReadTransmitPowerLevelType.Current
-    );
-    const maximum = await this.hci.readTransmitPowerLevel(
-      connectionHandle,
-      ReadTransmitPowerLevelType.Maximum
-    );
+    const current = await this.hci.readTransmitPowerLevel(connectionHandle, ReadTransmitPowerLevelType.Current);
+    const maximum = await this.hci.readTransmitPowerLevel(connectionHandle, ReadTransmitPowerLevelType.Maximum);
     return { current, maximum };
   }
 
@@ -337,7 +400,7 @@ export class GapCentral extends EventEmitter {
 
   private onLeScanTimeout = () => {
     this.scanning = false;
-    this.emit('GapLeScanState', false);
+    this.emit("GapLeScanState", false);
   };
 
   private onLeAdvertisingReport = (report: LeAdvReport): void => {
@@ -345,13 +408,15 @@ export class GapCentral extends EventEmitter {
       const advertisingReport: GapAdvertReport = {
         address: report.address,
         rssi: report.rssi,
-        connectableAdvertising: report.eventType === LeAdvEventType.Undirected || report.eventType === LeAdvEventType.Directed,
-        scannableAdvertising: report.eventType === LeAdvEventType.Scannable || report.eventType === LeAdvEventType.Undirected,
+        connectableAdvertising:
+          report.eventType === LeAdvEventType.Undirected || report.eventType === LeAdvEventType.Directed,
+        scannableAdvertising:
+          report.eventType === LeAdvEventType.Scannable || report.eventType === LeAdvEventType.Undirected,
         directedAdvertising: report.eventType === LeAdvEventType.Directed,
         scanResponse: report.eventType === LeAdvEventType.ScanResponse,
         data: AdvData.parse(report.data ?? Buffer.alloc(0)),
       };
-      this.emit('GapLeAdvReport', advertisingReport, report);
+      this.emit("GapLeAdvReport", advertisingReport, report);
     } catch (err) {
       debug(err);
     }
@@ -368,27 +433,26 @@ export class GapCentral extends EventEmitter {
         scanResponse: report.eventType.ScanResponse,
         data: AdvData.parse(report.data ?? Buffer.alloc(0)),
       };
-      this.emit('GapLeAdvReport', advertisingReport, report);
+      this.emit("GapLeAdvReport", advertisingReport, report);
     } catch (err) {
       debug(err);
     }
   };
 
-  private onLeConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeConnectionCompleteEvent) => {
+  private onLeConnectionComplete = (err: NodeJS.ErrnoException | null, event: LeConnectionCompleteEvent) => {
     this.onLeConnectionCompleteCommon(err, event);
   };
 
-  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException|null, event: LeEnhConnectionCompleteEvent) => {
+  private onLeEnhancedConnectionComplete = (err: NodeJS.ErrnoException | null, event: LeEnhConnectionCompleteEvent) => {
     this.onLeConnectionCompleteCommon(err, event);
   };
-
 
   private async onLeConnectionCompleteCommon(
-    err: NodeJS.ErrnoException|null,
-    event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent
+    err: NodeJS.ErrnoException | null,
+    event: LeConnectionCompleteEvent | LeEnhConnectionCompleteEvent,
   ): Promise<void> {
     try {
-      debug('onLeConnectionCompleteCommon');
+      debug("onLeConnectionCompleteCommon");
 
       clearTimeout(this.pendingCreateConnection?.timeoutId);
       this.pendingCreateConnection = null;
@@ -400,10 +464,15 @@ export class GapCentral extends EventEmitter {
         In either case, the event shall be sent with the error code Unknown Connection Identifier (0x02).
       */
 
-      if (err?.errno === HciErrorCode.UnknownConnectionId) {
+      if (err?.errno === HciErrorErrno.UnknownConnectionId) {
+        await this.startAutoScanIfEnabled();
         debug(chalk.red(`Connection cancelled (${err.message})`));
-        this.emit('GapConnectionCancelled');
+        this.emit("GapConnectionCancelled");
         return;
+      }
+
+      if (this.options?.autoScanOptions?.scanWhenConnected) {
+        await this.startAutoScanIfEnabled();
       }
 
       const device: GapDeviceInfo = {
@@ -415,7 +484,7 @@ export class GapCentral extends EventEmitter {
       const connectionIntervalMs = event.connectionIntervalMs;
       debug(`Connection interval ${connectionIntervalMs} ms`);
 
-      if (this.options.cacheRemoteInfo) {
+      if (this.options?.cacheRemoteInfo) {
         const cache = this.remoteInfoCache.get(event.peerAddress.toNumeric());
         if (cache) {
           device.versionInformation = cache.version;
@@ -432,18 +501,19 @@ export class GapCentral extends EventEmitter {
         device.leRemoteFeatures = features;
       }
 
-      debug('Remote Version Information', JSON.stringify(device.versionInformation));
-      debug('Remote Features', device.leRemoteFeatures.leFeatures.toString());
+      debug("Remote Version Information", JSON.stringify(device.versionInformation));
+      debug("Remote Features", device.leRemoteFeatures.leFeatures.toString());
 
       const gapEvent = this.createGapConnectedEvent(event.connectionHandle);
       assert(gapEvent);
 
-      debug('Connected to', event.peerAddress.toString());
+      debug("Connected to", event.peerAddress.toString());
 
-      this.emit('GapConnected', gapEvent);
+      this.emit("GapConnected", gapEvent);
     } catch (err) {
-      this.hci.disconnect(event.connectionHandle)
-        .catch(() => {});
+      if (err instanceof HciError && err.errno !== HciErrorErrno.ConnectionNotEstablished) {
+        this.hci.disconnect(event.connectionHandle).catch(() => {});
+      }
       debug(err);
     }
   }
@@ -491,7 +561,7 @@ export class GapCentral extends EventEmitter {
       leRemoteFeatures: features.leFeatures,
     };
 
-    if (this.extended && device.connComplete?.type === 'enhanced') {
+    if (this.extended && device.connComplete?.type === "enhanced") {
       event.localResolvablePrivateAddress = device.connComplete?.localResolvablePrivateAddress;
       event.peerResolvablePrivateAddress = device.connComplete?.peerResolvablePrivateAddress;
     }
@@ -499,20 +569,26 @@ export class GapCentral extends EventEmitter {
     return event;
   }
 
-  private onLeChannelSelectionAlgorithm = async (_: Error|null, event: LeChannelSelAlgoEvent) => {
-    debug('Channel selection algorithm detected', event.algorithm);
+  private onLeChannelSelectionAlgorithm = async (_: Error | null, event: LeChannelSelAlgoEvent) => {
+    debug("Channel selection algorithm detected", event.algorithm);
     const device = this.connectedDevices.get(event.connectionHandle);
     if (device) {
       device.channelSelectionAlgorithm = event;
     }
   };
 
-  private onDisconnectionComplete = (_err: Error|null, event: DisconnectionCompleteEvent) => {
+  private onDisconnectionComplete = (_err: Error | null, event: DisconnectionCompleteEvent) => {
     const device = this.connectedDevices.get(event.connectionHandle);
     if (device) {
       this.connectedDevices.delete(event.connectionHandle);
     }
 
-    this.emit('GapDisconnected', event);
+    if (this.options?.autoScanOptions?.scanWhenConnected === false) {
+      this.startAutoScanIfEnabled().catch(() => {
+        console.log("Failed to start scanning");
+      });
+    }
+
+    this.emit("GapDisconnected", event);
   };
 }

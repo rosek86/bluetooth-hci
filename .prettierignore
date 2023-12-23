@@ -1,0 +1,6 @@
+/src/l2cap/L2capChannelId.ts
+/src/l2cap/L2capSignalingCommand.ts
+/src/hci/*
+/src/gatt/*
+/src/gap/AdvData.ts
+/src/att/*

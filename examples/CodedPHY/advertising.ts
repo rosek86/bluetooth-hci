@@ -11,15 +11,15 @@ import {
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
-  AddressType
-} from '../../src';
-import { ArgsParser } from '../utils/ArgsParser';
+  AddressType,
+} from "../../src";
+import { ArgsParser } from "../utils/ArgsParser";
 
 (async () => {
   try {
     const args = await ArgsParser.getOptions();
-    if (!args || args.type !== 'serial') {
-      throw new Error('Invalid input parameters');
+    if (!args || args.type !== "serial") {
+      throw new Error("Invalid input parameters");
     }
 
     const adapter = new HciAdapter(await createHciSerial(args.deviceId, args.serial));
@@ -28,9 +28,7 @@ import { ArgsParser } from '../utils/ArgsParser';
 
     const hci = adapter.Hci;
     const selectedTxPower = await hci.leSetExtendedAdvertisingParametersV1(0, {
-      advertisingEventProperties: [
-        LeAdvertisingEventProperties.Connectable,
-      ],
+      advertisingEventProperties: [LeAdvertisingEventProperties.Connectable],
       primaryAdvertisingIntervalMinMs: 500,
       primaryAdvertisingIntervalMaxMs: 1000,
       primaryAdvertisingChannelMap: [
@@ -55,7 +53,7 @@ import { ArgsParser } from '../utils/ArgsParser';
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Zephyr Ctrl',
+      completeLocalName: "Zephyr Ctrl",
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -74,7 +72,7 @@ import { ArgsParser } from '../utils/ArgsParser';
       sets: [{ advertHandle: 0 }],
     });
 
-    console.log('end');
+    console.log("end");
   } catch (e) {
     const err = e as Error;
     console.log(err.message);

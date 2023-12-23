@@ -1,11 +1,4 @@
-import {
-  HciAdapter,
-  createHciSerial,
-  LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
-  AdvData
-} from '../src';
+import { HciAdapter, createHciSerial, LeOwnAddressType, LeScanningFilterPolicy, LeScanType, AdvData } from "../src";
 
 (async () => {
   try {
@@ -22,7 +15,7 @@ import {
     });
     await adapter.Hci.leSetScanEnable(true, true);
 
-    adapter.Hci.on('LeAdvertisingReport', (report) => {
+    adapter.Hci.on("LeAdvertisingReport", (report) => {
       console.log(report, AdvData.parse(report.data ?? Buffer.alloc(0)));
     });
   } catch (e) {

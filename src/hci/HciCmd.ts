@@ -1,10 +1,10 @@
-import Debug from 'debug';
-import assert from 'assert';
+import Debug from "debug";
+import assert from "assert";
 
 import { HciPacketType } from "./HciPacketType.js";
 
-import { HciErrorCode, HciParserErrorType } from "./HciError.js";
-import { makeHciError, makeParserError} from "./HciError.js";
+import { HciErrorErrno, HciParserErrorType } from "./HciError.js";
+import { makeHciError, makeParserError } from "./HciError.js";
 
 import {
   HciOgf,
@@ -14,26 +14,27 @@ import {
   HciOcfLinkControlCommands,
   HciOcfStatusParameters,
   HciOcfTestingCommands,
-  HicOcfLinkPolicyCommands
-} from './HciOgfOcf.js';
+  HicOcfLinkPolicyCommands,
+  ocfOgfToString,
+} from "./HciOgfOcf.js";
 
-const debug = Debug('bt-hci-hci-cmd');
+const debug = Debug("bt-hci-hci-cmd");
 
 type HciSendFunction = (pt: HciPacketType, data: Buffer) => void;
 
 interface Command {
-  opcode: { ogf: number; ocf: number; };
+  opcode: { ogf: number; ocf: number };
   payload?: Buffer;
   connectionHandle?: number;
   advertisingHandle?: number;
 }
 
 class HciOpcode {
-  public static build(opcode: { ogf: number, ocf: number }): number {
-    return opcode.ogf << 10 | opcode.ocf;
+  public static build(opcode: { ogf: number; ocf: number }): number {
+    return (opcode.ogf << 10) | opcode.ocf;
   }
 
-  public static expand(opcode: number): { ogf: number, ocf: number } {
+  public static expand(opcode: number): { ogf: number; ocf: number } {
     const ogf = opcode >> 10;
     const ocf = opcode & 1023;
     return { ogf, ocf };
@@ -57,13 +58,12 @@ interface HciPendingCommand {
 export class HciCmd {
   private pendingCommands: HciPendingCommand[] = [];
 
-  public constructor(private sendBuffer: HciSendFunction, public readonly timeout: number = 2_000) {
-  }
+  public constructor(private sendBuffer: HciSendFunction, public readonly timeout: number = 2_000) {}
 
   public async linkControl(params: {
-    ocf: HciOcfLinkControlCommands,
-    connectionHandle?: number,
-    payload?: Buffer,
+    ocf: HciOcfLinkControlCommands;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -76,9 +76,9 @@ export class HciCmd {
   }
 
   public async linkPolicy(params: {
-    ocf: HicOcfLinkPolicyCommands,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HicOcfLinkPolicyCommands;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -91,9 +91,9 @@ export class HciCmd {
   }
 
   public async controlAndBaseband(params: {
-    ocf: HciOcfControlAndBasebandCommands,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfControlAndBasebandCommands;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -106,9 +106,9 @@ export class HciCmd {
   }
 
   public async controlAndBasebandNoResponse(params: {
-    ocf: HciOcfControlAndBasebandCommands,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfControlAndBasebandCommands;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<void> {
     const opcode = HciOpcode.build({
       ogf: HciOgf.ControlAndBasebandCommands,
@@ -118,9 +118,9 @@ export class HciCmd {
   }
 
   public async informationParameters(params: {
-    ocf: HciOcfInformationParameters,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfInformationParameters;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -129,13 +129,13 @@ export class HciCmd {
       },
       payload: params.payload,
       connectionHandle: params.connectionHandle,
-    })
+    });
   }
 
   public async statusParameters(params: {
-    ocf: HciOcfStatusParameters,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfStatusParameters;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -144,13 +144,13 @@ export class HciCmd {
       },
       payload: params.payload,
       connectionHandle: params.connectionHandle,
-    })
+    });
   }
 
   public async testing(params: {
-    ocf: HciOcfTestingCommands,
-    connectionHandle?: number,
-    payload?: Buffer
+    ocf: HciOcfTestingCommands;
+    connectionHandle?: number;
+    payload?: Buffer;
   }): Promise<HciCmdResult> {
     return await this.sendWaitResult({
       opcode: {
@@ -198,13 +198,16 @@ export class HciCmd {
         dropPendingCommand();
         err ? reject(err) : resolve(evt!);
       };
-      const timeoutId = setTimeout(
-        () => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout
-      );
+      const timeoutId = setTimeout(() => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout);
       const onResult = (evt: HciCmdResult) => {
         debug(evt);
-        if (evt.status !== HciErrorCode.Success) {
-          complete(makeHciError(evt.status));
+        if (evt.status !== HciErrorErrno.Success) {
+          const message =
+            `${ocfOgfToString(cmd.opcode.ocf, cmd.opcode.ogf)}` +
+            ` failed with status ${HciErrorErrno[evt.status]}` +
+            `\n    -> cmd: ${JSON.stringify(cmd)}` +
+            `\n    -> evt: ${JSON.stringify(evt)}`;
+          complete(makeHciError(message, evt.status));
         } else {
           complete(undefined, evt);
         }
@@ -221,10 +224,7 @@ export class HciCmd {
   }
 
   private sendCommand(opcode: number, payload?: Buffer): void {
-    this.sendBuffer(
-      HciPacketType.HciCommand,
-      this.buildCommand(opcode, payload)
-    );
+    this.sendBuffer(HciPacketType.HciCommand, this.buildCommand(opcode, payload));
   }
 
   public onCmdResult(evt: HciCmdResult) {
@@ -235,8 +235,8 @@ export class HciCmd {
 
       if (cmd.connectionHandle !== undefined) {
         // parse connection handle
-        assert(evt.returnParameters, 'Return parameters are missing');
-        assert(evt.returnParameters.length >= 2, 'Cannot parse connection command complete event');
+        assert(evt.returnParameters, "Return parameters are missing");
+        assert(evt.returnParameters.length >= 2, "Cannot parse connection command complete event");
         if (cmd.connectionHandle !== evt.returnParameters.readUInt16LE(0)) {
           continue;
         }
@@ -244,8 +244,8 @@ export class HciCmd {
 
       if (cmd.advertisingHandle !== undefined) {
         // parse advertising handle
-        assert(evt.returnParameters, 'Return parameters are missing');
-        assert(evt.returnParameters.length >= 1, 'Cannot parse advertising command complete event');
+        assert(evt.returnParameters, "Return parameters are missing");
+        assert(evt.returnParameters.length >= 1, "Cannot parse advertising command complete event");
         if (cmd.advertisingHandle !== evt.returnParameters.readUInt8(0)) {
           continue;
         }
@@ -260,8 +260,8 @@ export class HciCmd {
     const buffer = Buffer.alloc(3 + payloadLength);
 
     let o = 0;
-    o = buffer.writeUIntLE(opcode,        o, 2);
-        buffer.writeUIntLE(payloadLength, o, 1);
+    o = buffer.writeUIntLE(opcode, o, 2);
+    buffer.writeUIntLE(payloadLength, o, 1);
 
     if (payload && payloadLength > 0) {
       payload.copy(buffer, 3);

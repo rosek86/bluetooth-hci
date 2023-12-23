@@ -24,7 +24,7 @@ import {
   AttHandleValueNtf, AttHandleValueNtfMsg, AttHandleValueInd, AttHandleValueIndMsg,
   AttHandleValueCfm, AttHandleValueCfmMsg, AttMultipleHandleValueNtf, AttMultipleHandleValueNtfMsg
 } from './AttSerDes.js';
-import { HciError } from '../hci/HciError.js';
+import { HciError, makeHciError } from '../hci/HciError.js';
 
 const debug = Debug('bt-hci-att');
 
@@ -290,7 +290,7 @@ export class Att extends EventEmitter {
     }
 
     this.destroy();
-    this.emit('Disconnected', new HciError(reasonCode));
+    this.emit('Disconnected', makeHciError('Disconnected', reasonCode, 'Att.Disconnected'));
   };
 
   // Utils

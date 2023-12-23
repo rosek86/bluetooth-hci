@@ -1,4 +1,4 @@
-import { AddressType, AdvData } from '../src';
+import { AddressType, AdvData } from "../src";
 import {
   LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
@@ -8,11 +8,11 @@ import {
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
   LeAdvertisingDataOperation,
-  LeScanResponseDataOperation
-} from '../src';
-import { Address } from '../src';
-import { HciAdapter } from '../src';
-import { createHciSerial } from '../src';
+  LeScanResponseDataOperation,
+} from "../src";
+import { Address } from "../src";
+import { HciAdapter } from "../src";
+import { createHciSerial } from "../src";
 
 (async () => {
   try {
@@ -52,7 +52,7 @@ import { createHciSerial } from '../src';
 
     const advertisingData = AdvData.build({
       flags: 6,
-      completeLocalName: 'Bluetooth HCI',
+      completeLocalName: "Bluetooth HCI",
       manufacturerData: {
         ident: 0x0689,
         data: Buffer.from([41, 0]),
@@ -65,14 +65,14 @@ import { createHciSerial } from '../src';
     });
 
     const scanResponseData = AdvData.build({
-      completeListOf16bitServiceClassUuids: [ '1826', '1818' ],
-      completeListOf128bitServiceClassUuids: [
-        '669aa6050c08969ee21186ad5062675f'
+      completeListOf16bitServiceClassUuids: ["1826", "1818"],
+      completeListOf128bitServiceClassUuids: ["669aa6050c08969ee21186ad5062675f"],
+      serviceData16bitUuid: [
+        {
+          uuid: "1826",
+          data: Buffer.from([1, 0, 32]),
+        },
       ],
-      serviceData16bitUuid: [{
-        uuid: '1826',
-        data: Buffer.from([ 1, 0, 32 ]),
-      }],
     });
     await hci.leSetExtendedScanResponseData(0, {
       operation: LeScanResponseDataOperation.Complete,
@@ -85,7 +85,7 @@ import { createHciSerial } from '../src';
       sets: [{ advertHandle: 0 }],
     });
 
-    console.log('advertising...');
+    console.log("advertising...");
   } catch (e) {
     const err = e as Error;
     console.log(err.message);
