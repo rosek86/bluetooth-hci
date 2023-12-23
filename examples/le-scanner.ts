@@ -1,13 +1,8 @@
-import chalk from 'chalk';
-import {
-  HciAdapter, createHciSerial,
-  GapCentral, GapAdvertReport,
-  LeScanFilterDuplicates,
-  LeScanType
-} from '../src';
-import { ArgsParser } from './utils/ArgsParser.js';
-import { getCompanyName } from '../assigned-numbers/Company Identifiers.js';
-import { getAppearanceSubcategoryName } from '../assigned-numbers/AppearanceValues.js';
+import chalk from "chalk";
+import { HciAdapter, createHciSerial, GapCentral, GapAdvertReport, LeScanFilterDuplicates, LeScanType } from "../src";
+import { ArgsParser } from "./utils/ArgsParser.js";
+import { getCompanyName } from "../assigned-numbers/Company Identifiers.js";
+import { getAppearanceSubcategoryName } from "../assigned-numbers/AppearanceValues.js";
 
 type GapAdvertReportExt = GapAdvertReport & {
   timestamp?: Date;
@@ -20,8 +15,8 @@ const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReport
 
   try {
     const args = await ArgsParser.getOptions();
-    if (!args || args.type !== 'serial') {
-      throw new Error('Invalid input parameters');
+    if (!args || args.type !== "serial") {
+      throw new Error("Invalid input parameters");
     }
 
     const adapter = new HciAdapter(await createHciSerial(args.deviceId, args.serial));
@@ -37,19 +32,19 @@ const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReport
           type: LeScanType.Active,
           intervalMs: 100,
           windowMs: 50,
-        }
-      }
+        },
+      },
     });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Disabled });
-    console.log('scanning...');
+    console.log("scanning...");
 
-    gap.on('GapLeScanState', (scanning) => {
-      console.log('scanning', scanning);
+    gap.on("GapLeScanState", (scanning) => {
+      console.log("scanning", scanning);
     });
 
-    gap.on('GapLeAdvReport', async (report) => {
+    gap.on("GapLeAdvReport", async (report) => {
       saveReport(report);
-      if ((Date.now() - printTime) > 1000) {
+      if (Date.now() - printTime > 1000) {
         printTime = Date.now();
         print();
       }
@@ -76,9 +71,9 @@ function saveReport(report: GapAdvertReport) {
 
 function print() {
   console.log();
-  console.log('adverts', adverts.size);
+  console.log("adverts", adverts.size);
   const sortedAdverts = [...adverts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  for (const [ address, info ] of sortedAdverts) {
+  for (const [address, info] of sortedAdverts) {
     printDeviceInfo(address, info);
   }
 }
@@ -109,12 +104,15 @@ function printReport(r: GapAdvertReport) {
   }
   if (report.data?.manufacturerData) {
     const companyName = getCompanyName(report.data?.manufacturerData.ident);
-    process.stdout.write(`    - Company Name: ${chalk.green(companyName ?? 'unknown')}\n`);
+    process.stdout.write(`    - Company Name: ${chalk.green(companyName ?? "unknown")}\n`);
     process.stdout.write(`    - Manufacturer Data: ${JSON.stringify([...report.data.manufacturerData.data])}\n`);
     delete report.data.manufacturerData;
   }
   if (report.data?.appearance) {
-    const appearance = getAppearanceSubcategoryName(report.data.appearance.category, report.data.appearance.subcategory);
+    const appearance = getAppearanceSubcategoryName(
+      report.data.appearance.category,
+      report.data.appearance.subcategory,
+    );
     process.stdout.write(`    - Appearance: ${chalk.yellow(appearance)}\n`);
     delete report.data.appearance;
   }

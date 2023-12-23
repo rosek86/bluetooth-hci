@@ -1,13 +1,13 @@
 export function bitGet(field: bigint, bit: bigint): boolean;
 export function bitGet(field: number, bit: number): boolean;
 export function bitGet(field: unknown, bit: unknown): boolean {
-  if (typeof field === 'number') {
+  if (typeof field === "number") {
     return ((field >> Number(bit)) & 1) === 1;
   }
-  if (typeof field === 'bigint' && (typeof bit === 'number' || typeof bit === 'bigint')) {
+  if (typeof field === "bigint" && (typeof bit === "number" || typeof bit === "bigint")) {
     return ((field >> BigInt(bit)) & 1n) === 1n;
   }
-  throw new Error('Invalid params');
+  throw new Error("Invalid params");
 }
 
 export function bitSet(field: number, bit: number, set?: boolean): number;
@@ -16,15 +16,15 @@ export function bitSet(field: unknown, bit: unknown, set?: boolean): unknown {
   if (!set) {
     return field;
   }
-  if (typeof field === 'number') {
+  if (typeof field === "number") {
     field |= 1 << Number(bit);
     return field;
   }
-  if (typeof field === 'bigint' && (typeof bit === 'number' || typeof bit === 'bigint')) {
+  if (typeof field === "bigint" && (typeof bit === "number" || typeof bit === "bigint")) {
     field |= 1n << BigInt(bit);
     return field;
   }
-  throw new Error('Invalid params');
+  throw new Error("Invalid params");
 }
 
 export function buildBitfield(bits: number[]): number {
@@ -38,18 +38,14 @@ export function buildBitfield(bits: number[]): number {
 export function readBigUInt128LE(buffer: Uint8Array, offset = 0): bigint {
   const first = buffer[offset];
   const last = buffer[offset + 15];
-  if (first === undefined || last === undefined)
-    throw new Error('Out of range')
+  if (first === undefined || last === undefined) throw new Error("Out of range");
 
   let value = 0n;
 
   for (let shift = 0n; shift < 128n; shift += 32n) {
-    value += BigInt(
-      buffer[offset++] +
-      buffer[offset++] * 2 ** 8 +
-      buffer[offset++] * 2 ** 16 +
-      buffer[offset++] * 2 ** 24
-    ) << shift;
+    value +=
+      BigInt(buffer[offset++] + buffer[offset++] * 2 ** 8 + buffer[offset++] * 2 ** 16 + buffer[offset++] * 2 ** 24) <<
+      shift;
   }
 
   return value;

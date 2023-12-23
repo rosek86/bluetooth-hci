@@ -1,125 +1,248 @@
-import { EventEmitter } from 'events';
-import Debug from 'debug';
+import { EventEmitter } from "events";
+import Debug from "debug";
 
-import { HciPacketType } from './HciPacketType.js';
+import { HciPacketType } from "./HciPacketType.js";
 
-import { getHciErrorMessage, HciErrorErrno, HciParserErrorType, makeHciError } from './HciError.js';
-import { HciDisconnectReason } from './HciError.js';
-import { makeParserError } from './HciError.js';
+import { getHciErrorMessage, HciErrorErrno, HciParserErrorType, makeHciError } from "./HciError.js";
+import { HciDisconnectReason } from "./HciError.js";
+import { makeParserError } from "./HciError.js";
 
-import { Address } from '../utils/Address.js';
-import { HciCmd } from './HciCmd.js';
+import { Address } from "../utils/Address.js";
+import { HciCmd } from "./HciCmd.js";
 import {
-   HciOcfInformationParameters,
-   HciOcfControlAndBasebandCommands,
-   HciOcfLeControllerCommands,
-   HciOcfStatusParameters,
-   HciOcfLinkControlCommands
-} from './HciOgfOcf.js'
+  HciOcfInformationParameters,
+  HciOcfControlAndBasebandCommands,
+  HciOcfLeControllerCommands,
+  HciOcfStatusParameters,
+  HciOcfLinkControlCommands,
+} from "./HciOgfOcf.js";
 import {
-  CompletedPackets, EventMask, EventMask2, FlowControlEnable, HostBufferSize,
-  HostNumberOfCompletedPackets, ReadAuthenticatedPayloadTimeout, ReadLeHostSupport,
-  ReadTransmitPowerLevel, ReadTransmitPowerLevelType, SetControllerToHostFlowControl,
-  SetEventMask, SetEventMask2, WriteAuthenticatedPayloadTimeout, WriteLeHostSupported
-} from './HciControlAndBaseband.js';
+  CompletedPackets,
+  EventMask,
+  EventMask2,
+  FlowControlEnable,
+  HostBufferSize,
+  HostNumberOfCompletedPackets,
+  ReadAuthenticatedPayloadTimeout,
+  ReadLeHostSupport,
+  ReadTransmitPowerLevel,
+  ReadTransmitPowerLevelType,
+  SetControllerToHostFlowControl,
+  SetEventMask,
+  SetEventMask2,
+  WriteAuthenticatedPayloadTimeout,
+  WriteLeHostSupported,
+} from "./HciControlAndBaseband.js";
 import {
-  LocalSupportedFeatures, LocalVersionInformation, ReadLocalSupportedFeatures,
-  ReadLocalVersionInformation, ReadBufferSize, BufferSize, ReadBdAddr, LocalSupportedCommands,
-  ReadLocalSupportedCommands, ReadRssi
-} from './HciInformationParameters.js';
+  LocalSupportedFeatures,
+  LocalVersionInformation,
+  ReadLocalSupportedFeatures,
+  ReadLocalVersionInformation,
+  ReadBufferSize,
+  BufferSize,
+  ReadBdAddr,
+  LocalSupportedCommands,
+  ReadLocalSupportedCommands,
+  ReadRssi,
+} from "./HciInformationParameters.js";
 import {
-  LeSupportedStates, LeEvents, LeSetEventsMask,
-  LeBufferSize, LeReadBufferSize, LeReadBufferSizeV2, LeBufferSizeV2, LeReadLocalSupportedFeatures,
-  LeSupportedFeatures, LeSetRandomAddress, LeAdvertisingParameters, LeSetAdvertisingParameters,
-  LeReadAdvertisingPhysicalChannelTxPower, LeSetAdvertisingScanResponseData, LeSetAdvertisingEnable,
-  LeScanParameters, LeCreateConnection, LeSetScanParameters, LeSetScanEnabled, LeConnectionUpdate,
-  LeReadWhiteListSize, LeWhiteList, LeExtendedAdvertisingParametersV1, LeExtendedScanParameters,
-  LeReadChannelMap, LeEncrypt, LeRand, LeEnableEncryption, LeLongTermKeyRequestReply,
-  LeLongTermKeyRequestNegativeReply, LeReceiverTestV1, LeReceiverTestV2, LeReceiverTestV3,
-  LeTransmitterTestV1, LeTransmitterTestV2, LeTransmitterTestV3, LeTransmitterTestV4, LeTestEnd,
-  LeRemoteConnectionParameterRequestReply, LeRemoteConnectionParameterRequestNegativeReply,
-  LeDataLength, LeSuggestedDefaultDataLength, LeDhKeyV1, LeDhKeyV2, LeAddDeviceToResolvingList,
-  LeRemoveDeviceFromResolvingList, LeReadResolvingListSize, LeMaximumDataLength, LeTxRxPhy,
-  ConnectionHandle, DefaultTxRxPhy, LeSetTxRxPhy, LeAdvertisingSetRandomAddress,
-  LeExtendedAdvertisingData, LeExtendedScanResponseData, LeExtendedScanEnabled,
-  LeNumberOfSupportedAdvertisingSets, LeExtendedAdvertisingEnable, LePrivacyMode,
-  LeTransmitPower, LeExtendedCreateConnectionV1, LeReadPeerResolvableAddress, LeLocalPeerResolvableAddress,
-  LeExtendedAdvertisingParametersV2, LeSetPeriodicAdvertisingParametersV1, LeSetPeriodicAdvertisingParametersV2,
+  LeSupportedStates,
+  LeEvents,
+  LeSetEventsMask,
+  LeBufferSize,
+  LeReadBufferSize,
+  LeReadBufferSizeV2,
+  LeBufferSizeV2,
+  LeReadLocalSupportedFeatures,
+  LeSupportedFeatures,
+  LeSetRandomAddress,
+  LeAdvertisingParameters,
+  LeSetAdvertisingParameters,
+  LeReadAdvertisingPhysicalChannelTxPower,
+  LeSetAdvertisingScanResponseData,
+  LeSetAdvertisingEnable,
+  LeScanParameters,
+  LeCreateConnection,
+  LeSetScanParameters,
+  LeSetScanEnabled,
+  LeConnectionUpdate,
+  LeReadWhiteListSize,
+  LeWhiteList,
+  LeExtendedAdvertisingParametersV1,
+  LeExtendedScanParameters,
+  LeReadChannelMap,
+  LeEncrypt,
+  LeRand,
+  LeEnableEncryption,
+  LeLongTermKeyRequestReply,
+  LeLongTermKeyRequestNegativeReply,
+  LeReceiverTestV1,
+  LeReceiverTestV2,
+  LeReceiverTestV3,
+  LeTransmitterTestV1,
+  LeTransmitterTestV2,
+  LeTransmitterTestV3,
+  LeTransmitterTestV4,
+  LeTestEnd,
+  LeRemoteConnectionParameterRequestReply,
+  LeRemoteConnectionParameterRequestNegativeReply,
+  LeDataLength,
+  LeSuggestedDefaultDataLength,
+  LeDhKeyV1,
+  LeDhKeyV2,
+  LeAddDeviceToResolvingList,
+  LeRemoveDeviceFromResolvingList,
+  LeReadResolvingListSize,
+  LeMaximumDataLength,
+  LeTxRxPhy,
+  ConnectionHandle,
+  DefaultTxRxPhy,
+  LeSetTxRxPhy,
+  LeAdvertisingSetRandomAddress,
+  LeExtendedAdvertisingData,
+  LeExtendedScanResponseData,
+  LeExtendedScanEnabled,
+  LeNumberOfSupportedAdvertisingSets,
+  LeExtendedAdvertisingEnable,
+  LePrivacyMode,
+  LeTransmitPower,
+  LeExtendedCreateConnectionV1,
+  LeReadPeerResolvableAddress,
+  LeLocalPeerResolvableAddress,
+  LeExtendedAdvertisingParametersV2,
+  LeSetPeriodicAdvertisingParametersV1,
+  LeSetPeriodicAdvertisingParametersV2,
   LeSetPeriodicAdvertisingEnable,
   LeSetPeriodicAdvertisingData,
-} from './HciLeController.js';
+} from "./HciLeController.js";
 
 import {
-  DisconnectionCompleteEvent, EncryptionChangeEvent, HciEvent, HciLeEvent,
-  LeReadRemoteFeaturesComplete, LeReadRemoteFeaturesCompleteEvent, LeConnectionUpdateComplete,
-  LeConnectionUpdateCompleteEvent, LeChannelSelAlgoEvent, LeChannelSelAlgo, LeLongTermKeyRequest,
-  LeConnectionComplete, LeConnectionCompleteEvent,  LeExtAdvReport, LeAdvReport,
-  LeEnhConnectionComplete, LeEnhConnectionCompleteEvent, LeRemoteConnectionParameterRequest,
-  LeLongTermKeyRequestEvent, LeRemoteConnectionParameterRequestEvent, LeDataLengthChange,
-  LeReadLocalP256PublicKeyComplete, LeGenerateDhKeyComplete, LeGenerateDhKeyCompleteEvent,
-  LeDirectedAdvertisingReport, LeDirectedAdvertisingReportEvent, LePhyUpdateComplete,
-  LePhyUpdateCompleteEvent, LeDataLengthChangeEvent, ReadRemoteVersionInformationComplete,
-  ReadRemoteVersionInformationCompleteEvent, LeAdvertisingSetTerminated,
+  DisconnectionCompleteEvent,
+  EncryptionChangeEvent,
+  HciEvent,
+  HciLeEvent,
+  LeReadRemoteFeaturesComplete,
+  LeReadRemoteFeaturesCompleteEvent,
+  LeConnectionUpdateComplete,
+  LeConnectionUpdateCompleteEvent,
+  LeChannelSelAlgoEvent,
+  LeChannelSelAlgo,
+  LeLongTermKeyRequest,
+  LeConnectionComplete,
+  LeConnectionCompleteEvent,
+  LeExtAdvReport,
+  LeAdvReport,
+  LeEnhConnectionComplete,
+  LeEnhConnectionCompleteEvent,
+  LeRemoteConnectionParameterRequest,
+  LeLongTermKeyRequestEvent,
+  LeRemoteConnectionParameterRequestEvent,
+  LeDataLengthChange,
+  LeReadLocalP256PublicKeyComplete,
+  LeGenerateDhKeyComplete,
+  LeGenerateDhKeyCompleteEvent,
+  LeDirectedAdvertisingReport,
+  LeDirectedAdvertisingReportEvent,
+  LePhyUpdateComplete,
+  LePhyUpdateCompleteEvent,
+  LeDataLengthChangeEvent,
+  ReadRemoteVersionInformationComplete,
+  ReadRemoteVersionInformationCompleteEvent,
+  LeAdvertisingSetTerminated,
   LeAdvertisingSetTerminatedEvent,
   EncryptionKeyRefreshComplete,
   NumberOfCompletedPacketsEntry,
   LeReadLocalP256PublicKeyCompleteEvent,
-  ReadRemoteSupportedFeaturesCompleteEvent
-} from './HciEvent.js';
+  ReadRemoteSupportedFeaturesCompleteEvent,
+} from "./HciEvent.js";
 
-import { AclDataPacket } from '../acl/Acl.js';
+import { AclDataPacket } from "../acl/Acl.js";
 
-const debug = Debug('bt-hci-hci');
+const debug = Debug("bt-hci-hci");
 
 interface HciInit {
   cmdTimeout?: number;
   send: (pt: HciPacketType, data: Buffer) => void;
 }
 
-type HciConnEvent = 'DisconnectionComplete' |
-                    'EncryptionChange' |
-                    'EncryptionKeyRefreshComplete' |
-                    'ReadRemoteVersionInformationComplete' |
-                    'ReadRemoteSupportedFeaturesComplete' |
-                    'NumberOfCompletedPackets' |
-                    'LeConnectionComplete' |
-                    'LeConnectionUpdateComplete' |
-                    'LeReadRemoteFeaturesComplete' |
-                    'LeLongTermKeyRequest' |
-                    'LeRemoteConnectionParameterRequest' |
-                    'LeDataLengthChange' |
-                    'LeReadLocalP256PublicKeyComplete' |
-                    'LeEnhancedConnectionComplete' |
-                    'LePhyUpdateComplete' |
-                    'LeChannelSelectionAlgorithm';
+type HciConnEvent =
+  | "DisconnectionComplete"
+  | "EncryptionChange"
+  | "EncryptionKeyRefreshComplete"
+  | "ReadRemoteVersionInformationComplete"
+  | "ReadRemoteSupportedFeaturesComplete"
+  | "NumberOfCompletedPackets"
+  | "LeConnectionComplete"
+  | "LeConnectionUpdateComplete"
+  | "LeReadRemoteFeaturesComplete"
+  | "LeLongTermKeyRequest"
+  | "LeRemoteConnectionParameterRequest"
+  | "LeDataLengthChange"
+  | "LeReadLocalP256PublicKeyComplete"
+  | "LeEnhancedConnectionComplete"
+  | "LePhyUpdateComplete"
+  | "LeChannelSelectionAlgorithm";
 
 export declare interface Hci {
-  on(event: 'DisconnectionComplete',                listener: (err: Error|null, event: DisconnectionCompleteEvent) => void): this;
-  on(event: 'EncryptionChange',                     listener: (err: Error|null, event: EncryptionChangeEvent) => void): this;
-  on(event: 'EncryptionKeyRefreshComplete',         listener: (err: Error|null, event: EncryptionKeyRefreshComplete) => void): this;
-  on(event: 'ReadRemoteVersionInformationComplete', listener: (err: Error|null, event: ReadRemoteVersionInformationCompleteEvent) => void): this;
-  on(event: 'ReadRemoteSupportedFeaturesComplete',  listener: (err: Error|null, event: ReadRemoteSupportedFeaturesCompleteEvent) => void): this;
-  on(event: 'NumberOfCompletedPackets',             listener: (err: Error|null, event: NumberOfCompletedPacketsEntry) => void): this;
-  on(event: 'LeConnectionComplete',                 listener: (err: Error|null, event: LeConnectionCompleteEvent) => void): this;
-  on(event: 'LeConnectionUpdateComplete',           listener: (err: Error|null, event: LeConnectionUpdateCompleteEvent) => void): this;
-  on(event: 'LeReadRemoteFeaturesComplete',         listener: (err: Error|null, event: LeReadRemoteFeaturesCompleteEvent) => void): this;
-  on(event: 'LeLongTermKeyRequest',                 listener: (err: Error|null, event: LeLongTermKeyRequestEvent) => void): this;
-  on(event: 'LeRemoteConnectionParameterRequest',   listener: (err: Error|null, event: LeRemoteConnectionParameterRequestEvent) => void): this;
-  on(event: 'LeDataLengthChange',                   listener: (err: Error|null, event: LeDataLengthChangeEvent) => void): this;
-  on(event: 'LeReadLocalP256PublicKeyComplete',     listener: (err: Error|null, event: LeReadLocalP256PublicKeyCompleteEvent) => void): this;
-  on(event: 'LeEnhancedConnectionComplete',         listener: (err: Error|null, event: LeEnhConnectionCompleteEvent) => void): this;
-  on(event: 'LePhyUpdateComplete',                  listener: (err: Error|null, event: LePhyUpdateCompleteEvent) => void): this;
-  on(event: 'LeChannelSelectionAlgorithm',          listener: (err: Error|null, event: LeChannelSelAlgoEvent) => void): this;
-  on<T>(event: HciConnEvent,                        listener: (err: Error|null, event: T) => void): this;
+  on(event: "DisconnectionComplete", listener: (err: Error | null, event: DisconnectionCompleteEvent) => void): this;
+  on(event: "EncryptionChange", listener: (err: Error | null, event: EncryptionChangeEvent) => void): this;
+  on(
+    event: "EncryptionKeyRefreshComplete",
+    listener: (err: Error | null, event: EncryptionKeyRefreshComplete) => void,
+  ): this;
+  on(
+    event: "ReadRemoteVersionInformationComplete",
+    listener: (err: Error | null, event: ReadRemoteVersionInformationCompleteEvent) => void,
+  ): this;
+  on(
+    event: "ReadRemoteSupportedFeaturesComplete",
+    listener: (err: Error | null, event: ReadRemoteSupportedFeaturesCompleteEvent) => void,
+  ): this;
+  on(
+    event: "NumberOfCompletedPackets",
+    listener: (err: Error | null, event: NumberOfCompletedPacketsEntry) => void,
+  ): this;
+  on(event: "LeConnectionComplete", listener: (err: Error | null, event: LeConnectionCompleteEvent) => void): this;
+  on(
+    event: "LeConnectionUpdateComplete",
+    listener: (err: Error | null, event: LeConnectionUpdateCompleteEvent) => void,
+  ): this;
+  on(
+    event: "LeReadRemoteFeaturesComplete",
+    listener: (err: Error | null, event: LeReadRemoteFeaturesCompleteEvent) => void,
+  ): this;
+  on(event: "LeLongTermKeyRequest", listener: (err: Error | null, event: LeLongTermKeyRequestEvent) => void): this;
+  on(
+    event: "LeRemoteConnectionParameterRequest",
+    listener: (err: Error | null, event: LeRemoteConnectionParameterRequestEvent) => void,
+  ): this;
+  on(event: "LeDataLengthChange", listener: (err: Error | null, event: LeDataLengthChangeEvent) => void): this;
+  on(
+    event: "LeReadLocalP256PublicKeyComplete",
+    listener: (err: Error | null, event: LeReadLocalP256PublicKeyCompleteEvent) => void,
+  ): this;
+  on(
+    event: "LeEnhancedConnectionComplete",
+    listener: (err: Error | null, event: LeEnhConnectionCompleteEvent) => void,
+  ): this;
+  on(event: "LePhyUpdateComplete", listener: (err: Error | null, event: LePhyUpdateCompleteEvent) => void): this;
+  on(event: "LeChannelSelectionAlgorithm", listener: (err: Error | null, event: LeChannelSelAlgoEvent) => void): this;
+  on<T>(event: HciConnEvent, listener: (err: Error | null, event: T) => void): this;
 
-  on(event: 'LeScanTimeout',                        listener: () => void): this;
-  on(event: 'LeAdvertisingReport',                  listener: (report: LeAdvReport) => void): this;
-  on(event: 'LeDirectedAdvertisingReport',          listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
-  on(event: 'LeExtendedAdvertisingReport',          listener: (report: LeExtAdvReport) => void): this;
-  on(event: 'LeAdvertisingSetTerminated',           listener: (err: Error|null, event: LeAdvertisingSetTerminatedEvent) => void): this;
-  on(event: 'LeGenerateDhKeyComplete',              listener: (err: Error|null, event: LeGenerateDhKeyCompleteEvent) => void): this;
+  on(event: "LeScanTimeout", listener: () => void): this;
+  on(event: "LeAdvertisingReport", listener: (report: LeAdvReport) => void): this;
+  on(event: "LeDirectedAdvertisingReport", listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
+  on(event: "LeExtendedAdvertisingReport", listener: (report: LeExtAdvReport) => void): this;
+  on(
+    event: "LeAdvertisingSetTerminated",
+    listener: (err: Error | null, event: LeAdvertisingSetTerminatedEvent) => void,
+  ): this;
+  on(
+    event: "LeGenerateDhKeyComplete",
+    listener: (err: Error | null, event: LeGenerateDhKeyCompleteEvent) => void,
+  ): this;
 
-  on(event: 'AclData',                              listener: (connectionHandle: number, event: AclDataPacket) => void): this;
+  on(event: "AclData", listener: (connectionHandle: number, event: AclDataPacket) => void): this;
 }
 
 export class Hci extends EventEmitter {
@@ -139,11 +262,11 @@ export class Hci extends EventEmitter {
 
   public async disconnect(
     connectionHandle: number,
-    reason: HciDisconnectReason = HciDisconnectReason.ConnTerminatedByRemoteUser
+    reason: HciDisconnectReason = HciDisconnectReason.ConnTerminatedByRemoteUser,
   ): Promise<void> {
     const payload = Buffer.alloc(3);
     payload.writeUIntLE(connectionHandle, 0, 2);
-    payload.writeUIntLE(reason,           2, 1);
+    payload.writeUIntLE(reason, 2, 1);
     const ocf = HciOcfLinkControlCommands.Disconnect;
     await this.cmd.linkControl({ ocf, payload });
   }
@@ -155,16 +278,19 @@ export class Hci extends EventEmitter {
     await this.cmd.linkControl({ ocf, payload });
   }
 
-  public async readRemoteVersionInformationAwait(connectionHandle: number, timeoutMs?: number): Promise<ReadRemoteVersionInformationCompleteEvent> {
+  public async readRemoteVersionInformationAwait(
+    connectionHandle: number,
+    timeoutMs?: number,
+  ): Promise<ReadRemoteVersionInformationCompleteEvent> {
     const waitEvent = this.waitEvent<ReadRemoteVersionInformationCompleteEvent>({
       connectionHandle,
-      event: 'ReadRemoteVersionInformationComplete',
+      event: "ReadRemoteVersionInformationComplete",
       timeoutMs,
     });
     await this.readRemoteVersionInformation(connectionHandle).catch((err) => {
       waitEvent.cancel();
       throw err;
-    })
+    });
     return await waitEvent.promise;
   }
 
@@ -175,15 +301,17 @@ export class Hci extends EventEmitter {
     await this.cmd.linkControl({ ocf, payload });
   }
 
-  public async readRemoteSupportedFeaturesAwait(connectionHandle: number): Promise<ReadRemoteSupportedFeaturesCompleteEvent> {
+  public async readRemoteSupportedFeaturesAwait(
+    connectionHandle: number,
+  ): Promise<ReadRemoteSupportedFeaturesCompleteEvent> {
     const waitEvent = this.waitEvent<ReadRemoteSupportedFeaturesCompleteEvent>({
       connectionHandle,
-      event: 'ReadRemoteSupportedFeaturesComplete'
+      event: "ReadRemoteSupportedFeaturesComplete",
     });
     await this.readRemoteSupportedFeatures(connectionHandle).catch((err) => {
       waitEvent.cancel();
       throw err;
-    })
+    });
     return await waitEvent.promise;
   }
 
@@ -409,12 +537,12 @@ export class Hci extends EventEmitter {
   public async leConnectionUpdateAwait(params: LeConnectionUpdate): Promise<LeConnectionUpdateCompleteEvent> {
     const waitEvent = this.waitEvent<LeConnectionUpdateCompleteEvent>({
       connectionHandle: params.connectionHandle,
-      event: 'LeConnectionUpdateComplete',
+      event: "LeConnectionUpdateComplete",
     });
     await this.leConnectionUpdate(params).catch((err) => {
       waitEvent.cancel();
       throw err;
-    })
+    });
     return await waitEvent.promise;
   }
 
@@ -439,17 +567,20 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf, payload });
   }
 
-  public async leReadRemoteFeaturesAwait(connectionHandle: number, timeoutMs: number): Promise<LeReadRemoteFeaturesCompleteEvent> {
+  public async leReadRemoteFeaturesAwait(
+    connectionHandle: number,
+    timeoutMs: number,
+  ): Promise<LeReadRemoteFeaturesCompleteEvent> {
     const waitEvent = this.waitEvent<LeReadRemoteFeaturesCompleteEvent>({
       connectionHandle,
-      event: 'LeReadRemoteFeaturesComplete',
+      event: "LeReadRemoteFeaturesComplete",
       timeoutMs,
     });
     await this.leReadRemoteFeatures(connectionHandle).catch((err) => {
       waitEvent.cancel();
       throw err;
-    })
-    return await waitEvent.promise
+    });
+    return await waitEvent.promise;
   }
 
   public async leEncrypt(key: Buffer, plainTextData: Buffer): Promise<Buffer> {
@@ -539,7 +670,7 @@ export class Hci extends EventEmitter {
 
   public async leRemoteConnectionParameterRequestReply(
     connectionHandle: number,
-    params: LeRemoteConnectionParameterRequestReply
+    params: LeRemoteConnectionParameterRequestReply,
   ): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestReply;
     const payload = LeRemoteConnectionParameterRequestReply.inParams(connectionHandle, params);
@@ -548,7 +679,7 @@ export class Hci extends EventEmitter {
 
   public async leRemoteConnectionParameterRequestNegativeReply(
     connectionHandle: number,
-    reason: HciErrorErrno
+    reason: HciErrorErrno,
   ): Promise<void> {
     const ocf = HciOcfLeControllerCommands.RemoteConnectionParameterRequestNegativeReply;
     const payload = LeRemoteConnectionParameterRequestNegativeReply.inParams(connectionHandle, reason);
@@ -564,12 +695,12 @@ export class Hci extends EventEmitter {
   public async leSetDataLengthAwait(connectionHandle: number, params: LeDataLength): Promise<LeDataLengthChangeEvent> {
     const waitEvent = this.waitEvent<LeDataLengthChangeEvent>({
       connectionHandle,
-      event: 'LeDataLengthChange',
+      event: "LeDataLengthChange",
     });
     await this.leSetDataLength(connectionHandle, params).catch((err) => {
       waitEvent.cancel();
       throw err;
-    })
+    });
     return await waitEvent.promise;
   }
 
@@ -615,7 +746,7 @@ export class Hci extends EventEmitter {
   }
 
   public async leClearResolvingList(): Promise<void> {
-    const  ocf = HciOcfLeControllerCommands.ClearResolvingList;
+    const ocf = HciOcfLeControllerCommands.ClearResolvingList;
     await this.cmd.leController({ ocf });
   }
 
@@ -641,7 +772,7 @@ export class Hci extends EventEmitter {
 
   public async leSetAddressResolutionEnable(enable: boolean): Promise<void> {
     const ocf = HciOcfLeControllerCommands.SetAddressResolutionEnable;
-    const payload = Buffer.from([ enable ? 1 : 0 ]);
+    const payload = Buffer.from([enable ? 1 : 0]);
     await this.cmd.leController({ ocf, payload });
   }
 
@@ -685,7 +816,7 @@ export class Hci extends EventEmitter {
 
   public async leSetExtendedAdvertisingParametersV1(
     advertHandle: number,
-    params: LeExtendedAdvertisingParametersV1
+    params: LeExtendedAdvertisingParametersV1,
   ): Promise<number> {
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParameters;
     const payload = LeExtendedAdvertisingParametersV1.inParams(advertHandle, params);
@@ -695,7 +826,7 @@ export class Hci extends EventEmitter {
 
   public async leSetExtendedAdvertisingParametersV2(
     advertHandle: number,
-    params: LeExtendedAdvertisingParametersV2
+    params: LeExtendedAdvertisingParametersV2,
   ): Promise<number> {
     const ocf = HciOcfLeControllerCommands.SetExtendedAdvertisingParametersV2;
     const payload = LeExtendedAdvertisingParametersV2.inParams(advertHandle, params);
@@ -738,7 +869,7 @@ export class Hci extends EventEmitter {
   }
 
   public async leRemoveAdvertisingSet(advertHandle: number): Promise<void> {
-    const payload = Buffer.from([ advertHandle ]);
+    const payload = Buffer.from([advertHandle]);
     const ocf = HciOcfLeControllerCommands.RemoveAdvertisingSet;
     await this.cmd.leController({ ocf, payload });
   }
@@ -748,14 +879,18 @@ export class Hci extends EventEmitter {
     await this.cmd.leController({ ocf });
   }
 
-  public async leSetPeriodicAdvertisingParametersV1(params: LeSetPeriodicAdvertisingParametersV1): Promise<{ advertisingHandle: number }> {
+  public async leSetPeriodicAdvertisingParametersV1(
+    params: LeSetPeriodicAdvertisingParametersV1,
+  ): Promise<{ advertisingHandle: number }> {
     const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingParametersV1;
     const payload = LeSetPeriodicAdvertisingParametersV1.inParams(params);
     await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
     return LeSetPeriodicAdvertisingParametersV1.outParams(payload);
   }
 
-  public async leSetPeriodicAdvertisingParametersV2(params: LeSetPeriodicAdvertisingParametersV2): Promise<{ advertisingHandle: number }> {
+  public async leSetPeriodicAdvertisingParametersV2(
+    params: LeSetPeriodicAdvertisingParametersV2,
+  ): Promise<{ advertisingHandle: number }> {
     const ocf = HciOcfLeControllerCommands.SetPeriodicAdvertisingParametersV2;
     const payload = LeSetPeriodicAdvertisingParametersV2.inParams(params);
     await this.cmd.leController({ ocf, payload, advertisingHandle: params.advertisingHandle });
@@ -806,9 +941,7 @@ export class Hci extends EventEmitter {
 
   public async writeAclData(connectionHandle: number, packet: AclDataPacket): Promise<void> {
     const aclHdrSize = 4;
-    const hdr = connectionHandle <<  0 |
-                packet.boundary  << 12 |
-                packet.broadcast << 14;
+    const hdr = (connectionHandle << 0) | (packet.boundary << 12) | (packet.broadcast << 14);
 
     const totalSize = aclHdrSize + packet.data.length;
     const buffer = Buffer.alloc(totalSize);
@@ -828,7 +961,7 @@ export class Hci extends EventEmitter {
         return this.onAclData(data);
       }
       if (packetType === HciPacketType.HciCommand) {
-        debug('on-data-hci-cmd');
+        debug("on-data-hci-cmd");
         return;
       }
     } catch (err) {
@@ -843,9 +976,9 @@ export class Hci extends EventEmitter {
       return;
     }
 
-    const eventCode     = data[0];
+    const eventCode = data[0];
     const payloadLength = data[1];
-    const payload       = data.subarray(2);
+    const payload = data.subarray(2);
 
     if (payloadLength !== payload.length) {
       debug(`(evt) invalid payload size: ${payloadLength}/${payload.length}`);
@@ -853,7 +986,7 @@ export class Hci extends EventEmitter {
     }
 
     if (eventCode !== HciEvent.LeMeta) {
-      debug('on-hci-event', HciEvent[eventCode]);
+      debug("on-hci-event", HciEvent[eventCode]);
     }
 
     switch (eventCode) {
@@ -882,7 +1015,7 @@ export class Hci extends EventEmitter {
         this.onLeEvent(payload);
         break;
       default:
-        debug('on-event: unknown event');
+        debug("on-event: unknown event");
         break;
     }
   }
@@ -891,8 +1024,7 @@ export class Hci extends EventEmitter {
     if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
-      const message = `Failed ${label} with status ${HciErrorErrno[status]}` +
-        `\n    -> evt: ${JSON.stringify(event)}`;
+      const message = `Failed ${label} with status ${HciErrorErrno[status]}` + `\n    -> evt: ${JSON.stringify(event)}`;
       this.emit(label, makeHciError(message, status), event);
     }
   }
@@ -903,9 +1035,12 @@ export class Hci extends EventEmitter {
     }
 
     let o = 0;
-    const status            = payload.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
-    const reasonCode        = payload.readUIntLE(o, 1); o += 1;
+    const status = payload.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = payload.readUIntLE(o, 2);
+    o += 2;
+    const reasonCode = payload.readUIntLE(o, 1);
+    o += 1;
 
     const event: DisconnectionCompleteEvent = {
       connectionHandle,
@@ -915,7 +1050,7 @@ export class Hci extends EventEmitter {
       },
     };
 
-    this.emitEvent('DisconnectionComplete', status, event);
+    this.emitEvent("DisconnectionComplete", status, event);
   }
 
   private onEncryptionChange(payload: Buffer): void {
@@ -924,18 +1059,21 @@ export class Hci extends EventEmitter {
     }
 
     let o = 0;
-    const status            = payload.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = payload.readUIntLE(o, 2); o += 2;
-    const encEnabled        = payload.readUIntLE(o, 1); o += 1;
+    const status = payload.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = payload.readUIntLE(o, 2);
+    o += 2;
+    const encEnabled = payload.readUIntLE(o, 1);
+    o += 1;
 
     const event: EncryptionChangeEvent = { connectionHandle, encEnabled };
 
-    this.emitEvent('EncryptionChange', status, event);
+    this.emitEvent("EncryptionChange", status, event);
   }
 
   private onReadRemoteVersionInformationComplete(data: Buffer): void {
     const { status, event } = ReadRemoteVersionInformationComplete.parse(data);
-    this.emitEvent('ReadRemoteVersionInformationComplete', status, event);
+    this.emitEvent("ReadRemoteVersionInformationComplete", status, event);
   }
 
   private onCommandComplete(payload: Buffer): void {
@@ -945,9 +1083,9 @@ export class Hci extends EventEmitter {
     }
 
     this.cmd.onCmdResult({
-      status:           payload[3],
-      numHciPackets:    payload[0],
-      opcode:           payload.readUInt16LE(1),
+      status: payload[3],
+      numHciPackets: payload[0],
+      opcode: payload.readUInt16LE(1),
       returnParameters: payload.subarray(4),
     });
   }
@@ -959,9 +1097,9 @@ export class Hci extends EventEmitter {
     }
 
     this.cmd.onCmdResult({
-      status:         payload[0],
-      numHciPackets:  payload[1],
-      opcode:         payload.readUInt16LE(2),
+      status: payload[0],
+      numHciPackets: payload[1],
+      opcode: payload.readUInt16LE(2),
     });
   }
 
@@ -970,7 +1108,8 @@ export class Hci extends EventEmitter {
     const numCompletedPackets: number[] = [];
 
     let o = 0;
-    const numHandles = payload.readUIntLE(o, 1); o += 1;
+    const numHandles = payload.readUIntLE(o, 1);
+    o += 1;
 
     for (let i = 0; i < numHandles; i++, o += 2) {
       connectionHandles.push(payload.readUIntLE(o, 2));
@@ -980,7 +1119,7 @@ export class Hci extends EventEmitter {
     }
 
     for (let i = 0; i < numHandles; i++) {
-      this.emit('NumberOfCompletedPackets', null, {
+      this.emit("NumberOfCompletedPackets", null, {
         connectionHandle: connectionHandles[i],
         numCompletedPackets: numCompletedPackets[i],
       });
@@ -994,11 +1133,13 @@ export class Hci extends EventEmitter {
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
 
     const event: EncryptionKeyRefreshComplete = { connectionHandle };
-    this.emitEvent('EncryptionKeyRefreshComplete', status, event);
+    this.emitEvent("EncryptionKeyRefreshComplete", status, event);
   }
 
   private onLeEvent(data: Buffer): void {
@@ -1006,10 +1147,10 @@ export class Hci extends EventEmitter {
     const payload = data.subarray(1);
 
     if (eventCode !== HciEvent.LeMeta) {
-      debug('on-hci-le-event', HciLeEvent[eventCode]);
+      debug("on-hci-le-event", HciLeEvent[eventCode]);
     }
 
-    switch  (eventCode) {
+    switch (eventCode) {
       case HciLeEvent.ConnectionComplete:
         this.onLeConnectionComplete(payload);
         break;
@@ -1059,104 +1200,104 @@ export class Hci extends EventEmitter {
         this.onLeChannelSelectionAlgorithm(payload);
         break;
       default:
-        debug('on-le-event: unknown event');
-        break
+        debug("on-le-event: unknown event");
+        break;
     }
   }
 
   private onLeConnectionComplete(data: Buffer): void {
     const { status, event } = LeConnectionComplete.parse(data);
-    this.emitEvent('LeConnectionComplete', status, event);
+    this.emitEvent("LeConnectionComplete", status, event);
   }
 
   private onLeAdvertisingReport(data: Buffer): void {
     const reports = LeAdvReport.parse(data);
 
     for (const report of reports) {
-      this.emit('LeAdvertisingReport', report);
+      this.emit("LeAdvertisingReport", report);
     }
   }
 
   private onLeConnectionUpdateComplete(data: Buffer): void {
     const { status, event } = LeConnectionUpdateComplete.parse(data);
-    this.emitEvent('LeConnectionUpdateComplete', status, event);
+    this.emitEvent("LeConnectionUpdateComplete", status, event);
   }
 
   private onLeReadRemoteFeaturesComplete(data: Buffer): void {
     const { status, event } = LeReadRemoteFeaturesComplete.parse(data);
-    this.emitEvent('LeReadRemoteFeaturesComplete', status, event);
+    this.emitEvent("LeReadRemoteFeaturesComplete", status, event);
   }
 
   private onLeLongTermKeyRequest(data: Buffer): void {
     const event = LeLongTermKeyRequest.parse(data);
-    this.emit('LeLongTermKeyRequest', null, event);
+    this.emit("LeLongTermKeyRequest", null, event);
   }
 
   private onLeRemoteConnectionParameterRequest(data: Buffer): void {
     const event = LeRemoteConnectionParameterRequest.parse(data);
-    this.emit('LeRemoteConnectionParameterRequest', null, event);
+    this.emit("LeRemoteConnectionParameterRequest", null, event);
   }
 
   private onLeDataLengthChange(data: Buffer): void {
     const event = LeDataLengthChange.parse(data);
-    this.emit('LeDataLengthChange', null, event);
+    this.emit("LeDataLengthChange", null, event);
   }
 
   private onLeReadLocalP256PublicKeyComplete(data: Buffer): void {
     const { status, event } = LeReadLocalP256PublicKeyComplete.parse(data);
-    this.emitEvent('LeReadLocalP256PublicKeyComplete', status, event);
+    this.emitEvent("LeReadLocalP256PublicKeyComplete", status, event);
   }
 
   private onLeGenerateDhKeyComplete(data: Buffer): void {
     const { status, event } = LeGenerateDhKeyComplete.parse(data);
-    this.emitEvent('LeGenerateDhKeyComplete', status, event);
+    this.emitEvent("LeGenerateDhKeyComplete", status, event);
   }
 
   private onLeEnhancedConnectionComplete(data: Buffer): void {
     const { status, event } = LeEnhConnectionComplete.parse(data);
-    this.emitEvent('LeEnhancedConnectionComplete', status, event);
+    this.emitEvent("LeEnhancedConnectionComplete", status, event);
   }
 
   private onLeDirectedAdvertisingReport(data: Buffer): void {
     const reports = LeDirectedAdvertisingReport.parse(data);
 
     for (const report of reports) {
-      this.emit('LeDirectedAdvertisingReport', report);
+      this.emit("LeDirectedAdvertisingReport", report);
     }
   }
 
   private onLePhyUpdateComplete(data: Buffer): void {
     const { status, event } = LePhyUpdateComplete.parse(data);
-    this.emitEvent('LePhyUpdateComplete', status, event);
+    this.emitEvent("LePhyUpdateComplete", status, event);
   }
 
   private onLeExtendedAdvertisingReport(data: Buffer): void {
     const reports = LeExtAdvReport.parse(data);
 
     for (const report of reports) {
-      this.emit('LeExtendedAdvertisingReport', report);
+      this.emit("LeExtendedAdvertisingReport", report);
     }
   }
 
   private onLeScanTimeout(): void {
-    this.emit('LeScanTimeout');
+    this.emit("LeScanTimeout");
   }
 
   private onLeAdvertisingSetTerminated(data: Buffer): void {
     const { status, event } = LeAdvertisingSetTerminated.parse(data);
-    this.emitEvent('LeAdvertisingSetTerminated', status, event);
+    this.emitEvent("LeAdvertisingSetTerminated", status, event);
   }
 
   private onLeChannelSelectionAlgorithm(data: Buffer): void {
     const event = LeChannelSelAlgo.parse(data);
-    this.emit('LeChannelSelectionAlgorithm', null, event);
+    this.emit("LeChannelSelectionAlgorithm", null, event);
   }
 
   private onAclData(data: Buffer): void {
     debug(`acl-data`);
     const aclHdrSize = 4;
 
-    const hdr  = data.readUIntLE(0, 2);
+    const hdr = data.readUIntLE(0, 2);
     const size = data.readUIntLE(2, 2);
 
     const rxSize = data.length - aclHdrSize;
@@ -1165,9 +1306,9 @@ export class Hci extends EventEmitter {
       debug(`acl-data: invalid size ${size} vs ${rxSize}`);
     }
 
-    const connectionHandle  = (hdr >>  0) & 0x0FFF;
-    const boundary          = (hdr >> 12) & 0x0003;
-    const broadcast         = (hdr >> 14) & 0x0003;
+    const connectionHandle = (hdr >> 0) & 0x0fff;
+    const boundary = (hdr >> 12) & 0x0003;
+    const broadcast = (hdr >> 14) & 0x0003;
 
     const result: AclDataPacket = {
       boundary,
@@ -1175,7 +1316,7 @@ export class Hci extends EventEmitter {
       data: data.subarray(aclHdrSize),
     };
 
-    this.emit('AclData', connectionHandle, result);
+    this.emit("AclData", connectionHandle, result);
   }
 
   // Utils
@@ -1183,7 +1324,7 @@ export class Hci extends EventEmitter {
     connectionHandle: number;
     event: HciConnEvent;
     timeoutMs?: number;
-  }): { promise: Promise<T>, cancel: () => void } {
+  }): { promise: Promise<T>; cancel: () => void } {
     let resolve: (res: T) => void = () => {};
     let reject: (err: Error) => void = () => {};
     const onTimeout = () => {
@@ -1195,7 +1336,7 @@ export class Hci extends EventEmitter {
     const cleanup = () => {
       clearTimeout(timerId);
       this.off(params.event, onEvent);
-      this.off('DisconnectionComplete', onDisconnected);
+      this.off("DisconnectionComplete", onDisconnected);
     };
     const onEvent = (err: Error | null, res: T) => {
       if (res.connectionHandle === params.connectionHandle) {
@@ -1217,7 +1358,7 @@ export class Hci extends EventEmitter {
       resolve = res;
       reject = rej;
       this.on(params.event, onEvent);
-      this.on('DisconnectionComplete', onDisconnected);
+      this.on("DisconnectionComplete", onDisconnected);
     });
     return { promise, cancel: cleanup };
   }

@@ -1,28 +1,28 @@
-import Debug from 'debug';
-import { EventEmitter } from 'events';
+import Debug from "debug";
+import { EventEmitter } from "events";
 
-import { Att, AttDataEntry } from './AttGlue.js';
-import { GattService } from './GattService.js';
-import { GattCharacteristic } from './GattCharacteristic.js';
-import { GattDescriptor } from './GattDescriptor.js';
-import { Profile, GattDirectory } from './GattDirectory.js';
+import { Att, AttDataEntry } from "./AttGlue.js";
+import { GattService } from "./GattService.js";
+import { GattCharacteristic } from "./GattCharacteristic.js";
+import { GattDescriptor } from "./GattDescriptor.js";
+import { Profile, GattDirectory } from "./GattDirectory.js";
 
-import { UUID } from '../utils/UUID.js';
-import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from '../att/AttSerDes.js';
+import { UUID } from "../utils/UUID.js";
+import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from "../att/AttSerDes.js";
 
-const debug = Debug('bt-hci-gatt');
+const debug = Debug("bt-hci-gatt");
 
-export enum  GattProfileAttributeType {
-  PrimaryService                    = 0x2800, // Primary Service Declaration
-  SecondaryService                  = 0x2801, // Secondary Service Declaration
-  Include                           = 0x2802, // Include Declaration
-  Characteristic                    = 0x2803, // Characteristic Declaration
-  CharacteristicExtendedProperties  = 0x2900, // Characteristic Extended Properties
-  CharacteristicUserDescription     = 0x2901, // Characteristic User Description Descriptor
+export enum GattProfileAttributeType {
+  PrimaryService = 0x2800, // Primary Service Declaration
+  SecondaryService = 0x2801, // Secondary Service Declaration
+  Include = 0x2802, // Include Declaration
+  Characteristic = 0x2803, // Characteristic Declaration
+  CharacteristicExtendedProperties = 0x2900, // Characteristic Extended Properties
+  CharacteristicUserDescription = 0x2901, // Characteristic User Description Descriptor
   ClientCharacteristicConfiguration = 0x2902, // Client Characteristic Configuration Descriptor
   ServerCharacteristicConfiguration = 0x2903, // Server Characteristic Configuration Descriptor
-  CharacteristicPresentationFormat  = 0x2904, // Characteristic Presentation Format Descriptor
-  CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
+  CharacteristicPresentationFormat = 0x2904, // Characteristic Presentation Format Descriptor
+  CharacteristicAggregateFormat = 0x2905, // Characteristic Aggregate Format Descriptor
 }
 
 interface GattHvxParams {
@@ -33,13 +33,13 @@ interface GattHvxParams {
 }
 
 export interface GattClient {
-  on(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
-  once(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
-  removeListener(event: 'GattNotification', listener: (event: GattHvxParams) => void): this;
+  on(event: "GattNotification", listener: (event: GattHvxParams) => void): this;
+  once(event: "GattNotification", listener: (event: GattHvxParams) => void): this;
+  removeListener(event: "GattNotification", listener: (event: GattHvxParams) => void): this;
 
-  on(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
-  once(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
-  removeListener(event: 'GattIndication', listener: (event: GattHvxParams) => void): this;
+  on(event: "GattIndication", listener: (event: GattHvxParams) => void): this;
+  once(event: "GattIndication", listener: (event: GattHvxParams) => void): this;
+  removeListener(event: "GattIndication", listener: (event: GattHvxParams) => void): this;
 }
 
 export class GattClient extends EventEmitter {
@@ -53,15 +53,15 @@ export class GattClient extends EventEmitter {
   constructor(private att: Att, profile?: Profile) {
     super();
     this.directory = new GattDirectory(profile);
-    att.on('Disconnected', this.onDisconnected);
-    att.on('HandleValueInd', this.onValueIndication);
-    att.on('HandleValueNtf', this.onValueNotification);
+    att.on("Disconnected", this.onDisconnected);
+    att.on("HandleValueInd", this.onValueIndication);
+    att.on("HandleValueNtf", this.onValueNotification);
   }
 
   private destroy(): void {
-    this.att.off('Disconnected', this.onDisconnected);
-    this.att.off('HandleValueInd', this.onValueIndication);
-    this.att.off('handleValueNtf', this.onValueNotification);
+    this.att.off("Disconnected", this.onDisconnected);
+    this.att.off("HandleValueInd", this.onValueIndication);
+    this.att.off("handleValueNtf", this.onValueNotification);
     this.removeAllListeners();
   }
 
@@ -73,7 +73,7 @@ export class GattClient extends EventEmitter {
     if (!entry) {
       return;
     }
-    this.emit('GattIndication', {
+    this.emit("GattIndication", {
       service: entry.service,
       characteristic: entry.characteristic,
       descriptor: entry.descriptor,
@@ -86,7 +86,7 @@ export class GattClient extends EventEmitter {
     if (!entry) {
       return;
     }
-    this.emit('GattNotification', {
+    this.emit("GattNotification", {
       service: entry.service,
       characteristic: entry.characteristic,
       descriptor: entry.descriptor,
@@ -97,27 +97,27 @@ export class GattClient extends EventEmitter {
   public async discover(): Promise<Profile> {
     const services = await this.discoverServices();
     for (const service of services) {
-      debug('service', service);
+      debug("service", service);
 
       const includedServices = await this.discoverIncludedServices(service);
       for (const includedService of includedServices) {
-        debug('inc-service', includedService);
+        debug("inc-service", includedService);
       }
 
       const characteristics = await this.discoverCharacteristics(service);
       for (const characteristic of characteristics) {
-        debug('characteristic', characteristic);
+        debug("characteristic", characteristic);
 
         const descriptors = await this.discoverDescriptors(characteristic);
 
         for (const descriptor of descriptors) {
-          debug('descriptor', descriptor);
+          debug("descriptor", descriptor);
         }
       }
     }
 
     const profile = this.directory.Profile;
-    this.emit('GattDiscovery', { profile });
+    this.emit("GattDiscovery", { profile });
     return profile;
   }
 
@@ -127,7 +127,7 @@ export class GattClient extends EventEmitter {
       return cacheServices;
     }
     const type = GattProfileAttributeType.PrimaryService;
-    const entries = await this.readByGroupTypeReqBetween(type, 1, 0xFFFF);
+    const entries = await this.readByGroupTypeReqBetween(type, 1, 0xffff);
     const services = entries.map((e) => GattService.fromAttData(e).toObject());
     this.directory.saveServices(services);
     return services;
@@ -174,7 +174,10 @@ export class GattClient extends EventEmitter {
     return result.mtu;
   }
 
-  public findCharacteristicByUuids(uuids: { serviceUuid: string; characteristicUuid: string }): GattCharacteristic.AsObject | null {
+  public findCharacteristicByUuids(uuids: {
+    serviceUuid: string;
+    characteristicUuid: string;
+  }): GattCharacteristic.AsObject | null {
     return this.directory.findCharacteristicByUuids(uuids);
   }
 
@@ -187,16 +190,16 @@ export class GattClient extends EventEmitter {
     const blob = await this.att.readReq({ attributeHandle: handle });
 
     let part = blob.attributeValue;
-    let value = Buffer.concat([ part ]);
+    let value = Buffer.concat([part]);
 
-    while (part.length === (this.mtu - 1)) {
+    while (part.length === this.mtu - 1) {
       const blob = await this.att.readBlobReq({
         attributeHandle: handle,
         valueOffset: value.length,
       });
 
       part = blob.partAttributeValue;
-      value = Buffer.concat([ value, part ]);
+      value = Buffer.concat([value, part]);
     }
 
     return value;
@@ -213,14 +216,13 @@ export class GattClient extends EventEmitter {
   }
 
   public async startCharacteristicsNotifications(char: GattCharacteristic.AsObject, requireAck: boolean) {
-    if (!requireAck && !char.properties.notify ||
-         requireAck && !char.properties.indicate) {
-      throw new Error('Cannot start notification on characteristic');
+    if ((!requireAck && !char.properties.notify) || (requireAck && !char.properties.indicate)) {
+      throw new Error("Cannot start notification on characteristic");
     }
 
     const attributeHandle = await this.getCCCDescriptorHandle(char);
     if (!attributeHandle) {
-      throw new Error('CCCD not found');
+      throw new Error("CCCD not found");
     }
 
     const enableNotificationBitfield = requireAck ? 2 : 1;
@@ -233,7 +235,7 @@ export class GattClient extends EventEmitter {
   public async stopCharacteristicsNotifications(char: GattCharacteristic.AsObject) {
     const attributeHandle = await this.getCCCDescriptorHandle(char);
     if (!attributeHandle) {
-      throw new Error('CCCD not found');
+      throw new Error("CCCD not found");
     }
 
     const attributeValue = Buffer.alloc(0);
@@ -241,13 +243,17 @@ export class GattClient extends EventEmitter {
   }
 
   private getCCCDescriptorHandle(char: GattCharacteristic.AsObject): number | null {
-    return this.directory.findDescriptor(
-      char.handle,
-      GattProfileAttributeType.ClientCharacteristicConfiguration
-    )?.handle ?? null;
+    return (
+      this.directory.findDescriptor(char.handle, GattProfileAttributeType.ClientCharacteristicConfiguration)?.handle ??
+      null
+    );
   }
 
-  private async readByGroupTypeReqBetween(attributeGroupType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+  private async readByGroupTypeReqBetween(
+    attributeGroupType: number,
+    startingHandle: number,
+    endingHandle: number,
+  ): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
@@ -265,7 +271,7 @@ export class GattClient extends EventEmitter {
       }
     } catch (e) {
       const err = e as NodeJS.ErrnoException;
-      if (err.code !== 'AttributeNotFound') {
+      if (err.code !== "AttributeNotFound") {
         throw err;
       }
     }
@@ -275,11 +281,16 @@ export class GattClient extends EventEmitter {
   private async readByGroupType(attributeGroupType: number, startingHandle: number, endingHandle: number) {
     return await this.att.readByGroupTypeReq({
       attributeGroupType: UUID.from(attributeGroupType, 2),
-      startingHandle, endingHandle,
+      startingHandle,
+      endingHandle,
     });
   }
 
-  private async readByTypeBetween(attributeType: number, startingHandle: number, endingHandle: number): Promise<AttDataEntry[]> {
+  private async readByTypeBetween(
+    attributeType: number,
+    startingHandle: number,
+    endingHandle: number,
+  ): Promise<AttDataEntry[]> {
     const attributeData: AttDataEntry[] = [];
     try {
       --startingHandle;
@@ -297,7 +308,7 @@ export class GattClient extends EventEmitter {
       }
     } catch (e) {
       const err = e as NodeJS.ErrnoException;
-      if (err.code !== 'AttributeNotFound') {
+      if (err.code !== "AttributeNotFound") {
         throw err;
       }
     }
@@ -307,7 +318,8 @@ export class GattClient extends EventEmitter {
   private async readByTypeReq(attributeType: number, startingHandle: number, endingHandle: number) {
     return await this.att.readByTypeReq({
       attributeType: UUID.from(attributeType, 2),
-      startingHandle, endingHandle,
+      startingHandle,
+      endingHandle,
     });
   }
 
@@ -317,7 +329,8 @@ export class GattClient extends EventEmitter {
       --startingHandle;
       while (startingHandle < endingHandle) {
         const data = await this.att.findInformationReq({
-          startingHandle: startingHandle + 1, endingHandle,
+          startingHandle: startingHandle + 1,
+          endingHandle,
         });
         for (const entry of data) {
           const previous = attributeData.at(-1);
@@ -330,7 +343,7 @@ export class GattClient extends EventEmitter {
       }
     } catch (e) {
       const err = e as NodeJS.ErrnoException;
-      if (err.code !== 'AttributeNotFound') {
+      if (err.code !== "AttributeNotFound") {
         throw err;
       }
     }

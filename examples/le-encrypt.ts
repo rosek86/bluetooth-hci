@@ -1,4 +1,4 @@
-import { HciAdapter, LeDhKeyV2KeyType, createHciSerial } from '../src';
+import { HciAdapter, LeDhKeyV2KeyType, createHciSerial } from "../src";
 
 (async () => {
   const adapter = new HciAdapter(await createHciSerial());
@@ -13,28 +13,28 @@ import { HciAdapter, LeDhKeyV2KeyType, createHciSerial } from '../src';
     readLocalP256PublicKeyComplete: true,
   });
 
-  hci.on('LeGenerateDhKeyComplete', (status, event) => {
-    console.log('LeGenerateDhKeyComplete', status, event);
+  hci.on("LeGenerateDhKeyComplete", (status, event) => {
+    console.log("LeGenerateDhKeyComplete", status, event);
   });
-  hci.on('LeReadLocalP256PublicKeyComplete', (status, event) => {
-    console.log('LeReadLocalP256PublicKeyComplete', status, event);
+  hci.on("LeReadLocalP256PublicKeyComplete", (status, event) => {
+    console.log("LeReadLocalP256PublicKeyComplete", status, event);
   });
 
-  if (commands.isSupported('leEncrypt')) {
-    const key = Buffer.from('0123456789ABCDEF');
-    const data = Buffer.from('0123456789ABCDEF');
+  if (commands.isSupported("leEncrypt")) {
+    const key = Buffer.from("0123456789ABCDEF");
+    const data = Buffer.from("0123456789ABCDEF");
     const result = await hci.leEncrypt(key, data);
     console.log(`Encrypted:`, result);
   }
 
-  if (commands.isSupported('leGenerateDhKeyV2')) {
+  if (commands.isSupported("leGenerateDhKeyV2")) {
     await hci.leGenerateDhKeyV2({
       publicKey: Buffer.alloc(64),
       keyType: LeDhKeyV2KeyType.UseDebugPrivateKey,
     });
   }
 
-  if (commands.isSupported('leReadLocalP256PublicKey')) {
+  if (commands.isSupported("leReadLocalP256PublicKey")) {
     await hci.leReadLocalP256PublicKey();
   }
 })();

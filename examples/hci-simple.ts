@@ -1,5 +1,5 @@
-import { createHciSerial } from '../src';
-import { Hci, H4 } from '../src';
+import { createHciSerial } from "../src";
+import { Hci, H4 } from "../src";
 
 (async () => {
   const port = await createHciSerial();
@@ -13,7 +13,7 @@ import { Hci, H4 } from '../src';
 
   const h4 = new H4();
 
-  port.on('data', (data) => {
+  port.on("data", (data) => {
     let result = h4.parse(data);
     do {
       if (result) {

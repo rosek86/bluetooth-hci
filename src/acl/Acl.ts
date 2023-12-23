@@ -2,7 +2,7 @@ export enum AclDataBoundary {
   FirstNoFlushFrag,
   NextFrag,
   FirstFrag,
-  Complete
+  Complete,
 }
 
 export enum AclDataBroadcast {

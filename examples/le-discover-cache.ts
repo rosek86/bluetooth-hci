@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import chalk from 'chalk';
+import fs from "fs/promises";
+import chalk from "chalk";
 
 import {
   createHciSerial,
@@ -18,8 +18,8 @@ import {
   Address,
   HciError,
   HciErrorErrno,
-  LeConnectionUpdate
-} from '../src';
+  LeConnectionUpdate,
+} from "../src";
 
 class App extends NbleGapCentral {
   private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();
@@ -46,7 +46,7 @@ class App extends NbleGapCentral {
       },
     });
 
-    this.on('error', (err) => console.log('NbleGapCentral Error:', err));
+    this.on("error", (err) => console.log("NbleGapCentral Error:", err));
   }
 
   protected async onAdvert(report: GapAdvertReport): Promise<void> {
@@ -67,7 +67,6 @@ class App extends NbleGapCentral {
 
       const name = this.getCompleteLocalName(report.address);
       console.log(`Connecting to ${report.address.toString()} (${name}) at RSSI ${report.rssi} dBm...`);
-
     } catch (e) {
       if (e instanceof HciError && e.errno === HciErrorErrno.CommandDisallowed) {
         return; // ignore
@@ -92,7 +91,9 @@ class App extends NbleGapCentral {
 
   private getCompleteLocalName(address: Address) {
     const storeValue = this.advReportStorage.get(address.toNumeric()) ?? {};
-    return storeValue.advertisement?.data?.completeLocalName ?? storeValue.scanResponse?.data?.completeLocalName ?? 'N/A';
+    return (
+      storeValue.advertisement?.data?.completeLocalName ?? storeValue.scanResponse?.data?.completeLocalName ?? "N/A"
+    );
   }
 
   protected async onConnected(event: GapConnectEvent, gatt: GattClient): Promise<void> {
@@ -116,13 +117,13 @@ class App extends NbleGapCentral {
           ...connectionParameters,
           connectionIntervalMinMs: 7.5,
           connectionIntervalMaxMs: 7.5,
-        })
+        }),
       );
 
       console.log(`Discovering services on ${event.address.toString()}...`);
       const profile = await gatt.discover();
       this.saveProfile(event.address, profile); // cache profile
-      console.log('Discovered services on', event.address.toString());
+      console.log("Discovered services on", event.address.toString());
 
       this.printManufacturerInfo(event);
       printProfile(gatt.Profile);
@@ -132,30 +133,32 @@ class App extends NbleGapCentral {
         return; // ignore
       }
       console.log(e);
-      console.log('Disconnecting...');
-      await this.disconnect(event.connectionHandle)
-        .catch(() => {});
+      console.log("Disconnecting...");
+      await this.disconnect(event.connectionHandle).catch(() => {});
     }
   }
 
   private printManufacturerInfo(event: GapConnectEvent) {
     const versionInformation = this.gap.getRemoteVersionInformation(event.connectionHandle);
-    console.log('Manufacturer (RF):   ', chalk.blue(this.adapter.manufacturerNameFromCode(versionInformation.manufacturerName)));
+    console.log(
+      "Manufacturer (RF):   ",
+      chalk.blue(this.adapter.manufacturerNameFromCode(versionInformation.manufacturerName)),
+    );
 
     const storeValue = this.advReportStorage.get(event.address.toNumeric()) ?? {};
-    const identifier = storeValue.advertisement?.data?.manufacturerData?.ident ??
-                       storeValue.scanResponse?.data?.manufacturerData?.ident;
+    const identifier =
+      storeValue.advertisement?.data?.manufacturerData?.ident ?? storeValue.scanResponse?.data?.manufacturerData?.ident;
     if (identifier) {
-      console.log('Manufacturer (PROD): ', chalk.blue(this.adapter.manufacturerNameFromCode(identifier)));
+      console.log("Manufacturer (PROD): ", chalk.blue(this.adapter.manufacturerNameFromCode(identifier)));
     }
   }
 
   protected async onDisconnected(reason: DisconnectionCompleteEvent): Promise<void> {
-    console.log('Disconnected', reason.connectionHandle, reason.reason);
+    console.log("Disconnected", reason.connectionHandle, reason.reason);
   }
 
   protected async onConnectionCancelled(): Promise<void> {
-    console.log('Connection cancelled (timeout)');
+    console.log("Connection cancelled (timeout)");
   }
 
   private async saveProfilesToFile() {
@@ -166,10 +169,10 @@ class App extends NbleGapCentral {
           advertisement: this.advReportStorage.get(key)?.advertisement,
           scanResponse: this.advReportStorage.get(key)?.scanResponse,
           profile: entry.profile,
-        }
+        };
       });
-      console.log('writing gatt-profiles.json', GapProfileStorage.Size);
-      await fs.writeFile('gatt-profiles.json', JSON.stringify(entries, null, 2));
+      console.log("writing gatt-profiles.json", GapProfileStorage.Size);
+      await fs.writeFile("gatt-profiles.json", JSON.stringify(entries, null, 2));
     } catch (e) {
       console.log(e);
     }
@@ -184,11 +187,11 @@ class App extends NbleGapCentral {
     await app.start();
   } catch (e) {
     const err = e as Error;
-    console.log('le-discover-cache', err.message);
+    console.log("le-discover-cache", err.message);
   }
 })();
 
-process.on('unhandledRejection', (error) => {
-  console.error('unhandledRejection', error);
+process.on("unhandledRejection", (error) => {
+  console.error("unhandledRejection", error);
   throw error;
 });

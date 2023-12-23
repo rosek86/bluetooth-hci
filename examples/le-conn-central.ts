@@ -6,8 +6,8 @@ import {
   LeScanFilterDuplicates,
   GapCentral,
   HciAdapter,
-  createHciSerial
-} from '../src';
+  createHciSerial,
+} from "../src";
 
 (async () => {
   try {
@@ -28,34 +28,36 @@ import {
         Phy1M: {
           type: LeScanType.Active,
           intervalMs: 11.25,
-          windowMs: 11.25
+          windowMs: 11.25,
         },
       },
     });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
 
-    gap.on('GapLeScanState', (scanning) => {
-      console.log('scanning', scanning);
+    gap.on("GapLeScanState", (scanning) => {
+      console.log("scanning", scanning);
     });
 
     let connecting = false;
-    gap.on('GapLeAdvReport', async (report) => {
-      if (connecting) { return; }
-      if (report.address.toString() !== 'AA:BB:CC:DD:EE:FF') {
+    gap.on("GapLeAdvReport", async (report) => {
+      if (connecting) {
+        return;
+      }
+      if (report.address.toString() !== "AA:BB:CC:DD:EE:FF") {
         return;
       }
 
       connecting = true;
-      console.log('connecting...');
+      console.log("connecting...");
       await gap.stopScanning();
       await gap.connect({ peerAddress: report.address });
     });
 
-    gap.on('GapConnected', async (event) => {
+    gap.on("GapConnected", async (event) => {
       connecting = false;
 
       console.log(
-        'connected',
+        "connected",
         event.connectionHandle,
         event.connectionParams,
         event.versionInfo,
@@ -71,19 +73,20 @@ import {
       console.log(`Power Level: ${powerLevels.current}/${powerLevels.maximum} dBm`);
 
       const phy = await hci.leReadPhy(event.connectionHandle);
-      console.log('PHY:', phy);
+      console.log("PHY:", phy);
 
       const dataLength = await hci.leSetDataLengthAwait(event.connectionHandle, {
         txOctets: 200,
-        txTime:   2000,
+        txTime: 2000,
       });
-      console.log('data-length', dataLength);
+      console.log("data-length", dataLength);
 
       const mtu = await att.exchangeMtuReq({ mtu: 200 });
-      console.log('mtu', mtu);
+      console.log("mtu", mtu);
 
       const info = await att.findInformationReq({
-        startingHandle: 0x0001, endingHandle: 0xFFFF,
+        startingHandle: 0x0001,
+        endingHandle: 0xffff,
       });
       console.log(info);
 
@@ -103,8 +106,8 @@ import {
       }, 2000);
     });
 
-    gap.on('GapDisconnected', (reason) => {
-      console.log('disconnected', reason);
+    gap.on("GapDisconnected", (reason) => {
+      console.log("disconnected", reason);
     });
   } catch (e) {
     const err = e as Error;

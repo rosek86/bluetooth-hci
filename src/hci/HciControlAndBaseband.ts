@@ -69,16 +69,16 @@ export class SetEventMask {
   static inParams(events: Partial<EventMask>): InParams<HciOcfControlAndBasebandCommands.SetEventMask> {
     let mask = 0n;
 
-    mask = bitSet(mask, 0n,  events.inquiryComplete);
-    mask = bitSet(mask, 1n,  events.inquiryResult);
-    mask = bitSet(mask, 2n,  events.connectionComplete);
-    mask = bitSet(mask, 3n,  events.connectionRequest);
-    mask = bitSet(mask, 4n,  events.disconnectionComplete);
-    mask = bitSet(mask, 5n,  events.authenticationComplete);
-    mask = bitSet(mask, 6n,  events.remoteNameRequestComplete);
-    mask = bitSet(mask, 7n,  events.encryptionChange);
-    mask = bitSet(mask, 8n,  events.changeConnectionLinkKeyComplete);
-    mask = bitSet(mask, 9n,  events.masterLinkKeyComplete);
+    mask = bitSet(mask, 0n, events.inquiryComplete);
+    mask = bitSet(mask, 1n, events.inquiryResult);
+    mask = bitSet(mask, 2n, events.connectionComplete);
+    mask = bitSet(mask, 3n, events.connectionRequest);
+    mask = bitSet(mask, 4n, events.disconnectionComplete);
+    mask = bitSet(mask, 5n, events.authenticationComplete);
+    mask = bitSet(mask, 6n, events.remoteNameRequestComplete);
+    mask = bitSet(mask, 7n, events.encryptionChange);
+    mask = bitSet(mask, 8n, events.changeConnectionLinkKeyComplete);
+    mask = bitSet(mask, 9n, events.masterLinkKeyComplete);
     mask = bitSet(mask, 10n, events.readRemoteSupportedFeaturesComplete);
     mask = bitSet(mask, 11n, events.readRemoteVersionInformationComplete);
     mask = bitSet(mask, 12n, events.qosSetupComplete);
@@ -132,7 +132,10 @@ export enum ReadTransmitPowerLevelType {
 }
 
 export class ReadTransmitPowerLevel {
-  static inParams(connectionHandle: number, type: ReadTransmitPowerLevelType): InParamsConn<HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
+  static inParams(
+    connectionHandle: number,
+    type: ReadTransmitPowerLevelType,
+  ): InParamsConn<HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
     const payload = Buffer.alloc(3);
     payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(type, 2);
@@ -148,9 +151,9 @@ export class ReadTransmitPowerLevel {
 }
 
 export enum FlowControlEnable {
-  Off       = 0x00,
-  AclOn     = 0x01,
-  SyncOn    = 0x02,
+  Off = 0x00,
+  AclOn = 0x01,
+  SyncOn = 0x02,
   AclSyncOn = 0x03,
 }
 
@@ -194,31 +197,31 @@ export class SetEventMask2 {
   static inParams(events: Partial<EventMask2>): Buffer {
     let mask = 0n;
 
-    mask = bitSet(mask, 0n,   events.physicalLinkComplete);
-    mask = bitSet(mask, 1n,   events.channelSelected);
-    mask = bitSet(mask, 2n,   events.disconnectionPhysicalLinkComplete);
-    mask = bitSet(mask, 3n,   events.physicalLinkLossEarlyWarning);
-    mask = bitSet(mask, 4n,   events.physicalLinkRecovery);
-    mask = bitSet(mask, 5n,   events.logicalLinkComplete);
-    mask = bitSet(mask, 6n,   events.disconnectionLogicalLinkComplete);
-    mask = bitSet(mask, 7n,   events.flowSpecModifyComplete);
-    mask = bitSet(mask, 8n,   events.numberOfCompletedDataBlocks);
-    mask = bitSet(mask, 9n,   events.ampStartTest);
-    mask = bitSet(mask, 10n,  events.ampTestEnd);
-    mask = bitSet(mask, 11n,  events.ampReceiverReport);
-    mask = bitSet(mask, 12n,  events.shortRangeModeChangeComplete);
-    mask = bitSet(mask, 13n,  events.ampStatusChange);
-    mask = bitSet(mask, 14n,  events.triggeredClockCapture);
-    mask = bitSet(mask, 15n,  events.synchronizationTrainComplete);
-    mask = bitSet(mask, 16n,  events.synchronizationTrainReceived);
-    mask = bitSet(mask, 17n,  events.connectionlessSlaveBroadcastReceive);
-    mask = bitSet(mask, 18n,  events.connectionlessSlaveBroadcastTimeout);
-    mask = bitSet(mask, 19n,  events.truncatedPageComplete);
-    mask = bitSet(mask, 20n,  events.slavePageResponseTimeout);
-    mask = bitSet(mask, 21n,  events.connectionlessSlaveBroadcastChannelMapChange);
-    mask = bitSet(mask, 22n,  events.inquiryResponseNotification);
-    mask = bitSet(mask, 23n,  events.authenticatedPayloadTimeoutExpired);
-    mask = bitSet(mask, 24n,  events.samStatusChange);
+    mask = bitSet(mask, 0n, events.physicalLinkComplete);
+    mask = bitSet(mask, 1n, events.channelSelected);
+    mask = bitSet(mask, 2n, events.disconnectionPhysicalLinkComplete);
+    mask = bitSet(mask, 3n, events.physicalLinkLossEarlyWarning);
+    mask = bitSet(mask, 4n, events.physicalLinkRecovery);
+    mask = bitSet(mask, 5n, events.logicalLinkComplete);
+    mask = bitSet(mask, 6n, events.disconnectionLogicalLinkComplete);
+    mask = bitSet(mask, 7n, events.flowSpecModifyComplete);
+    mask = bitSet(mask, 8n, events.numberOfCompletedDataBlocks);
+    mask = bitSet(mask, 9n, events.ampStartTest);
+    mask = bitSet(mask, 10n, events.ampTestEnd);
+    mask = bitSet(mask, 11n, events.ampReceiverReport);
+    mask = bitSet(mask, 12n, events.shortRangeModeChangeComplete);
+    mask = bitSet(mask, 13n, events.ampStatusChange);
+    mask = bitSet(mask, 14n, events.triggeredClockCapture);
+    mask = bitSet(mask, 15n, events.synchronizationTrainComplete);
+    mask = bitSet(mask, 16n, events.synchronizationTrainReceived);
+    mask = bitSet(mask, 17n, events.connectionlessSlaveBroadcastReceive);
+    mask = bitSet(mask, 18n, events.connectionlessSlaveBroadcastTimeout);
+    mask = bitSet(mask, 19n, events.truncatedPageComplete);
+    mask = bitSet(mask, 20n, events.slavePageResponseTimeout);
+    mask = bitSet(mask, 21n, events.connectionlessSlaveBroadcastChannelMapChange);
+    mask = bitSet(mask, 22n, events.inquiryResponseNotification);
+    mask = bitSet(mask, 23n, events.authenticatedPayloadTimeoutExpired);
+    mask = bitSet(mask, 24n, events.samStatusChange);
 
     const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
@@ -247,9 +250,9 @@ export class WriteLeHostSupported {
 }
 
 export interface HostBufferSize {
-  hostAclDataPacketLength:     number;
-  hostSyncDataPacketLength:    number;
-  hostTotalNumAclDataPackets:  number;
+  hostAclDataPacketLength: number;
+  hostSyncDataPacketLength: number;
+  hostTotalNumAclDataPackets: number;
   hostTotalNumSyncDataPackets: number;
 }
 
@@ -268,7 +271,7 @@ export interface CompletedPackets {
 
 export class HostNumberOfCompletedPackets {
   static inParams(completedPackets: CompletedPackets[]): Buffer {
-    const payload = Buffer.alloc(1 + (2+2) * completedPackets.length);
+    const payload = Buffer.alloc(1 + (2 + 2) * completedPackets.length);
 
     let o = payload.writeUInt8(completedPackets.length, 0);
 

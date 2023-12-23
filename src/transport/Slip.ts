@@ -1,12 +1,14 @@
 enum SlipDecoderState {
-  WaitBeg, WaitEnd, WaitEndEsc,
+  WaitBeg,
+  WaitEnd,
+  WaitEndEsc,
 }
 
 export class Slip {
-  private readonly END     = 0x0C; // indicates end of packet
-  private readonly ESC     = 0xDB; // indicates byte stuffing
-  private readonly ESC_END = 0xDC; // ESC ESC_END means END data byte
-  private readonly ESC_ESC = 0xDD; // ESC ESC_ESC means ESC data byte
+  private readonly END = 0x0c; // indicates end of packet
+  private readonly ESC = 0xdb; // indicates byte stuffing
+  private readonly ESC_END = 0xdc; // ESC ESC_END means END data byte
+  private readonly ESC_ESC = 0xdd; // ESC ESC_ESC means ESC data byte
 
   private decoderState = SlipDecoderState.WaitBeg;
   private decoderData: number[] = [];

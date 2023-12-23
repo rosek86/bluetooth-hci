@@ -1,7 +1,15 @@
 import EventEmitter from "events";
 import Debug from "debug";
 
-import { GapAdvertReport, GapCentral, GapConnectEvent, GapConnectParams, GapScanParamsOptions, GapScanStartOptions } from "../gap/GapCentral.js";
+import {
+  GapAdvertReport,
+  GapCentral,
+  GapCentralOptions,
+  GapConnectEvent,
+  GapConnectParams,
+  GapScanParamsOptions,
+  GapScanStartOptions,
+} from "../gap/GapCentral.js";
 import { GapProfileStorage } from "../gap/GapProfileStorage.js";
 import { GattClient } from "../gatt/GattClient.js";
 import { Hci } from "../hci/Hci.js";
@@ -12,7 +20,7 @@ import { HciAdapter } from "../utils/HciAdapter.js";
 import { printProfile } from "../utils/Profile.js";
 import { HciError, HciErrorErrno } from "../hci/HciError.js";
 
-const debug = Debug('NbleGapCentral');
+const debug = Debug("NbleGapCentral");
 
 export interface NbleGapCentralOptions {
   autoScan?: boolean;
@@ -27,21 +35,18 @@ export abstract class NbleGapCentral extends EventEmitter {
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
 
-  public constructor(protected adapter: HciAdapter, protected readonly options: NbleGapCentralOptions = {}) {
+  public constructor(protected adapter: HciAdapter, protected readonly options: GapCentralOptions = {}) {
     super();
 
     this.hci = adapter.Hci;
 
-    this.gap = new GapCentral(this.hci, {
-      ...options,
-      cacheRemoteInfo: true,
-    });
+    this.gap = new GapCentral(this.hci, options);
 
-    this.gap.on('GapLeScanState',          (scanning) => debug('scanning', scanning));
-    this.gap.on('GapLeAdvReport',          (report)   => this._onAdvert(report));
-    this.gap.on('GapConnected',            (event)    => this._onConnected(event));
-    this.gap.on('GapConnectionCancelled',  ()         => this._onConnectionCancelled());
-    this.gap.on('GapDisconnected',         (reason)   => this._onDisconnected(reason));
+    this.gap.on("GapLeScanState", (scanning) => debug("scanning", scanning));
+    this.gap.on("GapLeAdvReport", (report) => this._onAdvert(report));
+    this.gap.on("GapConnected", (event) => this._onConnected(event));
+    this.gap.on("GapConnectionCancelled", () => this._onConnectionCancelled());
+    this.gap.on("GapDisconnected", (reason) => this._onDisconnected(reason));
   }
 
   public async start() {
@@ -83,11 +88,11 @@ export abstract class NbleGapCentral extends EventEmitter {
     await this.hci.disconnect(connectionHandle);
   }
 
-  protected saveProfile(address: Address, profile: GattClient['Profile']) {
+  protected saveProfile(address: Address, profile: GattClient["Profile"]) {
     GapProfileStorage.saveProfile(address, profile);
   }
 
-  protected printProfile(profile: GattClient['Profile']) {
+  protected printProfile(profile: GattClient["Profile"]) {
     printProfile(profile);
   }
 
@@ -95,8 +100,8 @@ export abstract class NbleGapCentral extends EventEmitter {
     try {
       await this.onAdvert(report);
     } catch (e) {
-      debug('onAdvert error', e);
-      this.emit('error', e);
+      debug("onAdvert error", e);
+      this.emit("error", e);
     }
   }
   protected abstract onAdvert(_: GapAdvertReport): Promise<void>;
@@ -110,8 +115,8 @@ export abstract class NbleGapCentral extends EventEmitter {
 
       await this.onConnected(event, gattClient);
     } catch (e) {
-      debug('onConnected error', e);
-      this.emit('error', e);
+      debug("onConnected error", e);
+      this.emit("error", e);
     }
   }
   protected abstract onConnected(event: GapConnectEvent, client: GattClient): Promise<void>;
@@ -120,8 +125,8 @@ export abstract class NbleGapCentral extends EventEmitter {
     try {
       await this.onDisconnected(reason);
     } catch (e) {
-      debug('onDisconnected error', e);
-      this.emit('error', e);
+      debug("onDisconnected error", e);
+      this.emit("error", e);
     }
   }
   protected abstract onDisconnected(_: DisconnectionCompleteEvent): Promise<void>;
@@ -130,8 +135,8 @@ export abstract class NbleGapCentral extends EventEmitter {
     try {
       await this.onConnectionCancelled();
     } catch (e) {
-      debug('onConnectionCancelled error', e);
-      this.emit('error', e);
+      debug("onConnectionCancelled error", e);
+      this.emit("error", e);
     }
   }
   protected abstract onConnectionCancelled(): Promise<void>;

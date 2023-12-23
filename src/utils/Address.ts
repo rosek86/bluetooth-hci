@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { LePeerAddressType } from "../hci/HciLeController.js";
 
+// prettier-ignore
 export enum AddressType {
   PublicDeviceAddress   = 0x00, // Public Device Address
   RandomDeviceAddress   = 0x01, // Random Device Address
@@ -10,26 +11,26 @@ export enum AddressType {
 }
 
 export class Address {
-  private constructor(private address: number, private type: AddressType) {
-  }
+  private constructor(private address: number, private type: AddressType) {}
 
   static random(): Address {
     const addressBytes = crypto.webcrypto.getRandomValues(new Uint8Array(8));
     addressBytes[5] |= 0xc0;
     addressBytes[6] = 0;
     addressBytes[7] = 0;
-    const addressNumber = Number((new DataView(addressBytes.buffer)).getBigUint64(0, true));
+    const addressNumber = Number(new DataView(addressBytes.buffer).getBigUint64(0, true));
     return new Address(addressNumber, AddressType.RandomDeviceAddress);
   }
 
-  static from(address: string|number, type: AddressType): Address {
-    if (typeof address === 'number') {
+  static from(address: string | number, type: AddressType): Address {
+    if (typeof address === "number") {
       return new Address(address, type);
     }
 
     const num = address
-      .replace(/:/g, '')
-      .match(/.{1,2}/g)?.join('');
+      .replace(/:/g, "")
+      .match(/.{1,2}/g)
+      ?.join("");
 
     if (!num) {
       return new Address(0, type);
@@ -39,10 +40,7 @@ export class Address {
   }
 
   public toId(): string {
-    return this.address
-      .toString(16)
-      .toLowerCase()
-      .padStart(12, '0');
+    return this.address.toString(16).toLowerCase().padStart(12, "0");
   }
 
   public toNumeric(): number {
@@ -63,15 +61,15 @@ export class Address {
     return this.address
       .toString(16)
       .toUpperCase()
-      .padStart(12, '0')
+      .padStart(12, "0")
       .match(/.{1,2}/g)!
-      .join(':');
+      .join(":");
   }
 
   public getLePeerAddressType(): LePeerAddressType {
-    return this.type === AddressType.PublicDeviceAddress ?
-      LePeerAddressType.PublicDeviceAddress :
-      LePeerAddressType.RandomDeviceAddress;
+    return this.type === AddressType.PublicDeviceAddress
+      ? LePeerAddressType.PublicDeviceAddress
+      : LePeerAddressType.RandomDeviceAddress;
   }
 
   get [Symbol.toStringTag]() {

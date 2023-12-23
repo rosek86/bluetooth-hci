@@ -1,21 +1,21 @@
-process.env.BLUETOOTH_HCI_SOCKET_FACTORY = '1';
-import { bluetoothHciSocketFactory, BluetoothHciSocket } from '@rosek86/bluetooth-hci-socket';
+process.env.BLUETOOTH_HCI_SOCKET_FACTORY = "1";
+import { bluetoothHciSocketFactory, BluetoothHciSocket } from "@rosek86/bluetooth-hci-socket";
 
-import { SerialPortOpenOptions } from 'serialport';
-import { AutoDetectTypes } from '@serialport/bindings-cpp';
+import { SerialPortOpenOptions } from "serialport";
+import { AutoDetectTypes } from "@serialport/bindings-cpp";
 
-import { delay } from '../../src/utils/Utils.js';
-import { HciAdapter, HciDevice } from '../../src/utils/HciAdapter.js';
-import { createHciSerial } from '../../src/utils/SerialHciDevice.js';
+import { delay } from "../../src/utils/Utils.js";
+import { HciAdapter, HciDevice } from "../../src/utils/HciAdapter.js";
+import { createHciSerial } from "../../src/utils/SerialHciDevice.js";
 
 export interface AdapterSerialParams {
-  type: 'serial';
+  type: "serial";
   deviceId: number;
   serial: Partial<SerialPortOpenOptions<AutoDetectTypes>>;
 }
 
 export interface AdapterUsbParams {
-  type: 'usb';
+  type: "usb";
   deviceId: number;
   usb: {
     vid: number;
@@ -26,7 +26,7 @@ export interface AdapterUsbParams {
 }
 
 export interface AdapterNativeHciParams {
-  type: 'hci';
+  type: "hci";
   deviceId: number;
 }
 
@@ -35,8 +35,8 @@ export type AdapterParams = AdapterSerialParams | AdapterUsbParams | AdapterNati
 export class UsbHciSocket implements HciDevice {
   private port: BluetoothHciSocket;
 
-  constructor(private devId: number, private usbParams: AdapterUsbParams['usb']) {
-    this.port = bluetoothHciSocketFactory('usb');
+  constructor(private devId: number, private usbParams: AdapterUsbParams["usb"]) {
+    this.port = bluetoothHciSocketFactory("usb");
   }
 
   public async open() {
@@ -46,16 +46,16 @@ export class UsbHciSocket implements HciDevice {
 
   public async close() {
     this.port.stop();
-    this.port.removeAllListeners('data');
-    this.port.removeAllListeners('error');
+    this.port.removeAllListeners("data");
+    this.port.removeAllListeners("error");
   }
 
   public write(data: Buffer): void {
     this.port.write(data);
   }
 
-  public on(evt: 'data', listener: (data: Buffer) => void): void;
-  public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  public on(evt: "data", listener: (data: Buffer) => void): void;
+  public on(evt: "error", listener: (data: NodeJS.ErrnoException) => void): void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
@@ -66,7 +66,7 @@ export class NativeHciSocket implements HciDevice {
   private port: BluetoothHciSocket;
 
   constructor(private devId: number) {
-    this.port = bluetoothHciSocketFactory('native');
+    this.port = bluetoothHciSocketFactory("native");
   }
 
   public async open() {
@@ -77,21 +77,21 @@ export class NativeHciSocket implements HciDevice {
       await delay(1000);
     }
 
-    this.port.setFilter(Buffer.from('1600000020c10800000000400000', 'hex'));
+    this.port.setFilter(Buffer.from("1600000020c10800000000400000", "hex"));
   }
 
   public async close() {
     this.port.stop();
-    this.port.removeAllListeners('data');
-    this.port.removeAllListeners('error');
+    this.port.removeAllListeners("data");
+    this.port.removeAllListeners("error");
   }
 
   public write(data: Buffer): void {
     this.port.write(data);
   }
 
-  public on(evt: 'data', listener: (data: Buffer) => void): void;
-  public on(evt: 'error', listener: (data: NodeJS.ErrnoException) => void): void;
+  public on(evt: "data", listener: (data: Buffer) => void): void;
+  public on(evt: "error", listener: (data: NodeJS.ErrnoException) => void): void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(evt: any, listener: (data: any) => void): void {
     this.port.on(evt, listener);
@@ -99,21 +99,20 @@ export class NativeHciSocket implements HciDevice {
 }
 
 export abstract class HciAdapterFactory {
-
   public static async create(params: AdapterParams): Promise<HciAdapter> {
     return new HciAdapter(await this.createDevice(params));
   }
 
   private static async createDevice(params: AdapterParams): Promise<HciDevice> {
-    if (params.type === 'serial') {
+    if (params.type === "serial") {
       return createHciSerial(params.deviceId, params.serial);
     }
-    if (params.type === 'usb') {
+    if (params.type === "usb") {
       return new UsbHciSocket(params.deviceId, params.usb);
     }
-    if (params.type === 'hci') {
+    if (params.type === "hci") {
       return new NativeHciSocket(params.deviceId);
     }
-    throw new Error('Unknown adapter interface');
+    throw new Error("Unknown adapter interface");
   }
 }

@@ -1,5 +1,5 @@
-import { PcBleDriverJsAdapter } from '../src';
-import { HciAdapter, createHciSerial } from '../src';
+import { PcBleDriverJsAdapter } from "../src";
+import { HciAdapter, createHciSerial } from "../src";
 
 (async () => {
   const hciAdapter = new HciAdapter(await createHciSerial());
@@ -15,7 +15,7 @@ import { HciAdapter, createHciSerial } from '../src';
     timeout: 0,
   });
 
-  adapter.on('deviceDiscovered', (device) => {
+  adapter.on("deviceDiscovered", (device) => {
     console.log(device);
   });
 })();

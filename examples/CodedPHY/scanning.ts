@@ -9,14 +9,14 @@ import {
   LeScanType,
   LeScanFilterDuplicates,
   AddressType,
-} from '../../src';
-import { ArgsParser } from '../utils/ArgsParser';
+} from "../../src";
+import { ArgsParser } from "../utils/ArgsParser";
 
 (async () => {
   try {
     const args = await ArgsParser.getOptions();
-    if (!args || args.type !== 'serial') {
-      throw new Error('Invalid input parameters');
+    if (!args || args.type !== "serial") {
+      throw new Error("Invalid input parameters");
     }
 
     const adapter = new HciAdapter(await createHciSerial(args.deviceId, args.serial));
@@ -25,27 +25,27 @@ import { ArgsParser } from '../utils/ArgsParser';
 
     const hci = adapter.Hci;
     await hci.leAddDeviceToWhiteList({
-      addressType:  LeWhiteListAddressType.Random,
-      address:      Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress),
+      addressType: LeWhiteListAddressType.Random,
+      address: Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress),
     });
 
     const gap = new GapCentral(hci);
     await gap.init();
 
     await gap.setScanParameters({
-      ownAddressType:       LeOwnAddressType.RandomDeviceAddress,
+      ownAddressType: LeOwnAddressType.RandomDeviceAddress,
       scanningFilterPolicy: LeScanningFilterPolicy.FromWhiteList,
       scanningPhy: {
         PhyCoded: {
-          type:       LeScanType.Active,
+          type: LeScanType.Active,
           intervalMs: 100,
-          windowMs:   100,
+          windowMs: 100,
         },
       },
     });
     await gap.startScanning({ filterDuplicates: LeScanFilterDuplicates.Enabled });
 
-    gap.on('GapLeAdvReport', (report) => {
+    gap.on("GapLeAdvReport", (report) => {
       console.log(report);
     });
   } catch (e) {

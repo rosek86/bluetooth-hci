@@ -1,6 +1,11 @@
 import EventEmitter from "events";
 import { HciAdapter } from "../../utils/HciAdapter.js";
-import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "../../hci/HciLeController.js";
+import {
+  LeOwnAddressType,
+  LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+} from "../../hci/HciLeController.js";
 import { Address } from "../../utils/Address.js";
 import { GapCentral } from "../../gap/GapCentral.js";
 
@@ -23,7 +28,7 @@ interface AdData {
 interface Service {
   instanceId: string;
   deviceInstanceId: string;
-  type: 'primary' | 'secondary';
+  type: "primary" | "secondary";
   uuid: string;
   startHandle: number;
   endHandle: number;
@@ -33,7 +38,7 @@ interface Device {
   instanceId: string;
   address: string;
   addressType: string;
-  role: 'peripheral' | 'central';
+  role: "peripheral" | "central";
   connectionHandle?: unknown;
   connected?: boolean;
   txPower?: number;
@@ -70,44 +75,44 @@ export class PcBleDriverJsAdapter extends EventEmitter {
     await hci.reset();
 
     const localVersion = await hci.readLocalVersionInformation();
-    console.log('Local Version:', localVersion);
+    console.log("Local Version:", localVersion);
     // console.log('Manufacturer:', this.manufacturerNameFromCode(localVersion.manufacturerName));
 
     const localCommands = await hci.readLocalSupportedCommands();
-    console.log('Local Supported Commands:', localCommands.toStringSorted());
+    console.log("Local Supported Commands:", localCommands.toStringSorted());
 
     const localFeatures = await hci.readLocalSupportedFeatures();
-    console.log('Local Supported Features', localFeatures);
+    console.log("Local Supported Features", localFeatures);
 
     if (localFeatures.leSupported === false) {
-      throw new Error('LE not supported');
+      throw new Error("LE not supported");
     }
 
     const leFeatures = await hci.leReadLocalSupportedFeatures();
-    console.log('LE Features:', leFeatures.toString());
+    console.log("LE Features:", leFeatures.toString());
 
     const leStates = await hci.leReadSupportedStates();
-    console.log('LE States:', leStates);
+    console.log("LE States:", leStates);
 
-    if (localCommands.isSupported('readBdAddr')) {
+    if (localCommands.isSupported("readBdAddr")) {
       const bdAddress = await hci.readBdAddr();
-      console.log('BD Address:', bdAddress.toString());
+      console.log("BD Address:", bdAddress.toString());
     }
 
-    if (localCommands.isSupported('leReadTransmitPower')) {
+    if (localCommands.isSupported("leReadTransmitPower")) {
       const leTransmitPower = await hci.leReadTransmitPower();
       console.log(`LE Transmit Power:`, leTransmitPower);
     }
 
     const leBufferSize = await hci.leReadBufferSize();
-    console.log('LE Buffer Size:', leBufferSize);
+    console.log("LE Buffer Size:", leBufferSize);
 
     await hci.setEventMask({
-      disconnectionComplete:                true,
-      encryptionChange:                     true,
-      encryptionKeyRefreshComplete:         true,
+      disconnectionComplete: true,
+      encryptionChange: true,
+      encryptionKeyRefreshComplete: true,
       readRemoteVersionInformationComplete: true,
-      leMeta:                               true,
+      leMeta: true,
     });
     await hci.setEventMaskPage2({});
 
@@ -115,35 +120,35 @@ export class PcBleDriverJsAdapter extends EventEmitter {
     const extendedConnection = localCommands.Commands.leExtendedCreateConnectionV1;
 
     await hci.leSetEventMask({
-      connectionComplete:                   !extendedConnection,
-      advertisingReport:                    !extendedScan,
-      connectionUpdateComplete:             true,
-      readRemoteFeaturesComplete:           true,
-      longTermKeyRequest:                   true,
-      remoteConnectionParameterRequest:     true,
-      dataLengthChange:                     true,
-      readLocalP256PublicKeyComplete:       true,
-      generateDhKeyComplete:                true,
-      enhancedConnectionComplete:           extendedConnection,
-      directedAdvertisingReport:            true,
-      phyUpdateComplete:                    true,
-      extendedAdvertisingReport:            extendedScan,
-      scanTimeout:                          true,
-      advertisingSetTerminated:             true,
-      channelSelectionAlgorithm:            true,
+      connectionComplete: !extendedConnection,
+      advertisingReport: !extendedScan,
+      connectionUpdateComplete: true,
+      readRemoteFeaturesComplete: true,
+      longTermKeyRequest: true,
+      remoteConnectionParameterRequest: true,
+      dataLengthChange: true,
+      readLocalP256PublicKeyComplete: true,
+      generateDhKeyComplete: true,
+      enhancedConnectionComplete: extendedConnection,
+      directedAdvertisingReport: true,
+      phyUpdateComplete: true,
+      extendedAdvertisingReport: extendedScan,
+      scanTimeout: true,
+      advertisingSetTerminated: true,
+      channelSelectionAlgorithm: true,
     });
 
-    if (localCommands.isSupported('leReadWhiteListSize')) {
+    if (localCommands.isSupported("leReadWhiteListSize")) {
       console.log(`Whitelist size: ${await hci.leReadWhiteListSize()}`);
       await hci.leClearWhiteList();
     }
 
-    if (localCommands.isSupported('leReadResolvingListSize')) {
+    if (localCommands.isSupported("leReadResolvingListSize")) {
       console.log(`Resolving List size: ${await hci.leReadResolvingListSize()}`);
       await hci.leClearResolvingList();
     }
 
-    if (localCommands.isSupported('leReadNumberOfSupportedAdvertisingSets')) {
+    if (localCommands.isSupported("leReadNumberOfSupportedAdvertisingSets")) {
       const advSets = await hci.leReadNumberOfSupportedAdvertisingSets();
       console.log(`Number of supported advertising sets: ${advSets}`);
     }
@@ -163,7 +168,7 @@ export class PcBleDriverJsAdapter extends EventEmitter {
 
     await this.gap.init();
 
-    this.gap.on('GapLeAdvReport', (report, raw) => {
+    this.gap.on("GapLeAdvReport", (report, raw) => {
       const adData: AdData = {
         BLE_GAP_AD_TYPE_FLAGS: [],
         BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME: report.data.completeLocalName,
@@ -175,7 +180,7 @@ export class PcBleDriverJsAdapter extends EventEmitter {
         const data = Buffer.alloc(2 + report.data.manufacturerData.data.length);
         data.writeUInt16LE(report.data.manufacturerData.ident, 0);
         report.data.manufacturerData.data.copy(data, 2);
-        adData.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA = [ ...data ];
+        adData.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA = [...data];
       }
 
       // TODO: store device in cache
@@ -185,15 +190,15 @@ export class PcBleDriverJsAdapter extends EventEmitter {
         address: report.address.toString(),
 
         // BLE_GAP_ADV_TYPE_ADV_NONCONN_IND
-        addressType: 'random', // TODO: expand address type
-        role: 'peripheral',
+        addressType: "random", // TODO: expand address type
+        role: "peripheral",
         connected: false,
-        adData
+        adData,
       };
 
-      this.emit('deviceDiscovered', device, raw);
+      this.emit("deviceDiscovered", device, raw);
     });
-    console.log('initialised');
+    console.log("initialised");
   }
 
   async startScan(options: ScanParams, callback?: (err?: Error) => void) {

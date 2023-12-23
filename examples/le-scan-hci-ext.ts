@@ -5,8 +5,8 @@ import {
   LeScanningFilterPolicy,
   LeScanType,
   LeScanFilterDuplicates,
-  AdvData
-} from '../src';
+  AdvData,
+} from "../src";
 
 (async () => {
   try {
@@ -30,7 +30,7 @@ import {
       filterDuplicates: LeScanFilterDuplicates.Disabled,
     });
 
-    adapter.Hci.on('LeExtendedAdvertisingReport', (report) => {
+    adapter.Hci.on("LeExtendedAdvertisingReport", (report) => {
       console.log(report, AdvData.parse(report.data ?? Buffer.alloc(0)));
     });
   } catch (e) {
