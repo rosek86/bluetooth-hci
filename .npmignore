@@ -12,3 +12,7 @@
 /tsconfig.prod.json
 /gatt-profiles.json
 /assigned-numbers
+/.prettierignore
+/.prettierrc
+/.eslintignore
+/.eslintrc
