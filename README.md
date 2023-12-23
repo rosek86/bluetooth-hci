@@ -130,6 +130,7 @@ class App extends NbleGapCentral {
         return; // ignore
       }
       console.log(e);
+    } finally {
       console.log("Disconnecting...");
       await this.disconnect(event.connectionHandle).catch(() => {});
     }

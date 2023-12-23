@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2023-12-23
+
+- Update LBS example
+
 ## [1.1.2] - 2023-12-23
 
 - Improve connection stability
