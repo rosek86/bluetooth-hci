@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [1.1.2] - 2023-12-23
 
+- Improve connection stability
+
 ## [1.1.1] - 2023-12-03
 
 - Fixes
