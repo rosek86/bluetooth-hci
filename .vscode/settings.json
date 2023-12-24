@@ -1,5 +1,3 @@
 {
-  "nrf-connect.applications": [
-    "${workspaceFolder}/zephyr/hci_uart"
-  ]
+  "nrf-connect.applications": ["${workspaceFolder}/zephyr/peripheral_hr_coded"]
 }
