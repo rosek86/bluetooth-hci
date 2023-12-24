@@ -1,10 +1,11 @@
-const H5 = require('../lib/H5').default;
+const { H5 } = require("../lib/src/transport/H5");
 
-const assert = require('assert');
+const { describe, it } = require("node:test");
+const assert = require("node:assert");
 
-describe('H5', function() {
-  describe('encode()', function() {
-    it('should return -1 when the value is not present', function() {
+describe("H5", function () {
+  describe("encode()", function () {
+    it("should return -1 when the value is not present", function () {
       // assert.strictEqual([1, 2, 3].indexOf(4), -1);
       const h5 = new H5();
       const packet = h5.encode({
