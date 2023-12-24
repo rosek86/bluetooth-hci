@@ -19,4 +19,19 @@ describe("Test SMP functions", () => {
       new Uint8Array([0x0f, 0x93, 0x94, 0x0f, 0x22, 0xc1, 0xa1, 0x9e, 0xbe, 0x15, 0xe9, 0xbd, 0xd0, 0xac, 0x79, 0xcb]),
     );
   });
+
+  it("ah", async () => {
+    // IRK            ec0234a3 57c8ad05 341010a6 0a397d9b
+    // prand          00000000 00000000 00000000 00708194
+    // M              00000000 00000000 00000000 00708194
+    // AES_128        159d5fb7 2ebe2311 a48c1bdc c40dfbaa
+    // ah             0dfbaa
+    const smp = new Smp();
+    const irk = Buffer.from([
+      0xec, 0x02, 0x34, 0xa3, 0x57, 0xc8, 0xad, 0x05, 0x34, 0x10, 0x10, 0xa6, 0x0a, 0x39, 0x7d, 0x9b,
+    ]);
+    const r = Buffer.from([0x70, 0x81, 0x94]);
+    const result = await smp.ah(irk, r);
+    assert.deepStrictEqual(result, new Uint8Array([0x0d, 0xfb, 0xaa]));
+  });
 });
