@@ -2,6 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Smp } from "../../src/smp/Smp";
+import { AesCmac } from "aes-cmac";
+import { Uint8ArrayUtils } from "../../src/utils/Uint8Array";
 
 describe("Test SMP functions", () => {
   it("e", async () => {
@@ -18,6 +20,12 @@ describe("Test SMP functions", () => {
 
     const result = await smp.e(key, plaintextData);
     assert.deepStrictEqual(result, exp);
+  });
+
+  it("aes-cmac", async () => {
+    const aesCmac = new AesCmac(Uint8ArrayUtils.fromHex("2b7e151628aed2a6abf7158809cf4f3c"));
+    const result = await aesCmac.calculate(Uint8ArrayUtils.fromHex("6bc1bee22e409f96e93d7e117393172a"));
+    assert.strictEqual(Uint8ArrayUtils.toHex(result), "070a16b46b4d4144f79bdd9dd04a287c");
   });
 
   it("ah", async () => {
@@ -74,6 +82,29 @@ describe("Test SMP functions", () => {
 
     const smp = new Smp();
     const res = await smp.s1(k, r1, r2);
+
+    assert.deepStrictEqual(res, exp);
+  });
+
+  it("f4", async () => {
+    const u = new Uint8Array([
+      0xe6, 0x9d, 0x35, 0x0e, 0x48, 0x01, 0x03, 0xcc, 0xdb, 0xfd, 0xf4, 0xac, 0x11, 0x91, 0xf4, 0xef, 0xb9, 0xa5, 0xf9,
+      0xe9, 0xa7, 0x83, 0x2c, 0x5e, 0x2c, 0xbe, 0x97, 0xf2, 0xd2, 0x03, 0xb0, 0x20,
+    ]);
+    const v = new Uint8Array([
+      0xfd, 0xc5, 0x7f, 0xf4, 0x49, 0xdd, 0x4f, 0x6b, 0xfb, 0x7c, 0x9d, 0xf1, 0xc2, 0x9a, 0xcb, 0x59, 0x2a, 0xe7, 0xd4,
+      0xee, 0xfb, 0xfc, 0x0a, 0x90, 0x9a, 0xbb, 0xf6, 0x32, 0x3d, 0x8b, 0x18, 0x55,
+    ]);
+    const x = new Uint8Array([
+      0xab, 0xae, 0x2b, 0x71, 0xec, 0xb2, 0xff, 0xff, 0x3e, 0x73, 0x77, 0xd1, 0x54, 0x84, 0xcb, 0xd5,
+    ]);
+    const z = new Uint8Array([0x00]);
+    const exp = new Uint8Array([
+      0x2d, 0x87, 0x74, 0xa9, 0xbe, 0xa1, 0xed, 0xf1, 0x1c, 0xbd, 0xa9, 0x07, 0xf1, 0x16, 0xc9, 0xf2,
+    ]);
+
+    const smp = new Smp();
+    const res = await smp.f4(u, v, x, z);
 
     assert.deepStrictEqual(res, exp);
   });

@@ -1,5 +1,6 @@
 import { webcrypto } from "crypto";
 import { Uint8ArrayUtils } from "../utils/Uint8Array";
+import { AesCmac } from "aes-cmac";
 
 export class Smp {
   public async e(key: Uint8Array, plaintextData: Uint8Array) {
@@ -79,5 +80,21 @@ export class Smp {
     // r’ = r1’ || r2’
     const r = new Uint8Array([...r2.slice(0, 8), ...r1.slice(0, 8)]);
     return await this.e(k, r);
+  }
+
+  public async f4(u: Uint8Array, v: Uint8Array, x: Uint8Array, z: Uint8Array) {
+    if (u.length !== 32 || v.length !== 32 || x.length !== 16 || z.length !== 1) {
+      throw new Error("invalid parameters");
+    }
+
+    const m = new Uint8Array(65);
+
+    m[0] = z[0];
+    m.set(v, 1);
+    m.set(u, 33);
+
+    console.log(Uint8ArrayUtils.toHexArray(m));
+
+    return await new AesCmac(x).calculate(m);
   }
 }
