@@ -69,7 +69,7 @@ export class Smp {
   }
 
   public async s1(k: Uint8Array, r1: Uint8Array, r2: Uint8Array) {
-    if (k.length !== 16 || r1.length !== 16 || r2.length !== 16) {
+    if (k.length !== 16) {
       throw new Error("invalid parameters");
     }
 
@@ -77,7 +77,7 @@ export class Smp {
     // the most significant 64-bits of r2 are discarded to generate r2’.
 
     // r’ = r1’ || r2’
-    const r = new Uint8Array([...r1.slice(8), ...r2.slice(8)]);
+    const r = new Uint8Array([...r2.slice(0, 8), ...r1.slice(0, 8)]);
     return await this.e(k, r);
   }
 }
