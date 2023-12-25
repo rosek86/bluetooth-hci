@@ -65,6 +65,7 @@
     "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d7ac57eb3dd69cfe5bcd075977b24888dc3bd555"
   },
   "dependencies": {
+    "aes-cmac": "^3.0.0",
     "chalk": "^4.1.2",
     "crc": "^4.3.2",
     "debug": "^4.3.4",
