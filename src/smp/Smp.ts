@@ -82,19 +82,118 @@ export class Smp {
     return await this.e(k, r);
   }
 
+  public async aesCmac(k: Uint8Array, m: Uint8Array) {
+    k = new Uint8Array([...k]).reverse();
+    m = new Uint8Array([...m]).reverse();
+    return (await new AesCmac(k).calculate(m)).reverse();
+  }
+
   public async f4(u: Uint8Array, v: Uint8Array, x: Uint8Array, z: Uint8Array) {
     if (u.length !== 32 || v.length !== 32 || x.length !== 16 || z.length !== 1) {
       throw new Error("invalid parameters");
     }
 
     const m = new Uint8Array(65);
-
     m[0] = z[0];
     m.set(v, 1);
     m.set(u, 33);
 
-    console.log(Uint8ArrayUtils.toHexArray(m));
+    return await this.aesCmac(x, m);
+  }
 
-    return await new AesCmac(x).calculate(m);
+  public async f5(w: Uint8Array, n1: Uint8Array, n2: Uint8Array, a1: Uint8Array, a2: Uint8Array) {
+    if (w.length !== 32 || n1.length !== 16 || n2.length !== 16 || a1.length !== 7 || a2.length !== 7) {
+      throw new Error("invalid parameters");
+    }
+
+    // The string “btle” is mapped into a keyID using ASCII as 0x62746C65.
+    const btle = new Uint8Array([0x65, 0x6c, 0x74, 0x62]);
+    const salt = new Uint8Array([
+      0xbe, 0x83, 0x60, 0x5a, 0xdb, 0x0b, 0x37, 0x60, 0x38, 0xa5, 0xf5, 0xaa, 0x91, 0x83, 0x88, 0x6c,
+    ]);
+    const length = new Uint8Array([0x00, 0x01]);
+
+    const t = await this.aesCmac(salt, w);
+
+    const m = new Uint8Array(53);
+    m.set(length, 0);
+    m.set(a2, 2);
+    m.set(a1, 9);
+    m.set(n2, 16);
+    m.set(n1, 32);
+    m.set(btle, 48);
+
+    m[52] = 0; // Counter
+    const mackey = await this.aesCmac(t, m);
+
+    m[52] = 1; // Counter
+    const ltk = await this.aesCmac(t, m);
+
+    return { mackey, ltk };
+  }
+
+  public async f6(
+    w: Uint8Array,
+    n1: Uint8Array,
+    n2: Uint8Array,
+    r: Uint8Array,
+    iocap: Uint8Array,
+    a1: Uint8Array,
+    a2: Uint8Array,
+  ) {
+    if (
+      w.length !== 16 ||
+      n1.length !== 16 ||
+      n2.length !== 16 ||
+      r.length !== 16 ||
+      iocap.length !== 3 ||
+      a1.length !== 7 ||
+      a2.length !== 7
+    ) {
+      throw new Error("invalid parameters");
+    }
+
+    const m = new Uint8Array(65);
+
+    m.set(a2, 0);
+    m.set(a1, 7);
+    m.set(iocap, 14);
+    m.set(r, 17);
+    m.set(n2, 33);
+    m.set(n1, 49);
+
+    return await this.aesCmac(w, m);
+  }
+
+  public async g2(u: Uint8Array, v: Uint8Array, x: Uint8Array, y: Uint8Array) {
+    if (u.length !== 32 || v.length !== 32 || x.length !== 16 || y.length !== 16) {
+      throw new Error("invalid parameters");
+    }
+
+    const m = new Uint8Array(80);
+    m.set(y, 0);
+    m.set(v, 16);
+    m.set(u, 48);
+
+    const tmp = await this.aesCmac(x, m);
+
+    const dv = new DataView(tmp.buffer);
+    const val = dv.getUint32(0, true);
+
+    return val % 1000000;
+  }
+
+  public async h6(w: Uint8Array, keyID: Uint8Array) {
+    if (w.length !== 16 || keyID.length !== 4) {
+      throw new Error("invalid parameters");
+    }
+    return await this.aesCmac(w, keyID);
+  }
+
+  public async h7(salt: Uint8Array, w: Uint8Array) {
+    if (salt.length !== 16 || w.length !== 16) {
+      throw new Error("invalid parameters");
+    }
+    return await this.aesCmac(salt, w);
   }
 }
