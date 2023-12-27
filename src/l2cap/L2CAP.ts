@@ -239,13 +239,17 @@ export class L2CAP extends EventEmitter {
   private onAclDataComplete(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): void {
     debug("acl", connectionHandle, L2capChannelId[channelId], payload);
 
-    if (channelId === L2capChannelId.LeAttributeProtocol) {
-      this.emit("AttData", connectionHandle, payload);
+    switch (channelId) {
+      case L2capChannelId.LeAttributeProtocol:
+        this.emit("AttData", connectionHandle, payload);
+        break;
+      case L2capChannelId.LeSecurityManagerProtocol:
+        this.emit("SmpData", connectionHandle, payload);
+        break;
+      default:
+        debug("Unhandled L2CAP channel", channelId);
+        console.log("onAclDataComplete", connectionHandle, L2capChannelId[channelId], payload);
+        break;
     }
-    if (channelId === L2capChannelId.LeSecurityManagerProtocol) {
-      this.emit("SmpData", connectionHandle, payload);
-    }
-
-    console.log("onAclDataComplete", connectionHandle, channelId, payload);
   }
 }

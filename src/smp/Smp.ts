@@ -6,22 +6,76 @@ import { AesCmac } from "aes-cmac";
 import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
 import { L2capChannelId } from "../l2cap/L2capChannelId.js";
 
-export const SmpCommand = Object.freeze({
-  PairingRequest: 0x01,
-  PairingResponse: 0x02,
-  PairingConfirm: 0x03,
-  PairingRandom: 0x04,
-  PairingFailed: 0x05,
-  EncryptionInformation: 0x06,
-  CentralIdentification: 0x07,
-  IdentityInformation: 0x08,
-  IdentityAddressInformation: 0x09,
-  SigningInformation: 0x0a,
-  SecurityRequest: 0x0b,
-  PairingPublicKey: 0x0c,
-  PairingDHKeyCheck: 0x0d,
-  PairingKeypressNotification: 0x0e,
-});
+export enum SmpCommand {
+  PairingRequest = 0x01,
+  PairingResponse = 0x02,
+  PairingConfirm = 0x03,
+  PairingRandom = 0x04,
+  PairingFailed = 0x05,
+  EncryptionInformation = 0x06,
+  CentralIdentification = 0x07,
+  IdentityInformation = 0x08,
+  IdentityAddressInformation = 0x09,
+  SigningInformation = 0x0a,
+  SecurityRequest = 0x0b,
+  PairingPublicKey = 0x0c,
+  PairingDHKeyCheck = 0x0d,
+  PairingKeypressNotification = 0x0e,
+}
+
+export enum SmpIoCapability {
+  DisplayOnly = 0x00,
+  DisplayYesNo = 0x01,
+  KeyboardOnly = 0x02,
+  NoInputNoOutput = 0x03,
+  KeyboardDisplay = 0x04,
+}
+
+export enum SmpAuthReqBondingFlags {
+  NoBonding = 0x00,
+  Bonding = 0x01,
+}
+
+export enum SmpPairingFailedReason {
+  PasskeyEntryFailed = 0x01,
+  OobNotAvailable = 0x02,
+  AuthenticationRequirements = 0x03,
+  ConfirmValueFailed = 0x04,
+  PairingNotSupported = 0x05,
+  EncryptionKeySize = 0x06,
+  CommandNotSupported = 0x07,
+  UnspecifiedReason = 0x08,
+  RepeatedAttempts = 0x09,
+  InvalidParameters = 0x0a,
+  DhkeyCheckFailed = 0x0b,
+  NumericComparisonFailed = 0x0c,
+  BrEdrPairingInProgress = 0x0d,
+  CrossTransportKeyDerivationGenerationNotAllowed = 0x0e,
+  KeyRejected = 0x0f,
+}
+
+export enum SmpPasskeyNotificationType {
+  PasskeyEntryStarted = 0x00,
+  PasskeyDigitEntered = 0x01,
+  PasskeyDigitErased = 0x02,
+  PasskeyCleared = 0x03,
+  PasskeyEntryCompleted = 0x04,
+}
+
+export interface SmpPairing {
+  ioCapability: SmpIoCapability;
+  oobFlag: boolean;
+  authReq: {
+    bonding: SmpAuthReqBondingFlags;
+    mitm: boolean;
+    secureConnections: boolean;
+    keypress: boolean;
+    cryptoToolbox2: boolean;
+  };
+  maxKeySize: number;
+  initKeyDist: number;
+  respKeyDist: number;
+}
 
 interface L2cap extends EventEmitter {
   on(event: "SmpData", listener: (connectionHandle: number, payload: Buffer) => void): this;
@@ -31,6 +85,124 @@ interface L2cap extends EventEmitter {
 }
 
 export class Smp {
+  public constructor(private l2cap: L2cap, private connectionHandle: number) {}
+
+  public buildPairing(pairing: SmpPairing, request: boolean): Uint8Array {
+    const payload = new Uint8Array(7);
+    payload[0] = request ? SmpCommand.PairingRequest : SmpCommand.PairingResponse;
+    payload[1] = pairing.ioCapability;
+    payload[2] = pairing.oobFlag ? 1 : 0;
+    payload[3] = 0;
+    payload[3] |= pairing.authReq.bonding << 0;
+    payload[3] |= (pairing.authReq.mitm ? 1 : 0) << 2;
+    payload[3] |= (pairing.authReq.secureConnections ? 1 : 0) << 3;
+    payload[3] |= (pairing.authReq.keypress ? 1 : 0) << 4;
+    payload[3] |= (pairing.authReq.cryptoToolbox2 ? 1 : 0) << 5;
+    payload[4] = pairing.maxKeySize;
+    payload[5] = pairing.initKeyDist;
+    payload[6] = pairing.respKeyDist;
+    return payload;
+  }
+
+  public parsePairing(payload: Uint8Array): SmpPairing {
+    const ioCapability = payload[1];
+    const oobFlag = payload[2] === 1;
+    const authReq = {
+      bonding: (payload[3] >> 0) & 2,
+      mitm: ((payload[3] >> 2) & 1) === 1,
+      secureConnections: ((payload[3] >> 3) & 1) === 1,
+      keypress: ((payload[3] >> 4) & 1) === 1,
+      cryptoToolbox2: ((payload[3] >> 5) & 1) === 1,
+    };
+    const maxKeySize = payload[4];
+    const initKeyDist = payload[5];
+    const respKeyDist = payload[6];
+    return {
+      ioCapability,
+      oobFlag,
+      authReq,
+      maxKeySize,
+      initKeyDist,
+      respKeyDist,
+    };
+  }
+
+  public buildPairingConfirm(confirm: Uint8Array): Uint8Array {
+    const payload = new Uint8Array(17);
+    payload[0] = SmpCommand.PairingConfirm;
+    payload.set(confirm, 1);
+    return payload;
+  }
+
+  public parsePairingConfirm(payload: Uint8Array): Uint8Array {
+    return payload.slice(1);
+  }
+
+  public buildPairingRandom(random: Uint8Array): Uint8Array {
+    const payload = new Uint8Array(17);
+    payload[0] = SmpCommand.PairingRandom;
+    payload.set(random, 1);
+    return payload;
+  }
+
+  public parsePairingRandom(payload: Uint8Array): Uint8Array {
+    return payload.slice(1);
+  }
+
+  public buildPairingFailed(reason: SmpPairingFailedReason): Uint8Array {
+    const payload = new Uint8Array(2);
+    payload[0] = SmpCommand.PairingFailed;
+    payload[1] = reason;
+    return payload;
+  }
+
+  public parsePairingFailed(payload: Uint8Array): SmpPairingFailedReason {
+    return payload[1];
+  }
+
+  public buildPairingPublicKey(key: { x: Uint8Array; y: Uint8Array }): Uint8Array {
+    const payload = new Uint8Array(65);
+    payload[0] = SmpCommand.PairingPublicKey;
+    payload.set(key.x, 1);
+    payload.set(key.y, 33);
+    return payload;
+  }
+
+  public parsePairingPublicKey(payload: Uint8Array): { x: Uint8Array; y: Uint8Array } {
+    return {
+      x: payload.slice(1, 33),
+      y: payload.slice(33),
+    };
+  }
+
+  public buildPairingDHKeyCheck(check: Uint8Array): Uint8Array {
+    const payload = new Uint8Array(17);
+    payload[0] = SmpCommand.PairingDHKeyCheck;
+    payload.set(check, 1);
+    return payload;
+  }
+
+  public parsePairingDHKeyCheck(payload: Uint8Array): Uint8Array {
+    return payload.slice(1);
+  }
+
+  public buildPairingKeypressNotification(notificationType: SmpPasskeyNotificationType): Uint8Array {
+    const payload = new Uint8Array(2);
+    payload[0] = SmpCommand.PairingKeypressNotification;
+    payload[1] = notificationType;
+    return payload;
+  }
+
+  public parsePairingKeypressNotification(payload: Uint8Array): SmpPasskeyNotificationType {
+    return payload[1];
+  }
+
+  private writeSmpData(payload: Uint8Array) {
+    const data = Buffer.from(payload);
+    const channelId = L2capChannelId.LeSecurityManagerProtocol;
+    this.l2cap.writeAclData(this.connectionHandle, channelId, data);
+  }
+
   public async e(key: Uint8Array, plaintextData: Uint8Array) {
     key.reverse();
     const importedKey = await webcrypto.subtle.importKey("raw", key, { name: "AES-CBC", length: 128 }, false, [
