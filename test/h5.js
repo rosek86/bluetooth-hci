@@ -16,7 +16,8 @@ describe("H5", function () {
         packetType: 1,
         payload: [],
       });
-      console.log(packet);
+      void packet;
+      // console.log(packet);
     });
   });
 });

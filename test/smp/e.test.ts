@@ -1,9 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { Smp } from "../../src/smp/Smp";
 import { AesCmac } from "aes-cmac";
-import { Uint8ArrayUtils } from "../../src/utils/Uint8Array";
+
+import { Smp } from "../../src/smp/Smp.js";
+import { Uint8ArrayUtils } from "../../src/utils/Uint8Array.js";
 
 describe("Test SMP functions", () => {
   it("e", async () => {

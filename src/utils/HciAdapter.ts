@@ -32,7 +32,7 @@ export class HciAdapter extends EventEmitter {
       let result = this.h4.parse(data);
       do {
         if (result) {
-          this.hci.onData(result.type, result.packet);
+          this.hci.onData(result.type, Buffer.from(result.packet));
           result = this.h4.parse(Buffer.alloc(0));
         }
       } while (result);

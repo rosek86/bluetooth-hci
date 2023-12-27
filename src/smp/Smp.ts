@@ -1,6 +1,34 @@
-import { webcrypto } from "crypto";
-import { Uint8ArrayUtils } from "../utils/Uint8Array";
+import { webcrypto } from "node:crypto";
+import EventEmitter from "node:events";
+
 import { AesCmac } from "aes-cmac";
+
+import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
+import { L2capChannelId } from "../l2cap/L2capChannelId.js";
+
+export const SmpCommand = Object.freeze({
+  PairingRequest: 0x01,
+  PairingResponse: 0x02,
+  PairingConfirm: 0x03,
+  PairingRandom: 0x04,
+  PairingFailed: 0x05,
+  EncryptionInformation: 0x06,
+  CentralIdentification: 0x07,
+  IdentityInformation: 0x08,
+  IdentityAddressInformation: 0x09,
+  SigningInformation: 0x0a,
+  SecurityRequest: 0x0b,
+  PairingPublicKey: 0x0c,
+  PairingDHKeyCheck: 0x0d,
+  PairingKeypressNotification: 0x0e,
+});
+
+interface L2cap extends EventEmitter {
+  on(event: "SmpData", listener: (connectionHandle: number, payload: Buffer) => void): this;
+  on(event: "Disconnected", listener: (connectionHandle: number, reason: number) => void): this;
+
+  writeAclData: (connectionHandle: number, channelId: L2capChannelId, data: Buffer) => void;
+}
 
 export class Smp {
   public async e(key: Uint8Array, plaintextData: Uint8Array) {

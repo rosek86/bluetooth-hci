@@ -10,7 +10,7 @@ type PacketHdrSize = Partial<Record<number, number>>;
 
 export interface H4Packet {
   type: number;
-  packet: Buffer;
+  packet: Uint8Array;
 }
 
 export class H4 {
@@ -18,7 +18,7 @@ export class H4 {
 
   private parserState = ParserState.Type;
   private parserPacketType = 0;
-  private parserPacketData = Buffer.alloc(0);
+  private parserPacketData = new Uint8Array(0);
 
   private parserHeaderSize = 0;
   private parserPacketSize = 0;
@@ -32,7 +32,12 @@ export class H4 {
   }
 
   public parse(data: Buffer): H4Packet | null {
-    this.parserPacketData = Buffer.concat([this.parserPacketData, data]);
+    // this.parserPacketData = Buffer.concat([this.parserPacketData, data]);
+
+    const tmp = new Uint8Array(this.parserPacketData.length + data.length);
+    tmp.set(this.parserPacketData);
+    tmp.set(data, this.parserPacketData.length);
+    this.parserPacketData = tmp;
 
     if (this.parserState === ParserState.Type) {
       if (this.parserPacketData.length > 0) {
@@ -67,15 +72,16 @@ export class H4 {
   }
 
   private getPayloadSize(): number {
+    const dv = new DataView(this.parserPacketData.buffer);
     switch (this.parserPacketType) {
       case HciPacketType.HciCommand:
-        return this.parserPacketData.readUInt8(2);
+        return dv.getUint8(2);
       case HciPacketType.HciAclData:
-        return this.parserPacketData.readUInt16LE(2);
+        return dv.getUint16(2, true);
       case HciPacketType.HciSyncData:
-        return this.parserPacketData.readUInt8(2);
+        return dv.getUint8(2);
       case HciPacketType.HciEvent:
-        return this.parserPacketData.readUInt8(1);
+        return dv.getUint8(1);
       case HciPacketType.HciIsoData:
         // TODO: it is not clear to me how to parse size
         break;

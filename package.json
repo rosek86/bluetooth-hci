@@ -21,7 +21,8 @@
     "prebuild": "rm -fr lib",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --ext .ts",
-    "test": "glob -c \"node --require ts-node/register --test\" \"test/**/*.test.ts\"",
+    "pretest": "npm run build",
+    "test": "node --test",
     "prerelease": "rm -fr lib && npm run lint",
     "release": "tsc -p tsconfig.release.json"
   },
@@ -53,11 +54,9 @@
     "@types/debug": "^4.1.12",
     "@types/node": "^18.19.3",
     "@types/yargs": "^17.0.32",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
-    "glob": "^10.3.10",
-    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "yargs": "^17.7.2"
   },
@@ -65,7 +64,7 @@
     "@rosek86/bluetooth-hci-socket": "https://github.com/rosek86/node-bluetooth-hci-socket.git#d7ac57eb3dd69cfe5bcd075977b24888dc3bd555"
   },
   "dependencies": {
-    "aes-cmac": "^3.0.0",
+    "aes-cmac": "^3.0.1",
     "chalk": "^4.1.2",
     "crc": "^4.3.2",
     "debug": "^4.3.4",

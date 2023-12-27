@@ -9,7 +9,7 @@ interface H5Header {
   payloadLength: number;
 }
 
-type H5Packet = H5Header & { payload?: Buffer };
+type H5Packet = H5Header & { payload?: Uint8Array };
 
 enum H5TransportRetCode {
   ParserSlipPayloadSize = 1,
@@ -24,7 +24,7 @@ interface EncoderData {
   crcPresent: 0 | 1;
   reliablePacket: 0 | 1;
   packetType: number;
-  payload: Buffer;
+  payload: Uint8Array;
 }
 
 type DecoderResult = ({ code: 0 } & H5Packet) | { code: H5TransportRetCode };
@@ -46,7 +46,7 @@ export class H5 {
   private readonly payloadLengthSecondNibbleMask = 0x0ff0;
   private readonly payloadLengthPos = 4;
 
-  public encode(data: EncoderData): Buffer {
+  public encode(data: EncoderData): Uint8Array {
     const packet: number[] = [];
 
     this.addHeader(packet, {
@@ -64,7 +64,7 @@ export class H5 {
       this.addCrc16(packet);
     }
 
-    return Buffer.from(packet);
+    return new Uint8Array(packet);
   }
 
   private addHeader(packet: number[], hdr: H5Header): void {
@@ -82,20 +82,20 @@ export class H5 {
 
     packet.push((hdr.payloadLength & this.payloadLengthSecondNibbleMask) >> this.payloadLengthPos);
 
-    packet.push(this.calculateHeaderChecksum(Buffer.from(packet)));
+    packet.push(this.calculateHeaderChecksum(new Uint8Array(packet)));
   }
 
-  private calculateHeaderChecksum(hdr: Buffer): number {
+  private calculateHeaderChecksum(hdr: Uint8Array): number {
     return ~((hdr[0] + hdr[1] + hdr[2]) & 0xff) & 0xff;
   }
 
   private addCrc16(packet: number[]): void {
-    const crc16 = this.calculateCrc16Checksum(Buffer.from(packet));
+    const crc16 = this.calculateCrc16Checksum(new Uint8Array(packet));
     packet.push((crc16 >> 0) & 0xff);
     packet.push((crc16 >> 8) & 0xff);
   }
 
-  private calculateCrc16Checksum(packet: Buffer): number {
+  private calculateCrc16Checksum(packet: Uint8Array): number {
     // let crc = 0xFFFF;
     // for (const byte of packet) {
     //   crc  = (crc >> 8) | (crc << 8);
@@ -108,7 +108,7 @@ export class H5 {
     return crc16ccitt(packet, 0xffff);
   }
 
-  public decode(slipPayload: Buffer): DecoderResult {
+  public decode(slipPayload: Uint8Array): DecoderResult {
     if (slipPayload.length < this.h5HeaderLength) {
       return { code: H5TransportRetCode.ParserSlipPayloadSize };
     }
@@ -158,7 +158,7 @@ export class H5 {
     };
 
     if (payloadLength > 0) {
-      result.payload = Buffer.from(slipPayload.subarray(this.h5HeaderLength, this.h5HeaderLength + payloadLength));
+      result.payload = slipPayload.subarray(this.h5HeaderLength, this.h5HeaderLength + payloadLength);
     }
 
     return result;

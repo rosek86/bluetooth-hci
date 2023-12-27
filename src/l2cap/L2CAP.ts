@@ -26,6 +26,7 @@ interface AclFragments {
 
 export declare interface L2CAP {
   on(event: "AttData", listener: (connectionHandle: number, payload: Buffer) => void): this;
+  on(event: "SmpData", listener: (connectionHandle: number, payload: Buffer) => void): this;
   on(event: "Disconnected", listener: (connectionHandle: number, reason: number) => void): this;
 }
 
@@ -241,5 +242,10 @@ export class L2CAP extends EventEmitter {
     if (channelId === L2capChannelId.LeAttributeProtocol) {
       this.emit("AttData", connectionHandle, payload);
     }
+    if (channelId === L2capChannelId.LeSecurityManagerProtocol) {
+      this.emit("SmpData", connectionHandle, payload);
+    }
+
+    console.log("onAclDataComplete", connectionHandle, channelId, payload);
   }
 }

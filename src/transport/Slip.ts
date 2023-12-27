@@ -13,7 +13,7 @@ export class Slip {
   private decoderState = SlipDecoderState.WaitBeg;
   private decoderData: number[] = [];
 
-  public encode(data: Buffer): Buffer {
+  public encode(data: Uint8Array): Uint8Array {
     const encoded = [this.END];
 
     for (const byte of data) {
@@ -33,7 +33,7 @@ export class Slip {
     }
 
     encoded.push(this.END);
-    return Buffer.from(encoded);
+    return new Uint8Array(encoded);
   }
 
   public resetDecoder(): void {
@@ -41,8 +41,8 @@ export class Slip {
     this.decoderData = [];
   }
 
-  public decode(data: Buffer): Buffer[] {
-    const result: Buffer[] = [];
+  public decode(data: Uint8Array): Uint8Array[] {
+    const result: Uint8Array[] = [];
 
     for (const byte of data) {
       switch (this.decoderState) {
@@ -65,7 +65,7 @@ export class Slip {
               break;
             case this.END:
               if (this.decoderData.length > 0) {
-                result.push(Buffer.from(this.decoderData));
+                result.push(new Uint8Array(this.decoderData));
                 this.decoderData = [];
               }
               break;

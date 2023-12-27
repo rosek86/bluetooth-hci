@@ -17,7 +17,7 @@ import { Hci, H4 } from "../src";
     let result = h4.parse(data);
     do {
       if (result) {
-        hci.onData(result.type, result.packet);
+        hci.onData(result.type, Buffer.from(result.packet));
         result = h4.parse(Buffer.alloc(0));
       }
     } while (result);
