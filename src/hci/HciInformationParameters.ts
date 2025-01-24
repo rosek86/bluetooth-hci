@@ -130,11 +130,10 @@ export class ReadLocalSupportedFeatures {
   }
 }
 
-// prettier-ignore
 export interface LocalVersionInformation {
-  hciVersion:       number;
-  hciRevision:      number;
-  lmpPalVersion:    number;
+  hciVersion: number;
+  hciRevision: number;
+  lmpPalVersion: number;
   lmpPalSubversion: number;
   manufacturerName: number;
 }
@@ -144,22 +143,20 @@ export class ReadLocalVersionInformation {
     if (!params || params.length < 8) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
-    // prettier-ignore
     return {
-      hciVersion:       params.readUIntLE(0, 1),
-      hciRevision:      params.readUIntLE(1, 2),
-      lmpPalVersion:    params.readUIntLE(3, 1),
+      hciVersion: params.readUIntLE(0, 1),
+      hciRevision: params.readUIntLE(1, 2),
+      lmpPalVersion: params.readUIntLE(3, 1),
       lmpPalSubversion: params.readUIntLE(6, 2),
       manufacturerName: params.readUIntLE(4, 2),
     };
   }
 }
 
-// prettier-ignore
 export interface BufferSize {
-  aclDataPacketLength:            number;
-  synchronousDataPacketLength:    number;
-  totalNumAclDataPackets:         number;
+  aclDataPacketLength: number;
+  synchronousDataPacketLength: number;
+  totalNumAclDataPackets: number;
   totalNumSynchronousDataPackets: number;
 }
 
@@ -168,11 +165,10 @@ export class ReadBufferSize {
     if (!params || params.length < 7) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
-    // prettier-ignore
     return {
-      aclDataPacketLength:            params.readUInt16LE(0),
-      synchronousDataPacketLength:    params.readUInt8(2),
-      totalNumAclDataPackets:         params.readUInt16LE(3),
+      aclDataPacketLength: params.readUInt16LE(0),
+      synchronousDataPacketLength: params.readUInt8(2),
+      totalNumAclDataPackets: params.readUInt16LE(3),
       totalNumSynchronousDataPackets: params.readUInt16LE(5),
     };
   }

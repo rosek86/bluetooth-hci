@@ -228,12 +228,11 @@ export enum HciLeEvent {
   EnhancedConnectionCompleteV2                        = 0x29, // LE Enhanced Connection Complete
 }
 
-// prettier-ignore
 export enum LeExtAdvEventTypeDataStatus {
-  Complete            = 0,
-  IncompleteMoreData  = 1,
+  Complete = 0,
+  IncompleteMoreData = 1,
   IncompleteTruncated = 2,
-  Reserved            = 3,
+  Reserved = 3,
 }
 
 export interface LeExtAdvEventType {
@@ -437,16 +436,15 @@ export enum LeConnPeerAddressType {
   RandomIdentityAddress,
 }
 
-// prettier-ignore
 export enum LeMasterClockAccuracy {
   ppm500 = 0x00,
   ppm250 = 0x01,
   ppm150 = 0x02,
   ppm100 = 0x03,
-  ppm75  = 0x04,
-  ppm50  = 0x05,
-  ppm30  = 0x06,
-  ppm20  = 0x07,
+  ppm75 = 0x04,
+  ppm50 = 0x05,
+  ppm30 = 0x06,
+  ppm20 = 0x07,
 }
 
 export enum LeConnectionRole {
@@ -614,10 +612,9 @@ export class LeChannelSelAlgo {
   }
 }
 
-// prettier-ignore
 export interface LeConnectionUpdateCompleteEvent extends ConnEvent {
   connectionIntervalMs: number;
-  connectionLatency:    number;
+  connectionLatency: number;
   supervisionTimeoutMs: number;
 }
 
@@ -700,12 +697,11 @@ export class LeLongTermKeyRequest {
   }
 }
 
-// prettier-ignore
 export interface LeRemoteConnectionParameterRequestEvent extends ConnEvent {
   connectionIntervalMinMs: number;
   connectionIntervalMaxMs: number;
-  connectionLatency:       number;
-  supervisionTimeoutMs:    number;
+  connectionLatency: number;
+  supervisionTimeoutMs: number;
 }
 
 export class LeRemoteConnectionParameterRequest {
