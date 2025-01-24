@@ -71,9 +71,10 @@ export class Address {
   }
 
   public getLePeerAddressType(): LePeerAddressType {
-    return this.type === AddressType.PublicDeviceAddress
-      ? LePeerAddressType.PublicDeviceAddress
-      : LePeerAddressType.RandomDeviceAddress;
+    if (this.type === AddressType.PublicDeviceAddress || this.type === AddressType.PublicIdentityAddress) {
+      return LePeerAddressType.PublicDeviceAddress;
+    }
+    return LePeerAddressType.RandomDeviceAddress;
   }
 
   get [Symbol.toStringTag]() {

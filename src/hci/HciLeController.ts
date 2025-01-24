@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import { Address, AddressType } from "../utils/Address.js";
 import { bitGet, bitSet, buildBitfield } from "../utils/Utils.js";
 
@@ -1432,6 +1434,98 @@ export class LeExtendedCreateConnectionV2 {
       Buffer.from([params.advertisingHandle, params.subevent]),
       LeExtendedCreateConnectionV1.inParams(params),
     ]);
+  }
+}
+
+export interface LePeriodicAdvertisingCreateSync {
+  options: {
+    // 0: Use the Advertising_SID, Advertiser_Address_Type, and Advertiser_Address parameters
+    //    to determine which advertiser to listen to.
+    // 1: Use the Periodic Advertiser List to determine which advertiser to listen to.
+    usePeriodicAdvertiserList: boolean;
+
+    // 0: Reporting initially enabled
+    // 1: Reporting initially disabled
+    reportingInitDisabled: boolean;
+
+    // 0: Duplicate filtering initially disabled
+    // 1: Duplicate filtering initially enabled
+    duplicateFilteringInitEnabled: boolean;
+  };
+
+  // Advertising SID subfield in the ADI field used to identify the Periodic Advertising
+  // Range: 0x00 to 0x0F
+  advertisingSid: number;
+
+  advertiserAddress: Address;
+
+  // The maximum number of periodic advertising events that can be skipped after a successful receive
+  // Range: 0x0000 to 0x01F3
+  skip: number;
+
+  // Synchronization timeout for the periodic advertising train
+  // Range: 0x000A to 0x4000
+  // Time = N × 10 ms
+  // Time Range: 100 ms to 163.84 s
+  syncTimeoutMs: number;
+
+  syncCteType: {
+    // 0 Do not sync to packets with an AoA Constant Tone Extension
+    doNotSyncAoA: boolean;
+    // 1 Do not sync to packets with an AoD Constant Tone Extension with 1 μs slots
+    doNotSyncAoD1us: boolean;
+    // 2 Do not sync to packets with an AoD Constant Tone Extension with 2 μs slots
+    doNotSyncAoD2us: boolean;
+    // 3 Do not sync to packets with a type 3 Constant Tone Extension (currently reserved for future use)
+    doNotSyncType3: boolean;
+    // 4 Do not sync to packets without a Constant Tone Extension
+    doNotSyncNoCte: boolean;
+  };
+}
+
+export class LePeriodicAdvertisingCreateSync {
+  static inParams(params: LePeriodicAdvertisingCreateSync): Buffer {
+    assert(params.advertisingSid >= 0 && params.advertisingSid <= 0x0f, new Error("Invalid advertisingSid"));
+    assert(params.skip >= 0 && params.skip <= 0x01f3, new Error("Invalid skip"));
+    assert(params.syncTimeoutMs >= 100 && params.syncTimeoutMs <= 163_840, new Error("Invalid syncTimeoutMs"));
+
+    const options =
+      (params.options.usePeriodicAdvertiserList ? 1 << 0 : 0) |
+      (params.options.reportingInitDisabled ? 1 << 1 : 0) |
+      (params.options.duplicateFilteringInitEnabled ? 1 << 2 : 0);
+    const syncTimeout = Math.round(params.syncTimeoutMs / 10);
+    const syncCteType =
+      (params.syncCteType.doNotSyncAoA ? 1 << 0 : 0) |
+      (params.syncCteType.doNotSyncAoD1us ? 1 << 1 : 0) |
+      (params.syncCteType.doNotSyncAoD2us ? 1 << 2 : 0) |
+      (params.syncCteType.doNotSyncType3 ? 1 << 3 : 0) |
+      (params.syncCteType.doNotSyncNoCte ? 1 << 4 : 0);
+
+    const payload = Buffer.alloc(1 + 1 + 1 + 6 + 2 + 2 + 1);
+    payload.writeUInt8(options, 0);
+    payload.writeUInt8(params.advertisingSid, 1);
+    payload.writeUInt8(params.advertiserAddress.getLePeerAddressType(), 2);
+    payload.writeUIntLE(params.advertiserAddress.toNumeric(), 3, 6);
+    payload.writeUInt16LE(params.skip, 9);
+    payload.writeUInt16LE(syncTimeout, 11);
+    payload.writeUInt8(syncCteType, 13);
+    return payload;
+  }
+}
+
+export interface LeModDeviceToPeriodicAdvertiserList {
+  advertiserAddress: Address;
+  advertisingSid: number;
+}
+
+export class LeModDeviceToPeriodicAdvertiserList {
+  static inParams(params: LeModDeviceToPeriodicAdvertiserList): Buffer {
+    assert(params.advertisingSid >= 0 && params.advertisingSid <= 0x0f, new Error("Invalid advertisingSid"));
+    const payload = Buffer.alloc(1 + 6 + 1);
+    payload.writeUInt8(params.advertiserAddress.getLePeerAddressType(), 0);
+    payload.writeUIntLE(params.advertiserAddress.toNumeric(), 1, 6);
+    payload.writeUInt8(params.advertisingSid, 7);
+    return payload;
   }
 }
 

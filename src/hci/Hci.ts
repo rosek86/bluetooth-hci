@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 
 import Debug from "debug";
@@ -105,7 +106,9 @@ import {
   LeLongTermKeyRequestNegativeReply,
   LeLongTermKeyRequestReply,
   LeMaximumDataLength,
+  LeModDeviceToPeriodicAdvertiserList,
   LeNumberOfSupportedAdvertisingSets,
+  LePeriodicAdvertisingCreateSync,
   LePrivacyMode,
   LeRand,
   LeReadAdvertisingPhysicalChannelTxPower,
@@ -923,6 +926,53 @@ export class Hci extends EventEmitter {
     const ocf = HciOcfLeControllerCommands.ExtendedCreateConnection;
     const payload = LeExtendedCreateConnectionV1.inParams(params);
     await this.cmd.leController({ ocf, payload });
+  }
+
+  public async lePeriodicAdvertisingCreateSync(params: LePeriodicAdvertisingCreateSync): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.PeriodicAdvertisingCreateSync;
+    const payload = LePeriodicAdvertisingCreateSync.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async lePeriodicAdvertisingCreateSyncCancel(): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.PeriodicAdvertisingCreateSyncCancel;
+    await this.cmd.leController({ ocf });
+  }
+
+  /**
+   * Terminate the periodic advertising train identified by the Sync Handle.
+   * @param syncHandle Sync Handle identifying the periodic advertising train (0x0000 to 0x0EFF).
+   */
+  public async lePeriodicAdvertisingTerminateSync(syncHandle: number): Promise<void> {
+    assert(syncHandle >= 0x0000 && syncHandle <= 0x0eff, new Error("Invalid syncHandle"));
+    const ocf = HciOcfLeControllerCommands.PeriodicAdvertisingTerminateSync;
+    const payload = Buffer.alloc(2);
+    payload.writeUInt16LE(syncHandle, 0);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leAddDeviceToPeriodicAdvertiserList(params: LeModDeviceToPeriodicAdvertiserList): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.AddDeviceToPeriodicAdvertiserList;
+    const payload = LeModDeviceToPeriodicAdvertiserList.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leRemoveDeviceFromPeriodicAdvertiserList(params: LeModDeviceToPeriodicAdvertiserList): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.RemoveDeviceFromPeriodicAdvertiserList;
+    const payload = LeModDeviceToPeriodicAdvertiserList.inParams(params);
+    await this.cmd.leController({ ocf, payload });
+  }
+
+  public async leClearPeriodicAdvertiserList(): Promise<void> {
+    const ocf = HciOcfLeControllerCommands.ClearPeriodicAdvertiserList;
+    await this.cmd.leController({ ocf });
+  }
+
+  public async leReadPeriodicAdvertiserListSize(): Promise<number> {
+    const ocf = HciOcfLeControllerCommands.ReadPeriodicAdvertiserListSize;
+    const result = await this.cmd.leController({ ocf });
+    assert(result.returnParameters?.length === 1, new Error("Invalid returnParameters length"));
+    return result.returnParameters.readUInt8(0);
   }
 
   public async leReadTransmitPower(): Promise<LeTransmitPower> {
