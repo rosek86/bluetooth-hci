@@ -236,6 +236,7 @@ export enum HciOcfLeControllerCommands {
   SetEventMask                                        = 0x0001, // * LE Set Event Mask
   ReadBufferSizeV1                                    = 0x0002, // * LE Read Buffer Size
   ReadLocalSupportedFeatures                          = 0x0003, // * LE Read Local Supported Features
+  // Reserved
   SetRandomAddress                                    = 0x0005, // * LE Set Random Address
   SetAdvertisingParameters                            = 0x0006, // * LE Set Advertising Parameters
   ReadAdvertisingPhysicalChannelTxPower               = 0x0007, // * LE Read Advertising Physical Channel Tx Power
@@ -359,13 +360,36 @@ export enum HciOcfLeControllerCommands {
   SetDefaultSubrate                                   = 0x007D, // LE Set Default Subrate
   SubrateRequest                                      = 0x007E, // LE Subrate Request
   SetExtendedAdvertisingParametersV2                  = 0x007F, // * LE Set Extended Advertising Parameters
-  // Reserved for future use
-  // Reserved for future use
+  SetDecisionData                                     = 0x0080, // LE Set Decision Data
+  SetDecisionInstructions                             = 0x0081, // LE Set Decision Instructions
   SetPeriodicAdvertisingSubeventData                  = 0x0082, // LE Set Periodic Advertising Subevent Data
   SetPeriodicAdvertisingResponseData                  = 0x0083, // LE Set Periodic Advertising Response Data
   SetPeriodicSyncSubevent                             = 0x0084, // LE Set Periodic Sync Transfer Subevent
   ExtendedCreateConnectionV2                          = 0x0085, // * LE Extended Create Connection V2
   SetPeriodicAdvertisingParametersV2                  = 0x0086, // * LE Set Periodic Advertising Parameters V2
+  ReadAllLocalSupportedFeatures                       = 0x0087, // LE Read All Local Supported Features
+  ReadAllRemoteFeatures                               = 0x0088, // LE Read All Remote Features
+  CsReadLocalSupportedCapabilities                    = 0x0089, // LE CS Read Local Supported Capabilities
+  CsReadRemoteSupportedCapabilities                   = 0x008A, // LE CS Read Remote Supported Capabilities
+  CsWriteCachedRemoteSupportedCapabilities            = 0x008B, // LE CS Write Cached Remote Supported Capabilities
+  CsSecurityEnable                                    = 0x008C, // LE CS Security Enable
+  CsSetDefaultSettings                                = 0x008D, // LE CS Set Default Settings
+  CsReadRemoteFaeTable                                = 0x008E, // LE CS Read Remote FAE Table
+  CsWriteCachedRemoteFaeTable                         = 0x008F, // LE CS Write Cached Remote FAE Table
+  CsCreateConfig                                      = 0x0090, // LE CS Create Config
+  CsRemoveConfig                                      = 0x0091, // LE CS Remove Config
+  CsSetChannelClassification                          = 0x0092, // LE CS Set Channel Classification
+  CsSetProcedureParameters                            = 0x0093, // LE CS Set Procedure Parameters
+  CsProcedureEnable                                   = 0x0094, // LE CS Procedure Enable
+  CsTest                                              = 0x0095, // LE CS Test
+  CsTestEnd                                           = 0x0096, // LE CS Test End
+  SetHostFeatureV2                                    = 0x0097, // LE Set Host Feature V2
+  AddDeviceToMonitoredAdvertisersList                 = 0x0098, // LE Add Device To Monitored Advertisers List
+  RemoveDeviceFromMonitoredAdvertisersList            = 0x0099, // LE Remove Device From Monitored Advertisers List
+  ClearMonitoredAdvertisersList                       = 0x009A, // LE Clear Monitored Advertisers List
+  ReadMonitoredAdvertisersListSize                    = 0x009B, // LE Read Monitored Advertisers List Size
+  EnableMonitoringAdvertisers                         = 0x009C, // LE Enable Monitoring Advertisers
+  FrameSpaceUpdate                                    = 0x009D, // LE Frame Space Update
 }
 
 export function ocfOgfToString(ocf: number, ogf: number) {
