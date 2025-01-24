@@ -1,7 +1,9 @@
 import { Address, AddressType } from "../utils/Address.js";
-import { HciParserErrorType, makeParserError } from "./HciError.js";
 import { bitGet } from "../utils/Utils.js";
 
+import { HciParserErrorType, makeParserError } from "./HciError.js";
+
+// prettier-ignore
 export interface LocalSupportedFeatures {
   threeSlotPackets:                     boolean;
   fiveSlotPackets:                      boolean;
@@ -62,10 +64,12 @@ export interface LocalSupportedFeatures {
 
 export class ReadLocalSupportedFeatures {
   static outParams(params?: Buffer): LocalSupportedFeatures {
-    if (!params || params.length < (64/8)) {
+    if (!params || params.length < 64 / 8) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     const features = params.readBigUInt64LE(0);
+
+    // prettier-ignore
     return {
       threeSlotPackets:                     bitGet(features, 0n),
       fiveSlotPackets:                      bitGet(features, 1n),
@@ -126,6 +130,7 @@ export class ReadLocalSupportedFeatures {
   }
 }
 
+// prettier-ignore
 export interface LocalVersionInformation {
   hciVersion:       number;
   hciRevision:      number;
@@ -139,6 +144,7 @@ export class ReadLocalVersionInformation {
     if (!params || params.length < 8) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
+    // prettier-ignore
     return {
       hciVersion:       params.readUIntLE(0, 1),
       hciRevision:      params.readUIntLE(1, 2),
@@ -149,6 +155,7 @@ export class ReadLocalVersionInformation {
   }
 }
 
+// prettier-ignore
 export interface BufferSize {
   aclDataPacketLength:            number;
   synchronousDataPacketLength:    number;
@@ -161,6 +168,7 @@ export class ReadBufferSize {
     if (!params || params.length < 7) {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
+    // prettier-ignore
     return {
       aclDataPacketLength:            params.readUInt16LE(0),
       synchronousDataPacketLength:    params.readUInt8(2),
@@ -179,6 +187,7 @@ export class ReadBdAddr {
   }
 }
 
+// prettier-ignore
 export interface LocalSupportedCommandsFields {
   inquiry:                                                boolean;
   inquiryCancel:                                          boolean;
@@ -535,7 +544,7 @@ export class LocalSupportedCommands {
     return Object.entries(this.commands)
       .filter(([, supported]) => supported)
       .map(([command]) => command)
-      .join(', ');
+      .join(", ");
   }
 
   public toStringSorted(): string {
@@ -543,10 +552,11 @@ export class LocalSupportedCommands {
       .filter(([, supported]) => supported)
       .map(([command]) => command)
       .sort()
-      .join(', ');
+      .join(", ");
   }
 
   static from(params: Buffer): LocalSupportedCommands {
+    // prettier-ignore
     return new LocalSupportedCommands({
       inquiry:                                                bitGet(params[0], 0),
       inquiryCancel:                                          bitGet(params[0], 1),

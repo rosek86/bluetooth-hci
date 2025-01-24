@@ -1,22 +1,21 @@
-import Debug from "debug";
-import assert from "assert";
+import assert from "node:assert";
 
-import { HciPacketType } from "./HciPacketType.js";
+import Debug from "debug";
 
 import { HciErrorErrno, HciParserErrorType } from "./HciError.js";
 import { makeHciError, makeParserError } from "./HciError.js";
-
 import {
-  HciOgf,
   HciOcfControlAndBasebandCommands,
   HciOcfInformationParameters,
   HciOcfLeControllerCommands,
   HciOcfLinkControlCommands,
   HciOcfStatusParameters,
   HciOcfTestingCommands,
+  HciOgf,
   HicOcfLinkPolicyCommands,
   ocfOgfToString,
 } from "./HciOgfOcf.js";
+import { HciPacketType } from "./HciPacketType.js";
 
 const debug = Debug("bt-hci-hci-cmd");
 
@@ -58,7 +57,10 @@ interface HciPendingCommand {
 export class HciCmd {
   private pendingCommands: HciPendingCommand[] = [];
 
-  public constructor(private sendBuffer: HciSendFunction, public readonly timeout: number = 2_000) {}
+  public constructor(
+    private sendBuffer: HciSendFunction,
+    public readonly timeout: number = 2_000,
+  ) {}
 
   public async linkControl(params: {
     ocf: HciOcfLinkControlCommands;
@@ -196,7 +198,11 @@ export class HciCmd {
       const complete = (err?: Error, evt?: HciCmdResult) => {
         clearTimeout(timeoutId);
         dropPendingCommand();
-        err ? reject(err) : resolve(evt!);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(evt!);
+        }
       };
       const timeoutId = setTimeout(() => complete(makeParserError(HciParserErrorType.Timeout)), this.timeout);
       const onResult = (evt: HciCmdResult) => {

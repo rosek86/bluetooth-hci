@@ -1,11 +1,11 @@
 import {
-  HciAdapter,
-  createHciSerial,
-  LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates,
   AdvData,
+  HciAdapter,
+  LeOwnAddressType,
+  LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+  createHciSerial,
 } from "../src";
 
 (async () => {

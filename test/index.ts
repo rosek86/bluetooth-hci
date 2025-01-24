@@ -1,7 +1,6 @@
 import { describe, it } from "node:test";
 
 import { Hci } from "../src/hci/Hci";
-import { HciPacketType } from "../src/hci/HciPacketType";
 import {
   LeAdvertisingChannelMap,
   LeAdvertisingEventProperties,
@@ -10,11 +9,12 @@ import {
   LePeerAddressType,
   LePhy,
   LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy,
-  LeScanningFilterPolicy,
-  LeScanType,
   LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+  LeSecondaryAdvertisingPhy,
 } from "../src/hci/HciLeController";
+import { HciPacketType } from "../src/hci/HciPacketType";
 import { Address, AddressType } from "../src/utils/Address";
 
 let hci: Hci | null = null;

@@ -1,10 +1,10 @@
 export function getCompanyName(code: number): string | undefined {
-  const hexcode = code.toString(16).padStart(4, '0');
+  const hexcode = code.toString(16).padStart(4, "0");
   return companies.entries[hexcode];
 }
 export const companies: { revision: string; entries: { [id: string]: string } } = {
-  "revision": "2022-01-09",
-  "entries": {
+  revision: "2022-01-09",
+  entries: {
     "0b01": "RESIDEO TECHNOLOGIES, INC.",
     "0b00": "Flaircomm Microelectronics Inc.",
     "0aff": "FUSEAWARE LIMITED",
@@ -404,7 +404,7 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "0975": "BlueIOT(Beijing) Technology Co.,Ltd",
     "0974": "ABEYE",
     "0973": "Popit Oy",
-    "0972": "Closed Joint Stock Company \"Zavod Flometr\" (\"Zavod Flometr\" CJSC)",
+    "0972": 'Closed Joint Stock Company "Zavod Flometr" ("Zavod Flometr" CJSC)',
     "0971": "GA",
     "0970": "IBA Dosimetry GmbH",
     "096f": "Lund Motion Products, Inc.",
@@ -439,7 +439,7 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "0952": "Apptricity Corporation",
     "0951": "PPRS",
     "0950": "Capetech",
-    "094f": "Limited Liability Company \"Mikrotikls\"",
+    "094f": 'Limited Liability Company "Mikrotikls"',
     "094e": "PassiveBolt, Inc.",
     "094d": "tkLABS INC.",
     "094c": "GimmiSys GmbH",
@@ -620,7 +620,7 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "089d": "J-J.A.D.E. Enterprise LLC",
     "089c": "Embedded Devices Co. Company",
     "089b": "Saucon Technologies",
-    "089a": "Private limited company \"Teltonika\"",
+    "089a": 'Private limited company "Teltonika"',
     "0899": "SFS unimarket AG",
     "0898": "Sensibo, Inc.",
     "0897": "Current Lighting Solutions LLC",
@@ -1027,7 +1027,7 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "0705": "AB Electrolux",
     "0704": "JBX Designs Inc.",
     "0703": "Beijing Jingdong Century Trading Co., Ltd.",
-    "0702": "Akciju sabiedriba \"SAF TEHNIKA\"",
+    "0702": 'Akciju sabiedriba "SAF TEHNIKA"',
     "0701": "PAFERS TECH",
     "0700": "TraqFreq LLC",
     "06ff": "Redpine Signals Inc",
@@ -1925,7 +1925,7 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "0383": "Kronos Incorporated",
     "0382": "Precision Outcomes Ltd",
     "0381": "Sharp Corporation",
-    "0380": "LLC \"MEGA-F service\"",
+    "0380": 'LLC "MEGA-F service"',
     "037f": "Société des Produits Nestlé S.A. (formerly Nestec S.A.)",
     "037e": "lulabytes S.L.",
     "037d": "MICRODIA Ltd.",
@@ -2821,6 +2821,6 @@ export const companies: { revision: string; entries: { [id: string]: string } } 
     "0003": "IBM Corp.",
     "0002": "Intel Corp.",
     "0001": "Nokia Mobile Phones",
-    "0000": "Ericsson Technology Licensing"
-  }
-}
+    "0000": "Ericsson Technology Licensing",
+  },
+};

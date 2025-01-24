@@ -1,17 +1,17 @@
 import {
-  HciAdapter,
-  createHciSerial,
   Address,
+  AddressType,
   AdvData,
-  LeAdvertisingEventProperties,
+  HciAdapter,
   LeAdvertisingChannelMap,
+  LeAdvertisingDataOperation,
+  LeAdvertisingEventProperties,
+  LeAdvertisingFilterPolicy,
   LeOwnAddressType,
   LePeerAddressType,
-  LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
-  LeAdvertisingDataOperation,
-  AddressType,
+  createHciSerial,
 } from "../../src";
 import { ArgsParser } from "../utils/ArgsParser";
 

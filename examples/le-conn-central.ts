@@ -1,11 +1,11 @@
 import {
-  LePhy,
-  LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates,
   GapCentral,
   HciAdapter,
+  LeOwnAddressType,
+  LePhy,
+  LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
   createHciSerial,
 } from "../src";
 

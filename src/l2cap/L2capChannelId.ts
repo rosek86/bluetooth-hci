@@ -1,3 +1,4 @@
+// prettier-ignore
 export enum L2capChannelId {
   NullId                    = 0x00,
   L2capSignalingChannel     = 0x01,

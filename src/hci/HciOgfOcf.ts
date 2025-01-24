@@ -1,3 +1,4 @@
+// prettier-ignore
 export enum HciOgf {
   LinkControlCommands                                 = 0x01,
   LinkPolicyCommands                                  = 0x02,
@@ -8,6 +9,7 @@ export enum HciOgf {
   LeControllerCommands                                = 0x08,
 }
 
+// prettier-ignore
 export enum HciOcfLinkControlCommands {
   Inquiry                                             = 0x0001, // Inquiry
   InquiryCancel                                       = 0x0002, // Inquiry Cancel
@@ -64,6 +66,7 @@ export enum HciOcfLinkControlCommands {
   RemoteOobExtendedDataRequestReply                   = 0x0045, // Remote OOB Extended Data Request Reply
 }
 
+// prettier-ignore
 export enum HicOcfLinkPolicyCommands {
   HoldMode                                            = 0x0001, // Hold Mode
   SniffMode                                           = 0x0003, // Sniff Mode
@@ -79,6 +82,7 @@ export enum HicOcfLinkPolicyCommands {
   SniffSubrating                                      = 0x0011, // Sniff Subrating
 }
 
+// prettier-ignore
 export enum HciOcfControlAndBasebandCommands {
   SetEventMask                                        = 0x0001, // *
   Reset                                               = 0x0003, // *
@@ -183,6 +187,7 @@ export enum HciOcfControlAndBasebandCommands {
   SetMinEncryptionKeySize                             = 0x0084, // Set Min Encryption Key Size
 }
 
+// prettier-ignore
 export enum HciOcfInformationParameters {
   ReadLocalVersionInformation                         = 0x0001, // *
   ReadLocalSupportedCommands                          = 0x0002, // *
@@ -198,6 +203,7 @@ export enum HciOcfInformationParameters {
   ReadLocalSupportedControllerDelay                   = 0x000F,
 }
 
+// prettier-ignore
 export enum HciOcfStatusParameters {
   ReadFailedContactCounter                            = 0x0001, // Read Failed Contact Counter
   ResetFailedContactCounter                           = 0x0002, // Reset Failed Contact Counter
@@ -213,6 +219,7 @@ export enum HciOcfStatusParameters {
   SetTriggeredClockCapture                            = 0x000D, // Set Triggered Clock Capture
 }
 
+// prettier-ignore
 export enum HciOcfTestingCommands {
   ReadLoopbackMode                                    = 0x0001, // Read Loopback Mode
   WriteLoopbackMode                                   = 0x0002, // Write Loopback Mode
@@ -224,6 +231,7 @@ export enum HciOcfTestingCommands {
   WriteSecureConnectionsTestMode                      = 0x000A, // Write Secure Connections Test Mode
 }
 
+// prettier-ignore
 export enum HciOcfLeControllerCommands {
   SetEventMask                                        = 0x0001, // * LE Set Event Mask
   ReadBufferSizeV1                                    = 0x0002, // * LE Read Buffer Size
@@ -385,7 +393,7 @@ export function ocfOgfToString(ocf: number, ogf: number) {
       s += HciOcfLeControllerCommands[ocf];
       break;
     default:
-      s += 'Unknown';
+      s += "Unknown";
   }
 
   return s;

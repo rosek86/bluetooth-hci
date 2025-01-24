@@ -1,13 +1,13 @@
 import {
-  HciAdapter,
-  createHciSerial,
   GapCentral,
+  GattCharacteristic,
   GattClient,
+  GattService,
+  HciAdapter,
   LeScanFilterDuplicates,
   amendProfileWithUuidNames,
+  createHciSerial,
   uuidInfo,
-  GattService,
-  GattCharacteristic,
 } from "../src";
 
 (async () => {

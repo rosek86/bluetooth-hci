@@ -1,11 +1,13 @@
-import Debug from 'debug';
+import Debug from "debug";
 
-import { Address } from '../utils/Address.js';
-import { HciErrorErrno } from './HciError.js';
-import { LeSupportedFeatures } from './HciLeController.js';
+import { Address } from "../utils/Address.js";
 
-const debug = Debug('bt-hci-hci-event');
+import { HciErrorErrno } from "./HciError.js";
+import { LeSupportedFeatures } from "./HciLeController.js";
 
+const debug = Debug("bt-hci-hci-event");
+
+// prettier-ignore
 export enum HciEvent {
   InquiryComplete                                     = 0x01, // Inquiry Complete
   InquiryResult                                       = 0x02, // Inquiry Result
@@ -97,8 +99,8 @@ export interface DisconnectionCompleteEvent extends ConnEvent {
 }
 
 export enum EncryptionEnabled {
-  Off           = 0,
-  On            = 1,
+  Off = 0,
+  On = 1,
   OnBrEdrAesCcm = 2,
 }
 
@@ -106,8 +108,8 @@ export interface EncryptionChangeEvent extends ConnEvent {
   encEnabled: EncryptionEnabled;
 }
 
-export interface EncryptionKeyRefreshComplete extends ConnEvent {
-}
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+export interface EncryptionKeyRefreshComplete extends ConnEvent {}
 
 export interface NumberOfCompletedPacketsEntry extends ConnEvent {
   numCompletedPackets: number;
@@ -121,22 +123,30 @@ export interface ReadRemoteVersionInformationCompleteEvent extends ConnEvent {
 
 export class ReadRemoteVersionInformationComplete {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: ReadRemoteVersionInformationCompleteEvent,
+    status: HciErrorErrno;
+    event: ReadRemoteVersionInformationCompleteEvent;
   } {
     if (data.length !== 8) {
       debug(`ReadRemoteVersionInformationComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
-    const version           = data.readUIntLE(o, 1); o += 1;
-    const manufacturerName  = data.readUIntLE(o, 2); o += 2;
-    const subversion        = data.readUIntLE(o, 2); o += 2;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const version = data.readUIntLE(o, 1);
+    o += 1;
+    const manufacturerName = data.readUIntLE(o, 2);
+    o += 2;
+    const subversion = data.readUIntLE(o, 2);
+    o += 2;
 
     const event: ReadRemoteVersionInformationCompleteEvent = {
-      connectionHandle, version, manufacturerName, subversion,
+      connectionHandle,
+      version,
+      manufacturerName,
+      subversion,
     };
 
     return { status, event };
@@ -149,26 +159,31 @@ export interface ReadRemoteSupportedFeaturesCompleteEvent extends ConnEvent {
 
 export class ReadRemoteSupportedFeaturesComplete {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: ReadRemoteSupportedFeaturesCompleteEvent,
+    status: HciErrorErrno;
+    event: ReadRemoteSupportedFeaturesCompleteEvent;
   } {
     if (data.length !== 11) {
       debug(`ReadRemoteSupportedFeaturesComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
-    const lpmFeatures       = data.subarray(o, o + 8); o += 8;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const lpmFeatures = data.subarray(o, o + 8);
+    o += 8;
 
     const event: ReadRemoteSupportedFeaturesCompleteEvent = {
-      connectionHandle, lpmFeatures,
+      connectionHandle,
+      lpmFeatures,
     };
 
     return { status, event };
   }
 }
 
+// prettier-ignore
 export enum HciLeEvent {
   ConnectionComplete                                  = 0x01, // * LE Connection Complete
   AdvertisingReport                                   = 0x02, // * LE Advertising Report
@@ -213,6 +228,7 @@ export enum HciLeEvent {
   EnhancedConnectionCompleteV2                        = 0x29, // LE Enhanced Connection Complete
 }
 
+// prettier-ignore
 export enum LeExtAdvEventTypeDataStatus {
   Complete            = 0,
   IncompleteMoreData  = 1,
@@ -230,17 +246,16 @@ export interface LeExtAdvEventType {
 }
 
 export class LeExtAdvEventTypeParser {
-  private static readonly offsets = [0,1,2,3,4,5];
-  private static readonly masks   = [1,1,1,1,1,3];
+  private static readonly offsets = [0, 1, 2, 3, 4, 5];
+  private static readonly masks = [1, 1, 1, 1, 1, 3];
 
   public static parse(type: number): LeExtAdvEventType {
     const fields = [];
     for (let i = 0; i < this.offsets.length; i++) {
-      fields.push(
-        (type >> this.offsets[i]) & this.masks[i]
-      );
+      fields.push((type >> this.offsets[i]) & this.masks[i]);
     }
 
+    // prettier-ignore
     return {
       ConnectableAdvertising: fields[0] ? true : false,
       ScannableAdvertising:   fields[1] ? true : false,
@@ -252,6 +267,7 @@ export class LeExtAdvEventTypeParser {
   }
 }
 
+// prettier-ignore
 export enum LeExtAdvReportAddrType {
   PublicDeviceAddress   = 0x00, // Public Device Address
   RandomDeviceAddress   = 0x01, // Random Device Address
@@ -260,11 +276,13 @@ export enum LeExtAdvReportAddrType {
   Anonymous             = 0xFF, // No address provided (anonymous advertisement)
 }
 
+// prettier-ignore
 export enum LePrimaryAdvertiserPhy {
   Phy1M    = 0x01, // Advertiser PHY is LE 1M
   PhyCoded = 0x03, // Advertiser PHY is LE Coded
 }
 
+// prettier-ignore
 export enum LeSecondaryAdvertiserPhy {
   NotUsed  = 0x00, // No packets on the secondary advertising physical channel
   Phy1M    = 0x01, // Advertiser PHY is LE 1M
@@ -272,6 +290,7 @@ export enum LeSecondaryAdvertiserPhy {
   PhyCoded = 0x03, // Advertiser PHY is LE Coded
 }
 
+// prettier-ignore
 export enum LeAdvEventType {
   Undirected      = 0, // Connectable and scannable undirected advertising (ADV_IND)
   Directed        = 1, // Connectable directed advertising (ADV_DIRECT_IND)
@@ -280,6 +299,7 @@ export enum LeAdvEventType {
   ScanResponse    = 4, // Scan Response (SCAN_RSP)
 }
 
+// prettier-ignore
 export enum LeAdvReportAddrType {
   PublicDeviceAddress   = 0x00, // Public Device Address
   RandomDeviceAddress   = 0x01, // Random Device Address
@@ -291,8 +311,8 @@ export interface LeAdvReport {
   eventType: LeAdvEventType;
   addressType: LeAdvReportAddrType;
   address: Address;
-  rssi: number|null;
-  data: Buffer|null;
+  rssi: number | null;
+  data: Buffer | null;
 }
 
 export class LeAdvReport {
@@ -301,21 +321,26 @@ export class LeAdvReport {
     let o = 1;
 
     const reports: LeAdvReport[] = [];
-    const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
+    const powerOrNull = (v: number): number | null => (v !== 0x7f ? v : null);
 
     for (let i = 0; i < numReports; i++) {
-      const eventType   = data.readUIntLE(o, 1); o += 1;
-      const addressType = data.readUIntLE(o, 1); o += 1;
-      const address     = data.readUIntLE(o, 6); o += 6;
-      const dataLength  = data.readUIntLE(o, 1); o += 1;
+      const eventType = data.readUIntLE(o, 1);
+      o += 1;
+      const addressType = data.readUIntLE(o, 1);
+      o += 1;
+      const address = data.readUIntLE(o, 6);
+      o += 6;
+      const dataLength = data.readUIntLE(o, 1);
+      o += 1;
 
-      let advData: Buffer|null = null;
+      let advData: Buffer | null = null;
       if (dataLength > 0) {
         advData = data.subarray(o, o + dataLength);
         o += dataLength;
       }
 
-      const rssi = data.readIntLE(o, 1); o += 1;
+      const rssi = data.readIntLE(o, 1);
+      o += 1;
 
       reports.push({
         eventType,
@@ -337,12 +362,12 @@ export interface LeExtAdvReport {
   primaryPhy: LePrimaryAdvertiserPhy;
   secondaryPhy: LeSecondaryAdvertiserPhy;
   advertisingSid: number;
-  txPower: number|null;
-  rssi: number|null;
+  txPower: number | null;
+  rssi: number | null;
   periodicAdvIntervalMs: number;
   directAddressType: number;
   directAddress: number;
-  data: Buffer|null;
+  data: Buffer | null;
 }
 
 export class LeExtAdvReport {
@@ -351,23 +376,35 @@ export class LeExtAdvReport {
     let o = 1;
 
     const reports: LeExtAdvReport[] = [];
-    const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
+    const powerOrNull = (v: number): number | null => (v !== 0x7f ? v : null);
 
     for (let i = 0; i < numReports; i++) {
-      const eventType           = data.readUIntLE(o, 2); o += 2;
-      const addressType         = data.readUIntLE(o, 1); o += 1;
-      const address             = data.readUIntLE(o, 6); o += 6;
-      const primaryPhy          = data.readUIntLE(o, 1); o += 1;
-      const secondaryPhy        = data.readUIntLE(o, 1); o += 1;
-      const advertisingSid      = data.readUIntLE(o, 1); o += 1;
-      const txPower             = data.readIntLE (o, 1); o += 1;
-      const rssi                = data.readIntLE (o, 1); o += 1;
-      const periodicAdvInterval = data.readUIntLE(o, 2); o += 2;
-      const directAddressType   = data.readUIntLE(o, 1); o += 1;
-      const directAddress       = data.readUIntLE(o, 6); o += 6;
-      const dataLength          = data.readUIntLE(o, 1); o += 1;
+      const eventType = data.readUIntLE(o, 2);
+      o += 2;
+      const addressType = data.readUIntLE(o, 1);
+      o += 1;
+      const address = data.readUIntLE(o, 6);
+      o += 6;
+      const primaryPhy = data.readUIntLE(o, 1);
+      o += 1;
+      const secondaryPhy = data.readUIntLE(o, 1);
+      o += 1;
+      const advertisingSid = data.readUIntLE(o, 1);
+      o += 1;
+      const txPower = data.readIntLE(o, 1);
+      o += 1;
+      const rssi = data.readIntLE(o, 1);
+      o += 1;
+      const periodicAdvInterval = data.readUIntLE(o, 2);
+      o += 2;
+      const directAddressType = data.readUIntLE(o, 1);
+      o += 1;
+      const directAddress = data.readUIntLE(o, 6);
+      o += 6;
+      const dataLength = data.readUIntLE(o, 1);
+      o += 1;
 
-      let advData: Buffer|null = null;
+      let advData: Buffer | null = null;
       if (dataLength > 0) {
         advData = data.subarray(o, o + dataLength);
         o += dataLength;
@@ -400,6 +437,7 @@ export enum LeConnPeerAddressType {
   RandomIdentityAddress,
 }
 
+// prettier-ignore
 export enum LeMasterClockAccuracy {
   ppm500 = 0x00,
   ppm250 = 0x01,
@@ -413,11 +451,11 @@ export enum LeMasterClockAccuracy {
 
 export enum LeConnectionRole {
   Master,
-  Slave
+  Slave,
 }
 
 export interface LeConnectionCompleteEvent extends ConnEvent {
-  type: 'standard';
+  type: "standard";
   role: LeConnectionRole;
   peerAddressType: LeConnPeerAddressType;
   peerAddress: Address;
@@ -428,28 +466,37 @@ export interface LeConnectionCompleteEvent extends ConnEvent {
 }
 
 export class LeConnectionComplete {
-  static parse(data: Buffer): { status: HciErrorErrno, event: LeConnectionCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno; event: LeConnectionCompleteEvent } {
     if (data.length !== 18) {
       debug(`LeConnectionComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status              = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle    = data.readUIntLE(o, 2); o += 2;
-    const role                = data.readUIntLE(o, 1); o += 1;
-    const peerAddressType     = data.readUIntLE(o, 1); o += 1;
-    const peerAddress         = data.readUIntLE(o, 6); o += 6;
-    const connectionInterval  = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency   = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout  = data.readUIntLE(o, 2); o += 2;
-    const masterClockAccuracy = data.readUIntLE(o, 1); o += 1;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const role = data.readUIntLE(o, 1);
+    o += 1;
+    const peerAddressType = data.readUIntLE(o, 1);
+    o += 1;
+    const peerAddress = data.readUIntLE(o, 6);
+    o += 6;
+    const connectionInterval = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionLatency = data.readUIntLE(o, 2);
+    o += 2;
+    const supervisionTimeout = data.readUIntLE(o, 2);
+    o += 2;
+    const masterClockAccuracy = data.readUIntLE(o, 1);
+    o += 1;
 
     const event: LeConnectionCompleteEvent = {
-      type:                 'standard',
+      type: "standard",
       connectionHandle,
       role,
       peerAddressType,
-      peerAddress:          Address.from(peerAddress, peerAddressType),
+      peerAddress: Address.from(peerAddress, peerAddressType),
       connectionIntervalMs: connectionInterval * 1.25,
       connectionLatency,
       supervisionTimeoutMs: supervisionTimeout * 10,
@@ -460,42 +507,53 @@ export class LeConnectionComplete {
   }
 }
 
-export interface LeEnhConnectionCompleteEvent extends Omit<LeConnectionCompleteEvent, 'type'> {
-  type: 'enhanced';
+export interface LeEnhConnectionCompleteEvent extends Omit<LeConnectionCompleteEvent, "type"> {
+  type: "enhanced";
   localResolvablePrivateAddress: Address;
   peerResolvablePrivateAddress: Address;
 }
 
 export class LeEnhConnectionComplete {
-  static parse(data: Buffer): { status: HciErrorErrno, event: LeEnhConnectionCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno; event: LeEnhConnectionCompleteEvent } {
     if (data.length !== 30) {
       debug(`LeEnhConnectionComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status                        = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle              = data.readUIntLE(o, 2); o += 2;
-    const role                          = data.readUIntLE(o, 1); o += 1;
-    const peerAddressType               = data.readUIntLE(o, 1); o += 1;
-    const peerAddress                   = data.readUIntLE(o, 6); o += 6;
-    const localResolvablePrivateAddress = data.readUIntLE(o, 6); o += 6;
-    const peerResolvablePrivateAddress  = data.readUIntLE(o, 6); o += 6;
-    const connectionInterval            = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency             = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout            = data.readUIntLE(o, 2); o += 2;
-    const masterClockAccuracy           = data.readUIntLE(o, 1); o += 1;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const role = data.readUIntLE(o, 1);
+    o += 1;
+    const peerAddressType = data.readUIntLE(o, 1);
+    o += 1;
+    const peerAddress = data.readUIntLE(o, 6);
+    o += 6;
+    const localResolvablePrivateAddress = data.readUIntLE(o, 6);
+    o += 6;
+    const peerResolvablePrivateAddress = data.readUIntLE(o, 6);
+    o += 6;
+    const connectionInterval = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionLatency = data.readUIntLE(o, 2);
+    o += 2;
+    const supervisionTimeout = data.readUIntLE(o, 2);
+    o += 2;
+    const masterClockAccuracy = data.readUIntLE(o, 1);
+    o += 1;
 
     const event: LeEnhConnectionCompleteEvent = {
-      type:                           'enhanced',
+      type: "enhanced",
       connectionHandle,
       role,
       peerAddressType,
-      peerAddress:                    Address.from(peerAddress, peerAddressType),
-      localResolvablePrivateAddress:  Address.from(localResolvablePrivateAddress, peerAddressType),
-      peerResolvablePrivateAddress:   Address.from(peerResolvablePrivateAddress, peerAddressType),
-      connectionIntervalMs:           connectionInterval * 1.25,
+      peerAddress: Address.from(peerAddress, peerAddressType),
+      localResolvablePrivateAddress: Address.from(localResolvablePrivateAddress, peerAddressType),
+      peerResolvablePrivateAddress: Address.from(peerResolvablePrivateAddress, peerAddressType),
+      connectionIntervalMs: connectionInterval * 1.25,
       connectionLatency,
-      supervisionTimeoutMs:           supervisionTimeout * 10,
+      supervisionTimeoutMs: supervisionTimeout * 10,
       masterClockAccuracy,
     };
 
@@ -511,18 +569,22 @@ export interface LeAdvertisingSetTerminatedEvent {
 
 export class LeAdvertisingSetTerminated {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: LeAdvertisingSetTerminatedEvent,
+    status: HciErrorErrno;
+    event: LeAdvertisingSetTerminatedEvent;
   } {
     if (data.length !== 5) {
       debug(`LeAdvertisingSetTerminated: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1); o += 1;
-    const advertisingHandle = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
-    const numEvents         = data.readUIntLE(o, 1); o += 1;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const advertisingHandle = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const numEvents = data.readUIntLE(o, 1);
+    o += 1;
 
     return {
       status,
@@ -547,11 +609,12 @@ export class LeChannelSelAlgo {
 
     return {
       connectionHandle: data.readUIntLE(0, 2),
-      algorithm:        data.readUIntLE(2, 1),
+      algorithm: data.readUIntLE(2, 1),
     };
   }
 }
 
+// prettier-ignore
 export interface LeConnectionUpdateCompleteEvent extends ConnEvent {
   connectionIntervalMs: number;
   connectionLatency:    number;
@@ -559,17 +622,22 @@ export interface LeConnectionUpdateCompleteEvent extends ConnEvent {
 }
 
 export class LeConnectionUpdateComplete {
-  static parse(data: Buffer): { status: HciErrorErrno, event: LeConnectionUpdateCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno; event: LeConnectionUpdateCompleteEvent } {
     if (data.length !== 9) {
       debug(`LeConnectionUpdateComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status             = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle   = data.readUIntLE(o, 2); o += 2;
-    const connectionInterval = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency  = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout = data.readUIntLE(o, 2); o += 2;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionInterval = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionLatency = data.readUIntLE(o, 2);
+    o += 2;
+    const supervisionTimeout = data.readUIntLE(o, 2);
+    o += 2;
 
     const event: LeConnectionUpdateCompleteEvent = {
       connectionHandle,
@@ -587,15 +655,18 @@ export interface LeReadRemoteFeaturesCompleteEvent extends ConnEvent {
 }
 
 export class LeReadRemoteFeaturesComplete {
-  static parse(data: Buffer): { status: HciErrorErrno, event: LeReadRemoteFeaturesCompleteEvent } {
+  static parse(data: Buffer): { status: HciErrorErrno; event: LeReadRemoteFeaturesCompleteEvent } {
     if (data.length !== 11) {
       debug(`LeReadRemoteFeaturesComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1);  o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2);  o += 2;
-    const leFeatures        = data.readBigInt64LE(o); o += 8;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const leFeatures = data.readBigInt64LE(o);
+    o += 8;
 
     const event: LeReadRemoteFeaturesCompleteEvent = {
       connectionHandle,
@@ -618,14 +689,18 @@ export class LeLongTermKeyRequest {
     }
 
     let o = 0;
-    const connectionHandle      = data.readUIntLE(o, 2);    o += 2;
-    const randomNumber          = data.readBigUInt64LE(o);  o += 8;
-    const encryptedDiversifier  = data.readUIntLE(o, 2);    o += 2;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const randomNumber = data.readBigUInt64LE(o);
+    o += 8;
+    const encryptedDiversifier = data.readUIntLE(o, 2);
+    o += 2;
 
     return { connectionHandle, randomNumber, encryptedDiversifier };
   }
 }
 
+// prettier-ignore
 export interface LeRemoteConnectionParameterRequestEvent extends ConnEvent {
   connectionIntervalMinMs: number;
   connectionIntervalMaxMs: number;
@@ -640,27 +715,32 @@ export class LeRemoteConnectionParameterRequest {
     }
 
     let o = 0;
-    const connectionHandle      = data.readUIntLE(o, 2); o += 2;
-    const connectionIntervalMin = data.readUIntLE(o, 2); o += 2;
-    const connectionIntervalMax = data.readUIntLE(o, 2); o += 2;
-    const connectionLatency     = data.readUIntLE(o, 2); o += 2;
-    const supervisionTimeout    = data.readUIntLE(o, 2); o += 2;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionIntervalMin = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionIntervalMax = data.readUIntLE(o, 2);
+    o += 2;
+    const connectionLatency = data.readUIntLE(o, 2);
+    o += 2;
+    const supervisionTimeout = data.readUIntLE(o, 2);
+    o += 2;
 
     return {
       connectionHandle,
-      connectionIntervalMinMs:  connectionIntervalMin * 1.25,
-      connectionIntervalMaxMs:  connectionIntervalMax * 1.25,
+      connectionIntervalMinMs: connectionIntervalMin * 1.25,
+      connectionIntervalMaxMs: connectionIntervalMax * 1.25,
       connectionLatency,
-      supervisionTimeoutMs:     supervisionTimeout * 10,
+      supervisionTimeoutMs: supervisionTimeout * 10,
     };
   }
 }
 
 export interface LeDataLengthChangeEvent extends ConnEvent {
-  maxTxOctets:  number;
-  maxTxTime:    number;
-  maxRxOctets:  number;
-  maxRxTime:    number;
+  maxTxOctets: number;
+  maxTxTime: number;
+  maxRxOctets: number;
+  maxRxTime: number;
 }
 
 export class LeDataLengthChange {
@@ -670,11 +750,16 @@ export class LeDataLengthChange {
     }
 
     let o = 0;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
-    const maxTxOctets       = data.readUIntLE(o, 2); o += 2;
-    const maxTxTime         = data.readUIntLE(o, 2); o += 2;
-    const maxRxOctets       = data.readUIntLE(o, 2); o += 2;
-    const maxRxTime         = data.readUIntLE(o, 2); o += 2;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const maxTxOctets = data.readUIntLE(o, 2);
+    o += 2;
+    const maxTxTime = data.readUIntLE(o, 2);
+    o += 2;
+    const maxRxOctets = data.readUIntLE(o, 2);
+    o += 2;
+    const maxRxTime = data.readUIntLE(o, 2);
+    o += 2;
 
     return {
       connectionHandle,
@@ -692,8 +777,8 @@ export interface LeReadLocalP256PublicKeyCompleteEvent {
 
 export class LeReadLocalP256PublicKeyComplete {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: LeReadLocalP256PublicKeyCompleteEvent,
+    status: HciErrorErrno;
+    event: LeReadLocalP256PublicKeyCompleteEvent;
   } {
     if (data.length !== 65) {
       debug(`LeReadLocalP256PublicKeyComplete: invalid size ${data.length}`);
@@ -712,9 +797,9 @@ export interface LeGenerateDhKeyCompleteEvent {
 
 export class LeGenerateDhKeyComplete {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: LeGenerateDhKeyCompleteEvent,
-   } {
+    status: HciErrorErrno;
+    event: LeGenerateDhKeyCompleteEvent;
+  } {
     if (data.length !== 33) {
       debug(`LeGenerateDhKeyComplete: invalid size ${data.length}`);
     }
@@ -731,7 +816,7 @@ export enum LeDirectedAdvEventType {
 }
 
 export enum LeDirectedAdvReportAddrType {
-  RandomDeviceAddress   = 0x01, // Random Device Address
+  RandomDeviceAddress = 0x01, // Random Device Address
 }
 
 export interface LeDirectedAdvertisingReportEvent {
@@ -740,7 +825,7 @@ export interface LeDirectedAdvertisingReportEvent {
   address: Address;
   directAddressType: LeDirectedAdvReportAddrType;
   directAddress: Address;
-  rssi: number|null;
+  rssi: number | null;
 }
 
 export class LeDirectedAdvertisingReport {
@@ -749,15 +834,21 @@ export class LeDirectedAdvertisingReport {
     let o = 1;
 
     const reports: LeDirectedAdvertisingReportEvent[] = [];
-    const powerOrNull = (v: number): number|null => v !== 0x7F ? v : null;
+    const powerOrNull = (v: number): number | null => (v !== 0x7f ? v : null);
 
     for (let i = 0; i < numReports; i++) {
-      const eventType         = data.readUIntLE(o, 1); o += 1;
-      const addressType       = data.readUIntLE(o, 1); o += 1;
-      const address           = data.readUIntLE(o, 6); o += 6;
-      const directAddressType = data.readUIntLE(o, 1); o += 1;
-      const directAddress     = data.readUIntLE(o, 6); o += 6;
-      const rssi              = data.readIntLE (o, 1); o += 1;
+      const eventType = data.readUIntLE(o, 1);
+      o += 1;
+      const addressType = data.readUIntLE(o, 1);
+      o += 1;
+      const address = data.readUIntLE(o, 6);
+      o += 6;
+      const directAddressType = data.readUIntLE(o, 1);
+      o += 1;
+      const directAddress = data.readUIntLE(o, 6);
+      o += 6;
+      const rssi = data.readIntLE(o, 1);
+      o += 1;
 
       reports.push({
         eventType,
@@ -780,23 +871,30 @@ export interface LePhyUpdateCompleteEvent extends ConnEvent {
 
 export class LePhyUpdateComplete {
   static parse(data: Buffer): {
-    status: HciErrorErrno,
-    event: LePhyUpdateCompleteEvent,
-   } {
+    status: HciErrorErrno;
+    event: LePhyUpdateCompleteEvent;
+  } {
     if (data.length !== 5) {
       debug(`LePhyUpdateComplete: invalid size ${data.length}`);
     }
 
     let o = 0;
-    const status            = data.readUIntLE(o, 1); o += 1;
-    const connectionHandle  = data.readUIntLE(o, 2); o += 2;
-    const txPhy             = data.readUIntLE(o, 1); o += 1;
-    const rxPhy             = data.readUIntLE(o, 1); o += 1;
+    const status = data.readUIntLE(o, 1);
+    o += 1;
+    const connectionHandle = data.readUIntLE(o, 2);
+    o += 2;
+    const txPhy = data.readUIntLE(o, 1);
+    o += 1;
+    const rxPhy = data.readUIntLE(o, 1);
+    o += 1;
 
     return {
-      status, event: {
-        connectionHandle, txPhy, rxPhy,
-      }
+      status,
+      event: {
+        connectionHandle,
+        txPhy,
+        rxPhy,
+      },
     };
   }
 }

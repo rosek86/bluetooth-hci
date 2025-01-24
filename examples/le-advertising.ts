@@ -1,14 +1,14 @@
 import { AddressType, AdvData } from "../src";
 import {
-  LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
+  LeAdvertisingDataOperation,
+  LeAdvertisingEventProperties,
+  LeAdvertisingFilterPolicy,
   LeOwnAddressType,
   LePeerAddressType,
-  LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy,
-  LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
+  LeSecondaryAdvertisingPhy,
 } from "../src";
 import { Address } from "../src";
 import { HciAdapter } from "../src";

@@ -1,4 +1,4 @@
-
+// prettier-ignore
 export enum L2capSignalingCommand {
   L2CAP_COMMAND_REJECT_RSP               = 0x01, // 0x0001 and 0x0005
   L2CAP_CONNECTION_REQ                   = 0x02, // 0x0001

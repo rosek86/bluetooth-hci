@@ -3,8 +3,8 @@ import EventEmitter from "node:events";
 
 import { AesCmac } from "aes-cmac";
 
-import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
 import { L2capChannelId } from "../l2cap/L2capChannelId.js";
+import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
 
 export enum SmpCommand {
   PairingRequest = 0x01,
@@ -85,7 +85,10 @@ interface L2cap extends EventEmitter {
 }
 
 export class Smp {
-  public constructor(private l2cap: L2cap, private connectionHandle: number) {}
+  public constructor(
+    private l2cap: L2cap,
+    private connectionHandle: number,
+  ) {}
 
   public buildPairing(pairing: SmpPairing, request: boolean): Uint8Array {
     const payload = new Uint8Array(7);

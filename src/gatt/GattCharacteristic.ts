@@ -1,7 +1,7 @@
-import { AttDataEntry } from './AttGlue.js';
+import { UUID } from "../utils/UUID.js";
+import { bitGet } from "../utils/Utils.js";
 
-import { UUID } from '../utils/UUID.js';
-import { bitGet } from '../utils/Utils.js';
+import { AttDataEntry } from "./AttGlue.js";
 
 enum CharacteristicPropertiesBits {
   // If set, permits broadcasts of the Characteristic Value using
@@ -73,26 +73,36 @@ export class GattCharacteristic {
   private properties: GattCharacteristic.Properties;
   private uuid: string;
 
-  public get Handle(): number { return this.handle; }
-  public get EndingHandle(): number { return this.endingHandle; }
-  public get ValueHandle(): number { return this.valueHandle; }
-  public get UUID(): string { return this.uuid; }
-  public get Properties(): GattCharacteristic.Properties { return this.properties; }
+  public get Handle(): number {
+    return this.handle;
+  }
+  public get EndingHandle(): number {
+    return this.endingHandle;
+  }
+  public get ValueHandle(): number {
+    return this.valueHandle;
+  }
+  public get UUID(): string {
+    return this.uuid;
+  }
+  public get Properties(): GattCharacteristic.Properties {
+    return this.properties;
+  }
 
   public static fromAttData(data: AttDataEntry): GattCharacteristic {
     return new GattCharacteristic(data);
   }
 
   private constructor(data: AttDataEntry) {
-    const properties  = data.value.readUInt8(0);
+    const properties = data.value.readUInt8(0);
     const valueHandle = data.value.readUInt16LE(1);
-    const uuid        = data.value.subarray(3);
+    const uuid = data.value.subarray(3);
 
-    this.handle       = data.handle;
+    this.handle = data.handle;
     this.endingHandle = data.endingHandle;
-    this.properties   = this.parseProperties(properties);
-    this.valueHandle  = valueHandle;
-    this.uuid         = UUID.toString(uuid);
+    this.properties = this.parseProperties(properties);
+    this.valueHandle = valueHandle;
+    this.uuid = UUID.toString(uuid);
   }
 
   public toObject(): GattCharacteristic.AsObject {
@@ -106,6 +116,7 @@ export class GattCharacteristic {
   }
 
   private parseProperties(bitsfield: number): GattCharacteristic.Properties {
+    // prettier-ignore
     return {
       broadcast:                  bitGet(bitsfield, CharacteristicPropertiesBits.Broadcast),
       read:                       bitGet(bitsfield, CharacteristicPropertiesBits.Read),

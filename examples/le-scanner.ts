@@ -1,8 +1,10 @@
 import chalk from "chalk";
-import { HciAdapter, createHciSerial, GapCentral, GapAdvertReport, LeScanFilterDuplicates, LeScanType } from "../src";
-import { ArgsParser } from "./utils/ArgsParser.js";
-import { getCompanyName } from "../assigned-numbers/Company Identifiers.js";
+
 import { getAppearanceSubcategoryName } from "../assigned-numbers/AppearanceValues.js";
+import { getCompanyName } from "../assigned-numbers/Company Identifiers.js";
+import { GapAdvertReport, GapCentral, HciAdapter, LeScanFilterDuplicates, LeScanType, createHciSerial } from "../src";
+
+import { ArgsParser } from "./utils/ArgsParser.js";
 
 type GapAdvertReportExt = GapAdvertReport & {
   timestamp?: Date;

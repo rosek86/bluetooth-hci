@@ -1,25 +1,25 @@
-import fs from "fs/promises";
 import chalk from "chalk";
 
 import {
-  createHciSerial,
-  HciAdapter,
-  LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates,
+  Address,
   DisconnectionCompleteEvent,
   GapAdvertReport,
   GapConnectEvent,
   GapProfileStorage,
   GattClient,
-  NbleGapCentral,
-  printProfile,
-  Address,
+  HciAdapter,
   HciError,
   HciErrorErrno,
   LeConnectionUpdate,
+  LeOwnAddressType,
+  LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+  NbleGapCentral,
+  createHciSerial,
+  printProfile,
 } from "../src";
+import fs from "fs/promises";
 
 class App extends NbleGapCentral {
   private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();

@@ -1,80 +1,130 @@
 // ref Core5.2 p1480
-import Debug from 'debug';
-import { EventEmitter } from 'events';
+import { EventEmitter } from "node:events";
 
-import { L2capChannelId } from '../l2cap/L2capChannelId.js';
+import Debug from "debug";
 
-import { AttOpcode } from './AttOpcode.js';
-import { AttErrorCode } from './AttError.js';
+import { HciError, makeHciError } from "../hci/HciError.js";
+import { L2capChannelId } from "../l2cap/L2capChannelId.js";
+
+import { AttErrorCode } from "./AttError.js";
+import { AttOpcode } from "./AttOpcode.js";
 import {
-  AttSerDes, AttErrorRsp, AttErrorRspMsg,
-  AttExchangeMtuReq, AttExchangeMtuReqMsg, AttExchangeMtuRsp, AttExchangeMtuRspMsg,
-  AttFindInformationReq, AttFindInformationReqMsg, AttFindInformationRsp, AttFindInformationRspMsg,
-  AttFindByTypeValueReq, AttFindByTypeValueReqMsg, AttFindByTypeValueRsp, AttFindByTypeValueRspMsg,
-  AttReadByTypeReq, AttReadByTypeReqMsg, AttReadByTypeRsp, AttReadByTypeRspMsg,
-  AttReadReq, AttReadReqMsg, AttReadRsp, AttReadRspMsg,
-  AttReadBlobReq, AttReadBlobReqMsg, AttReadBlobRsp, AttReadBlobRspMsg,
-  AttReadMultipleReq, AttReadMultipleReqMsg, AttReadMultipleRsp, AttReadMultipleRspMsg,
-  AttReadByGroupTypeReq, AttReadByGroupTypeReqMsg, AttReadByGroupTypeRsp, AttReadByGroupTypeRspMsg,
-  AttWriteReq, AttWriteReqMsg, AttWriteRsp, AttWriteRspMsg,
-  AttPrepareWriteReq, AttPrepareWriteReqMsg, AttPrepareWriteRsp, AttPrepareWriteRspMsg,
-  AttExecuteWriteReq, AttExecuteWriteReqMsg, AttExecuteWriteRsp, AttExecuteWriteRspMsg,
-  AttReadMultipleVariableReq, AttReadMultipleVariableReqMsg, AttReadMultipleVariableRsp, AttReadMultipleVariableRspMsg,
-  AttWriteCmd, AttWriteCmdMsg, AttSignedWriteCmd, AttSignedWriteCmdMsg,
-  AttHandleValueNtf, AttHandleValueNtfMsg, AttHandleValueInd, AttHandleValueIndMsg,
-  AttHandleValueCfm, AttHandleValueCfmMsg, AttMultipleHandleValueNtf, AttMultipleHandleValueNtfMsg
-} from './AttSerDes.js';
-import { HciError, makeHciError } from '../hci/HciError.js';
+  AttErrorRsp,
+  AttErrorRspMsg,
+  AttExchangeMtuReq,
+  AttExchangeMtuReqMsg,
+  AttExchangeMtuRsp,
+  AttExchangeMtuRspMsg,
+  AttExecuteWriteReq,
+  AttExecuteWriteReqMsg,
+  AttExecuteWriteRsp,
+  AttExecuteWriteRspMsg,
+  AttFindByTypeValueReq,
+  AttFindByTypeValueReqMsg,
+  AttFindByTypeValueRsp,
+  AttFindByTypeValueRspMsg,
+  AttFindInformationReq,
+  AttFindInformationReqMsg,
+  AttFindInformationRsp,
+  AttFindInformationRspMsg,
+  AttHandleValueCfm,
+  AttHandleValueCfmMsg,
+  AttHandleValueInd,
+  AttHandleValueIndMsg,
+  AttHandleValueNtf,
+  AttHandleValueNtfMsg,
+  AttMultipleHandleValueNtf,
+  AttMultipleHandleValueNtfMsg,
+  AttPrepareWriteReq,
+  AttPrepareWriteReqMsg,
+  AttPrepareWriteRsp,
+  AttPrepareWriteRspMsg,
+  AttReadBlobReq,
+  AttReadBlobReqMsg,
+  AttReadBlobRsp,
+  AttReadBlobRspMsg,
+  AttReadByGroupTypeReq,
+  AttReadByGroupTypeReqMsg,
+  AttReadByGroupTypeRsp,
+  AttReadByGroupTypeRspMsg,
+  AttReadByTypeReq,
+  AttReadByTypeReqMsg,
+  AttReadByTypeRsp,
+  AttReadByTypeRspMsg,
+  AttReadMultipleReq,
+  AttReadMultipleReqMsg,
+  AttReadMultipleRsp,
+  AttReadMultipleRspMsg,
+  AttReadMultipleVariableReq,
+  AttReadMultipleVariableReqMsg,
+  AttReadMultipleVariableRsp,
+  AttReadMultipleVariableRspMsg,
+  AttReadReq,
+  AttReadReqMsg,
+  AttReadRsp,
+  AttReadRspMsg,
+  AttSerDes,
+  AttSignedWriteCmd,
+  AttSignedWriteCmdMsg,
+  AttWriteCmd,
+  AttWriteCmdMsg,
+  AttWriteReq,
+  AttWriteReqMsg,
+  AttWriteRsp,
+  AttWriteRspMsg,
+} from "./AttSerDes.js";
 
-const debug = Debug('bt-hci-att');
+const debug = Debug("bt-hci-att");
 
 type AttEvents = keyof typeof AttOpcode;
 
 interface L2cap extends EventEmitter {
-  on(event: 'AttData', listener: (connectionHandle: number, payload: Buffer) => void): this;
-  on(event: 'Disconnected', listener: (connectionHandle: number, reason: number) => void): this;
+  on(event: "AttData", listener: (connectionHandle: number, payload: Buffer) => void): this;
+  on(event: "Disconnected", listener: (connectionHandle: number, reason: number) => void): this;
 
   writeAclData: (connectionHandle: number, channelId: L2capChannelId, data: Buffer) => void;
 }
 
+// prettier-ignore
 export declare interface Att {
-  on(event: 'Disconnected',            listener: (reason: HciError) => void): this;
+  on(event: "Disconnected",            listener: (reason: HciError) => void): this;
 
-  on(event: 'ErrorRsp',                listener: (event: AttErrorRspMsg) => void): this;
-  on(event: 'ExchangeMtuReq',          listener: (event: AttExchangeMtuReqMsg) => void): this;
-  on(event: 'ExchangeMtuRsp',          listener: (event: AttExchangeMtuRspMsg) => void): this;
-  on(event: 'FindInformationReq',      listener: (event: AttFindInformationReqMsg) => void): this;
-  on(event: 'FindInformationRsp',      listener: (event: AttFindInformationRspMsg) => void): this;
-  on(event: 'FindByTypeValueReq',      listener: (event: AttFindByTypeValueReqMsg) => void): this;
-  on(event: 'FindByTypeValueRsp',      listener: (event: AttFindByTypeValueRspMsg) => void): this;
-  on(event: 'ReadByTypeReq',           listener: (event: AttReadByTypeReqMsg) => void): this;
-  on(event: 'ReadByTypeRsp',           listener: (event: AttReadByTypeRspMsg) => void): this;
-  on(event: 'ReadReq',                 listener: (event: AttReadReqMsg) => void): this;
-  on(event: 'ReadRsp',                 listener: (event: AttReadRspMsg) => void): this;
-  on(event: 'ReadBlobReq',             listener: (event: AttReadBlobReqMsg) => void): this;
-  on(event: 'ReadBlobRsp',             listener: (event: AttReadBlobRspMsg) => void): this;
-  on(event: 'ReadMultipleReq',         listener: (event: AttReadMultipleReqMsg) => void): this;
-  on(event: 'ReadMultipleRsp',         listener: (event: AttReadMultipleRspMsg) => void): this;
-  on(event: 'ReadByGroupTypeReq',      listener: (event: AttReadByGroupTypeReqMsg) => void): this;
-  on(event: 'ReadByGroupTypeRsp',      listener: (event: AttReadByGroupTypeRspMsg) => void): this;
-  on(event: 'WriteReq',                listener: (event: AttWriteReqMsg) => void): this;
-  on(event: 'WriteRsp',                listener: (event: AttWriteRspMsg) => void): this;
-  on(event: 'PrepareWriteReq',         listener: (event: AttPrepareWriteReqMsg) => void): this;
-  on(event: 'PrepareWriteRsp',         listener: (event: AttPrepareWriteRspMsg) => void): this;
-  on(event: 'ExecuteWriteReq',         listener: (event: AttExecuteWriteReqMsg) => void): this;
-  on(event: 'ExecuteWriteRsp',         listener: (event: AttExecuteWriteRspMsg) => void): this;
-  on(event: 'ReadMultipleVariableReq', listener: (event: AttReadMultipleVariableReqMsg) => void): this;
-  on(event: 'ReadMultipleVariableRsp', listener: (event: AttReadMultipleVariableRspMsg) => void): this;
+  on(event: "ErrorRsp",                listener: (event: AttErrorRspMsg) => void): this;
+  on(event: "ExchangeMtuReq",          listener: (event: AttExchangeMtuReqMsg) => void): this;
+  on(event: "ExchangeMtuRsp",          listener: (event: AttExchangeMtuRspMsg) => void): this;
+  on(event: "FindInformationReq",      listener: (event: AttFindInformationReqMsg) => void): this;
+  on(event: "FindInformationRsp",      listener: (event: AttFindInformationRspMsg) => void): this;
+  on(event: "FindByTypeValueReq",      listener: (event: AttFindByTypeValueReqMsg) => void): this;
+  on(event: "FindByTypeValueRsp",      listener: (event: AttFindByTypeValueRspMsg) => void): this;
+  on(event: "ReadByTypeReq",           listener: (event: AttReadByTypeReqMsg) => void): this;
+  on(event: "ReadByTypeRsp",           listener: (event: AttReadByTypeRspMsg) => void): this;
+  on(event: "ReadReq",                 listener: (event: AttReadReqMsg) => void): this;
+  on(event: "ReadRsp",                 listener: (event: AttReadRspMsg) => void): this;
+  on(event: "ReadBlobReq",             listener: (event: AttReadBlobReqMsg) => void): this;
+  on(event: "ReadBlobRsp",             listener: (event: AttReadBlobRspMsg) => void): this;
+  on(event: "ReadMultipleReq",         listener: (event: AttReadMultipleReqMsg) => void): this;
+  on(event: "ReadMultipleRsp",         listener: (event: AttReadMultipleRspMsg) => void): this;
+  on(event: "ReadByGroupTypeReq",      listener: (event: AttReadByGroupTypeReqMsg) => void): this;
+  on(event: "ReadByGroupTypeRsp",      listener: (event: AttReadByGroupTypeRspMsg) => void): this;
+  on(event: "WriteReq",                listener: (event: AttWriteReqMsg) => void): this;
+  on(event: "WriteRsp",                listener: (event: AttWriteRspMsg) => void): this;
+  on(event: "PrepareWriteReq",         listener: (event: AttPrepareWriteReqMsg) => void): this;
+  on(event: "PrepareWriteRsp",         listener: (event: AttPrepareWriteRspMsg) => void): this;
+  on(event: "ExecuteWriteReq",         listener: (event: AttExecuteWriteReqMsg) => void): this;
+  on(event: "ExecuteWriteRsp",         listener: (event: AttExecuteWriteRspMsg) => void): this;
+  on(event: "ReadMultipleVariableReq", listener: (event: AttReadMultipleVariableReqMsg) => void): this;
+  on(event: "ReadMultipleVariableRsp", listener: (event: AttReadMultipleVariableRspMsg) => void): this;
 
-  on(event: 'HandleValueNtf',          listener: (event: AttHandleValueNtfMsg) => void): this;
-  on(event: 'HandleValueInd',          listener: (event: AttHandleValueIndMsg) => void): this;
-  on(event: 'HandleValueCfm',          listener: (event: AttHandleValueCfmMsg) => void): this;
-  on(event: 'MultipleHandleValueNtf',  listener: (event: AttMultipleHandleValueNtfMsg) => void): this;
+  on(event: "HandleValueNtf",          listener: (event: AttHandleValueNtfMsg) => void): this;
+  on(event: "HandleValueInd",          listener: (event: AttHandleValueIndMsg) => void): this;
+  on(event: "HandleValueCfm",          listener: (event: AttHandleValueCfmMsg) => void): this;
+  on(event: "MultipleHandleValueNtf",  listener: (event: AttMultipleHandleValueNtfMsg) => void): this;
 
   on<T>(event: AttEvents, listener: (event: T) => void): this;
 }
 
 export class Att extends EventEmitter {
+  // prettier-ignore
   private readonly handlers: Record<number, (data: Buffer) => void> = {
     [AttOpcode.ErrorRsp]:                this.handleEvent.bind(this, AttOpcode.ErrorRsp,                AttErrorRsp),
     [AttOpcode.ExchangeMtuReq]:          this.handleEvent.bind(this, AttOpcode.ExchangeMtuReq,          AttExchangeMtuReq),
@@ -108,15 +158,18 @@ export class Att extends EventEmitter {
     [AttOpcode.MultipleHandleValueNtf]:  this.handleEvent.bind(this, AttOpcode.MultipleHandleValueNtf,  AttMultipleHandleValueNtf),
   };
 
-  constructor (private l2cap: L2cap, private connectionHandle: number) {
+  constructor(
+    private l2cap: L2cap,
+    private connectionHandle: number,
+  ) {
     super();
-    l2cap.on('AttData', this.onAttData);
-    l2cap.on('Disconnected', this.onDisconnected);
+    l2cap.on("AttData", this.onAttData);
+    l2cap.on("Disconnected", this.onDisconnected);
   }
 
   private destroy(): void {
-    this.l2cap.off('AttData', this.onAttData);
-    this.l2cap.off('Disconnected', this.onDisconnected);
+    this.l2cap.off("AttData", this.onAttData);
+    this.l2cap.off("Disconnected", this.onDisconnected);
     this.removeAllListeners();
   }
 
@@ -176,73 +229,93 @@ export class Att extends EventEmitter {
   // Requests
   public async exchangeMtuReq(req: AttExchangeMtuReqMsg): Promise<AttExchangeMtuRspMsg> {
     return await this.writeAttWaitEvent<AttExchangeMtuRspMsg>(
-      AttOpcode.ExchangeMtuReq, AttOpcode.ExchangeMtuRsp, AttExchangeMtuReq.serialize(req)
+      AttOpcode.ExchangeMtuReq,
+      AttOpcode.ExchangeMtuRsp,
+      AttExchangeMtuReq.serialize(req),
     );
   }
 
   public async findInformationReq(req: AttFindInformationReqMsg): Promise<AttFindInformationRspMsg> {
     return await this.writeAttWaitEvent<AttFindInformationRspMsg>(
-      AttOpcode.FindInformationReq, AttOpcode.FindInformationRsp, AttFindInformationReq.serialize(req)
+      AttOpcode.FindInformationReq,
+      AttOpcode.FindInformationRsp,
+      AttFindInformationReq.serialize(req),
     );
   }
 
   public async findByTypeValueReq(req: AttFindByTypeValueReqMsg): Promise<AttFindByTypeValueRspMsg> {
     return await this.writeAttWaitEvent<AttFindByTypeValueRspMsg>(
-      AttOpcode.FindByTypeValueReq, AttOpcode.FindByTypeValueRsp, AttFindByTypeValueReq.serialize(req)
+      AttOpcode.FindByTypeValueReq,
+      AttOpcode.FindByTypeValueRsp,
+      AttFindByTypeValueReq.serialize(req),
     );
   }
 
   public async readByTypeReq(req: AttReadByTypeReqMsg): Promise<AttReadByTypeRspMsg> {
     return await this.writeAttWaitEvent<AttReadByTypeRspMsg>(
-      AttOpcode.ReadByTypeReq, AttOpcode.ReadByTypeRsp, AttReadByTypeReq.serialize(req)
+      AttOpcode.ReadByTypeReq,
+      AttOpcode.ReadByTypeRsp,
+      AttReadByTypeReq.serialize(req),
     );
   }
 
   public async readReq(req: AttReadReqMsg): Promise<AttReadRspMsg> {
-    return await this.writeAttWaitEvent<AttReadRspMsg>(
-      AttOpcode.ReadReq, AttOpcode.ReadRsp, AttReadReq.serialize(req)
-    );
+    return await this.writeAttWaitEvent<AttReadRspMsg>(AttOpcode.ReadReq, AttOpcode.ReadRsp, AttReadReq.serialize(req));
   }
 
   public async readBlobReq(req: AttReadBlobReqMsg): Promise<AttReadBlobRspMsg> {
     return await this.writeAttWaitEvent<AttReadBlobRspMsg>(
-      AttOpcode.ReadBlobReq, AttOpcode.ReadBlobRsp, AttReadBlobReq.serialize(req)
+      AttOpcode.ReadBlobReq,
+      AttOpcode.ReadBlobRsp,
+      AttReadBlobReq.serialize(req),
     );
   }
 
   public async readMultipleReq(req: AttReadMultipleReqMsg): Promise<AttReadMultipleRspMsg> {
     return await this.writeAttWaitEvent<AttReadMultipleRspMsg>(
-      AttOpcode.ReadMultipleReq, AttOpcode.ReadMultipleRsp, AttReadMultipleReq.serialize(req)
+      AttOpcode.ReadMultipleReq,
+      AttOpcode.ReadMultipleRsp,
+      AttReadMultipleReq.serialize(req),
     );
   }
 
   public async readByGroupTypeReq(req: AttReadByGroupTypeReqMsg): Promise<AttReadByGroupTypeRspMsg> {
     return await this.writeAttWaitEvent<AttReadByGroupTypeRspMsg>(
-      AttOpcode.ReadByGroupTypeReq, AttOpcode.ReadByGroupTypeRsp, AttReadByGroupTypeReq.serialize(req)
+      AttOpcode.ReadByGroupTypeReq,
+      AttOpcode.ReadByGroupTypeRsp,
+      AttReadByGroupTypeReq.serialize(req),
     );
   }
 
   public async writeReq(req: AttWriteReqMsg): Promise<AttWriteRspMsg> {
     return await this.writeAttWaitEvent<AttWriteRspMsg>(
-      AttOpcode.WriteReq, AttOpcode.WriteRsp, AttWriteReq.serialize(req)
+      AttOpcode.WriteReq,
+      AttOpcode.WriteRsp,
+      AttWriteReq.serialize(req),
     );
   }
 
   public async prepareWriteReq(req: AttPrepareWriteReqMsg): Promise<AttPrepareWriteRspMsg> {
     return await this.writeAttWaitEvent<AttPrepareWriteRspMsg>(
-      AttOpcode.PrepareWriteReq, AttOpcode.PrepareWriteRsp, AttPrepareWriteReq.serialize(req)
+      AttOpcode.PrepareWriteReq,
+      AttOpcode.PrepareWriteRsp,
+      AttPrepareWriteReq.serialize(req),
     );
   }
 
   public async executeWriteReq(req: AttExecuteWriteReqMsg): Promise<AttExecuteWriteRspMsg> {
     return await this.writeAttWaitEvent<AttExecuteWriteRspMsg>(
-      AttOpcode.ExecuteWriteReq, AttOpcode.ExecuteWriteRsp, AttExecuteWriteReq.serialize(req)
+      AttOpcode.ExecuteWriteReq,
+      AttOpcode.ExecuteWriteRsp,
+      AttExecuteWriteReq.serialize(req),
     );
   }
 
   public async readMultipleVariableReq(req: AttReadMultipleVariableReqMsg): Promise<AttReadMultipleVariableRspMsg> {
     return await this.writeAttWaitEvent<AttReadMultipleVariableRspMsg>(
-      AttOpcode.ReadMultipleVariableReq, AttOpcode.ReadMultipleVariableRsp, AttReadMultipleVariableReq.serialize(req)
+      AttOpcode.ReadMultipleVariableReq,
+      AttOpcode.ReadMultipleVariableRsp,
+      AttReadMultipleVariableReq.serialize(req),
     );
   }
 
@@ -290,7 +363,7 @@ export class Att extends EventEmitter {
     }
 
     this.destroy();
-    this.emit('Disconnected', makeHciError('Disconnected', reasonCode, 'Att.Disconnected'));
+    this.emit("Disconnected", makeHciError("Disconnected", reasonCode, "Att.Disconnected"));
   };
 
   // Utils
@@ -303,33 +376,29 @@ export class Att extends EventEmitter {
   }
 
   private async writeAtt(data: Buffer): Promise<void> {
-    await this.l2cap.writeAclData(
-      this.connectionHandle,
-      L2capChannelId.LeAttributeProtocol,
-      data
-    );
+    await this.l2cap.writeAclData(this.connectionHandle, L2capChannelId.LeAttributeProtocol, data);
   }
 
   private waitAttEvent<T>(reqOpcode: AttOpcode, resEventType: AttEvents): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const cleanup = () => {
-        this.off(resEventType,    onSuccess);
-        this.off('ErrorRsp',      onFailure);
-        this.off('Disconnected',  onDisconnected);
+        this.off(resEventType, onSuccess);
+        this.off("ErrorRsp", onFailure);
+        this.off("Disconnected", onDisconnected);
       };
       const onDisconnected = (reason: HciError) => {
         cleanup();
         reject(reason);
       };
       const onFailure = (event: AttErrorRspMsg) => {
-        debug('onFailure', reqOpcode, resEventType, event);
+        debug("onFailure", reqOpcode, resEventType, event);
         if (event.requestOpcodeInError !== reqOpcode) {
           return;
         }
         cleanup();
         const err: NodeJS.ErrnoException = new Error(
           `ATT request (${AttOpcode[reqOpcode]}) failed due to ${AttErrorCode[event.errorCode]} ` +
-          `attribute handle: ${event.attributeHandleInError}`
+            `attribute handle: ${event.attributeHandleInError}`,
         );
         err.code = AttErrorCode[event.errorCode];
         err.errno = event.errorCode;
@@ -339,9 +408,9 @@ export class Att extends EventEmitter {
         cleanup();
         resolve(event);
       };
-      this.on('ErrorRsp',     onFailure);
-      this.on(resEventType,   onSuccess);
-      this.on('Disconnected', onDisconnected);
+      this.on("ErrorRsp", onFailure);
+      this.on(resEventType, onSuccess);
+      this.on("Disconnected", onDisconnected);
     });
   }
 

@@ -1,4 +1,5 @@
-import EventEmitter from "events";
+import EventEmitter from "node:events";
+
 import Debug from "debug";
 
 import {
@@ -13,12 +14,12 @@ import {
 import { GapProfileStorage } from "../gap/GapProfileStorage.js";
 import { GattClient } from "../gatt/GattClient.js";
 import { Hci } from "../hci/Hci.js";
+import { HciError, HciErrorErrno } from "../hci/HciError.js";
 import { DisconnectionCompleteEvent } from "../hci/HciEvent.js";
 import { LePhy } from "../hci/HciLeController.js";
 import { Address } from "../utils/Address.js";
 import { HciAdapter } from "../utils/HciAdapter.js";
 import { printProfile } from "../utils/Profile.js";
-import { HciError, HciErrorErrno } from "../hci/HciError.js";
 
 const debug = Debug("NbleGapCentral");
 
@@ -35,7 +36,10 @@ export abstract class NbleGapCentral extends EventEmitter {
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
 
-  public constructor(protected adapter: HciAdapter, protected readonly options: GapCentralOptions = {}) {
+  public constructor(
+    protected adapter: HciAdapter,
+    protected readonly options: GapCentralOptions = {},
+  ) {
     super();
 
     this.hci = adapter.Hci;

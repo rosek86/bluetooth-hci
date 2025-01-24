@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+
 import { LePeerAddressType } from "../hci/HciLeController.js";
 
 // prettier-ignore
@@ -11,7 +12,10 @@ export enum AddressType {
 }
 
 export class Address {
-  private constructor(private address: number, private type: AddressType) {}
+  private constructor(
+    private address: number,
+    private type: AddressType,
+  ) {}
 
   static random(): Address {
     const addressBytes = crypto.webcrypto.getRandomValues(new Uint8Array(8));

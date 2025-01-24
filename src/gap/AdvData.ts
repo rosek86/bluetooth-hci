@@ -1,6 +1,5 @@
 // NOTE:
 // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-
 import { UUID } from "../utils/UUID.js";
 
 export interface AdvDataField {
@@ -8,6 +7,7 @@ export interface AdvDataField {
   data: Buffer;
 }
 
+// prettier-ignore
 /* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 export enum AdvDataType {
   Flags                                   = 0x01, // *
@@ -61,54 +61,54 @@ export enum AdvDataType {
 }
 
 export const AdvDataTypeLabel = [
-  'Flags',
-  'Incomplete List of 16-bit Service Class UUIDs',
-  'Complete List of 16-bit Service Class UUIDs',
-  'Incomplete List of 32-bit Service Class UUIDs',
-  'Complete List of 32-bit Service Class UUIDs',
-  'Incomplete List of 128-bit Service Class UUIDs',
-  'Complete List of 128-bit Service Class UUIDs',
-  'Shortened Local Name',
-  'Complete Local Name',
-  'Tx Power Level',
-  'Class of Device',
-  'Simple Pairing Hash C',
-  'Simple Pairing Hash C-192',
-  'Simple Pairing Randomizer R',
-  'Simple Pairing Randomizer R-192',
-  'Device ID',
-  'Security Manager TK Value',
-  'Security Manager Out of Band Flags',
-  'Slave Connection Interval Range',
-  'List of 16-bit Service Solicitation UUIDs',
-  'List of 128-bit Service Solicitation UUIDs',
-  'Service Data',
-  'Service Data - 16-bit UUID',
-  'Public Target Address',
-  'Random Target Address',
-  'Appearance',
-  'Advertising Interval',
-  'LE Bluetooth Device Address',
-  'LE Role',
-  'Simple Pairing Hash C-256',
-  'Simple Pairing Randomizer R-256',
-  'List of 32-bit Service Solicitation UUIDs',
-  'Service Data - 32-bit UUID',
-  'Service Data - 128-bit UUID',
-  'LE Secure Connections Confirmation Value',
-  'LE Secure Connections Random Value',
-  'URI',
-  'Indoor Positioning',
-  'Transport Discovery Data',
-  'LE Supported Features',
-  'Channel Map Update Indication',
-  'PB-ADV',
-  'Mesh Message',
-  'Mesh Beacon',
-  'BIGInfo',
-  'Broadcast_Code',
-  '3D Information Data',
-  'Manufacturer Specific Data',
+  "Flags",
+  "Incomplete List of 16-bit Service Class UUIDs",
+  "Complete List of 16-bit Service Class UUIDs",
+  "Incomplete List of 32-bit Service Class UUIDs",
+  "Complete List of 32-bit Service Class UUIDs",
+  "Incomplete List of 128-bit Service Class UUIDs",
+  "Complete List of 128-bit Service Class UUIDs",
+  "Shortened Local Name",
+  "Complete Local Name",
+  "Tx Power Level",
+  "Class of Device",
+  "Simple Pairing Hash C",
+  "Simple Pairing Hash C-192",
+  "Simple Pairing Randomizer R",
+  "Simple Pairing Randomizer R-192",
+  "Device ID",
+  "Security Manager TK Value",
+  "Security Manager Out of Band Flags",
+  "Slave Connection Interval Range",
+  "List of 16-bit Service Solicitation UUIDs",
+  "List of 128-bit Service Solicitation UUIDs",
+  "Service Data",
+  "Service Data - 16-bit UUID",
+  "Public Target Address",
+  "Random Target Address",
+  "Appearance",
+  "Advertising Interval",
+  "LE Bluetooth Device Address",
+  "LE Role",
+  "Simple Pairing Hash C-256",
+  "Simple Pairing Randomizer R-256",
+  "List of 32-bit Service Solicitation UUIDs",
+  "Service Data - 32-bit UUID",
+  "Service Data - 128-bit UUID",
+  "LE Secure Connections Confirmation Value",
+  "LE Secure Connections Random Value",
+  "URI",
+  "Indoor Positioning",
+  "Transport Discovery Data",
+  "LE Supported Features",
+  "Channel Map Update Indication",
+  "PB-ADV",
+  "Mesh Message",
+  "Mesh Beacon",
+  "BIGInfo",
+  "Broadcast_Code",
+  "3D Information Data",
+  "Manufacturer Specific Data",
 ];
 
 interface AdvDataServcieData {
@@ -144,7 +144,7 @@ export interface AdvData {
   serviceData32bitUuid?: AdvDataServcieData[];
   serviceData128bitUuid?: AdvDataServcieData[];
   appearance?: AdvDataAppearance;
-  unparsed?: { [key: number]: Buffer; }
+  unparsed?: { [key: number]: Buffer };
 }
 
 export class AdvData {
@@ -156,43 +156,49 @@ export class AdvData {
     }
     if (advData.incompleteListOf16bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.IncompleteListOf16bitServiceClassUuids, 16,
-        advData.incompleteListOf16bitServiceClassUuids
+        AdvDataType.IncompleteListOf16bitServiceClassUuids,
+        16,
+        advData.incompleteListOf16bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.completeListOf16bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.CompleteListOf16bitServiceClassUuids, 16,
-        advData.completeListOf16bitServiceClassUuids
+        AdvDataType.CompleteListOf16bitServiceClassUuids,
+        16,
+        advData.completeListOf16bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.incompleteListOf32bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.IncompleteListOf32bitServiceClassUuids, 32,
-        advData.incompleteListOf32bitServiceClassUuids
+        AdvDataType.IncompleteListOf32bitServiceClassUuids,
+        32,
+        advData.incompleteListOf32bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.completeListOf32bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.CompleteListOf32bitServiceClassUuids, 32,
-        advData.completeListOf32bitServiceClassUuids
+        AdvDataType.CompleteListOf32bitServiceClassUuids,
+        32,
+        advData.completeListOf32bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.incompleteListOf128bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.IncompleteListOf128bitServiceClassUuids, 128,
-        advData.incompleteListOf128bitServiceClassUuids
+        AdvDataType.IncompleteListOf128bitServiceClassUuids,
+        128,
+        advData.incompleteListOf128bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.completeListOf128bitServiceClassUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.CompleteListOf128bitServiceClassUuids, 128,
-        advData.completeListOf128bitServiceClassUuids
+        AdvDataType.CompleteListOf128bitServiceClassUuids,
+        128,
+        advData.completeListOf128bitServiceClassUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
@@ -210,22 +216,25 @@ export class AdvData {
     }
     if (advData.listOf16bitServiceSolicitationUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.ListOf16bitServiceSolicitationUuids, 16,
-        advData.listOf16bitServiceSolicitationUuids
+        AdvDataType.ListOf16bitServiceSolicitationUuids,
+        16,
+        advData.listOf16bitServiceSolicitationUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.listOf32bitServiceSolicitationUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.ListOf32bitServiceSolicitationUuids, 32,
-        advData.listOf32bitServiceSolicitationUuids
+        AdvDataType.ListOf32bitServiceSolicitationUuids,
+        32,
+        advData.listOf32bitServiceSolicitationUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
     if (advData.listOf128bitServiceSolicitationUuids) {
       const list = this.buildListOfServiceClassUuids(
-        AdvDataType.ListOf128bitServiceSolicitationUuids, 128,
-        advData.listOf128bitServiceSolicitationUuids
+        AdvDataType.ListOf128bitServiceSolicitationUuids,
+        128,
+        advData.listOf128bitServiceSolicitationUuids,
       );
       buffer = Buffer.concat([buffer, list]);
     }
@@ -272,7 +281,7 @@ export class AdvData {
 
     buffer[0] = buffer.length - 1;
     buffer[1] = type;
-  
+
     let o = 2;
     for (const uuid of list) {
       UUID.from(uuid).copy(buffer, o);
@@ -283,10 +292,10 @@ export class AdvData {
   }
 
   private static buildName(type: AdvDataType, name: string): Buffer {
-    const nameBuffer = Buffer.from(name, 'utf8');
+    const nameBuffer = Buffer.from(name, "utf8");
     const buffer = Buffer.alloc(2 + nameBuffer.length);
     buffer.writeUIntLE(buffer.length - 1, 0, 1);
-    buffer.writeUIntLE(type,              1, 1);
+    buffer.writeUIntLE(type, 1, 1);
     nameBuffer.copy(buffer, 2);
     return buffer;
   }
@@ -317,11 +326,11 @@ export class AdvData {
     return buffer;
   }
 
-  private static buildManufData(manufData: Required<AdvData>['manufacturerData']): Buffer {
+  private static buildManufData(manufData: Required<AdvData>["manufacturerData"]): Buffer {
     const buffer = Buffer.alloc(2 + 2 + manufData.data.length);
-    buffer.writeUIntLE(buffer.length - 1,                     0, 1);
-    buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData,  1, 1);
-    buffer.writeUIntLE(manufData.ident,                       2, 2);
+    buffer.writeUIntLE(buffer.length - 1, 0, 1);
+    buffer.writeUIntLE(AdvDataType.ManufacturerSpecificData, 1, 1);
+    buffer.writeUIntLE(manufData.ident, 2, 2);
     manufData.data.copy(buffer, 4);
     return buffer;
   }
@@ -358,7 +367,7 @@ export class AdvData {
     return ad;
   }
 
-  private static parseField(advData: AdvData, field: { type: number, data: Buffer }): void {
+  private static parseField(advData: AdvData, field: { type: number; data: Buffer }): void {
     switch (field.type) {
       case AdvDataType.Flags: {
         advData.flags = field.data[0];
@@ -401,11 +410,11 @@ export class AdvData {
         break;
       }
       case AdvDataType.ShortenedLocalName: {
-        advData.shortenedLocalName = field.data.toString('utf8');
+        advData.shortenedLocalName = field.data.toString("utf8");
         break;
       }
       case AdvDataType.CompleteLocalName: {
-        advData.completeLocalName = field.data.toString('utf8');
+        advData.completeLocalName = field.data.toString("utf8");
         break;
       }
       case AdvDataType.TxPowerLevel: {
@@ -433,7 +442,7 @@ export class AdvData {
       case AdvDataType.ServiceData16bitUuid: {
         advData.serviceData16bitUuid = advData.serviceData16bitUuid ?? [];
         advData.serviceData16bitUuid.push({
-          uuid: field.data.subarray(0, 2).reverse().toString('hex'),
+          uuid: field.data.subarray(0, 2).reverse().toString("hex"),
           data: field.data.subarray(2, field.data.length),
         });
         break;
@@ -441,8 +450,8 @@ export class AdvData {
       case AdvDataType.Appearance: {
         const value = field.data.readUInt16LE(0);
         advData.appearance = {
-          category:    ((value >> 6) & 0x3FF),
-          subcategory: ((value >> 0) & 0x03F),
+          category: (value >> 6) & 0x3ff,
+          subcategory: (value >> 0) & 0x03f,
           value,
         };
         break;
@@ -450,7 +459,7 @@ export class AdvData {
       case AdvDataType.ServiceData32bitUuid: {
         advData.serviceData32bitUuid = advData.serviceData32bitUuid ?? [];
         advData.serviceData32bitUuid.push({
-          uuid: field.data.subarray(0, 4).reverse().toString('hex'),
+          uuid: field.data.subarray(0, 4).reverse().toString("hex"),
           data: field.data.subarray(4, field.data.length),
         });
         break;
@@ -458,7 +467,7 @@ export class AdvData {
       case AdvDataType.ServiceData128bitUuid: {
         advData.serviceData128bitUuid = advData.serviceData128bitUuid ?? [];
         advData.serviceData128bitUuid.push({
-          uuid: field.data.subarray(0, 16).reverse().toString('hex'),
+          uuid: field.data.subarray(0, 16).reverse().toString("hex"),
           data: field.data.subarray(16, field.data.length),
         });
         break;
@@ -466,7 +475,7 @@ export class AdvData {
       case AdvDataType.ManufacturerSpecificData: {
         advData.manufacturerData = {
           ident: field.data.readUInt16LE(0),
-          data:  field.data.subarray(2),
+          data: field.data.subarray(2),
         };
         break;
       }
@@ -481,7 +490,10 @@ export class AdvData {
   private static parseServiceClassUuids(data: Buffer, size: number): string[] {
     const uuids: string[] = [];
     for (let i = 0; i < data.length; i += size) {
-      const uuid = data.subarray(i, i + size).reverse().toString('hex');
+      const uuid = data
+        .subarray(i, i + size)
+        .reverse()
+        .toString("hex");
       uuids.push(uuid);
     }
     return uuids;

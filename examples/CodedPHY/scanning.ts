@@ -1,14 +1,14 @@
 import {
-  HciAdapter,
-  createHciSerial,
   Address,
-  LeOwnAddressType,
-  LeWhiteListAddressType,
-  GapCentral,
-  LeScanningFilterPolicy,
-  LeScanType,
-  LeScanFilterDuplicates,
   AddressType,
+  GapCentral,
+  HciAdapter,
+  LeOwnAddressType,
+  LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+  LeWhiteListAddressType,
+  createHciSerial,
 } from "../../src";
 import { ArgsParser } from "../utils/ArgsParser";
 

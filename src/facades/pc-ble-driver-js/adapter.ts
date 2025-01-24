@@ -1,5 +1,6 @@
-import EventEmitter from "events";
-import { HciAdapter } from "../../utils/HciAdapter.js";
+import EventEmitter from "node:events";
+
+import { GapCentral } from "../../gap/GapCentral.js";
 import {
   LeOwnAddressType,
   LeScanFilterDuplicates,
@@ -7,7 +8,7 @@ import {
   LeScanningFilterPolicy,
 } from "../../hci/HciLeController.js";
 import { Address } from "../../utils/Address.js";
-import { GapCentral } from "../../gap/GapCentral.js";
+import { HciAdapter } from "../../utils/HciAdapter.js";
 
 interface ScanParams {
   active: boolean;

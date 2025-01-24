@@ -20,18 +20,18 @@ Additional examples are available in the [examples](examples) directory.
 
 ```ts
 import {
-  createHciSerial,
-  HciAdapter,
   DisconnectionCompleteEvent,
   GapAdvertReport,
   GapConnectEvent,
   GattClient,
-  NbleGapCentral,
-  printProfile,
+  HciAdapter,
   HciError,
   HciErrorErrno,
   LeConnectionUpdate,
+  NbleGapCentral,
+  createHciSerial,
   delay,
+  printProfile,
 } from "bluetooth-hci";
 
 class App extends NbleGapCentral {
@@ -160,10 +160,9 @@ class App extends NbleGapCentral {
 ### Simple scanning
 
 ```ts
-import { createHciSerial, HciAdapter } from "bluetooth-hci";
+import { HciAdapter, createHciSerial } from "bluetooth-hci";
 import { AdvData } from "bluetooth-hci";
-
-import { LeOwnAddressType, LeScanningFilterPolicy, LeScanType, LeScanFilterDuplicates } from "bluetooth-hci";
+import { LeOwnAddressType, LeScanFilterDuplicates, LeScanType, LeScanningFilterPolicy } from "bluetooth-hci";
 
 (async () => {
   try {
@@ -202,18 +201,18 @@ import { LeOwnAddressType, LeScanningFilterPolicy, LeScanType, LeScanFilterDupli
 
 ```ts
 import {
-  LeAdvertisingEventProperties,
   LeAdvertisingChannelMap,
+  LeAdvertisingDataOperation,
+  LeAdvertisingEventProperties,
+  LeAdvertisingFilterPolicy,
   LeOwnAddressType,
   LePeerAddressType,
-  LeAdvertisingFilterPolicy,
   LePrimaryAdvertisingPhy,
-  LeSecondaryAdvertisingPhy,
-  LeAdvertisingDataOperation,
   LeScanResponseDataOperation,
+  LeSecondaryAdvertisingPhy,
 } from "bluetooth-hci";
 import { Address, AdvData } from "bluetooth-hci";
-import { createHciSerial, HciAdapter } from "bluetooth-hci";
+import { HciAdapter, createHciSerial } from "bluetooth-hci";
 
 (async () => {
   try {

@@ -1,12 +1,12 @@
-process.env.BLUETOOTH_HCI_SOCKET_FACTORY = "1";
-import { bluetoothHciSocketFactory, BluetoothHciSocket } from "@rosek86/bluetooth-hci-socket";
-
-import { SerialPortOpenOptions } from "serialport";
+import { BluetoothHciSocket, bluetoothHciSocketFactory } from "@rosek86/bluetooth-hci-socket";
 import { AutoDetectTypes } from "@serialport/bindings-cpp";
+import { SerialPortOpenOptions } from "serialport";
 
-import { delay } from "../../src/utils/Utils.js";
 import { HciAdapter, HciDevice } from "../../src/utils/HciAdapter.js";
 import { createHciSerial } from "../../src/utils/SerialHciDevice.js";
+import { delay } from "../../src/utils/Utils.js";
+
+process.env.BLUETOOTH_HCI_SOCKET_FACTORY = "1";
 
 export interface AdapterSerialParams {
   type: "serial";
@@ -35,7 +35,10 @@ export type AdapterParams = AdapterSerialParams | AdapterUsbParams | AdapterNati
 export class UsbHciSocket implements HciDevice {
   private port: BluetoothHciSocket;
 
-  constructor(private devId: number, private usbParams: AdapterUsbParams["usb"]) {
+  constructor(
+    private devId: number,
+    private usbParams: AdapterUsbParams["usb"],
+  ) {
     this.port = bluetoothHciSocketFactory("usb");
   }
 

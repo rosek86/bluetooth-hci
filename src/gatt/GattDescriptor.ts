@@ -1,6 +1,6 @@
-import { AttDataEntry } from "./AttGlue.js";
-
 import { UUID } from "../utils/UUID.js";
+
+import { AttDataEntry } from "./AttGlue.js";
 
 export namespace GattDescriptor {
   export interface AsObject {

@@ -1,4 +1,5 @@
 // HCI Command Errors  [Ver5.2 | Vol1, Part F, 1.3]
+// prettier-ignore
 export enum HciErrorErrno {
   Success                     = 0x00, // Success
   UnknownCommand              = 0x01, // Unknown HCI Command
@@ -75,13 +76,13 @@ export enum HciErrorErrno {
 }
 
 export enum HciDisconnectReason {
-  AuthFailure                 = HciErrorErrno.AuthFailure,
-  ConnTerminatedByRemoteUser  = HciErrorErrno.ConnTerminatedByRemoteUser,
-  ConnTerminatedLowResources  = HciErrorErrno.ConnTerminatedLowResources,
-  ConnTerminatedPowerOff      = HciErrorErrno.ConnTerminatedPowerOff,
-  UnsupportedFeature          = HciErrorErrno.UnsupportedFeature,
-  UnitKeyNotSupported         = HciErrorErrno.UnitKeyNotSupported,
-  ConnectionParameters        = HciErrorErrno.ConnectionParameters,
+  AuthFailure = HciErrorErrno.AuthFailure,
+  ConnTerminatedByRemoteUser = HciErrorErrno.ConnTerminatedByRemoteUser,
+  ConnTerminatedLowResources = HciErrorErrno.ConnTerminatedLowResources,
+  ConnTerminatedPowerOff = HciErrorErrno.ConnTerminatedPowerOff,
+  UnsupportedFeature = HciErrorErrno.UnsupportedFeature,
+  UnitKeyNotSupported = HciErrorErrno.UnitKeyNotSupported,
+  ConnectionParameters = HciErrorErrno.ConnectionParameters,
 }
 
 const HciErrorErrnoToString: { [id: number]: string } = {
@@ -95,12 +96,12 @@ const HciErrorErrnoToString: { [id: number]: string } = {
   0x07: "Memory Capacity Exceeded",
   0x08: "Connection Timeout",
   0x09: "Connection Limit Exceeded",
-  0x0A: "Synchronous Connection Limit To A Device Exceeded",
-  0x0B: "Connection Already Exists",
-  0x0C: "Command Disallowed",
-  0x0D: "Connection Rejected due to Limited Resources",
-  0x0E: "Connection Rejected Due To Security Reasons",
-  0x0F: "Connection Rejected due to Unacceptable BD_ADDR",
+  0x0a: "Synchronous Connection Limit To A Device Exceeded",
+  0x0b: "Connection Already Exists",
+  0x0c: "Command Disallowed",
+  0x0d: "Connection Rejected due to Limited Resources",
+  0x0e: "Connection Rejected Due To Security Reasons",
+  0x0f: "Connection Rejected due to Unacceptable BD_ADDR",
   0x10: "Connection Accept Timeout Exceeded",
   0x11: "Unsupported Feature or Parameter Value",
   0x12: "Invalid HCI Command Parameters",
@@ -111,12 +112,12 @@ const HciErrorErrnoToString: { [id: number]: string } = {
   0x17: "Repeated Attempts",
   0x18: "Pairing Not Allowed",
   0x19: "Unknown LMP PDU",
-  0x1A: "Unsupported Remote Feature / Unsupported LMP Feature",
-  0x1B: "SCO Offset Rejected",
-  0x1C: "SCO Interval Rejected",
-  0x1D: "SCO Air Mode Rejected",
-  0x1E: "Invalid LMP Parameters / Invalid LL Parameters",
-  0x1F: "Unspecified Error",
+  0x1a: "Unsupported Remote Feature / Unsupported LMP Feature",
+  0x1b: "SCO Offset Rejected",
+  0x1c: "SCO Interval Rejected",
+  0x1d: "SCO Air Mode Rejected",
+  0x1e: "Invalid LMP Parameters / Invalid LL Parameters",
+  0x1f: "Unspecified Error",
   0x20: "Unsupported LMP Parameter Value / Unsupported LL Parameter Value",
   0x21: "Role Change Not Allowed",
   0x22: "LMP Response Timeout / LL Response Timeout",
@@ -127,12 +128,12 @@ const HciErrorErrnoToString: { [id: number]: string } = {
   0x27: "Requested QoS Not Supported",
   0x28: "Instant Passed",
   0x29: "Pairing With Unit Key Not Supported",
-  0x2A: "Different Transaction Collision",
-  0x2B: "Reserved for future use",
-  0x2C: "QoS Unacceptable Parameter",
-  0x2D: "QoS Rejected",
-  0x2E: "Channel Classification Not Supported",
-  0x2F: "Insufficient Security",
+  0x2a: "Different Transaction Collision",
+  0x2b: "Reserved for future use",
+  0x2c: "QoS Unacceptable Parameter",
+  0x2d: "QoS Rejected",
+  0x2e: "Channel Classification Not Supported",
+  0x2f: "Insufficient Security",
   0x30: "Parameter Out Of Mandatory Range",
   0x31: "Reserved for future use",
   0x32: "Role Switch Pending",
@@ -143,12 +144,12 @@ const HciErrorErrnoToString: { [id: number]: string } = {
   0x37: "Secure Simple Pairing Not Supported By Host",
   0x38: "Host Busy - Pairing",
   0x39: "Connection Rejected due to No Suitable Channel Found",
-  0x3A: "Controller Busy",
-  0x3B: "Unacceptable Connection Parameters",
-  0x3C: "Advertising Timeout",
-  0x3D: "Connection Terminated due to MIC Failure",
-  0x3E: "Connection Failed to be Established / Synchronization Timeout",
-  0x3F: "MAC Connection Failed",
+  0x3a: "Controller Busy",
+  0x3b: "Unacceptable Connection Parameters",
+  0x3c: "Advertising Timeout",
+  0x3d: "Connection Terminated due to MIC Failure",
+  0x3e: "Connection Failed to be Established / Synchronization Timeout",
+  0x3f: "MAC Connection Failed",
   0x40: "Coarse Clock Adjustment Rejected but Will Try to Adjust Using Clock Dragging",
   0x41: "Type0 Submap Not Defined",
   0x42: "Unknown Advertising Identifier",
@@ -167,7 +168,7 @@ export class HciError extends Error implements NodeJS.ErrnoException {
   public stack?: string;
 
   constructor(message: string, errno: HciErrorErrno, path?: string) {
-    super()
+    super();
 
     this.name = this.constructor.name;
 
@@ -193,13 +194,12 @@ export class HciError extends Error implements NodeJS.ErrnoException {
       // A Host shall consider any error
       // code that it does not explicitly understand equivalent to the error code
       // Unspecified Error (0x1F).
-      return HciErrorErrnoToString[0x1F];
+      return HciErrorErrnoToString[0x1f];
     }
 
     return error;
   }
 }
-
 
 export class HciParserError extends Error implements NodeJS.ErrnoException {
   errno?: number | undefined;
@@ -222,12 +222,12 @@ export function makeParserError(code: HciParserErrorType): Error {
   if (code === HciParserErrorType.InvalidPayloadSize) {
     error.message = `Invalid payload size`;
     error.errno = code;
-    error.code = 'HCI_INVALID_PAYLOAD_SIZE';
+    error.code = "HCI_INVALID_PAYLOAD_SIZE";
   }
   if (code === HciParserErrorType.Timeout) {
     error.message = `Command timeout`;
     error.errno = code;
-    error.code = 'HCI_COMMAND_TIMEOUT';
+    error.code = "HCI_COMMAND_TIMEOUT";
   }
   return error;
 }

@@ -1,9 +1,13 @@
-import assert from "assert";
-import { EventEmitter } from "events";
-import Debug from "debug";
+import assert from "node:assert";
+import { EventEmitter } from "node:events";
+
 import chalk from "chalk";
-import { AdvData } from "./AdvData.js";
+import Debug from "debug";
+
+import { Att } from "../att/Att.js";
 import { Hci } from "../hci/Hci.js";
+import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.js";
+import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
 import {
   DisconnectionCompleteEvent,
   LeAdvEventType,
@@ -20,22 +24,21 @@ import {
 } from "../hci/HciEvent.js";
 import {
   LeConnectionUpdate,
-  LeExtendedCreateConnectionV1,
   LeExtendedCreateConnectionPhy,
+  LeExtendedCreateConnectionV1,
   LeExtendedScanEnabled,
   LeExtendedScanParameters,
   LeInitiatorFilterPolicy,
   LeOwnAddressType,
   LeScanFilterDuplicates,
-  LeScanningFilterPolicy,
   LeScanType,
+  LeScanningFilterPolicy,
   LeSupportedFeatures,
 } from "../hci/HciLeController.js";
-import { Address } from "../utils/Address.js";
-import { Att } from "../att/Att.js";
 import { L2CAP } from "../l2cap/L2CAP.js";
-import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.js";
-import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
+import { Address } from "../utils/Address.js";
+
+import { AdvData } from "./AdvData.js";
 
 export interface GapCentralOptions {
   autoScan?: boolean;
@@ -158,7 +161,10 @@ export class GapCentral extends EventEmitter {
     return device.att;
   }
 
-  constructor(private hci: Hci, private readonly options?: GapCentralOptions) {
+  constructor(
+    private hci: Hci,
+    private readonly options?: GapCentralOptions,
+  ) {
     super();
 
     this.options = options ?? {};

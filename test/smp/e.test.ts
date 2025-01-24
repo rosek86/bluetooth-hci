@@ -1,14 +1,28 @@
 import assert from "node:assert";
+import { EventEmitter } from "node:stream";
 import { describe, it } from "node:test";
 
 import { AesCmac } from "aes-cmac";
 
+import { L2capChannelId } from "../../src/index.js";
 import { Smp } from "../../src/smp/Smp.js";
 import { Uint8ArrayUtils } from "../../src/utils/Uint8Array.js";
 
+class L2Cap extends EventEmitter {
+  writeAclData(connectionHandle: number, channelId: L2capChannelId, data: Buffer) {
+    void connectionHandle;
+    void channelId;
+    void data;
+  }
+}
+
+function createSmp() {
+  return new Smp(new L2Cap(), 0);
+}
+
 describe("Test SMP functions", () => {
   it("e", async () => {
-    const smp = new Smp();
+    const smp = createSmp();
     const key = new Uint8Array([
       0xe9, 0xd7, 0x8f, 0x18, 0x0c, 0xb2, 0x1d, 0xff, 0xe6, 0x10, 0x76, 0x65, 0xa1, 0xf1, 0xe2, 0xe2,
     ]);
@@ -29,7 +43,7 @@ describe("Test SMP functions", () => {
     // M              00000000 00000000 00000000 00708194
     // AES_128        159d5fb7 2ebe2311 a48c1bdc c40dfbaa
     // ah             0dfbaa
-    const smp = new Smp();
+    const smp = createSmp();
     const irk = new Uint8Array([
       0x9b, 0x7d, 0x39, 0x0a, 0xa6, 0x10, 0x10, 0x34, 0x05, 0xad, 0xc8, 0x57, 0xa3, 0x34, 0x02, 0xec,
     ]);
@@ -59,7 +73,7 @@ describe("Test SMP functions", () => {
       0x86, 0x3b, 0xf1, 0xbe, 0xc5, 0x4d, 0xa7, 0xd2, 0xea, 0x88, 0x89, 0x87, 0xef, 0x3f, 0x1e, 0x1e,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.c1(k, r, preq, pres, iat, ia, rat, ra);
 
     assert.deepStrictEqual(res, exp);
@@ -75,7 +89,7 @@ describe("Test SMP functions", () => {
       0x62, 0xa0, 0x6d, 0x79, 0xae, 0x16, 0x42, 0x5b, 0x9b, 0xf4, 0xb0, 0xe8, 0xf0, 0xe1, 0x1f, 0x9a,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.s1(k, r1, r2);
 
     assert.deepStrictEqual(res, exp);
@@ -104,7 +118,7 @@ describe("Test SMP functions", () => {
       0x2d, 0x87, 0x74, 0xa9, 0xbe, 0xa1, 0xed, 0xf1, 0x1c, 0xbd, 0xa9, 0x07, 0xf1, 0x16, 0xc9, 0xf2,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.f4(u, v, x, z);
 
     assert.deepStrictEqual(res, exp);
@@ -130,7 +144,7 @@ describe("Test SMP functions", () => {
       0x20, 0x6e, 0x63, 0xce, 0x20, 0x6a, 0x3f, 0xfd, 0x02, 0x4a, 0x08, 0xa1, 0x76, 0xf1, 0x65, 0x29,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const { mackey, ltk } = await smp.f5(w, n1, n2, a1, a2);
 
     assert.deepStrictEqual(ltk, expLtk);
@@ -157,7 +171,7 @@ describe("Test SMP functions", () => {
       0x61, 0x8f, 0x95, 0xda, 0x09, 0x0b, 0x6c, 0xd2, 0xc5, 0xe8, 0xd0, 0x9c, 0x98, 0x73, 0xc4, 0xe3,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.f6(w, n1, n2, r, io_cap, a1, a2);
 
     assert.deepStrictEqual(res, exp);
@@ -180,7 +194,7 @@ describe("Test SMP functions", () => {
     ]);
     const expVal = 0x2f9ed5ba % 1000000;
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.g2(u, v, x, y);
 
     assert.strictEqual(res, expVal);
@@ -195,7 +209,7 @@ describe("Test SMP functions", () => {
       0x99, 0x63, 0xb1, 0x80, 0xe2, 0xa9, 0xd3, 0xe8, 0x1c, 0xc9, 0x6d, 0xe7, 0x02, 0xe1, 0x9a, 0x2d,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.h6(w, keyId);
 
     assert.deepStrictEqual(res, exp);
@@ -212,7 +226,7 @@ describe("Test SMP functions", () => {
       0x11, 0x70, 0xa5, 0x75, 0x2a, 0x8c, 0x99, 0xd2, 0xec, 0xc0, 0xa3, 0xc6, 0x97, 0x35, 0x17, 0xfb,
     ]);
 
-    const smp = new Smp();
+    const smp = createSmp();
     const res = await smp.h7(salt, w);
 
     assert.deepStrictEqual(res, exp);

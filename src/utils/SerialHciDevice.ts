@@ -1,14 +1,14 @@
+import { AutoDetectTypes } from "@serialport/bindings-cpp";
 import Debug from "debug";
 import { SerialPort, SerialPortOpenOptions } from "serialport";
-import { AutoDetectTypes } from "@serialport/bindings-cpp";
+
+import { HciDevice } from "./HciAdapter.js";
 
 // https://github.com/serialport/bindings-interface/pull/32
 // import { PortInfo } from '@serialport/bindings-interface';
 interface PortInfo {
   path: string;
 }
-
-import { HciDevice } from "./HciAdapter.js";
 
 const debug = Debug("bt-hci-uart");
 

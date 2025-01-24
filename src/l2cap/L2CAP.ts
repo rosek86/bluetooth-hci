@@ -1,13 +1,14 @@
+import { EventEmitter } from "node:events";
+
 import Debug from "debug";
-import { EventEmitter } from "events";
 
-import { L2capChannelId } from "./L2capChannelId.js";
-
+import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from "../acl/Acl.js";
 import { Hci } from "../hci/Hci.js";
 import { HciError } from "../hci/HciError.js";
 import { DisconnectionCompleteEvent, NumberOfCompletedPacketsEntry } from "../hci/HciEvent.js";
 import { LeBufferSize } from "../hci/HciLeController.js";
-import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from "../acl/Acl.js";
+
+import { L2capChannelId } from "./L2capChannelId.js";
 
 const debug = Debug("bt-hci-l2cap");
 

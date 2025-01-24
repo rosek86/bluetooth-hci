@@ -1,7 +1,9 @@
 import { EOL } from "node:os";
+
 import chalk from "chalk";
+
 import { uuids } from "../../assigned-numbers/16-bit UUID Numbers.js";
-import { Profile, Service, Characteristic, IncludedService, Descriptor } from "../gatt/GattDirectory.js";
+import { Characteristic, Descriptor, IncludedService, Profile, Service } from "../gatt/GattDirectory.js";
 
 export const uuidInfo = (uuid: string): { type: string; for: string } | undefined => uuids.entries[uuid];
 

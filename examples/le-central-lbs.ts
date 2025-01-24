@@ -1,16 +1,16 @@
 import {
-  createHciSerial,
-  HciAdapter,
   DisconnectionCompleteEvent,
   GapAdvertReport,
   GapConnectEvent,
   GattClient,
-  NbleGapCentral,
-  printProfile,
+  HciAdapter,
   HciError,
   HciErrorErrno,
   LeConnectionUpdate,
+  NbleGapCentral,
+  createHciSerial,
   delay,
+  printProfile,
 } from "../src";
 
 class App extends NbleGapCentral {

@@ -1,3 +1,4 @@
+// prettier-ignore
 export enum AttOpcode {
   ErrorRsp                = 0x01, // * Request Opcode in Error, Attribute Handle In Error, Error Code
   ExchangeMtuReq          = 0x02, // * Client Rx MTU

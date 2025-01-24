@@ -1,4 +1,4 @@
-
+// prettier-ignore
 export enum AttErrorCode {
   InvalidHandle                 = 0x01, // The attribute handle given was not valid on this server.
   ReadNotPermitted              = 0x02, // The attribute cannot be read.

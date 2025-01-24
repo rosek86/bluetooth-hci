@@ -1,4 +1,4 @@
-import { HciAdapter, createHciSerial, LeOwnAddressType, LeScanningFilterPolicy, LeScanType, AdvData } from "../src";
+import { AdvData, HciAdapter, LeOwnAddressType, LeScanType, LeScanningFilterPolicy, createHciSerial } from "../src";
 
 (async () => {
   try {

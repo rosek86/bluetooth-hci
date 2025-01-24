@@ -1,16 +1,16 @@
 const messages = [
-  'ExchangeMtu',
-  'FindInformation',
-  'FindByTypeValue',
-  'ReadByType',
-  'Read',
-  'ReadBlob',
-  'ReadMultiple',
-  'ReadByGroupType',
-  'Write',
-  'PrepareWrite',
-  'ExecuteWrite',
-  'ReadMultipleVariable',
+  "ExchangeMtu",
+  "FindInformation",
+  "FindByTypeValue",
+  "ReadByType",
+  "Read",
+  "ReadBlob",
+  "ReadMultiple",
+  "ReadByGroupType",
+  "Write",
+  "PrepareWrite",
+  "ExecuteWrite",
+  "ReadMultipleVariable",
 ];
 
 function genRequest(Name) {
@@ -47,13 +47,12 @@ function genImports() {
   const genImport = (name) => {
     return `      Att${name}Req, Att${name}ReqMsg, Att${name}Rsp, Att${name}RspMsg,\n`;
   };
-  let imports = '\n      AttErrorRsp, AttErrorRspMsg,\n';
+  let imports = "\n      AttErrorRsp, AttErrorRspMsg,\n";
   for (const msg of messages) {
     imports += genImport(msg);
   }
   console.log(`
-    import {${imports}    } from './AttSerDes.js';`
-  );
+    import {${imports}    } from './AttSerDes.js';`);
 }
 
 function genSerDes(name) {
@@ -123,11 +122,11 @@ function genEventCases() {
 
 function genEventProto(name) {
   const spacesLength = 20 - name.length;
-  const spaces = [...new Array(spacesLength)].map(() => ' ').join('');
+  const spaces = [...new Array(spacesLength)].map(() => " ").join("");
 
   return `
   on(event: '${name}Req', ${spaces}listener: (event: Att${name}ReqMsg) => void): this;
-  on(event: '${name}Rsp', ${spaces}listener: (event: Att${name}RspMsg) => void): this;`
+  on(event: '${name}Rsp', ${spaces}listener: (event: Att${name}RspMsg) => void): this;`;
 }
 
 function genEventProtos() {
@@ -138,10 +137,10 @@ function genEventProtos() {
 
 function getEventHandler(name) {
   const spacesLength = 20 - name.length;
-  const spaces = [...new Array(spacesLength)].map(() => ' ').join('');
+  const spaces = [...new Array(spacesLength)].map(() => " ").join("");
 
   return `[AttOpcode.${name}Req]: ${spaces}this.handleEvent.bind(this, AttOpcode.${name}Req, ${spaces}Att${name}Req),
-[AttOpcode.${name}Rsp]: ${spaces}this.handleEvent.bind(this, AttOpcode.${name}Rsp, ${spaces}Att${name}Rsp),`
+[AttOpcode.${name}Rsp]: ${spaces}this.handleEvent.bind(this, AttOpcode.${name}Rsp, ${spaces}Att${name}Rsp),`;
 }
 
 function getEventHandlers() {
@@ -149,7 +148,6 @@ function getEventHandlers() {
     console.log(getEventHandler(msg));
   }
 }
-
 
 // genRequests();
 // genResponses();

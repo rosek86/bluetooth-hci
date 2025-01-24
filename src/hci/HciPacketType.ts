@@ -1,3 +1,4 @@
+// prettier-ignore
 export enum HciPacketType {
   Ack             = 0,  // Acknowledgment packets
   HciCommand      = 1,  // HCI Command packet

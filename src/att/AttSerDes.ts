@@ -1,19 +1,19 @@
-import { AttOpcode } from './AttOpcode.js';
-import { AttErrorCode } from './AttError.js';
+import Debug from "debug";
 
-import Debug from 'debug';
+import { AttErrorCode } from "./AttError.js";
+import { AttOpcode } from "./AttOpcode.js";
 
-const debug = Debug('bt-hci-att-serdes');
+const debug = Debug("bt-hci-att-serdes");
 
 export interface AttSerDes<T> {
   serialize(data: T): Buffer;
-  deserialize(buffer: Buffer): T|null;
+  deserialize(buffer: Buffer): T | null;
 }
 
 export interface AttErrorRspMsg {
-  requestOpcodeInError:   number;       // s:1, The request that generated this ATT_ERROR_RSP PDU
-  attributeHandleInError: number;       // s:2, The attribute handle that generated this ATT_ERROR_RSP PDU
-  errorCode:              AttErrorCode; // s:1, The reason why the request has generated an ATT_ERROR_RSP PDU
+  requestOpcodeInError: number; // s:1, The request that generated this ATT_ERROR_RSP PDU
+  attributeHandleInError: number; // s:2, The attribute handle that generated this ATT_ERROR_RSP PDU
+  errorCode: AttErrorCode; // s:1, The reason why the request has generated an ATT_ERROR_RSP PDU
 }
 
 export class AttErrorRsp {
@@ -22,22 +22,21 @@ export class AttErrorRsp {
   static serialize(data: AttErrorRspMsg): Buffer {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.ErrorRsp,          o, 1);
-    o = buffer.writeUIntLE(data.requestOpcodeInError,   o, 1);
+    o = buffer.writeUIntLE(AttOpcode.ErrorRsp, o, 1);
+    o = buffer.writeUIntLE(data.requestOpcodeInError, o, 1);
     o = buffer.writeUIntLE(data.attributeHandleInError, o, 2);
-        buffer.writeUIntLE(data.errorCode,              o, 1);
+    buffer.writeUIntLE(data.errorCode, o, 1);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttErrorRspMsg|null {
-    if (buffer.length       !== this.size ||
-        buffer.readUInt8(0) !== AttOpcode.ErrorRsp) {
+  static deserialize(buffer: Buffer): AttErrorRspMsg | null {
+    if (buffer.length !== this.size || buffer.readUInt8(0) !== AttOpcode.ErrorRsp) {
       return null;
     }
     return {
-       requestOpcodeInError:   buffer.readUIntLE(1, 1),
-       attributeHandleInError: buffer.readUIntLE(2, 2),
-       errorCode:              buffer.readUIntLE(4, 1),
+      requestOpcodeInError: buffer.readUIntLE(1, 1),
+      attributeHandleInError: buffer.readUIntLE(2, 2),
+      errorCode: buffer.readUIntLE(4, 1),
     };
   }
 }
@@ -53,13 +52,12 @@ export class AttExchangeMtuReq {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuReq, o, 1);
-        buffer.writeUIntLE(req.mtu,                  o, 2);
+    buffer.writeUIntLE(req.mtu, o, 2);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttExchangeMtuReqMsg|null {
-    if (buffer.length       !== this.size ||
-        buffer.readUInt8(0) !== AttOpcode.ExchangeMtuReq) {
+  static deserialize(buffer: Buffer): AttExchangeMtuReqMsg | null {
+    if (buffer.length !== this.size || buffer.readUInt8(0) !== AttOpcode.ExchangeMtuReq) {
       return null;
     }
     return { mtu: buffer.readUIntLE(1, 2) };
@@ -77,13 +75,12 @@ export class AttExchangeMtuRsp {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ExchangeMtuRsp, o, 1);
-        buffer.writeUIntLE(req.mtu,                  o, 2);
+    buffer.writeUIntLE(req.mtu, o, 2);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttExchangeMtuRspMsg|null {
-    if (buffer.length       !== this.size ||
-        buffer.readUInt8(0) !== AttOpcode.ExchangeMtuRsp) {
+  static deserialize(buffer: Buffer): AttExchangeMtuRspMsg | null {
+    if (buffer.length !== this.size || buffer.readUInt8(0) !== AttOpcode.ExchangeMtuRsp) {
       return null;
     }
     return { mtu: buffer.readUIntLE(1, 2) };
@@ -92,7 +89,7 @@ export class AttExchangeMtuRsp {
 
 export interface AttFindInformationReqMsg {
   startingHandle: number; // First requested handle number
-  endingHandle:   number; // Last requested handle number
+  endingHandle: number; // Last requested handle number
 }
 
 export class AttFindInformationReq {
@@ -101,20 +98,19 @@ export class AttFindInformationReq {
   static serialize(req: AttFindInformationReqMsg): Buffer {
     const buffer = Buffer.alloc(this.size);
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.FindInformationReq,  o, 1);
-    o = buffer.writeUIntLE(req.startingHandle,            o, 2);
-        buffer.writeUIntLE(req.endingHandle,              o, 2);
+    o = buffer.writeUIntLE(AttOpcode.FindInformationReq, o, 1);
+    o = buffer.writeUIntLE(req.startingHandle, o, 2);
+    buffer.writeUIntLE(req.endingHandle, o, 2);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttFindInformationReqMsg|null {
-    if (buffer.length       !== this.size ||
-        buffer.readUInt8(0) !== AttOpcode.FindInformationReq) {
+  static deserialize(buffer: Buffer): AttFindInformationReqMsg | null {
+    if (buffer.length !== this.size || buffer.readUInt8(0) !== AttOpcode.FindInformationReq) {
       return null;
     }
     return {
       startingHandle: buffer.readUIntLE(1, 2),
-      endingHandle:   buffer.readUIntLE(3, 2),
+      endingHandle: buffer.readUIntLE(3, 2),
     };
   }
 }
@@ -134,30 +130,30 @@ export class AttFindInformationRsp {
   static serialize(data: AttFindInformationRspMsg): Buffer {
     const uuidSize = this.getUuidSize(data);
     if (uuidSize === null) {
-      throw new Error('Invalid ATT response data');
+      throw new Error("Invalid ATT response data");
     }
 
     const format = this.uuidSizeToFormat[uuidSize];
     if (!format) {
-      throw new Error('Invalid ATT response data');
+      throw new Error("Invalid ATT response data");
     }
 
     const buffer = Buffer.alloc(2 + (2 + uuidSize) * data.length);
 
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.FindInformationRsp,  o, 1);
-    o = buffer.writeUIntLE(format,                        o, 1);
+    o = buffer.writeUIntLE(AttOpcode.FindInformationRsp, o, 1);
+    o = buffer.writeUIntLE(format, o, 1);
 
     for (const entry of data) {
-      o  = buffer.writeUIntLE(entry.handle, o, 2);
+      o = buffer.writeUIntLE(entry.handle, o, 2);
       o += entry.uuid.copy(buffer, o);
     }
 
     return buffer;
   }
 
-  private static getUuidSize(data: AttFindInformationRspMsg): number|null {
-    let uuidSize: number|null = null;
+  private static getUuidSize(data: AttFindInformationRspMsg): number | null {
+    let uuidSize: number | null = null;
 
     for (const entry of data) {
       const length = entry.uuid.length;
@@ -178,9 +174,8 @@ export class AttFindInformationRsp {
     return uuidSize;
   }
 
-  static deserialize(buffer: Buffer): AttFindInformationRspMsg|null {
-    if (buffer.length        <  this.minSize ||
-        buffer.readUInt8(0) !== AttOpcode.FindInformationRsp) {
+  static deserialize(buffer: Buffer): AttFindInformationRspMsg | null {
+    if (buffer.length < this.minSize || buffer.readUInt8(0) !== AttOpcode.FindInformationRsp) {
       return null;
     }
 
@@ -190,7 +185,7 @@ export class AttFindInformationRsp {
     if (!uuidSize) {
       return null;
     }
-    if (((buffer.length - 2) % (uuidSize + 2)) !== 0) {
+    if ((buffer.length - 2) % (uuidSize + 2) !== 0) {
       return null;
     }
 
@@ -198,10 +193,12 @@ export class AttFindInformationRsp {
 
     let o = 2;
     while (o < buffer.length) {
-      const handle = buffer.readUIntLE(o, 2);       o += 2;
-      const uuid   = buffer.subarray(o, o + uuidSize); o += uuidSize;
+      const handle = buffer.readUIntLE(o, 2);
+      o += 2;
+      const uuid = buffer.subarray(o, o + uuidSize);
+      o += uuidSize;
 
-      result.push({ handle, uuid, });
+      result.push({ handle, uuid });
     }
 
     return result;
@@ -210,8 +207,8 @@ export class AttFindInformationRsp {
 
 export interface AttFindByTypeValueReqMsg {
   startingHandle: number; // s: 2, First requested handle number
-  endingHandle:   number; // s: 2, Last requested handle number
-  attributeType:  number; // s: 2, 2 octet UUID to find
+  endingHandle: number; // s: 2, Last requested handle number
+  attributeType: number; // s: 2, 2 octet UUID to find
   attributeValue: Buffer; // s: 0, to (ATT_MTU-7) Attribute value to find
 }
 
@@ -221,23 +218,22 @@ export class AttFindByTypeValueReq {
   static serialize(data: AttFindByTypeValueReqMsg): Buffer {
     const buffer = Buffer.alloc(this.hdrSize + data.attributeValue.length);
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.FindByTypeValueReq,  o, 1);
-    o = buffer.writeUIntLE(data.startingHandle,           o, 2);
-    o = buffer.writeUIntLE(data.endingHandle,             o, 2);
-    o = buffer.writeUIntLE(data.attributeType,            o, 2);
+    o = buffer.writeUIntLE(AttOpcode.FindByTypeValueReq, o, 1);
+    o = buffer.writeUIntLE(data.startingHandle, o, 2);
+    o = buffer.writeUIntLE(data.endingHandle, o, 2);
+    o = buffer.writeUIntLE(data.attributeType, o, 2);
     data.attributeValue.copy(buffer, o);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttFindByTypeValueReqMsg|null {
-    if (buffer.readUInt8(0) !== AttOpcode.FindByTypeValueReq ||
-        buffer.length        <  this.hdrSize) {
+  static deserialize(buffer: Buffer): AttFindByTypeValueReqMsg | null {
+    if (buffer.readUInt8(0) !== AttOpcode.FindByTypeValueReq || buffer.length < this.hdrSize) {
       return null;
     }
     return {
       startingHandle: buffer.readUIntLE(1, 2),
-      endingHandle:   buffer.readUIntLE(3, 2),
-      attributeType:  buffer.readUIntLE(5, 2),
+      endingHandle: buffer.readUIntLE(3, 2),
+      attributeType: buffer.readUIntLE(5, 2),
       attributeValue: buffer.subarray(this.hdrSize),
     };
   }
@@ -260,15 +256,14 @@ export class AttFindByTypeValueRsp {
 
     for (const info of data.handlesInformationList) {
       o = buffer.writeUIntLE(info.foundAttributeHandle, o, 2);
-      o = buffer.writeUIntLE(info.groupEndHandle,       o, 2);
+      o = buffer.writeUIntLE(info.groupEndHandle, o, 2);
     }
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttFindByTypeValueRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.FindByTypeValueRsp) {
+  static deserialize(buffer: Buffer): AttFindByTypeValueRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.FindByTypeValueRsp) {
       return null;
     }
 
@@ -278,10 +273,13 @@ export class AttFindByTypeValueRsp {
 
     let o = 1;
     while (o < buffer.length) {
-      const foundAttributeHandle = buffer.readUIntLE(o, 2); o += 2;
-      const groupEndHandle       = buffer.readUIntLE(o, 2); o += 2;
+      const foundAttributeHandle = buffer.readUIntLE(o, 2);
+      o += 2;
+      const groupEndHandle = buffer.readUIntLE(o, 2);
+      o += 2;
       result.handlesInformationList.push({
-        foundAttributeHandle, groupEndHandle,
+        foundAttributeHandle,
+        groupEndHandle,
       });
     }
 
@@ -291,8 +289,8 @@ export class AttFindByTypeValueRsp {
 
 export interface AttReadByTypeReqMsg {
   startingHandle: number; // First requested handle number
-  endingHandle:   number; // Last requested handle number
-  attributeType:  Buffer; // 2 or 16 octet UUID
+  endingHandle: number; // Last requested handle number
+  attributeType: Buffer; // 2 or 16 octet UUID
 }
 
 export class AttReadByTypeReq {
@@ -300,27 +298,26 @@ export class AttReadByTypeReq {
 
   static serialize(data: AttReadByTypeReqMsg): Buffer {
     if ([2, 16].includes(data.attributeType.length) === false) {
-      throw new Error('Invalid attribute type length');
+      throw new Error("Invalid attribute type length");
     }
     const buffer = Buffer.alloc(this.hdrSize + data.attributeType.length);
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByTypeReq, o, 1);
-    o = buffer.writeUIntLE(data.startingHandle,     o, 2);
-    o = buffer.writeUIntLE(data.endingHandle,       o, 2);
+    o = buffer.writeUIntLE(data.startingHandle, o, 2);
+    o = buffer.writeUIntLE(data.endingHandle, o, 2);
     data.attributeType.copy(buffer, o);
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadByTypeReqMsg|null {
+  static deserialize(buffer: Buffer): AttReadByTypeReqMsg | null {
     const sizes = [this.hdrSize + 2, this.hdrSize + 16];
-    if (sizes.includes(buffer.length) === false ||
-        buffer.readUInt8(0) !== AttOpcode.ReadByTypeReq) {
+    if (sizes.includes(buffer.length) === false || buffer.readUInt8(0) !== AttOpcode.ReadByTypeReq) {
       return null;
     }
     return {
       startingHandle: buffer.readUIntLE(1, 2),
-      endingHandle:   buffer.readUIntLE(3, 2),
-      attributeType:  buffer.subarray(this.hdrSize),
+      endingHandle: buffer.readUIntLE(3, 2),
+      attributeType: buffer.subarray(this.hdrSize),
     };
   }
 }
@@ -342,14 +339,14 @@ export class AttReadByTypeRsp {
     const attributeDataList = data.attributeDataList;
 
     if (data.attributeDataList.length === 0) {
-      throw new Error('Invalid ATT response data');
+      throw new Error("Invalid ATT response data");
     }
 
     const attributeValueSize = attributeDataList[0].value.length;
 
     for (const attributeData of attributeDataList) {
       if (attributeData.value.length !== attributeValueSize) {
-        throw new Error('Invalid ATT response data');
+        throw new Error("Invalid ATT response data");
       }
     }
 
@@ -357,20 +354,19 @@ export class AttReadByTypeRsp {
     const buffer = Buffer.alloc(this.hdrSize + payloadSize);
 
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.ReadByTypeRsp,               o, 1);
-    o = buffer.writeUIntLE(this.handleSize + attributeValueSize,  o, 1);
+    o = buffer.writeUIntLE(AttOpcode.ReadByTypeRsp, o, 1);
+    o = buffer.writeUIntLE(this.handleSize + attributeValueSize, o, 1);
 
     for (const attributeData of attributeDataList) {
-      o  = buffer.writeUIntLE(attributeData.handle, o, 2);
+      o = buffer.writeUIntLE(attributeData.handle, o, 2);
       o += attributeData.value.copy(buffer, o);
     }
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadByTypeRspMsg|null {
-    if (buffer.length        <  2 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadByTypeRsp) {
+  static deserialize(buffer: Buffer): AttReadByTypeRspMsg | null {
+    if (buffer.length < 2 || buffer.readUInt8(0) !== AttOpcode.ReadByTypeRsp) {
       return null;
     }
 
@@ -405,15 +401,14 @@ export class AttReadReq {
     const buffer = Buffer.alloc(3);
 
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.ReadReq,     o, 1);
-        buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o = buffer.writeUIntLE(AttOpcode.ReadReq, o, 1);
+    buffer.writeUIntLE(data.attributeHandle, o, 2);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadReqMsg|null {
-    if (buffer.length        <  3 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadReq) {
+  static deserialize(buffer: Buffer): AttReadReqMsg | null {
+    if (buffer.length < 3 || buffer.readUInt8(0) !== AttOpcode.ReadReq) {
       return null;
     }
 
@@ -433,9 +428,8 @@ export class AttReadRsp {
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadRsp) {
+  static deserialize(buffer: Buffer): AttReadRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadRsp) {
       return null;
     }
 
@@ -454,21 +448,20 @@ export class AttReadBlobReq {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadBlobReq, o, 1);
-    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
-        buffer.writeUIntLE(data.valueOffset,      o, 2);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
+    buffer.writeUIntLE(data.valueOffset, o, 2);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadBlobReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadBlobReq) {
+  static deserialize(buffer: Buffer): AttReadBlobReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadBlobReq) {
       return null;
     }
 
     return {
-      attributeHandle:  buffer.readUIntLE(1, 2),
-      valueOffset:      buffer.readUIntLE(3, 2),
+      attributeHandle: buffer.readUIntLE(1, 2),
+      valueOffset: buffer.readUIntLE(3, 2),
     };
   }
 }
@@ -485,9 +478,8 @@ export class AttReadBlobRsp {
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadBlobRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadBlobRsp) {
+  static deserialize(buffer: Buffer): AttReadBlobRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadBlobRsp) {
       return null;
     }
 
@@ -512,9 +504,8 @@ export class AttReadMultipleReq {
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadMultipleReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadMultipleReq) {
+  static deserialize(buffer: Buffer): AttReadMultipleReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadMultipleReq) {
       return null;
     }
 
@@ -542,9 +533,8 @@ export class AttReadMultipleRsp {
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadMultipleRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadMultipleRsp) {
+  static deserialize(buffer: Buffer): AttReadMultipleRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadMultipleRsp) {
       return null;
     }
 
@@ -563,23 +553,22 @@ export class AttReadByGroupTypeReq {
 
   static serialize(data: AttReadByGroupTypeReqMsg): Buffer {
     if ([2, 16].includes(data.attributeGroupType.length) === false) {
-      throw new Error('Invalid ATT data');
+      throw new Error("Invalid ATT data");
     }
 
     const buffer = Buffer.alloc(this.hdrSize + data.attributeGroupType.length);
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeReq, o, 1);
-    o = buffer.writeUIntLE(data.startingHandle,          o, 2);
-    o = buffer.writeUIntLE(data.endingHandle,            o, 2);
+    o = buffer.writeUIntLE(data.startingHandle, o, 2);
+    o = buffer.writeUIntLE(data.endingHandle, o, 2);
     data.attributeGroupType.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadByGroupTypeReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeReq) {
+  static deserialize(buffer: Buffer): AttReadByGroupTypeReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeReq) {
       return null;
     }
     const availableSize = [this.hdrSize + 2, this.hdrSize + 16];
@@ -588,8 +577,8 @@ export class AttReadByGroupTypeReq {
     }
 
     return {
-      startingHandle:     buffer.readUIntLE(1, 2),
-      endingHandle:       buffer.readUIntLE(3, 2),
+      startingHandle: buffer.readUIntLE(1, 2),
+      endingHandle: buffer.readUIntLE(3, 2),
       attributeGroupType: buffer.subarray(this.hdrSize),
     };
   }
@@ -614,20 +603,20 @@ export class AttReadByGroupTypeRsp {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.ReadByGroupTypeRsp, o, 1);
-    o = buffer.writeUIntLE(entry,                        o, 1);
+    o = buffer.writeUIntLE(entry, o, 1);
 
     for (const entry of data.attributeDataList) {
-      o  = buffer.writeUIntLE(entry.attributeHandle, o, 2);
-      o  = buffer.writeUIntLE(entry.endGroupHandle,  o, 2);
+      o = buffer.writeUIntLE(entry.attributeHandle, o, 2);
+      o = buffer.writeUIntLE(entry.endGroupHandle, o, 2);
       o += entry.attributeValue.copy(buffer, o);
     }
 
     return buffer;
   }
 
-  private static getSize(data: AttReadByGroupTypeRspMsg): { total: number, entry: number } {
+  private static getSize(data: AttReadByGroupTypeRspMsg): { total: number; entry: number } {
     let totalSize = this.hdrSize;
-    let entrySize: number|null = null;
+    let entrySize: number | null = null;
     for (const entry of data.attributeDataList) {
       const es = entry.attributeValue.length;
 
@@ -637,18 +626,17 @@ export class AttReadByGroupTypeRsp {
         entrySize = es;
       }
       if (entrySize !== es) {
-        throw new Error('Invalid ATT data');
+        throw new Error("Invalid ATT data");
       }
     }
     if (entrySize === null) {
-      throw new Error('Invalid ATT data');
+      throw new Error("Invalid ATT data");
     }
     return { total: totalSize, entry: entrySize };
   }
 
-  static deserialize(buffer: Buffer): AttReadByGroupTypeRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeRsp) {
+  static deserialize(buffer: Buffer): AttReadByGroupTypeRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadByGroupTypeRsp) {
       return null;
     }
 
@@ -659,13 +647,17 @@ export class AttReadByGroupTypeRsp {
 
     let o = 2;
     while (o < buffer.length) {
-      const attributeHandle = buffer.readUInt16LE(o); o += 2;
-      const endGroupHandle  = buffer.readUInt16LE(o); o += 2;
-      const attributeValue  = buffer.subarray(o, o + length);
+      const attributeHandle = buffer.readUInt16LE(o);
+      o += 2;
+      const endGroupHandle = buffer.readUInt16LE(o);
+      o += 2;
+      const attributeValue = buffer.subarray(o, o + length);
       o += length;
 
       result.attributeDataList.push({
-        attributeHandle, endGroupHandle, attributeValue,
+        attributeHandle,
+        endGroupHandle,
+        attributeValue,
       });
     }
 
@@ -685,40 +677,38 @@ export class AttWriteReq {
     const buffer = Buffer.alloc(this.hdrSize + data.attributeValue.length);
 
     let o = 0;
-    o = buffer.writeUIntLE(AttOpcode.WriteReq,    o, 1);
-    o = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o = buffer.writeUIntLE(AttOpcode.WriteReq, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
     data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttWriteReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.WriteReq) {
+  static deserialize(buffer: Buffer): AttWriteReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.WriteReq) {
       return null;
     }
 
     const result: AttWriteReqMsg = {
       attributeHandle: buffer.readUInt16LE(1),
-      attributeValue:  buffer.subarray(3),
+      attributeValue: buffer.subarray(3),
     };
 
     return result;
   }
 }
 
-export interface AttWriteRspMsg {
-}
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+export interface AttWriteRspMsg {}
 
 export class AttWriteRsp {
   static serialize(_: AttWriteRspMsg): Buffer {
     void _;
-    return Buffer.from([ AttOpcode.WriteRsp ]);
+    return Buffer.from([AttOpcode.WriteRsp]);
   }
 
-  static deserialize(buffer: Buffer): AttWriteRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.WriteRsp) {
+  static deserialize(buffer: Buffer): AttWriteRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.WriteRsp) {
       return null;
     }
     return {};
@@ -739,22 +729,21 @@ export class AttPrepareWriteReq {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteReq, o, 1);
-    o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
-    o = buffer.writeUIntLE(data.valueOffset,          o, 2);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
+    o = buffer.writeUIntLE(data.valueOffset, o, 2);
     data.partAttributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttPrepareWriteReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.PrepareWriteReq) {
+  static deserialize(buffer: Buffer): AttPrepareWriteReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.PrepareWriteReq) {
       return null;
     }
 
     const result: AttPrepareWriteReqMsg = {
-      attributeHandle:    buffer.readUInt16LE(1),
-      valueOffset:        buffer.readUInt16LE(3),
+      attributeHandle: buffer.readUInt16LE(1),
+      valueOffset: buffer.readUInt16LE(3),
       partAttributeValue: buffer.subarray(this.hdrSize),
     };
 
@@ -776,22 +765,21 @@ export class AttPrepareWriteRsp {
 
     let o = 0;
     o = buffer.writeUIntLE(AttOpcode.PrepareWriteRsp, o, 1);
-    o = buffer.writeUIntLE(data.attributeHandle,      o, 2);
-    o = buffer.writeUIntLE(data.valueOffset,          o, 2);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
+    o = buffer.writeUIntLE(data.valueOffset, o, 2);
     data.partAttributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttPrepareWriteRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.PrepareWriteRsp) {
+  static deserialize(buffer: Buffer): AttPrepareWriteRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.PrepareWriteRsp) {
       return null;
     }
 
     const result: AttPrepareWriteRspMsg = {
-      attributeHandle:    buffer.readUInt16LE(1),
-      valueOffset:        buffer.readUInt16LE(3),
+      attributeHandle: buffer.readUInt16LE(1),
+      valueOffset: buffer.readUInt16LE(3),
       partAttributeValue: buffer.subarray(this.hdrSize),
     };
 
@@ -810,15 +798,11 @@ export interface AttExecuteWriteReqMsg {
 
 export class AttExecuteWriteReq {
   static serialize(data: AttExecuteWriteReqMsg): Buffer {
-    return Buffer.from([
-      AttOpcode.ExecuteWriteReq,
-      data.flags
-    ]);
+    return Buffer.from([AttOpcode.ExecuteWriteReq, data.flags]);
   }
 
-  static deserialize(buffer: Buffer): AttExecuteWriteReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ExecuteWriteReq) {
+  static deserialize(buffer: Buffer): AttExecuteWriteReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ExecuteWriteReq) {
       return null;
     }
 
@@ -826,18 +810,16 @@ export class AttExecuteWriteReq {
   }
 }
 
-export interface AttExecuteWriteRspMsg {
-}
+export interface AttExecuteWriteRspMsg {}
 
 export class AttExecuteWriteRsp {
   static serialize(_: AttExecuteWriteRspMsg): Buffer {
     void _;
-    return Buffer.from([ AttOpcode.ExecuteWriteRsp ]);
+    return Buffer.from([AttOpcode.ExecuteWriteRsp]);
   }
 
-  static deserialize(buffer: Buffer): AttExecuteWriteRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ExecuteWriteRsp) {
+  static deserialize(buffer: Buffer): AttExecuteWriteRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ExecuteWriteRsp) {
       return null;
     }
     return {};
@@ -859,9 +841,8 @@ export class AttReadMultipleVariableReq {
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadMultipleVariableReqMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableReq) {
+  static deserialize(buffer: Buffer): AttReadMultipleVariableReqMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableReq) {
       return null;
     }
 
@@ -886,16 +867,15 @@ export class AttReadMultipleVariableRsp {
     o = buffer.writeUIntLE(AttOpcode.ReadMultipleVariableRsp, o, 1);
 
     for (const entry of data.values) {
-      o  = buffer.writeUIntLE(entry.length, o, 2);
+      o = buffer.writeUIntLE(entry.length, o, 2);
       o += entry.copy(buffer, o);
     }
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttReadMultipleVariableRspMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableRsp) {
+  static deserialize(buffer: Buffer): AttReadMultipleVariableRspMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.ReadMultipleVariableRsp) {
       return null;
     }
 
@@ -903,7 +883,8 @@ export class AttReadMultipleVariableRsp {
 
     let o = 1;
     while (o < buffer.length) {
-      const len = buffer.readUIntLE(o, 2); o += 2;
+      const len = buffer.readUIntLE(o, 2);
+      o += 2;
       result.values.push(buffer.subarray(o, o + len));
       o += len;
     }
@@ -922,16 +903,15 @@ export class AttWriteCmd {
     const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
-    o  = buffer.writeUIntLE(AttOpcode.WriteCmd,    o, 1);
-    o  = buffer.writeUIntLE(data.attributeHandle,  o, 2);
+    o = buffer.writeUIntLE(AttOpcode.WriteCmd, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
     data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttWriteCmdMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.WriteCmd) {
+  static deserialize(buffer: Buffer): AttWriteCmdMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.WriteCmd) {
       return null;
     }
 
@@ -952,16 +932,15 @@ export class AttSignedWriteCmd {
     const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
-    o  = buffer.writeUIntLE(AttOpcode.SignedWriteCmd, o, 1);
-    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o = buffer.writeUIntLE(AttOpcode.SignedWriteCmd, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
     data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttSignedWriteCmdMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.SignedWriteCmd) {
+  static deserialize(buffer: Buffer): AttSignedWriteCmdMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.SignedWriteCmd) {
       return null;
     }
 
@@ -982,16 +961,15 @@ export class AttHandleValueNtf {
     const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
-    o  = buffer.writeUIntLE(AttOpcode.HandleValueNtf, o, 1);
-    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o = buffer.writeUIntLE(AttOpcode.HandleValueNtf, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
     data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttHandleValueNtfMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.HandleValueNtf) {
+  static deserialize(buffer: Buffer): AttHandleValueNtfMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.HandleValueNtf) {
       return null;
     }
 
@@ -1012,16 +990,15 @@ export class AttHandleValueInd {
     const buffer = Buffer.alloc(3 + data.attributeValue.length);
 
     let o = 0;
-    o  = buffer.writeUIntLE(AttOpcode.HandleValueInd, o, 1);
-    o  = buffer.writeUIntLE(data.attributeHandle,     o, 2);
+    o = buffer.writeUIntLE(AttOpcode.HandleValueInd, o, 1);
+    o = buffer.writeUIntLE(data.attributeHandle, o, 2);
     data.attributeValue.copy(buffer, o);
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttHandleValueIndMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.HandleValueInd) {
+  static deserialize(buffer: Buffer): AttHandleValueIndMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.HandleValueInd) {
       return null;
     }
 
@@ -1032,8 +1009,7 @@ export class AttHandleValueInd {
   }
 }
 
-export interface AttHandleValueCfmMsg {
-}
+export interface AttHandleValueCfmMsg {}
 
 export class AttHandleValueCfm {
   static serialize(_: AttHandleValueCfmMsg): Buffer {
@@ -1041,9 +1017,8 @@ export class AttHandleValueCfm {
     return Buffer.from([AttOpcode.HandleValueCfm]);
   }
 
-  static deserialize(buffer: Buffer): AttHandleValueCfmMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.HandleValueCfm) {
+  static deserialize(buffer: Buffer): AttHandleValueCfmMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.HandleValueCfm) {
       return null;
     }
 
@@ -1067,17 +1042,16 @@ export class AttMultipleHandleValueNtf {
     o = buffer.writeUIntLE(AttOpcode.MultipleHandleValueNtf, o, 1);
 
     for (const entry of data.values) {
-      o  = buffer.writeUIntLE(entry.attributeHandle,        o, 2);
-      o  = buffer.writeUIntLE(entry.attributeValue.length,  o, 2);
+      o = buffer.writeUIntLE(entry.attributeHandle, o, 2);
+      o = buffer.writeUIntLE(entry.attributeValue.length, o, 2);
       o += entry.attributeValue.copy(buffer, o);
     }
 
     return buffer;
   }
 
-  static deserialize(buffer: Buffer): AttMultipleHandleValueNtfMsg|null {
-    if (buffer.length        <  1 ||
-        buffer.readUInt8(0) !== AttOpcode.MultipleHandleValueNtf) {
+  static deserialize(buffer: Buffer): AttMultipleHandleValueNtfMsg | null {
+    if (buffer.length < 1 || buffer.readUInt8(0) !== AttOpcode.MultipleHandleValueNtf) {
       return null;
     }
 
@@ -1085,8 +1059,10 @@ export class AttMultipleHandleValueNtf {
 
     let o = 1;
     while (o < buffer.length) {
-      const handle = buffer.readUIntLE(o, 2); o += 2;
-      const length = buffer.readUIntLE(o, 2); o += 2;
+      const handle = buffer.readUIntLE(o, 2);
+      o += 2;
+      const length = buffer.readUIntLE(o, 2);
+      o += 2;
       result.values.push({
         attributeHandle: handle,
         attributeValue: buffer.subarray(o, o + length),

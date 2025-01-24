@@ -1,5 +1,6 @@
-import { HciParserErrorType, makeParserError } from "./HciError.js";
 import { bitSet } from "../utils/Utils.js";
+
+import { HciParserErrorType, makeParserError } from "./HciError.js";
 import { HciOcfControlAndBasebandCommands } from "./HciOgfOcf.js";
 
 export interface EventMask {

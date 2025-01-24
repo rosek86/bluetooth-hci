@@ -1,8 +1,10 @@
 import EventEmitter from "node:events";
+
+import { getCompanyName } from "../../assigned-numbers/Company Identifiers.js";
 import { Hci } from "../hci/Hci.js";
 import { H4 } from "../transport/H4.js";
+
 import { Address, AddressType } from "./Address.js";
-import { getCompanyName } from "../../assigned-numbers/Company Identifiers.js";
 
 export interface HciDevice {
   open(): Promise<void>;

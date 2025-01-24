@@ -1,20 +1,20 @@
 import {
-  createHciSerial,
-  HciAdapter,
   DisconnectionCompleteEvent,
   GapAdvertReport,
   GapConnectEvent,
   GattClient,
-  NbleGapCentral,
-  printProfile,
+  HciAdapter,
   HciError,
   HciErrorErrno,
   LeConnectionUpdate,
-  delay,
   LeOwnAddressType,
-  LeScanningFilterPolicy,
-  LeScanType,
   LeScanFilterDuplicates,
+  LeScanType,
+  LeScanningFilterPolicy,
+  NbleGapCentral,
+  createHciSerial,
+  delay,
+  printProfile,
 } from "../src";
 
 class App extends NbleGapCentral {

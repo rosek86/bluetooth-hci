@@ -2,6 +2,12 @@
   "semi": true,
   "trailingComma": "all",
   "singleQuote": false,
+  "bracketSpacing": true,
   "printWidth": 120,
-  "tabWidth": 2
+  "tabWidth": 2,
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
+  "importOrder": ["^node:", "<THIRD_PARTY_MODULES>", "^../", "^./"],
+  "importOrderParserPlugins": ["typescript", "decorators-legacy"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }
