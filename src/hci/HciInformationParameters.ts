@@ -183,6 +183,7 @@ export class ReadBdAddr {
   }
 }
 
+// 6.27 Supported commands
 // prettier-ignore
 export interface LocalSupportedCommandsFields {
   inquiry:                                                boolean;
@@ -516,13 +517,21 @@ export interface LocalSupportedCommandsFields {
   leSetDefaultSubrate:                                    boolean;
   leSubrateRequest:                                       boolean;
   leSetExtendedAdvertisingParametersV2:                   boolean;
-  // Reserved for future use
-  // Reserved for future use
+  leSetDecisionData:                                      boolean;
+  leSetDecisionInstructions:                              boolean;
   leSetPeriodicAdvertisingSubeventData:                   boolean;
   leSetPeriodicAdvertisingResponseData:                   boolean;
   leSetPeriodicSyncSubevent:                              boolean;
   leExtendedCreateConnectionV2:                           boolean;
   leSetPeriodicAdvertisingParametersV2:                   boolean;
+  leReadAllLocalSupportedFeatures:                        boolean;
+  leReadAllRemoteFeatures:                                boolean;
+  leSetHostFeatureV2:                                     boolean;
+  leAddDeviceToMonitoredAdvertisersList:                  boolean;
+  leRemoveDeviceFromMonitoredAdvertisersList:             boolean;
+  leClearMonitoredAdvertisersList:                        boolean;
+  leReadMonitoredAdvertisersListSize:                     boolean;
+  leFrameSpaceUpdate:                                     boolean;
 }
 
 export class LocalSupportedCommands {
@@ -885,13 +894,21 @@ export class LocalSupportedCommands {
       leSetDefaultSubrate:                                    bitGet(params[46], 0),
       leSubrateRequest:                                       bitGet(params[46], 1),
       leSetExtendedAdvertisingParametersV2:                   bitGet(params[46], 2),
-      // Reserved for future use
-      // Reserved for future use
+      leSetDecisionData:                                      bitGet(params[46], 3),
+      leSetDecisionInstructions:                              bitGet(params[46], 4),
       leSetPeriodicAdvertisingSubeventData:                   bitGet(params[46], 5),
       leSetPeriodicAdvertisingResponseData:                   bitGet(params[46], 6),
       leSetPeriodicSyncSubevent:                              bitGet(params[46], 7),
       leExtendedCreateConnectionV2:                           bitGet(params[47], 0),
       leSetPeriodicAdvertisingParametersV2:                   bitGet(params[47], 1),
+      leReadAllLocalSupportedFeatures:                        bitGet(params[47], 2),
+      leReadAllRemoteFeatures:                                bitGet(params[47], 3),
+      leSetHostFeatureV2:                                     bitGet(params[47], 4),
+      leAddDeviceToMonitoredAdvertisersList:                  bitGet(params[47], 5),
+      leRemoveDeviceFromMonitoredAdvertisersList:             bitGet(params[47], 6),
+      leClearMonitoredAdvertisersList:                        bitGet(params[47], 7),
+      leReadMonitoredAdvertisersListSize:                     bitGet(params[48], 0),
+      leFrameSpaceUpdate:                                     bitGet(params[48], 1),
     });
   }
 }
