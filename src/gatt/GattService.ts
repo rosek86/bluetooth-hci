@@ -2,6 +2,7 @@ import { UUID } from "../utils/UUID.js";
 
 import { AttDataEntry } from "./AttGlue.js";
 
+/* eslint-disable @typescript-eslint/no-namespace */
 export namespace GattService {
   export interface AsObject {
     handle: number;

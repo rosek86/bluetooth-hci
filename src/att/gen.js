@@ -149,10 +149,10 @@ function getEventHandlers() {
   }
 }
 
-// genRequests();
-// genResponses();
-// genImports();
-// genSerDeses();
-// genEventCases();
-// genEventProtos();
+genRequests();
+genResponses();
+genImports();
+genSerDeses();
+genEventCases();
+genEventProtos();
 getEventHandlers();

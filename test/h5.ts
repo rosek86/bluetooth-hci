@@ -1,7 +1,6 @@
-const { H5 } = require("../lib/src/transport/H5");
+import { describe, it } from "node:test";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert");
+import { H5 } from "../src/transport/H5";
 
 describe("H5", function () {
   describe("encode()", function () {
@@ -14,7 +13,7 @@ describe("H5", function () {
         crcPresent: 1,
         reliablePacket: 1,
         packetType: 1,
-        payload: [],
+        payload: new Uint8Array([]),
       });
       void packet;
       // console.log(packet);

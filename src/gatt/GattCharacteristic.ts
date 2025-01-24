@@ -41,6 +41,7 @@ enum CharacteristicPropertiesBits {
   ExtendedProperties = 7,
 }
 
+/* eslint-disable @typescript-eslint/no-namespace */
 export namespace GattCharacteristic {
   export interface AsObject {
     handle: number;
