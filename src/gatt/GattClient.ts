@@ -14,18 +14,18 @@ import { GattService } from "./GattService.js";
 const debug = Debug("bt-hci-gatt");
 
 // prettier-ignore
-export enum  GattProfileAttributeType {
-  PrimaryService                    = 0x2800, // Primary Service Declaration
-  SecondaryService                  = 0x2801, // Secondary Service Declaration
-  Include                           = 0x2802, // Include Declaration
-  Characteristic                    = 0x2803, // Characteristic Declaration
-  CharacteristicExtendedProperties  = 0x2900, // Characteristic Extended Properties
-  CharacteristicUserDescription     = 0x2901, // Characteristic User Description Descriptor
-  ClientCharacteristicConfiguration = 0x2902, // Client Characteristic Configuration Descriptor
-  ServerCharacteristicConfiguration = 0x2903, // Server Characteristic Configuration Descriptor
-  CharacteristicPresentationFormat  = 0x2904, // Characteristic Presentation Format Descriptor
-  CharacteristicAggregateFormat     = 0x2905, // Characteristic Aggregate Format Descriptor
-}
+export const  GattProfileAttributeType = Object.freeze({
+  PrimaryService:                     0x2800, // Primary Service Declaration
+  SecondaryService:                   0x2801, // Secondary Service Declaration
+  Include:                            0x2802, // Include Declaration
+  Characteristic:                     0x2803, // Characteristic Declaration
+  CharacteristicExtendedProperties:   0x2900, // Characteristic Extended Properties
+  CharacteristicUserDescription:      0x2901, // Characteristic User Description Descriptor
+  ClientCharacteristicConfiguration:  0x2902, // Client Characteristic Configuration Descriptor
+  ServerCharacteristicConfiguration:  0x2903, // Server Characteristic Configuration Descriptor
+  CharacteristicPresentationFormat:   0x2904, // Characteristic Presentation Format Descriptor
+  CharacteristicAggregateFormat:      0x2905, // Characteristic Aggregate Format Descriptor
+} as const);
 
 interface GattHvxParams {
   service: GattService.AsObject;
@@ -45,6 +45,8 @@ export interface GattClient {
 }
 
 export class GattClient extends EventEmitter {
+  private readonly att: Att;
+
   private mtu = 23;
   private directory: GattDirectory;
 
@@ -52,12 +54,12 @@ export class GattClient extends EventEmitter {
     return this.directory.Profile;
   }
 
-  constructor(
-    private att: Att,
-    profile?: Profile,
-  ) {
+  constructor(att: Att, profile?: Profile) {
     super();
+
+    this.att = att;
     this.directory = new GattDirectory(profile);
+
     att.on("Disconnected", this.onDisconnected);
     att.on("HandleValueInd", this.onValueIndication);
     att.on("HandleValueNtf", this.onValueNotification);

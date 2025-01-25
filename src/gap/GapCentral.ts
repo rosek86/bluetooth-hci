@@ -128,6 +128,9 @@ interface RemoteInfoCache {
 }
 
 export class GapCentral extends EventEmitter {
+  private readonly hci: Hci;
+  private readonly options?: GapCentralOptions;
+
   private extended = false;
   private scanning = false;
 
@@ -161,12 +164,10 @@ export class GapCentral extends EventEmitter {
     return device.att;
   }
 
-  constructor(
-    private hci: Hci,
-    private readonly options?: GapCentralOptions,
-  ) {
+  constructor(hci: Hci, options?: GapCentralOptions) {
     super();
 
+    this.hci = hci;
     this.options = options ?? {};
     this.options.autoScan = this.options.autoScan ?? true;
     this.options.autoScanOptions = this.options.autoScanOptions ?? {};

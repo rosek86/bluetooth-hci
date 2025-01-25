@@ -3,11 +3,11 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { HciError, makeHciError } from "../hci/HciError.js";
+import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
 import { L2capChannelId } from "../l2cap/L2capChannelId.js";
 
-import { AttErrorCode } from "./AttError.js";
-import { AttOpcode } from "./AttOpcode.js";
+import { AttErrorCodeGetName } from "./AttError.js";
+import { AttOpcode, AttOpcodeGetName, numberToAttOpcode } from "./AttOpcode.js";
 import {
   AttErrorRsp,
   AttErrorRspMsg,
@@ -80,7 +80,7 @@ type AttEvents = keyof typeof AttOpcode;
 
 interface L2cap extends EventEmitter {
   on(event: "AttData", listener: (connectionHandle: number, payload: Buffer) => void): this;
-  on(event: "Disconnected", listener: (connectionHandle: number, reason: number) => void): this;
+  on(event: "Disconnected", listener: (connectionHandle: number, reason: HciErrorErrno) => void): this;
 
   writeAclData: (connectionHandle: number, channelId: L2capChannelId, data: Buffer) => void;
 }
@@ -124,6 +124,9 @@ export declare interface Att {
 }
 
 export class Att extends EventEmitter {
+  private readonly l2cap: L2cap;
+  private readonly connectionHandle: number;
+
   // prettier-ignore
   private readonly handlers: Record<number, (data: Buffer) => void> = {
     [AttOpcode.ErrorRsp]:                this.handleEvent.bind(this, AttOpcode.ErrorRsp,                AttErrorRsp),
@@ -158,11 +161,12 @@ export class Att extends EventEmitter {
     [AttOpcode.MultipleHandleValueNtf]:  this.handleEvent.bind(this, AttOpcode.MultipleHandleValueNtf,  AttMultipleHandleValueNtf),
   };
 
-  constructor(
-    private l2cap: L2cap,
-    private connectionHandle: number,
-  ) {
+  constructor(l2cap: L2cap, connectionHandle: number) {
     super();
+
+    this.l2cap = l2cap;
+    this.connectionHandle = connectionHandle;
+
     l2cap.on("AttData", this.onAttData);
     l2cap.on("Disconnected", this.onDisconnected);
   }
@@ -350,14 +354,14 @@ export class Att extends EventEmitter {
       return;
     }
 
-    const opcode: AttOpcode = data[0];
+    const opcode = numberToAttOpcode(data[0]);
 
     if (this.handlers[opcode]) {
       this.handlers[opcode](data);
     }
   };
 
-  private onDisconnected = (connectionHandle: number, reasonCode: number): void => {
+  private onDisconnected = (connectionHandle: number, reasonCode: HciErrorErrno): void => {
     if (this.connectionHandle !== connectionHandle) {
       return;
     }
@@ -368,8 +372,7 @@ export class Att extends EventEmitter {
 
   // Utils
   private async writeAttWaitEvent<T>(req: AttOpcode, res: AttOpcode, data: Buffer): Promise<T> {
-    // NOTE: cast necessary due to https://github.com/microsoft/TypeScript/issues/38806
-    const resEventType = AttOpcode[res] as AttEvents;
+    const resEventType = AttOpcodeGetName(res) as AttEvents;
     const waitAttRsp = this.waitAttEvent<T>(req, resEventType);
     await this.writeAtt(data);
     return await waitAttRsp;
@@ -397,10 +400,10 @@ export class Att extends EventEmitter {
         }
         cleanup();
         const err: NodeJS.ErrnoException = new Error(
-          `ATT request (${AttOpcode[reqOpcode]}) failed due to ${AttErrorCode[event.errorCode]} ` +
+          `ATT request (${AttOpcodeGetName(reqOpcode)}) failed due to ${AttErrorCodeGetName(event.errorCode)} ` +
             `attribute handle: ${event.attributeHandleInError}`,
         );
-        err.code = AttErrorCode[event.errorCode];
+        err.code = AttErrorCodeGetName(event.errorCode);
         err.errno = event.errorCode;
         reject(err);
       };
@@ -415,7 +418,7 @@ export class Att extends EventEmitter {
   }
 
   private handleEvent<T>(opcode: AttOpcode, serDes: AttSerDes<T>, data: Buffer): void {
-    const name = AttOpcode[opcode];
+    const name = AttOpcodeGetName(opcode);
 
     const msg = serDes.deserialize(data);
     if (!msg) {

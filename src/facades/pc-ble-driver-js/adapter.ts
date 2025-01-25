@@ -63,10 +63,12 @@ interface Device {
 }
 
 export class PcBleDriverJsAdapter extends EventEmitter {
-  private gap: GapCentral;
+  private readonly hciAdapter: HciAdapter;
+  private readonly gap: GapCentral;
 
-  constructor(private hciAdapter: HciAdapter) {
+  constructor(hciAdapter: HciAdapter) {
     super();
+    this.hciAdapter = hciAdapter;
     this.gap = new GapCentral(hciAdapter.Hci);
   }
 

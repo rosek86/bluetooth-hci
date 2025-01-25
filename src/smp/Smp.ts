@@ -6,60 +6,114 @@ import { AesCmac } from "aes-cmac";
 import { L2capChannelId } from "../l2cap/L2capChannelId.js";
 import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
 
-export enum SmpCommand {
-  PairingRequest = 0x01,
-  PairingResponse = 0x02,
-  PairingConfirm = 0x03,
-  PairingRandom = 0x04,
-  PairingFailed = 0x05,
-  EncryptionInformation = 0x06,
-  CentralIdentification = 0x07,
-  IdentityInformation = 0x08,
-  IdentityAddressInformation = 0x09,
-  SigningInformation = 0x0a,
-  SecurityRequest = 0x0b,
-  PairingPublicKey = 0x0c,
-  PairingDHKeyCheck = 0x0d,
-  PairingKeypressNotification = 0x0e,
+export const SmpCommand = Object.freeze({
+  PairingRequest: 0x01,
+  PairingResponse: 0x02,
+  PairingConfirm: 0x03,
+  PairingRandom: 0x04,
+  PairingFailed: 0x05,
+  EncryptionInformation: 0x06,
+  CentralIdentification: 0x07,
+  IdentityInformation: 0x08,
+  IdentityAddressInformation: 0x09,
+  SigningInformation: 0x0a,
+  SecurityRequest: 0x0b,
+  PairingPublicKey: 0x0c,
+  PairingDHKeyCheck: 0x0d,
+  PairingKeypressNotification: 0x0e,
+} as const);
+
+export type SmpCommand = (typeof SmpCommand)[keyof typeof SmpCommand];
+
+export const SmpIoCapability = Object.freeze({
+  DisplayOnly: 0x00,
+  DisplayYesNo: 0x01,
+  KeyboardOnly: 0x02,
+  NoInputNoOutput: 0x03,
+  KeyboardDisplay: 0x04,
+} as const);
+
+export type SmpIoCapability = (typeof SmpIoCapability)[keyof typeof SmpIoCapability];
+
+export function isSmpIoCapability(value: number): value is SmpIoCapability {
+  return value in SmpIoCapability;
 }
 
-export enum SmpIoCapability {
-  DisplayOnly = 0x00,
-  DisplayYesNo = 0x01,
-  KeyboardOnly = 0x02,
-  NoInputNoOutput = 0x03,
-  KeyboardDisplay = 0x04,
+export function numberToSmpIoCapability(value: number): SmpIoCapability {
+  if (!isSmpIoCapability(value)) {
+    throw new Error(`Invalid SmpIoCapability value: ${value}`);
+  }
+  return value;
 }
 
-export enum SmpAuthReqBondingFlags {
-  NoBonding = 0x00,
-  Bonding = 0x01,
+export const SmpAuthReqBondingFlags = Object.freeze({
+  NoBonding: 0x00,
+  Bonding: 0x01,
+} as const);
+
+export type SmpAuthReqBondingFlags = (typeof SmpAuthReqBondingFlags)[keyof typeof SmpAuthReqBondingFlags];
+
+export function isSmpAuthReqBondingFlags(value: number): value is SmpAuthReqBondingFlags {
+  return value in SmpAuthReqBondingFlags;
 }
 
-export enum SmpPairingFailedReason {
-  PasskeyEntryFailed = 0x01,
-  OobNotAvailable = 0x02,
-  AuthenticationRequirements = 0x03,
-  ConfirmValueFailed = 0x04,
-  PairingNotSupported = 0x05,
-  EncryptionKeySize = 0x06,
-  CommandNotSupported = 0x07,
-  UnspecifiedReason = 0x08,
-  RepeatedAttempts = 0x09,
-  InvalidParameters = 0x0a,
-  DhkeyCheckFailed = 0x0b,
-  NumericComparisonFailed = 0x0c,
-  BrEdrPairingInProgress = 0x0d,
-  CrossTransportKeyDerivationGenerationNotAllowed = 0x0e,
-  KeyRejected = 0x0f,
+export function numberToSmpAuthReqBondingFlags(value: number): SmpAuthReqBondingFlags {
+  if (!isSmpAuthReqBondingFlags(value)) {
+    throw new Error(`Invalid SmpAuthReqBondingFlags value: ${value}`);
+  }
+  return value;
 }
 
-export enum SmpPasskeyNotificationType {
-  PasskeyEntryStarted = 0x00,
-  PasskeyDigitEntered = 0x01,
-  PasskeyDigitErased = 0x02,
-  PasskeyCleared = 0x03,
-  PasskeyEntryCompleted = 0x04,
+export const SmpPairingFailedReason = Object.freeze({
+  PasskeyEntryFailed: 0x01,
+  OobNotAvailable: 0x02,
+  AuthenticationRequirements: 0x03,
+  ConfirmValueFailed: 0x04,
+  PairingNotSupported: 0x05,
+  EncryptionKeySize: 0x06,
+  CommandNotSupported: 0x07,
+  UnspecifiedReason: 0x08,
+  RepeatedAttempts: 0x09,
+  InvalidParameters: 0x0a,
+  DhkeyCheckFailed: 0x0b,
+  NumericComparisonFailed: 0x0c,
+  BrEdrPairingInProgress: 0x0d,
+  CrossTransportKeyDerivationGenerationNotAllowed: 0x0e,
+  KeyRejected: 0x0f,
+} as const);
+
+export type SmpPairingFailedReason = (typeof SmpPairingFailedReason)[keyof typeof SmpPairingFailedReason];
+
+export function isSmpPairingFailedReason(value: number): value is SmpPairingFailedReason {
+  return value in SmpPairingFailedReason;
+}
+
+export function numberToSmpPairingFailedReason(value: number): SmpPairingFailedReason {
+  if (!isSmpPairingFailedReason(value)) {
+    throw new Error(`Invalid SmpPairingFailedReason value: ${value}`);
+  }
+  return value;
+}
+
+export const SmpPasskeyNotificationType = Object.freeze({
+  PasskeyEntryStarted: 0x00,
+  PasskeyDigitEntered: 0x01,
+  PasskeyDigitErased: 0x02,
+  PasskeyCleared: 0x03,
+  PasskeyEntryCompleted: 0x04,
+} as const);
+
+export type SmpPasskeyNotificationType = (typeof SmpPasskeyNotificationType)[keyof typeof SmpPasskeyNotificationType];
+
+export function isSmpPasskeyNotificationType(value: number): value is SmpPasskeyNotificationType {
+  return value in SmpPasskeyNotificationType;
+}
+
+export function numberToSmpPasskeyNotificationType(value: number): SmpPasskeyNotificationType {
+  if (!isSmpPasskeyNotificationType(value)) {
+    throw new Error(`Invalid SmpPasskeyNotificationType value: ${value}`);
+  }
+  return value;
 }
 
 export interface SmpPairing {
@@ -85,10 +139,17 @@ interface L2cap extends EventEmitter {
 }
 
 export class Smp {
-  public constructor(
-    private l2cap: L2cap,
-    private connectionHandle: number,
-  ) {}
+  private l2cap: L2cap;
+  private connectionHandle: number;
+
+  public constructor(l2cap: L2cap, connectionHandle: number) {
+    this.l2cap = l2cap;
+    this.connectionHandle = connectionHandle;
+
+    // TODO: remove this:
+    void this.l2cap;
+    void this.connectionHandle;
+  }
 
   public buildPairing(pairing: SmpPairing, request: boolean): Uint8Array {
     const payload = new Uint8Array(7);
@@ -108,10 +169,10 @@ export class Smp {
   }
 
   public parsePairing(payload: Uint8Array): SmpPairing {
-    const ioCapability = payload[1];
+    const ioCapability = numberToSmpIoCapability(payload[1]);
     const oobFlag = payload[2] === 1;
     const authReq = {
-      bonding: (payload[3] >> 0) & 2,
+      bonding: numberToSmpAuthReqBondingFlags((payload[3] >> 0) & 2),
       mitm: ((payload[3] >> 2) & 1) === 1,
       secureConnections: ((payload[3] >> 3) & 1) === 1,
       keypress: ((payload[3] >> 4) & 1) === 1,
@@ -160,7 +221,7 @@ export class Smp {
   }
 
   public parsePairingFailed(payload: Uint8Array): SmpPairingFailedReason {
-    return payload[1];
+    return numberToSmpPairingFailedReason(payload[1]);
   }
 
   public buildPairingPublicKey(key: { x: Uint8Array; y: Uint8Array }): Uint8Array {
@@ -197,14 +258,14 @@ export class Smp {
   }
 
   public parsePairingKeypressNotification(payload: Uint8Array): SmpPasskeyNotificationType {
-    return payload[1];
+    return numberToSmpPasskeyNotificationType(payload[1]);
   }
 
-  private writeSmpData(payload: Uint8Array) {
-    const data = Buffer.from(payload);
-    const channelId = L2capChannelId.LeSecurityManagerProtocol;
-    this.l2cap.writeAclData(this.connectionHandle, channelId, data);
-  }
+  // private writeSmpData(payload: Uint8Array) {
+  //   const data = Buffer.from(payload);
+  //   const channelId = L2capChannelId.LeSecurityManagerProtocol;
+  //   this.l2cap.writeAclData(this.connectionHandle, channelId, data);
+  // }
 
   public async e(key: Uint8Array, plaintextData: Uint8Array) {
     key.reverse();

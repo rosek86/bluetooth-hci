@@ -8,57 +8,58 @@ export interface AdvDataField {
 }
 
 // prettier-ignore
-/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
-export enum AdvDataType {
-  Flags                                   = 0x01, // *
-  IncompleteListOf16bitServiceClassUuids  = 0x02, // *
-  CompleteListOf16bitServiceClassUuids    = 0x03, // *
-  IncompleteListOf32bitServiceClassUuids  = 0x04, // *
-  CompleteListOf32bitServiceClassUuids    = 0x05, // *
-  IncompleteListOf128bitServiceClassUuids = 0x06, // *
-  CompleteListOf128bitServiceClassUuids   = 0x07, // *
-  ShortenedLocalName                      = 0x08, // *
-  CompleteLocalName                       = 0x09, // *
-  TxPowerLevel                            = 0x0A, // *
-  ClassOfDevice                           = 0x0D,
-  SimplePairingHashC                      = 0x0E,
-  SimplePairingHashC192                   = 0x0E,
-  SimplePairingRandomizerR                = 0x0F,
-  SimplePairingRandomizerR192             = 0x0F,
-  DeviceId                                = 0x10,
-  SecurityManagerTkValue                  = 0x10,
-  SecurityManagerOobFlags                 = 0x11,
-  SlaveConnectionIntervalRange            = 0x12,
-  ListOf16bitServiceSolicitationUuids     = 0x14, // *
-  ListOf128bitServiceSolicitationUuids    = 0x15, // *
-  ServiceData                             = 0x16, // *
-  ServiceData16bitUuid                    = 0x16, // *
-  PublicTargetAddress                     = 0x17,
-  RandomTargetAddress                     = 0x18,
-  Appearance                              = 0x19, // *
-  AdvertisingInterval                     = 0x1A,
-  LeBluetoothDeviceAddress                = 0x1B,
-  LeRole                                  = 0x1C,
-  SimplePairingHashC256                   = 0x1D,
-  SimplePairingRandomizerR256             = 0x1E,
-  ListOf32bitServiceSolicitationUuids     = 0x1F, // *
-  ServiceData32bitUuid                    = 0x20, // *
-  ServiceData128bitUuid                   = 0x21, // *
-  LeSecureConnectionsConfirmationValue    = 0x22,
-  LeSecureConnectionsRandomValue          = 0x23,
-  Uri                                     = 0x24,
-  IndoorPositioning                       = 0x25,
-  TransportDiscoveryData                  = 0x26,
-  LeSupportedFeatures                     = 0x27,
-  ChannelMapUpdateIndication              = 0x28,
-  PbAdv                                   = 0x29,
-  MeshMessage                             = 0x2A,
-  MeshBeacon                              = 0x2B,
-  BigInfo                                 = 0x2C,
-  BroadcastCode                           = 0x2D,
-  InformationData3d                       = 0x3D,
-  ManufacturerSpecificData                = 0xFF, // *
-}
+export const AdvDataType = Object.freeze({
+  Flags:                                    0x01, // *
+  IncompleteListOf16bitServiceClassUuids:   0x02, // *
+  CompleteListOf16bitServiceClassUuids:     0x03, // *
+  IncompleteListOf32bitServiceClassUuids:   0x04, // *
+  CompleteListOf32bitServiceClassUuids:     0x05, // *
+  IncompleteListOf128bitServiceClassUuids:  0x06, // *
+  CompleteListOf128bitServiceClassUuids:    0x07, // *
+  ShortenedLocalName:                       0x08, // *
+  CompleteLocalName:                        0x09, // *
+  TxPowerLevel:                             0x0A, // *
+  ClassOfDevice:                            0x0D,
+  SimplePairingHashC:                       0x0E,
+  SimplePairingHashC192:                    0x0E,
+  SimplePairingRandomizerR:                 0x0F,
+  SimplePairingRandomizerR192:              0x0F,
+  DeviceId:                                 0x10,
+  SecurityManagerTkValue:                   0x10,
+  SecurityManagerOobFlags:                  0x11,
+  SlaveConnectionIntervalRange:             0x12,
+  ListOf16bitServiceSolicitationUuids:      0x14, // *
+  ListOf128bitServiceSolicitationUuids:     0x15, // *
+  ServiceData:                              0x16, // *
+  ServiceData16bitUuid:                     0x16, // *
+  PublicTargetAddress:                      0x17,
+  RandomTargetAddress:                      0x18,
+  Appearance:                               0x19, // *
+  AdvertisingInterval:                      0x1A,
+  LeBluetoothDeviceAddress:                 0x1B,
+  LeRole:                                   0x1C,
+  SimplePairingHashC256:                    0x1D,
+  SimplePairingRandomizerR256:              0x1E,
+  ListOf32bitServiceSolicitationUuids:      0x1F, // *
+  ServiceData32bitUuid:                     0x20, // *
+  ServiceData128bitUuid:                    0x21, // *
+  LeSecureConnectionsConfirmationValue:     0x22,
+  LeSecureConnectionsRandomValue:           0x23,
+  Uri:                                      0x24,
+  IndoorPositioning:                        0x25,
+  TransportDiscoveryData:                   0x26,
+  LeSupportedFeatures:                      0x27,
+  ChannelMapUpdateIndication:               0x28,
+  PbAdv:                                    0x29,
+  MeshMessage:                              0x2A,
+  MeshBeacon:                               0x2B,
+  BigInfo:                                  0x2C,
+  BroadcastCode:                            0x2D,
+  InformationData3d:                        0x3D,
+  ManufacturerSpecificData:                 0xFF, // *
+} as const);
+
+export type AdvDataType = (typeof AdvDataType)[keyof typeof AdvDataType];
 
 export const AdvDataTypeLabel = [
   "Flags",

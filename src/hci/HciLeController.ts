@@ -58,7 +58,11 @@ export interface LeSupportedFeaturesInfo {
 }
 
 export class LeSupportedFeatures {
-  private constructor(private features: LeSupportedFeaturesInfo) {}
+  private features: LeSupportedFeaturesInfo;
+
+  private constructor(features: LeSupportedFeaturesInfo) {
+    this.features = features;
+  }
 
   public get Features(): LeSupportedFeaturesInfo {
     return Object.assign({}, this.features);
@@ -2004,27 +2008,31 @@ export enum LeScanningFilterPolicy {
   AllExceptPacketFromWhiteListAndDirectedAdvertising = 0x03,
 }
 
-// prettier-ignore
-export enum LeScanningPhy {
-  Phy1M    = 0x00, // Scan advertisements on the LE 1M PHY
-  PhyCoded = 0x02, // Scan advertisements on the LE Coded PHY
-}
+export const LeScanningPhy = Object.freeze({
+  Phy1M: 0x00, // Scan advertisements on the LE 1M PHY
+  PhyCoded: 0x02, // Scan advertisements on the LE Coded PHY
+} as const);
 
-// prettier-ignore
-export enum LeScanType {
-  Passive = 0x00, // Passive Scanning. No scan request PDUs shall be sent.
-  Active  = 0x01, // Active Scanning. Scan request PDUs may be sent.
-}
+export type LeScanningPhy = (typeof LeScanningPhy)[keyof typeof LeScanningPhy];
 
-// prettier-ignore
-export enum LeModulationIndex {
-  Standard = 0, // Assume transmitter will have a standard modulation index
-  Stable   = 1, // Assume transmitter will have a stable modulation index
-}
+export const LeScanType = Object.freeze({
+  Passive: 0x00, // Passive Scanning. No scan request PDUs shall be sent.
+  Active: 0x01, // Active Scanning. Scan request PDUs may be sent.
+} as const);
 
-// prettier-ignore
-export enum LeCteType {
-  AoAConstatTone     = 0x00, // Expect AoA Constant Tone Extension
-  AoDConstantTone1us = 0x01, // Expect AoD Constant Tone Extension with 1 μs slots
-  AoDConstantTone2us = 0x02, // Expect AoD Constant Tone Extension with 2 μs slots
-}
+export type LeScanType = (typeof LeScanType)[keyof typeof LeScanType];
+
+export const LeModulationIndex = Object.freeze({
+  Standard: 0, // Assume transmitter will have a standard modulation index
+  Stable: 1, // Assume transmitter will have a stable modulation index
+} as const);
+
+export type LeModulationIndex = (typeof LeModulationIndex)[keyof typeof LeModulationIndex];
+
+export const LeCteType = Object.freeze({
+  AoAConstatTone: 0x00, // Expect AoA Constant Tone Extension
+  AoDConstantTone1us: 0x01, // Expect AoD Constant Tone Extension with 1 μs slots
+  AoDConstantTone2us: 0x02, // Expect AoD Constant Tone Extension with 2 μs slots
+} as const);
+
+export type LeCteType = (typeof LeCteType)[keyof typeof LeCteType];

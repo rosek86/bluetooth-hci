@@ -3,19 +3,31 @@ import crypto from "node:crypto";
 import { LePeerAddressType } from "../hci/HciLeController.js";
 
 // prettier-ignore
-export enum AddressType {
-  PublicDeviceAddress   = 0x00, // Public Device Address
-  RandomDeviceAddress   = 0x01, // Random Device Address
-  PublicIdentityAddress = 0x02, // Public Identity Address
-  RandomIdentityAddress = 0x03, // Random (static) Identity Address
-  Anonymous             = 0xFF, // No address provided (anonymous advertisement)
-}
+export const AddressType = Object.freeze({
+  PublicDeviceAddress:   0x00, // Public Device Address
+  RandomDeviceAddress:   0x01, // Random Device Address
+  PublicIdentityAddress: 0x02, // Public Identity Address
+  RandomIdentityAddress: 0x03, // Random (static) Identity Address
+  Anonymous:             0xFF, // No address provided (anonymous advertisement)
+} as const);
+
+export type AddressType = (typeof AddressType)[keyof typeof AddressType];
 
 export class Address {
-  private constructor(
-    private address: number,
-    private type: AddressType,
-  ) {}
+  private address: number;
+  private type: AddressType;
+
+  private constructor(address: number, type: AddressType | number) {
+    if (!Address.numberIsAddressType(type)) {
+      throw new Error(`Invalid address type: ${type}`);
+    }
+    this.address = address;
+    this.type = type;
+  }
+
+  static numberIsAddressType(num: number): num is AddressType {
+    return num in AddressType;
+  }
 
   static random(): Address {
     const addressBytes = crypto.webcrypto.getRandomValues(new Uint8Array(8));
@@ -26,7 +38,7 @@ export class Address {
     return new Address(addressNumber, AddressType.RandomDeviceAddress);
   }
 
-  static from(address: string | number, type: AddressType): Address {
+  static from(address: string | number, type: AddressType | number): Address {
     if (typeof address === "number") {
       return new Address(address, type);
     }

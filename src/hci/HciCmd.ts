@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import Debug from "debug";
 
-import { HciErrorErrno, HciParserErrorType } from "./HciError.js";
+import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType } from "./HciError.js";
 import { makeHciError, makeParserError } from "./HciError.js";
 import {
   HciOcfControlAndBasebandCommands,
@@ -43,7 +43,7 @@ class HciOpcode {
 export interface HciCmdResult {
   numHciPackets: number;
   opcode: number;
-  status: number;
+  status: HciErrorErrno;
   returnParameters?: Buffer;
 }
 
@@ -55,12 +55,15 @@ interface HciPendingCommand {
 }
 
 export class HciCmd {
+  private readonly sendBuffer: HciSendFunction;
+  public readonly timeout: number;
+
   private pendingCommands: HciPendingCommand[] = [];
 
-  public constructor(
-    private sendBuffer: HciSendFunction,
-    public readonly timeout: number = 2_000,
-  ) {}
+  public constructor(sendBuffer: HciSendFunction, timeout: number = 2_000) {
+    this.sendBuffer = sendBuffer;
+    this.timeout = timeout;
+  }
 
   public async linkControl(params: {
     ocf: HciOcfLinkControlCommands;
@@ -210,7 +213,7 @@ export class HciCmd {
         if (evt.status !== HciErrorErrno.Success) {
           const message =
             `${ocfOgfToString(cmd.opcode.ocf, cmd.opcode.ogf)}` +
-            ` failed with status ${HciErrorErrno[evt.status]}` +
+            ` failed with status ${HciErrorErrnoGetName(evt.status)}` +
             `\n    -> cmd: ${JSON.stringify(cmd)}` +
             `\n    -> evt: ${JSON.stringify(evt)}`;
           complete(makeHciError(message, evt.status));

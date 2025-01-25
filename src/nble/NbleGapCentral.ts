@@ -33,15 +33,16 @@ export interface NbleGapCentralOptions {
 }
 
 export abstract class NbleGapCentral extends EventEmitter {
+  protected readonly adapter: HciAdapter;
+  protected readonly options: GapCentralOptions;
   protected readonly gap: GapCentral;
   protected readonly hci: Hci;
 
-  public constructor(
-    protected adapter: HciAdapter,
-    protected readonly options: GapCentralOptions = {},
-  ) {
+  public constructor(adapter: HciAdapter, options: GapCentralOptions = {}) {
     super();
 
+    this.adapter = adapter;
+    this.options = options;
     this.hci = adapter.Hci;
 
     this.gap = new GapCentral(this.hci, options);

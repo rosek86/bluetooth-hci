@@ -1,22 +1,24 @@
-import { HciPacketType } from "../hci/HciPacketType.js";
+import { HciPacketType, numberToHciPacketType } from "../hci/HciPacketType.js";
 
-enum ParserState {
-  Type,
-  Header,
-  Payload,
-}
+const ParserState = Object.freeze({
+  Type: 0,
+  Header: 1,
+  Payload: 2,
+} as const);
+
+type ParserState = (typeof ParserState)[keyof typeof ParserState];
 
 type PacketHdrSize = Partial<Record<number, number>>;
 
 export interface H4Packet {
-  type: number;
+  type: HciPacketType;
   packet: Uint8Array;
 }
 
 export class H4 {
   private readonly headerSize: PacketHdrSize = {};
 
-  private parserState = ParserState.Type;
+  private parserState: ParserState = ParserState.Type;
   private parserPacketType = 0;
   private parserPacketData = new Uint8Array(0);
 
@@ -64,7 +66,7 @@ export class H4 {
 
         this.parserState = ParserState.Type;
 
-        return { type: this.parserPacketType, packet };
+        return { type: numberToHciPacketType(this.parserPacketType), packet };
       }
     }
 

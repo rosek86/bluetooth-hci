@@ -3,43 +3,43 @@ import { bitGet } from "../utils/Utils.js";
 
 import { AttDataEntry } from "./AttGlue.js";
 
-enum CharacteristicPropertiesBits {
+const CharacteristicPropertiesBits = Object.freeze({
   // If set, permits broadcasts of the Characteristic Value using
   // Server Characteristic Configuration Descriptor. If set, the Server
   // Characteristic Configuration Descriptor shall exist.
-  Broadcast = 0,
+  Broadcast: 0,
 
   // If set, permits reads of the Characteristic Value using procedures
   // defined in Section 4.8
-  Read = 1,
+  Read: 1,
 
   // If set, permit writes of the Characteristic Value without response
   // using procedures defined in Section 4.9.1.
-  WriteWithoutResponse = 2,
+  WriteWithoutResponse: 2,
 
   // If set, permits writes of the Characteristic Value with response
   // using procedures defined in Section 4.9.3 or Section 4.9.4.
-  Write = 3,
+  Write: 3,
 
   // If set, permits notifications of a Characteristic Value without
   // acknowledgment using the procedure defined in Section 4.10. If
   // set, the Client Characteristic Configuration Descriptor shall exist.
-  Notify = 4,
+  Notify: 4,
 
   // If set, permits indications of a Characteristic Value with acknowledgment
   // using the procedure defined in Section 4.11. If set, the
   // Client Characteristic Configuration Descriptor shall exist.
-  Indicate = 5,
+  Indicate: 5,
 
   // If set, permits signed writes to the Characteristic Value using the
   // procedure defined in Section 4.9.2.
-  AuthenticatedSignedWrites = 6,
+  AuthenticatedSignedWrites: 6,
 
   // If set, additional characteristic properties are defined in the Characteristic
   // Extended Properties Descriptor defined in Section 3.3.3.1.
   // If set, the Characteristic Extended Properties Descriptor shall exist.
-  ExtendedProperties = 7,
-}
+  ExtendedProperties: 7,
+} as const);
 
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace GattCharacteristic {

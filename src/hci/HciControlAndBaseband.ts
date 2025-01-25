@@ -127,10 +127,12 @@ export class SetEventMask {
   }
 }
 
-export enum ReadTransmitPowerLevelType {
-  Current = 0, // Read Current Transmit Power Level.
-  Maximum = 1, // Read Maximum Transmit Power Level.
-}
+export const ReadTransmitPowerLevelType = Object.freeze({
+  Current: 0, // Read Current Transmit Power Level.
+  Maximum: 1, // Read Maximum Transmit Power Level.
+} as const);
+
+export type ReadTransmitPowerLevelType = (typeof ReadTransmitPowerLevelType)[keyof typeof ReadTransmitPowerLevelType];
 
 export class ReadTransmitPowerLevel {
   static inParams(
@@ -151,12 +153,14 @@ export class ReadTransmitPowerLevel {
   }
 }
 
-export enum FlowControlEnable {
-  Off = 0x00,
-  AclOn = 0x01,
-  SyncOn = 0x02,
-  AclSyncOn = 0x03,
-}
+export const FlowControlEnable = Object.freeze({
+  Off: 0x00,
+  AclOn: 0x01,
+  SyncOn: 0x02,
+  AclSyncOn: 0x03,
+} as const);
+
+export type FlowControlEnable = (typeof FlowControlEnable)[keyof typeof FlowControlEnable];
 
 export class SetControllerToHostFlowControl {
   static inParams(enable: FlowControlEnable): Buffer {

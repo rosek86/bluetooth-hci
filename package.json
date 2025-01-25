@@ -61,7 +61,7 @@
     "eslint": "^9.18.0",
     "globals": "^15.14.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.7.3",
+    "typescript": "^5.8.0-dev.20250124",
     "typescript-eslint": "^8.15.0",
     "yargs": "^17.7.2"
   },

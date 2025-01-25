@@ -11,12 +11,14 @@ interface H5Header {
 
 type H5Packet = H5Header & { payload?: Uint8Array };
 
-enum H5TransportRetCode {
-  ParserSlipPayloadSize = 1,
-  ParserSlipCalculatedPayloadSize = 2,
-  ParserHeaderChecksum = 3,
-  ParserPacketChecksum = 4,
-}
+const H5TransportRetCode = Object.freeze({
+  ParserSlipPayloadSize: 1,
+  ParserSlipCalculatedPayloadSize: 2,
+  ParserHeaderChecksum: 3,
+  ParserPacketChecksum: 4,
+} as const);
+
+type H5TransportRetCode = (typeof H5TransportRetCode)[keyof typeof H5TransportRetCode];
 
 interface EncoderData {
   seqNum: number;

@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { AclDataPacket } from "../acl/Acl.js";
+import { AclDataPacket, numberToAclDataBoundary, numberToAclDataBroadcast } from "../acl/Acl.js";
 import { Address } from "../utils/Address.js";
 
 import { HciCmd } from "./HciCmd.js";
@@ -24,7 +24,7 @@ import {
   WriteAuthenticatedPayloadTimeout,
   WriteLeHostSupported,
 } from "./HciControlAndBaseband.js";
-import { HciErrorErrno, HciParserErrorType, getHciErrorMessage, makeHciError } from "./HciError.js";
+import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType, getHciErrorMessage, makeHciError, numberToHciErrorErrno } from "./HciError.js";
 import { HciDisconnectReason } from "./HciError.js";
 import { makeParserError } from "./HciError.js";
 import {
@@ -1072,7 +1072,7 @@ export class Hci extends EventEmitter {
     if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
-      const message = `Failed ${label} with status ${HciErrorErrno[status]}` + `\n    -> evt: ${JSON.stringify(event)}`;
+      const message = `Failed ${label} with status ${HciErrorErrnoGetName(status)}` + `\n    -> evt: ${JSON.stringify(event)}`;
       this.emit(label, makeHciError(message, status), event);
     }
   }
@@ -1082,13 +1082,9 @@ export class Hci extends EventEmitter {
       debug(`onDisconnectionComplete: invalid size ${payload.length}`);
     }
 
-    let o = 0;
-    const status = payload.readUIntLE(o, 1);
-    o += 1;
-    const connectionHandle = payload.readUIntLE(o, 2);
-    o += 2;
-    const reasonCode = payload.readUIntLE(o, 1);
-    o += 1;
+    const status = numberToHciErrorErrno(payload.readUInt8(0));
+    const connectionHandle = payload.readUInt16LE(1);
+    const reasonCode = numberToHciErrorErrno(payload.readUInt8(3));
 
     const event: DisconnectionCompleteEvent = {
       connectionHandle,
@@ -1106,13 +1102,9 @@ export class Hci extends EventEmitter {
       debug(`onEncryptionChange: invalid size ${payload.length}`);
     }
 
-    let o = 0;
-    const status = payload.readUIntLE(o, 1);
-    o += 1;
-    const connectionHandle = payload.readUIntLE(o, 2);
-    o += 2;
-    const encEnabled = payload.readUIntLE(o, 1);
-    o += 1;
+    const status = numberToHciErrorErrno(payload.readUInt8(0));
+    const connectionHandle = payload.readUInt16LE(1);
+    const encEnabled = payload.readUInt8(3);
 
     const event: EncryptionChangeEvent = { connectionHandle, encEnabled };
 
@@ -1131,7 +1123,7 @@ export class Hci extends EventEmitter {
     }
 
     this.cmd.onCmdResult({
-      status: payload[3],
+      status: numberToHciErrorErrno(payload[3]),
       numHciPackets: payload[0],
       opcode: payload.readUInt16LE(1),
       returnParameters: payload.subarray(4),
@@ -1145,7 +1137,7 @@ export class Hci extends EventEmitter {
     }
 
     this.cmd.onCmdResult({
-      status: payload[0],
+      status: numberToHciErrorErrno(payload[0]),
       numHciPackets: payload[1],
       opcode: payload.readUInt16LE(2),
     });
@@ -1180,11 +1172,8 @@ export class Hci extends EventEmitter {
       return;
     }
 
-    let o = 0;
-    const status = data.readUIntLE(o, 1);
-    o += 1;
-    const connectionHandle = data.readUIntLE(o, 2);
-    o += 2;
+    const status = numberToHciErrorErrno(data.readUInt8(0));
+    const connectionHandle = data.readUInt16LE(1);
 
     const event: EncryptionKeyRefreshComplete = { connectionHandle };
     this.emitEvent("EncryptionKeyRefreshComplete", status, event);
@@ -1359,8 +1348,8 @@ export class Hci extends EventEmitter {
     const broadcast = (hdr >> 14) & 0x0003;
 
     const result: AclDataPacket = {
-      boundary,
-      broadcast,
+      boundary: numberToAclDataBoundary(boundary),
+      broadcast: numberToAclDataBroadcast(broadcast),
       data: data.subarray(aclHdrSize),
     };
 

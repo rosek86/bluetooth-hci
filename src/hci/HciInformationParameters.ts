@@ -535,7 +535,11 @@ export interface LocalSupportedCommandsFields {
 }
 
 export class LocalSupportedCommands {
-  private constructor(private commands: LocalSupportedCommandsFields) {}
+  private commands: LocalSupportedCommandsFields;
+
+  private constructor(commands: LocalSupportedCommandsFields) {
+    this.commands = commands;
+  }
 
   public get Commands(): LocalSupportedCommandsFields {
     return Object.assign({}, this.commands);

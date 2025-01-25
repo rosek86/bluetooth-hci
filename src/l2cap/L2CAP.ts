@@ -4,11 +4,11 @@ import Debug from "debug";
 
 import { AclDataBoundary, AclDataBroadcast, AclDataPacket } from "../acl/Acl.js";
 import { Hci } from "../hci/Hci.js";
-import { HciError } from "../hci/HciError.js";
+import { HciError, HciErrorErrno } from "../hci/HciError.js";
 import { DisconnectionCompleteEvent, NumberOfCompletedPacketsEntry } from "../hci/HciEvent.js";
 import { LeBufferSize } from "../hci/HciLeController.js";
 
-import { L2capChannelId } from "./L2capChannelId.js";
+import { L2capChannelId, L2capChannelIdGetName, numberToL2capChannelId } from "./L2capChannelId.js";
 
 const debug = Debug("bt-hci-l2cap");
 
@@ -28,11 +28,12 @@ interface AclFragments {
 export declare interface L2CAP {
   on(event: "AttData", listener: (connectionHandle: number, payload: Buffer) => void): this;
   on(event: "SmpData", listener: (connectionHandle: number, payload: Buffer) => void): this;
-  on(event: "Disconnected", listener: (connectionHandle: number, reason: number) => void): this;
+  on(event: "Disconnected", listener: (connectionHandle: number, reason: HciErrorErrno) => void): this;
 }
 
 export class L2CAP extends EventEmitter {
   private readonly l2capHeader = 4;
+  private readonly hci: Hci;
 
   private aclSize: LeBufferSize = {
     leAclDataPacketLength: 0,
@@ -42,8 +43,9 @@ export class L2CAP extends EventEmitter {
   private aclConnections: Map<number, { pending: number }> = new Map();
   private aclFragments: Map<number, AclFragments> = new Map();
 
-  constructor(private hci: Hci) {
+  constructor(hci: Hci) {
     super();
+    this.hci = hci;
   }
 
   public async init(): Promise<void> {
@@ -200,7 +202,7 @@ export class L2CAP extends EventEmitter {
 
     if (event.boundary === AclDataBoundary.FirstFrag) {
       const length = event.data.readUIntLE(0, 2);
-      const channelId = event.data.readUIntLE(2, 2);
+      const channelId = numberToL2capChannelId(event.data.readUIntLE(2, 2));
       const payload = event.data.subarray(4);
 
       if (length === payload.length) {
@@ -238,7 +240,7 @@ export class L2CAP extends EventEmitter {
   };
 
   private onAclDataComplete(connectionHandle: number, channelId: L2capChannelId, payload: Buffer): void {
-    debug("acl", connectionHandle, L2capChannelId[channelId], payload);
+    debug("acl", connectionHandle, L2capChannelIdGetName(channelId), payload);
 
     switch (channelId) {
       case L2capChannelId.LeAttributeProtocol:
@@ -249,7 +251,7 @@ export class L2CAP extends EventEmitter {
         break;
       default:
         debug("Unhandled L2CAP channel", channelId);
-        console.log("onAclDataComplete", connectionHandle, L2capChannelId[channelId], payload);
+        console.log("onAclDataComplete", connectionHandle, L2capChannelIdGetName(channelId), payload);
         break;
     }
   }

@@ -17,10 +17,12 @@ export interface HciDevice {
 export class HciAdapter extends EventEmitter {
   private readonly hci: Hci;
   private readonly h4: H4;
+  private readonly device: HciDevice;
 
-  constructor(private device: HciDevice) {
+  constructor(device: HciDevice) {
     super();
 
+    this.device = device;
     this.hci = new Hci({
       send: (packetType, data) => {
         const packet = Buffer.concat([Buffer.from([packetType]), data, Buffer.from([0])]);

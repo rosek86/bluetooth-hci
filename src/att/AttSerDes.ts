@@ -787,9 +787,22 @@ export class AttPrepareWriteRsp {
   }
 }
 
-export enum AttExecuteWriteReqFlags {
-  Cancel = 0,
-  Write = 1,
+export const AttExecuteWriteReqFlags = Object.freeze({
+  Cancel: 0,
+  Write: 1,
+} as const);
+
+export type AttExecuteWriteReqFlags = (typeof AttExecuteWriteReqFlags)[keyof typeof AttExecuteWriteReqFlags];
+
+export function isAttExecuteWriteReqFlags(v: number): v is AttExecuteWriteReqFlags {
+  return Object.values(AttExecuteWriteReqFlags).includes(v as AttExecuteWriteReqFlags);
+}
+
+export function numberToAttExecuteWriteReqFlags(v: number): AttExecuteWriteReqFlags {
+  if (!isAttExecuteWriteReqFlags(v)) {
+    throw new Error("Invalid AttExecuteWriteReqFlags");
+  }
+  return v;
 }
 
 export interface AttExecuteWriteReqMsg {
@@ -806,7 +819,7 @@ export class AttExecuteWriteReq {
       return null;
     }
 
-    return { flags: buffer.readUInt8(1) };
+    return { flags: numberToAttExecuteWriteReqFlags(buffer.readUInt8(1)) };
   }
 }
 

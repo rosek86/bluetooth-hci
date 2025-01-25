@@ -1,8 +1,10 @@
-enum SlipDecoderState {
-  WaitBeg,
-  WaitEnd,
-  WaitEndEsc,
-}
+const SlipDecoderState = Object.freeze({
+  WaitBeg: 0,
+  WaitEnd: 1,
+  WaitEndEsc: 2,
+} as const);
+
+type SlipDecoderState = (typeof SlipDecoderState)[keyof typeof SlipDecoderState];
 
 export class Slip {
   private readonly END = 0x0c; // indicates end of packet
@@ -10,7 +12,7 @@ export class Slip {
   private readonly ESC_END = 0xdc; // ESC ESC_END means END data byte
   private readonly ESC_ESC = 0xdd; // ESC ESC_ESC means ESC data byte
 
-  private decoderState = SlipDecoderState.WaitBeg;
+  private decoderState: SlipDecoderState = SlipDecoderState.WaitBeg;
   private decoderData: number[] = [];
 
   public encode(data: Uint8Array): Uint8Array {
