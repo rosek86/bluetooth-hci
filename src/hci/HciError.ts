@@ -95,13 +95,13 @@ export function HciErrorErrnoGetName(code: HciErrorErrno): string {
 }
 
 export const HciDisconnectReason = Object.freeze({
-  AuthFailure:  HciErrorErrno.AuthFailure,
-  ConnTerminatedByRemoteUser:  HciErrorErrno.ConnTerminatedByRemoteUser,
-  ConnTerminatedLowResources:  HciErrorErrno.ConnTerminatedLowResources,
-  ConnTerminatedPowerOff:  HciErrorErrno.ConnTerminatedPowerOff,
-  UnsupportedFeature:  HciErrorErrno.UnsupportedFeature,
-  UnitKeyNotSupported:  HciErrorErrno.UnitKeyNotSupported,
-  ConnectionParameters:  HciErrorErrno.ConnectionParameters,
+  AuthFailure: HciErrorErrno.AuthFailure,
+  ConnTerminatedByRemoteUser: HciErrorErrno.ConnTerminatedByRemoteUser,
+  ConnTerminatedLowResources: HciErrorErrno.ConnTerminatedLowResources,
+  ConnTerminatedPowerOff: HciErrorErrno.ConnTerminatedPowerOff,
+  UnsupportedFeature: HciErrorErrno.UnsupportedFeature,
+  UnitKeyNotSupported: HciErrorErrno.UnitKeyNotSupported,
+  ConnectionParameters: HciErrorErrno.ConnectionParameters,
 } as const);
 
 export type HciDisconnectReason = (typeof HciDisconnectReason)[keyof typeof HciDisconnectReason];

@@ -16,7 +16,7 @@
     "noImplicitOverride": true,
     "noUnusedParameters": true,
     "allowUnreachableCode": false,
-    // "noUncheckedIndexedAccess": true,
+    // "noUncheckedIndexedAccess": true, // Found 411 errors in 17 files.
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
     // "erasableSyntaxOnly": true,

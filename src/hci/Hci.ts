@@ -24,7 +24,14 @@ import {
   WriteAuthenticatedPayloadTimeout,
   WriteLeHostSupported,
 } from "./HciControlAndBaseband.js";
-import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType, getHciErrorMessage, makeHciError, numberToHciErrorErrno } from "./HciError.js";
+import {
+  HciErrorErrno,
+  HciErrorErrnoGetName,
+  HciParserErrorType,
+  getHciErrorMessage,
+  makeHciError,
+  numberToHciErrorErrno,
+} from "./HciError.js";
 import { HciDisconnectReason } from "./HciError.js";
 import { makeParserError } from "./HciError.js";
 import {
@@ -32,6 +39,7 @@ import {
   EncryptionChangeEvent,
   EncryptionKeyRefreshComplete,
   HciEvent,
+  HciEventGetName,
   HciLeEvent,
   LeAdvReport,
   LeAdvertisingSetTerminated,
@@ -65,6 +73,8 @@ import {
   ReadRemoteSupportedFeaturesCompleteEvent,
   ReadRemoteVersionInformationComplete,
   ReadRemoteVersionInformationCompleteEvent,
+  numberToEncryptionEnabled,
+  numberToHciEvent,
 } from "./HciEvent.js";
 import {
   BufferSize,
@@ -1024,7 +1034,7 @@ export class Hci extends EventEmitter {
       return;
     }
 
-    const eventCode = data[0];
+    const eventCode = numberToHciEvent(data[0]);
     const payloadLength = data[1];
     const payload = data.subarray(2);
 
@@ -1034,7 +1044,7 @@ export class Hci extends EventEmitter {
     }
 
     if (eventCode !== HciEvent.LeMeta) {
-      debug("on-hci-event", HciEvent[eventCode]);
+      debug("on-hci-event", HciEventGetName(eventCode));
     }
 
     switch (eventCode) {
@@ -1072,7 +1082,8 @@ export class Hci extends EventEmitter {
     if (status === HciErrorErrno.Success) {
       this.emit(label, null, event);
     } else {
-      const message = `Failed ${label} with status ${HciErrorErrnoGetName(status)}` + `\n    -> evt: ${JSON.stringify(event)}`;
+      const message =
+        `Failed ${label} with status ${HciErrorErrnoGetName(status)}` + `\n    -> evt: ${JSON.stringify(event)}`;
       this.emit(label, makeHciError(message, status), event);
     }
   }
@@ -1104,7 +1115,7 @@ export class Hci extends EventEmitter {
 
     const status = numberToHciErrorErrno(payload.readUInt8(0));
     const connectionHandle = payload.readUInt16LE(1);
-    const encEnabled = payload.readUInt8(3);
+    const encEnabled = numberToEncryptionEnabled(payload.readUInt8(3));
 
     const event: EncryptionChangeEvent = { connectionHandle, encEnabled };
 
@@ -1180,11 +1191,11 @@ export class Hci extends EventEmitter {
   }
 
   private onLeEvent(data: Buffer): void {
-    const eventCode = data[0];
+    const eventCode = numberToHciEvent(data[0]);
     const payload = data.subarray(1);
 
     if (eventCode !== HciEvent.LeMeta) {
-      debug("on-hci-le-event", HciLeEvent[eventCode]);
+      debug("on-hci-le-event", HciEventGetName(eventCode));
     }
 
     switch (eventCode) {

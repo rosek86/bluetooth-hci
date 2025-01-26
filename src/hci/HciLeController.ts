@@ -474,11 +474,13 @@ export class LeReadWhiteListSize {
   }
 }
 
-export enum LeWhiteListAddressType {
-  Public,
-  Random,
-  Anonymous,
-}
+export const LeWhiteListAddressType = Object.freeze({
+  Public: 0,
+  Random: 1,
+  Anonymous: 2,
+} as const);
+
+export type LeWhiteListAddressType = (typeof LeWhiteListAddressType)[keyof typeof LeWhiteListAddressType];
 
 export interface LeWhiteList {
   addressType: LeWhiteListAddressType;
@@ -586,18 +588,20 @@ export class LeLongTermKeyRequestNegativeReply {
   }
 }
 
-export enum LeState {
-  ScanUndirectAdv,
-  ConnScanUndirectAdv,
-  NonConnNonScanUndirectAdv,
-  HighDutyConnDirectAdv,
-  LowDutyConnDirectAdv,
-  ActiveScanning,
-  PassiveScanning,
-  Initiating,
-  ConnectionMasterRole,
-  ConnectionSlaveRole,
-}
+export const LeState = Object.freeze({
+  ScanUndirectAdv: 0,
+  ConnScanUndirectAdv: 1,
+  NonConnNonScanUndirectAdv: 2,
+  HighDutyConnDirectAdv: 3,
+  LowDutyConnDirectAdv: 4,
+  ActiveScanning: 5,
+  PassiveScanning: 6,
+  Initiating: 7,
+  ConnectionMasterRole: 8,
+  ConnectionSlaveRole: 9,
+} as const);
+
+export type LeState = (typeof LeState)[keyof typeof LeState];
 
 export const LeStateNames = [
   "Scannable Undirected Advertising State",
@@ -762,17 +766,19 @@ export class LeReceiverTestV3 extends LeTest {
 }
 
 // prettier-ignore
-export enum LeTxTestPayload {
-  SequencePRBS9     = 0x00, // PRBS9 sequence '11111111100000111101…' (in transmission order) as
+export const LeTxTestPayload = Object.freeze({
+  SequencePRBS9:      0x00, // PRBS9 sequence '11111111100000111101…' (in transmission order) as
                             // described in [Vol 6] Part F, Section 4.1.5
-  Sequence11110000  = 0x01, // Repeated '11110000' (in transmission order) sequence as described in
+  Sequence11110000:   0x01, // Repeated '11110000' (in transmission order) sequence as described in
                             // [Vol 6] Part F, Section 4.1.5
-  Sequence10101010  = 0x02, // Repeated '10101010' (in transmission order) sequence as described in
+  Sequence10101010:   0x02, // Repeated '10101010' (in transmission order) sequence as described in
                             // [Vol 6] Part F, Section 4.1.5
-  SequencePRBS15    = 0x03, // PRBS15 sequence as described in [Vol 6] Part F, Section 4.1.5
-  Sequence11111111  = 0x04, // Repeated '11111111' (in transmission order) sequence
-  Sequence00000000  = 0x05, // Repeated '00000000' (in transmission order) sequence
-}
+  SequencePRBS15:     0x03, // PRBS15 sequence as described in [Vol 6] Part F, Section 4.1.5
+  Sequence11111111:   0x04, // Repeated '11111111' (in transmission order) sequence
+  Sequence00000000:   0x05, // Repeated '00000000' (in transmission order) sequence
+} as const);
+
+export type LeTxTestPayload = (typeof LeTxTestPayload)[keyof typeof LeTxTestPayload];
 
 export interface LeTransmitterTestV1 {
   txChannelMhz: number;
@@ -1002,10 +1008,12 @@ export class LeDhKeyV1 {
   }
 }
 
-export enum LeDhKeyV2KeyType {
-  UseGeneratedPrivateKey = 0x00, // Use the generated private key
-  UseDebugPrivateKey = 0x01, // Use the debug private key
-}
+export const LeDhKeyV2KeyType = Object.freeze({
+  UseGeneratedPrivateKey: 0x00, // Use the generated private key
+  UseDebugPrivateKey: 0x01, // Use the debug private key
+} as const);
+
+export type LeDhKeyV2KeyType = (typeof LeDhKeyV2KeyType)[keyof typeof LeDhKeyV2KeyType];
 
 export interface LeDhKeyV2 {
   publicKey: Buffer;
@@ -1174,8 +1182,8 @@ export class LeTxRxPhy {
       throw makeParserError(HciParserErrorType.InvalidPayloadSize);
     }
     return {
-      txPhy: params.readUInt8(2),
-      rxPhy: params.readUInt8(3),
+      txPhy: numberToLePhy(params.readUInt8(2)),
+      rxPhy: numberToLePhy(params.readUInt8(3)),
     };
   }
 }
@@ -1214,11 +1222,13 @@ export class DefaultTxRxPhy {
   }
 }
 
-export enum LeSetTxRxPhyOpts {
-  noPreferredCoding,
-  prefersS2,
-  prefersS8,
-}
+export const LeSetTxRxPhyOpts = Object.freeze({
+  noPreferredCoding: 0,
+  prefersS2: 1,
+  prefersS8: 2,
+} as const);
+
+export type LeSetTxRxPhyOpts = (typeof LeSetTxRxPhyOpts)[keyof typeof LeSetTxRxPhyOpts];
 
 export interface LeSetTxRxPhy {
   txPhys: LePhy;
@@ -1274,13 +1284,15 @@ export class LeAdvertisingSetRandomAddress {
 }
 
 // prettier-ignore
-export enum LeAdvertisingDataOperation {
-  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
-  Complete              = 0x03, // Complete extended advertising data
-  Unchanged             = 0x04, // Unchanged data (just update the Advertising DID)
-}
+export const LeAdvertisingDataOperation = Object.freeze({
+  FragmentIntermediate: 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst:        0x01, // First fragment of fragmented extended advertising data
+  FragmentLast:         0x02, // Last fragment of fragmented extended advertising data
+  Complete:             0x03, // Complete extended advertising data
+  Unchanged:            0x04, // Unchanged data (just update the Advertising DID)
+} as const);
+
+export type LeAdvertisingDataOperation = (typeof LeAdvertisingDataOperation)[keyof typeof LeAdvertisingDataOperation];
 
 export interface LeExtendedAdvertisingData {
   operation: LeAdvertisingDataOperation;
@@ -1333,16 +1345,18 @@ export class LeExtendedAdvertisingEnable {
   }
 }
 
-export enum LeInitiatorFilterPolicy {
-  PeerAddress,
-  WhiteList,
-}
+export const LeInitiatorFilterPolicy = Object.freeze({
+  PeerAddress: 0,
+  WhiteList: 1,
+} as const);
 
-export enum LeInitiatingPhy {
-  Phy1M = 0,
-  Phy2M = 1,
-  PhyCoded = 2,
-}
+export type LeInitiatorFilterPolicy = (typeof LeInitiatorFilterPolicy)[keyof typeof LeInitiatorFilterPolicy];
+
+export const LeInitiatingPhy = Object.freeze({
+  Phy1M: 0,
+  Phy2M: 1,
+  PhyCoded: 2,
+} as const);
 
 export interface LeExtendedCreateConnectionPhy {
   scanIntervalMs: number;
@@ -1570,12 +1584,15 @@ export class LePrivacyMode {
 }
 
 // prettier-ignore
-export enum LeScanResponseDataOperation {
-  FragmentIntermediate  = 0x00, // Intermediate fragment of fragmented extended advertising data
-  FragmentFirst         = 0x01, // First fragment of fragmented extended advertising data
-  FragmentLast          = 0x02, // Last fragment of fragmented extended advertising data
-  Complete              = 0x03, // Complete scan response data
-}
+export const LeScanResponseDataOperation = Object.freeze({
+  FragmentIntermediate: 0x00, // Intermediate fragment of fragmented extended advertising data
+  FragmentFirst:        0x01, // First fragment of fragmented extended advertising data
+  FragmentLast:         0x02, // Last fragment of fragmented extended advertising data
+  Complete:             0x03, // Complete scan response data
+} as const);
+
+export type LeScanResponseDataOperation =
+  (typeof LeScanResponseDataOperation)[keyof typeof LeScanResponseDataOperation];
 
 export interface LeExtendedScanResponseData {
   operation: LeScanResponseDataOperation;
@@ -1656,13 +1673,15 @@ export class LeExtendedAdvertisingParametersV1 {
   }
 }
 
-export enum AdvertisingPhyOptions {
-  NoPreferredCoding,
-  PreferS2,
-  PreferS8,
-  RequireS2,
-  RequireS8,
-}
+export const AdvertisingPhyOptions = Object.freeze({
+  NoPreferredCoding: 0,
+  PreferS2: 1,
+  PreferS8: 2,
+  RequireS2: 3,
+  RequireS8: 4,
+} as const);
+
+export type AdvertisingPhyOptions = (typeof AdvertisingPhyOptions)[keyof typeof AdvertisingPhyOptions];
 
 export interface LeExtendedAdvertisingParametersV2 extends LeExtendedAdvertisingParametersV1 {
   primaryAdvertisingPhyOptions?: AdvertisingPhyOptions;
@@ -1859,11 +1878,13 @@ export class LeExtendedScanParameters {
   }
 }
 
-export enum LeScanFilterDuplicates {
-  Disabled = 0x00, // Duplicate filtering disabled
-  Enabled = 0x01, // Duplicate filtering enabled
-  Reset = 0x02, // Duplicate filtering enabled, reset for each scan period
-}
+export const LeScanFilterDuplicates = Object.freeze({
+  Disabled: 0x00, // Duplicate filtering disabled
+  Enabled: 0x01, // Duplicate filtering enabled
+  Reset: 0x02, // Duplicate filtering enabled, reset for each scan period
+} as const);
+
+export type LeScanFilterDuplicates = (typeof LeScanFilterDuplicates)[keyof typeof LeScanFilterDuplicates];
 
 export interface LeExtendedScanEnabled {
   enable: boolean;
@@ -1894,109 +1915,140 @@ export class LeExtendedScanEnabled {
   }
 }
 
-export enum LePhy {
-  Phy1M = 0,
-  Phy2M = 1,
-  PhyCoded = 2,
+export const LePhy = Object.freeze({
+  Phy1M: 0,
+  Phy2M: 1,
+  PhyCoded: 2,
+} as const);
+
+export type LePhy = (typeof LePhy)[keyof typeof LePhy];
+
+export function isLePhy(phy: number): phy is LePhy {
+  return phy === LePhy.Phy1M || phy === LePhy.Phy2M || phy === LePhy.PhyCoded;
 }
 
-export enum LeTxPhy {
-  Phy1M = 0x01, // Transmitter set to use the LE 1M PHY
-  Phy2M = 0x02, // Transmitter set to use the LE 2M PHY
-  PhyCodedS8 = 0x03, // Transmitter set to use the LE Coded PHY with S=8 data coding
-  PhyCodedS2 = 0x04, // Transmitter set to use the LE Coded PHY with S=2 data coding
+export function numberToLePhy(phy: number): LePhy {
+  if (!isLePhy(phy)) {
+    throw makeHciError("Invalid PHY", HciErrorErrno.InvalidCommandParameter);
+  }
+  return phy;
 }
 
-export enum LeAdvertisingType {
+export const LeTxPhy = Object.freeze({
+  Phy1M: 0x01, // Transmitter set to use the LE 1M PHY
+  Phy2M: 0x02, // Transmitter set to use the LE 2M PHY
+  PhyCodedS8: 0x03, // Transmitter set to use the LE Coded PHY with S=8 data coding
+  PhyCodedS2: 0x04, // Transmitter set to use the LE Coded PHY with S=2 data coding
+} as const);
+
+export type LeTxPhy = (typeof LeTxPhy)[keyof typeof LeTxPhy];
+
+export const LeAdvertisingType = Object.freeze({
   // Connectable and scannable undirected advertising (ADV_IND) (default)
-  Undirected = 0,
+  Undirected: 0,
   // Connectable high duty cycle directed advertising (ADV_DIRECT_IND, high duty cycle)
-  DirectedHighDutyCycle = 1,
+  DirectedHighDutyCycle: 1,
   // Scannable undirected advertising (ADV_SCAN_IND)
-  Scannable = 2,
+  Scannable: 2,
   // Non connectable undirected advertising (ADV_NONCONN_IND)
-  NonConnectable = 3,
+  NonConnectable: 3,
   // Connectable low duty cycle directed advertising (ADV_DIRECT_IND, low duty cycle)
-  DirectedLowDutyCycle = 4,
-}
+  DirectedLowDutyCycle: 4,
+} as const);
+
+export type LeAdvertisingType = (typeof LeAdvertisingType)[keyof typeof LeAdvertisingType];
 
 // prettier-ignore
-export enum LeAdvertisingEventProperties {
-  Connectable                      = 0, // Connectable advertising
-  Scannable                        = 1, // Scannable advertising
-  Directed                         = 2, // Directed advertising
-  HighDutyCycleDirectedConnectable = 3, // High Duty Cycle Directed Connectable advertising 
+export const LeAdvertisingEventProperties = Object.freeze({
+  Connectable                      : 0, // Connectable advertising
+  Scannable                        : 1, // Scannable advertising
+  Directed                         : 2, // Directed advertising
+  HighDutyCycleDirectedConnectable : 3, // High Duty Cycle Directed Connectable advertising 
                                         // (≤ 3.75 ms Advertising Interval)
-  UseLegacyPDUs                    = 4, // Use legacy advertising PDUs
-  AnonymousAdvertising             = 5, // Omit advertiser's address from all PDUs ("anonymous advertising")
-  IncludeTxPower                   = 6, // Include TxPower in the extended header of at least one advertising PDU
-}
+  UseLegacyPDUs                    : 4, // Use legacy advertising PDUs
+  AnonymousAdvertising             : 5, // Omit advertiser's address from all PDUs ("anonymous advertising")
+  IncludeTxPower                   : 6, // Include TxPower in the extended header of at least one advertising PDU
+} as const);
 
-export enum LeAdvertisingChannelMap {
-  Channel37 = 0, // Channel 37 shall be used
-  Channel38 = 1, // Channel 38 shall be used
-  Channel39 = 2, // Channel 39 shall be used
-}
+export type LeAdvertisingEventProperties =
+  (typeof LeAdvertisingEventProperties)[keyof typeof LeAdvertisingEventProperties];
 
-// prettier-ignore
-export enum LeOwnAddressType {
-  PublicDeviceAddress,          // Public Device Address
-  RandomDeviceAddress,          // Random Device Address
-  UsePublicAddressIfNoMatching, // Controller generates the Resolvable Private Address based on the local
-                                // IRK from the resolving list. If the resolving list contains no matching
-                                // entry, use the public address.
-  UseRandomAddressIfNoMatching, // Controller generates the Resolvable Private Address based on the local
-                                // IRK from the resolving list. If the resolving list contains no matching
-                                // entry, use the random address from LE_Set_Advertising_Set_Random_
-                                // Address.
-}
+export const LeAdvertisingChannelMap = Object.freeze({
+  Channel37: 0, // Channel 37 shall be used
+  Channel38: 1, // Channel 38 shall be used
+  Channel39: 2, // Channel 39 shall be used
+} as const);
 
-export enum LePeerAddressType {
-  PublicDeviceAddress, // Public Device Address or Public Identity Address
-  RandomDeviceAddress, // Random Device Address or Random (static) Identity Address
-}
+export type LeAdvertisingChannelMap = (typeof LeAdvertisingChannelMap)[keyof typeof LeAdvertisingChannelMap];
 
 // prettier-ignore
-export enum LeAdvertisingFilterPolicy {
-  Any,                  // Process scan and connection requests from all devices (i.e., the White
-                        // List is not in use)
-  WhiteListConnect,     // Process connection requests from all devices and scan requests only
-                        // from devices that are in the White List.
-  WhiteListScan,        // Process scan requests from all devices and connection requests only
-                        // from devices that are in the White List.
-  WhiteListScanConnect, // Process scan and connection requests only from devices in the White
-                        // List.
-}
+export const LeOwnAddressType = Object.freeze({
+  PublicDeviceAddress: 0,          // Public Device Address
+  RandomDeviceAddress: 1,          // Random Device Address
+  UsePublicAddressIfNoMatching: 2, // Controller generates the Resolvable Private Address based on the local
+                                   // IRK from the resolving list. If the resolving list contains no matching
+                                   // entry, use the public address.
+  UseRandomAddressIfNoMatching: 3, // Controller generates the Resolvable Private Address based on the local
+                                   // IRK from the resolving list. If the resolving list contains no matching
+                                   // entry, use the random address from LE_Set_Advertising_Set_Random_
+                                   // Address.
+} as const);
+
+export type LeOwnAddressType = (typeof LeOwnAddressType)[keyof typeof LeOwnAddressType];
+
+export const LePeerAddressType = Object.freeze({
+  PublicDeviceAddress: 0, // Public Device Address or Public Identity Address
+  RandomDeviceAddress: 1, // Random Device Address or Random (static) Identity Address
+} as const);
+
+export type LePeerAddressType = (typeof LePeerAddressType)[keyof typeof LePeerAddressType];
+
+export const LeAdvertisingFilterPolicy = Object.freeze({
+  // Process scan and connection requests from all devices (i.e., the White List is not in use)
+  Any: 0,
+  // Process connection requests from all devices and scan requests only from devices that are in the White List.
+  WhiteListConnect: 1,
+  // Process scan requests from all devices and connection requests only from devices that are in the White List.
+  WhiteListScan: 2,
+  // Process scan and connection requests only from devices in the White List.
+  WhiteListScanConnect: 3,
+} as const);
+
+export type LeAdvertisingFilterPolicy = (typeof LeAdvertisingFilterPolicy)[keyof typeof LeAdvertisingFilterPolicy];
 
 // prettier-ignore
-export enum LePrimaryAdvertisingPhy {
-  Phy1M    = 0x01, // Primary advertisement PHY is LE 1M
-  PhyCoded = 0x03, // Primary advertisement PHY is LE Coded
-}
+export const LePrimaryAdvertisingPhy = Object.freeze({
+  Phy1M:    0x01, // Primary advertisement PHY is LE 1M
+  PhyCoded: 0x03, // Primary advertisement PHY is LE Coded
+} as const);
+
+export type LePrimaryAdvertisingPhy = (typeof LePrimaryAdvertisingPhy)[keyof typeof LePrimaryAdvertisingPhy];
 
 // prettier-ignore
-export enum LeSecondaryAdvertisingPhy {
-  Phy1M    = 0x01, // Secondary advertisement PHY is LE 1M
-  Phy2M    = 0x02, // Secondary advertisement PHY is LE 2M
-  PhyCoded = 0x03, // Secondary advertisement PHY is LE Coded
-}
+export const LeSecondaryAdvertisingPhy = Object.freeze({
+  Phy1M:    0x01, // Secondary advertisement PHY is LE 1M
+  Phy2M:    0x02, // Secondary advertisement PHY is LE 2M
+  PhyCoded: 0x03, // Secondary advertisement PHY is LE Coded
+} as const);
 
-export enum LeScanningFilterPolicy {
+export type LeSecondaryAdvertisingPhy = (typeof LeSecondaryAdvertisingPhy)[keyof typeof LeSecondaryAdvertisingPhy];
+
+export const LeScanningFilterPolicy = Object.freeze({
   // Accept all advertising and scan response PDUs except directed advertising
   // PDUs not addressed to this device
-  All = 0x00,
+  All: 0x00,
 
   // Accept only advertising and scan response PDUs from devices where
   // the advertiser’s address is in the White List. Directed advertising PDUs
   // which are not addressed to this device shall be ignored.
-  FromWhiteList = 0x01,
+  FromWhiteList: 0x01,
 
   // Accept all advertising and scan response PDUs except directed advertising
   // PDUs where the identity address corresponding to TargetA does
   // not address this device.
   // Note: Directed advertising PDUs where the TargetA is a resolvable private
   // address that cannot be resolved are also accepted.
-  AllExceptDirectedAdvertisingPackets = 0x02,
+  AllExceptDirectedAdvertisingPackets: 0x02,
 
   // Accept all advertising and scan response PDUs except:
   // • advertising and scan response PDUs where the advertiser’s identity
@@ -2005,8 +2057,10 @@ export enum LeScanningFilterPolicy {
   // to TargetA does not address this device.
   // Note: Directed advertising PDUs where TargetA is a resolvable private
   // address that cannot be resolved are also accepted.
-  AllExceptPacketFromWhiteListAndDirectedAdvertising = 0x03,
-}
+  AllExceptPacketFromWhiteListAndDirectedAdvertising: 0x03,
+} as const);
+
+export type LeScanningFilterPolicy = (typeof LeScanningFilterPolicy)[keyof typeof LeScanningFilterPolicy];
 
 export const LeScanningPhy = Object.freeze({
   Phy1M: 0x00, // Scan advertisements on the LE 1M PHY

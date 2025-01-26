@@ -67,7 +67,7 @@ interface InParamsConn<T> {
 }
 
 export class SetEventMask {
-  static inParams(events: Partial<EventMask>): InParams<HciOcfControlAndBasebandCommands.SetEventMask> {
+  static inParams(events: Partial<EventMask>): InParams<typeof HciOcfControlAndBasebandCommands.SetEventMask> {
     let mask = 0n;
 
     mask = bitSet(mask, 0n, events.inquiryComplete);
@@ -138,7 +138,7 @@ export class ReadTransmitPowerLevel {
   static inParams(
     connectionHandle: number,
     type: ReadTransmitPowerLevelType,
-  ): InParamsConn<HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
+  ): InParamsConn<typeof HciOcfControlAndBasebandCommands.ReadTransmitPowerLevel> {
     const payload = Buffer.alloc(3);
     payload.writeUInt16LE(connectionHandle, 0);
     payload.writeUInt8(type, 2);

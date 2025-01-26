@@ -9,10 +9,10 @@ import {
   HciOcfInformationParameters,
   HciOcfLeControllerCommands,
   HciOcfLinkControlCommands,
+  HciOcfLinkPolicyCommands,
   HciOcfStatusParameters,
   HciOcfTestingCommands,
   HciOgf,
-  HicOcfLinkPolicyCommands,
   ocfOgfToString,
 } from "./HciOgfOcf.js";
 import { HciPacketType } from "./HciPacketType.js";
@@ -81,7 +81,7 @@ export class HciCmd {
   }
 
   public async linkPolicy(params: {
-    ocf: HicOcfLinkPolicyCommands;
+    ocf: HciOcfLinkPolicyCommands;
     connectionHandle?: number;
     payload?: Buffer;
   }): Promise<HciCmdResult> {
