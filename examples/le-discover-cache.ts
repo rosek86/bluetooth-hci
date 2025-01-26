@@ -2,9 +2,9 @@ import chalk from "chalk";
 
 import {
   Address,
-  DisconnectionCompleteEvent,
-  GapAdvertReport,
-  GapConnectEvent,
+  type DisconnectionCompleteEvent,
+  type GapAdvertReport,
+  type GapConnectEvent,
   GapProfileStorage,
   GattClient,
   HciAdapter,

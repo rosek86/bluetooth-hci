@@ -1,7 +1,7 @@
 import {
-  DisconnectionCompleteEvent,
-  GapAdvertReport,
-  GapConnectEvent,
+  type DisconnectionCompleteEvent,
+  type GapAdvertReport,
+  type GapConnectEvent,
   GattClient,
   HciAdapter,
   HciError,

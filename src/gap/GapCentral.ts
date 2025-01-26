@@ -9,22 +9,22 @@ import { Hci } from "../hci/Hci.js";
 import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.js";
 import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
 import {
-  DisconnectionCompleteEvent,
+  type DisconnectionCompleteEvent,
   LeAdvEventType,
   LeAdvReport,
-  LeChannelSelAlgoEvent,
-  LeConnectionCompleteEvent,
+  type LeChannelSelAlgoEvent,
+  type LeConnectionCompleteEvent,
   LeConnectionRole,
-  LeConnectionUpdateCompleteEvent,
-  LeEnhConnectionCompleteEvent,
+  type LeConnectionUpdateCompleteEvent,
+  type LeEnhConnectionCompleteEvent,
   LeExtAdvReport,
   LeMasterClockAccuracy,
-  LeReadRemoteFeaturesCompleteEvent,
-  ReadRemoteVersionInformationCompleteEvent,
+  type LeReadRemoteFeaturesCompleteEvent,
+  type ReadRemoteVersionInformationCompleteEvent,
 } from "../hci/HciEvent.js";
 import {
   LeConnectionUpdate,
-  LeExtendedCreateConnectionPhy,
+  type LeExtendedCreateConnectionPhy,
   LeExtendedCreateConnectionV1,
   LeExtendedScanEnabled,
   LeExtendedScanParameters,

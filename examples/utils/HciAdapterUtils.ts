@@ -1,6 +1,6 @@
 import { HciAdapter } from "../../src/utils/HciAdapter.js";
 
-import { ArgsParser, DefaultInputArgs } from "./ArgsParser.js";
+import { ArgsParser, type DefaultInputArgs } from "./ArgsParser.js";
 import { HciAdapterFactory } from "./HciAdapterFactory.js";
 
 export class HciAdapterUtils {

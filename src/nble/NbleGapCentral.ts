@@ -3,19 +3,19 @@ import EventEmitter from "node:events";
 import Debug from "debug";
 
 import {
-  GapAdvertReport,
+  type GapAdvertReport,
   GapCentral,
-  GapCentralOptions,
-  GapConnectEvent,
-  GapConnectParams,
-  GapScanParamsOptions,
-  GapScanStartOptions,
+  type GapCentralOptions,
+  type GapConnectEvent,
+  type GapConnectParams,
+  type GapScanParamsOptions,
+  type GapScanStartOptions,
 } from "../gap/GapCentral.js";
 import { GapProfileStorage } from "../gap/GapProfileStorage.js";
 import { GattClient } from "../gatt/GattClient.js";
 import { Hci } from "../hci/Hci.js";
 import { HciError, HciErrorErrno } from "../hci/HciError.js";
-import { DisconnectionCompleteEvent } from "../hci/HciEvent.js";
+import { type DisconnectionCompleteEvent } from "../hci/HciEvent.js";
 import { LePhy } from "../hci/HciLeController.js";
 import { Address } from "../utils/Address.js";
 import { HciAdapter } from "../utils/HciAdapter.js";

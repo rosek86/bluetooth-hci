@@ -2,8 +2,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "target": "ES2022",
-    "lib": ["ES2022"],
+    "target": "ES2023",
+    "lib": ["ES2023"],
     "sourceMap": true,
     "baseUrl": ".",
     "outDir": "./lib",
@@ -19,7 +19,7 @@
     // "noUncheckedIndexedAccess": true, // Found 411 errors in 17 files.
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
-    // "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": true,
 
     "incremental": true,
     "noEmit": false,
@@ -27,7 +27,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    // "verbatimModuleSyntax": true,
+    // "verbatimModuleSyntax": true, // only with "module": "ESNext"
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "declaration": true

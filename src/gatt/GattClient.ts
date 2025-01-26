@@ -2,13 +2,13 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { AttHandleValueIndMsg, AttHandleValueNtfMsg } from "../att/AttSerDes.js";
+import { type AttHandleValueIndMsg, type AttHandleValueNtfMsg } from "../att/AttSerDes.js";
 import { UUID } from "../utils/UUID.js";
 
-import { Att, AttDataEntry } from "./AttGlue.js";
+import { type Att, type AttDataEntry } from "./AttGlue.js";
 import { GattCharacteristic } from "./GattCharacteristic.js";
 import { GattDescriptor } from "./GattDescriptor.js";
-import { GattDirectory, Profile } from "./GattDirectory.js";
+import { GattDirectory, type Profile } from "./GattDirectory.js";
 import { GattService } from "./GattService.js";
 
 const debug = Debug("bt-hci-gatt");

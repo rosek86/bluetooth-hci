@@ -1,4 +1,4 @@
-import { Profile } from "../gatt/GattDirectory.js";
+import { type Profile } from "../gatt/GattDirectory.js";
 import { Address } from "../utils/Address.js";
 
 export interface GapProfileStorageEntry {

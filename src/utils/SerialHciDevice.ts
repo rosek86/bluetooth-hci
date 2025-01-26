@@ -1,8 +1,8 @@
-import { AutoDetectTypes } from "@serialport/bindings-cpp";
+import { type AutoDetectTypes } from "@serialport/bindings-cpp";
 import Debug from "debug";
-import { SerialPort, SerialPortOpenOptions } from "serialport";
+import { SerialPort, type SerialPortOpenOptions } from "serialport";
 
-import { HciDevice } from "./HciAdapter.js";
+import { type HciDevice } from "./HciAdapter.js";
 
 // https://github.com/serialport/bindings-interface/pull/32
 // import { PortInfo } from '@serialport/bindings-interface';

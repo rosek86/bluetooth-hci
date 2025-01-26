@@ -2,7 +2,14 @@ import chalk from "chalk";
 
 import { getAppearanceSubcategoryName } from "../assigned-numbers/AppearanceValues.js";
 import { getCompanyName } from "../assigned-numbers/Company Identifiers.js";
-import { GapAdvertReport, GapCentral, HciAdapter, LeScanFilterDuplicates, LeScanType, createHciSerial } from "../src";
+import {
+  type GapAdvertReport,
+  GapCentral,
+  HciAdapter,
+  LeScanFilterDuplicates,
+  LeScanType,
+  createHciSerial,
+} from "../src";
 
 import { ArgsParser } from "./utils/ArgsParser.js";
 

@@ -1,8 +1,8 @@
 import { BluetoothHciSocket, bluetoothHciSocketFactory } from "@rosek86/bluetooth-hci-socket";
-import { AutoDetectTypes } from "@serialport/bindings-cpp";
-import { SerialPortOpenOptions } from "serialport";
+import { type AutoDetectTypes } from "@serialport/bindings-cpp";
+import { type SerialPortOpenOptions } from "serialport";
 
-import { HciAdapter, HciDevice } from "../../src/utils/HciAdapter.js";
+import { HciAdapter, type HciDevice } from "../../src/utils/HciAdapter.js";
 import { createHciSerial } from "../../src/utils/SerialHciDevice.js";
 import { delay } from "../../src/utils/Utils.js";
 
