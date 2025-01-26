@@ -1,3 +1,5 @@
+// [Core: 4.5 Packet Type]
+
 // prettier-ignore
 export const HciPacketType = Object.freeze({
   Ack:            0,  // Acknowledgment packets

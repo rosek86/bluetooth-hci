@@ -179,6 +179,7 @@ const HciErrorErrnoToString: { [id: number]: string } = {
   0x45: "Packet Too Long",
   0x46: "Too Late",
   0x47: "Too Early",
+  0x48: "Insufficient Channels",
 };
 
 export class HciError extends Error implements NodeJS.ErrnoException {

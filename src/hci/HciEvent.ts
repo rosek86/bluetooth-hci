@@ -39,6 +39,7 @@ export const HciEvent = Object.freeze({
   ReadClockOffsetComplete:                              0x1C, // Read Clock Offset Complete
   ConnectionPacketTypeChanged:                          0x1D, // Connection Packet Type Changed
   QosViolation:                                         0x1E, // QoS Violation
+  PageScanModeChange:                                   0x1F, // x Page Scan Mode Change (removed)
   PageScanRepetitionModeChange:                         0x20, // Page Scan Repetition Mode Change
   FlowSpecificationComplete:                            0x21, // Flow Specification Complete
   InquiryResultWithRssi:                                0x22, // Inquiry Result With RSSI
@@ -60,20 +61,20 @@ export const HciEvent = Object.freeze({
   KeypressNotification:                                 0x3C, // Keypress Notification
   RemoteHostSupportedFeaturesNotification:              0x3D, // Remote Host Supported Features Notification
   LeMeta:                                               0x3E, // * LE Meta
-  PhysicalLinkComplete:                                 0x40, // Physical Link Complete
-  ChannelSelected:                                      0x41, // Channel Selected
-  DisconnectionPhysicalLinkComplete:                    0x42, // Disconnection Physical Link Complete
-  PhysicalLinkLossEarlyWarning:                         0x43, // Physical Link Loss Early Warning
-  PhysicalLinkRecovery:                                 0x44, // Physical Link Recovery
-  LogicalLinkComplete:                                  0x45, // Logical Link Complete
-  DisconnectionLogicalLinkComplete:                     0x46, // Disconnection Logical Link Complete
-  FlowSpecModifyComplete:                               0x47, // Flow Spec Modify Complete
+  PhysicalLinkComplete:                                 0x40, // x Physical Link Complete (removed)
+  ChannelSelected:                                      0x41, // x Channel Selected (removed)
+  DisconnectionPhysicalLinkComplete:                    0x42, // x Disconnection Physical Link Complete (removed)
+  PhysicalLinkLossEarlyWarning:                         0x43, // x Physical Link Loss Early Warning (removed)
+  PhysicalLinkRecovery:                                 0x44, // x Physical Link Recovery (removed)
+  LogicalLinkComplete:                                  0x45, // x Logical Link Complete (removed)
+  DisconnectionLogicalLinkComplete:                     0x46, // x Disconnection Logical Link Complete (removed)
+  FlowSpecModifyComplete:                               0x47, // x Flow Spec Modify Complete (removed)
   NumberOfCompletedDataBlocks:                          0x48, // Number Of Completed Data Blocks
-  ShortRangeModeChangeComplete:                         0x4C, // Short Range Mode Change Complete
+  AmpStartTest:                                         0x49, // x AMP Start Test (removed)
+  AmpTestEnd:                                           0x4A, // x AMP Test End (removed)
+  AmpReceiverReport:                                    0x4B, // x AMP Receiver Report (removed)
+  ShortRangeModeChangeComplete:                         0x4C, // x Short Range Mode Change Complete (removed)
   AmpStatusChange:                                      0x4D, // AMP Status Change
-  AmpStartTest:                                         0x49, // AMP Start Test
-  AmpTestEnd:                                           0x4A, // AMP Test End
-  AmpReceiverReport:                                    0x4B, // AMP Receiver Report
   TriggeredClockCapture:                                0x4E, // Triggered Clock Capture
   SynchronizationTrainComplete:                         0x4F, // Synchronization Train Complete
   SynchronizationTrainReceived:                         0x50, // Synchronization Train Received

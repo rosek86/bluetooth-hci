@@ -3,63 +3,98 @@ import { bitGet } from "../utils/Utils.js";
 
 import { HciParserErrorType, makeParserError } from "./HciError.js";
 
-// prettier-ignore
 export interface LocalSupportedFeatures {
-  threeSlotPackets:                     boolean;
-  fiveSlotPackets:                      boolean;
-  encryption:                           boolean;
-  slotOffset:                           boolean;
-  timingAccuracy:                       boolean;
-  roleSwitch:                           boolean;
-  holdMode:                             boolean;
-  sniffMode:                            boolean;
-  powerControlRequests:                 boolean;
-  channelQualityDrivenDataRate:         boolean;
-  scolink:                              boolean;
-  hv2packets:                           boolean;
-  hv3packets:                           boolean;
-  microLawLogSynchronousData:           boolean;
-  aLawLogSynchronousData:               boolean;
-  cvsSynchronousData:                   boolean;
-  pagingParameterNegotiation:           boolean;
-  powerControl:                         boolean;
-  transparentSynchronousData:           boolean;
-  flowControlLagLsb:                    boolean;
-  flowControlLagMiddleBit:              boolean;
-  flowControlLagMsb:                    boolean;
-  broadcastEncryption:                  boolean;
-  enhancedDataRateAcl2MbpsMode:         boolean;
-  enhancedDataRateAcl3MbpsMode:         boolean;
-  enhancedInquiryScan:                  boolean;
-  interlacedInquiryScan:                boolean;
-  interlacedPageScan:                   boolean;
-  rssiWithInquiryResults:               boolean;
-  extendedScoLinkEv3Packets:            boolean;
-  ev4Packets:                           boolean;
-  ev5Packets:                           boolean;
-  afhCapableSlave:                      boolean;
-  afhClassificationSlave:               boolean;
-  brEdrNotSupported:                    boolean;
-  leSupported:                          boolean;
-  threeSlotEnhancedDataRateAclPackets:  boolean;
-  fiveSlotEnhancedDataRateAclPackets:   boolean;
-  sniffSubrating:                       boolean;
-  pauseEncryption:                      boolean;
-  afhCapableMaster:                     boolean;
-  afhClassificationMaster:              boolean;
-  enhancedDataRateESco2MbpsMode:        boolean;
-  enhancedDataRateESco3MbpsMode:        boolean;
+  threeSlotPackets: boolean;
+  fiveSlotPackets: boolean;
+  encryption: boolean;
+  slotOffset: boolean;
+  timingAccuracy: boolean;
+  roleSwitch: boolean;
+  holdMode: boolean;
+  sniffMode: boolean;
+  powerControlRequests: boolean;
+  channelQualityDrivenDataRate: boolean;
+  scolink: boolean;
+  hv2packets: boolean;
+  hv3packets: boolean;
+  microLawLogSynchronousData: boolean;
+  aLawLogSynchronousData: boolean;
+  cvsSynchronousData: boolean;
+  pagingParameterNegotiation: boolean;
+  powerControl: boolean;
+  transparentSynchronousData: boolean;
+  flowControlLagLsb: boolean;
+  flowControlLagMiddleBit: boolean;
+  flowControlLagMsb: boolean;
+  broadcastEncryption: boolean;
+  enhancedDataRateAcl2MbpsMode: boolean;
+  enhancedDataRateAcl3MbpsMode: boolean;
+  enhancedInquiryScan: boolean;
+  interlacedInquiryScan: boolean;
+  interlacedPageScan: boolean;
+  rssiWithInquiryResults: boolean;
+  extendedScoLinkEv3Packets: boolean;
+  ev4Packets: boolean;
+  ev5Packets: boolean;
+  afhCapableSlave: boolean;
+  afhClassificationSlave: boolean;
+  brEdrNotSupported: boolean;
+  leSupported: boolean;
+  threeSlotEnhancedDataRateAclPackets: boolean;
+  fiveSlotEnhancedDataRateAclPackets: boolean;
+  sniffSubrating: boolean;
+  pauseEncryption: boolean;
+  afhCapableMaster: boolean;
+  afhClassificationMaster: boolean;
+  enhancedDataRateESco2MbpsMode: boolean;
+  enhancedDataRateESco3MbpsMode: boolean;
   threeSlotEnhancedDataRateEScoPackets: boolean;
-  extendedInquiryResponse:              boolean;
-  simultaneousLeAndBrEdr:               boolean;
-  secureSimplePairing:                  boolean;
-  encapsulatedPdu:                      boolean;
-  erroneousDataReporting:               boolean;
-  nonFlushablePacketBoundaryFlag:       boolean;
-  linkSupervisionTimeoutChangedEvent:   boolean;
-  variableInquiryTxPowerLevel:          boolean;
-  enhancedPowerControl:                 boolean;
-  extendedFeatures:                     boolean;
+  extendedInquiryResponse: boolean;
+  simultaneousLeAndBrEdr: boolean;
+  secureSimplePairing: boolean;
+  encapsulatedPdu: boolean;
+  erroneousDataReporting: boolean;
+  nonFlushablePacketBoundaryFlag: boolean;
+  linkSupervisionTimeoutChangedEvent: boolean;
+  variableInquiryTxPowerLevel: boolean;
+  enhancedPowerControl: boolean;
+  extendedFeatures: boolean;
+}
+
+export interface LocalSupportedFeaturesPage1 {
+  // 64 Secure Simple Pairing (Host Support)  0 0
+  secureSimplePairingHost: boolean;
+  // 65 LE Supported (Host)                   0 1
+  leSupportedHost: boolean;
+  // 66 Previously used                       0 2
+  // 67 Secure Connections (Host Support)     0 3
+  secureConnectionsHost: boolean;
+}
+
+export interface LocalSupportedFeaturesPage2 {
+  // 128 Connectionless Peripheral Broadcast – Transmitter Operation  0 0
+  connectionlessPeripheralBroadcastTransmitter: boolean;
+  // 129 Connectionless Peripheral Broadcast – Receiver Operation     0 1
+  connectionlessPeripheralBroadcastReceiver: boolean;
+  // 130 Synchronization Train                                        0 2
+  synchronizationTrain: boolean;
+  // 131 Synchronization Scan                                         0 3
+  synchronizationScan: boolean;
+  // 132 HCI_Inquiry_Response_Notification event                      0 4
+  hciInquiryResponseNotification: boolean;
+  // 133 Generalized interlaced scan                                  0 5
+  generalizedInterlacedScan: boolean;
+  // 134 Coarse Clock Adjustment                                      0 6
+  coarseClockAdjustment: boolean;
+  // 135 Reserved for future use                                      0 7
+  // 136 Secure Connections (Controller Support)                      1 0
+  secureConnectionsController: boolean;
+  // 137 Ping                                                         1 1
+  ping: boolean;
+  // 138 Slot Availability Mask                                       1 2
+  slotAvailabilityMask: boolean;
+  // 139 Train nudging                                                1 3
+  trainNudging: boolean;
 }
 
 export class ReadLocalSupportedFeatures {
@@ -71,15 +106,15 @@ export class ReadLocalSupportedFeatures {
 
     // prettier-ignore
     return {
-      threeSlotPackets:                     bitGet(features, 0n),
-      fiveSlotPackets:                      bitGet(features, 1n),
-      encryption:                           bitGet(features, 2n),
-      slotOffset:                           bitGet(features, 3n),
-      timingAccuracy:                       bitGet(features, 4n),
-      roleSwitch:                           bitGet(features, 5n),
-      holdMode:                             bitGet(features, 6n),
-      sniffMode:                            bitGet(features, 7n),
-      powerControlRequests:                 bitGet(features, 9n),
+      threeSlotPackets:                     bitGet(features,  0n),
+      fiveSlotPackets:                      bitGet(features,  1n),
+      encryption:                           bitGet(features,  2n),
+      slotOffset:                           bitGet(features,  3n),
+      timingAccuracy:                       bitGet(features,  4n),
+      roleSwitch:                           bitGet(features,  5n),
+      holdMode:                             bitGet(features,  6n),
+      sniffMode:                            bitGet(features,  7n),
+      powerControlRequests:                 bitGet(features,  9n),
       channelQualityDrivenDataRate:         bitGet(features, 10n),
       scolink:                              bitGet(features, 11n),
       hv2packets:                           bitGet(features, 12n),
@@ -184,354 +219,353 @@ export class ReadBdAddr {
 }
 
 // 6.27 Supported commands
-// prettier-ignore
 export interface LocalSupportedCommandsFields {
-  inquiry:                                                boolean;
-  inquiryCancel:                                          boolean;
-  periodicInquiryMode:                                    boolean;
-  exitPeriodicInquiryMode:                                boolean;
-  createConnection:                                       boolean;
-  disconnect:                                             boolean;
-  addScoConnection:                                       boolean;
-  createConnectionCancel:                                 boolean;
-  acceptConnectionRequest:                                boolean;
-  rejectConnectionRequest:                                boolean;
-  linkKeyRequestReply:                                    boolean;
-  linkKeyRequestNegativeReply:                            boolean;
-  pinCodeRequestReply:                                    boolean;
-  pinCodeRequestNegativeReply:                            boolean;
-  changeConnectionPacketType:                             boolean;
-  authenticationRequested:                                boolean;
-  setConnectionEncryption:                                boolean;
-  changeConnectionLinkKey:                                boolean;
-  masterLinkKey:                                          boolean;
-  remoteNameRequest:                                      boolean;
-  remoteNameRequestCancel:                                boolean;
-  readRemoteSupportedFeatures:                            boolean;
-  readRemoteExtendedFeatures:                             boolean;
-  readRemoteVersionInformation:                           boolean;
-  readClockOffset:                                        boolean;
-  readLmpHandle:                                          boolean;
-  holdMode:                                               boolean;
-  sniffMode:                                              boolean;
-  exitSniffMode:                                          boolean;
-  qosSetup:                                               boolean;
-  roleDiscovery:                                          boolean;
-  switchRole:                                             boolean;
-  readLinkPolicySettings:                                 boolean;
-  writeLinkPolicySettings:                                boolean;
-  readDefaultLinkPolicySettings:                          boolean;
-  writeDefaultLinkPolicySettings:                         boolean;
-  flowSpecification:                                      boolean;
-  setEventMask:                                           boolean;
-  reset:                                                  boolean;
-  setEventFilter:                                         boolean;
-  flush:                                                  boolean;
-  readPinType:                                            boolean;
-  writePinType:                                           boolean;
-  readStoredLinkKey:                                      boolean;
-  writeStoredLinkKey:                                     boolean;
-  deleteStoredLinkKey:                                    boolean;
-  writeLocalName:                                         boolean;
-  readLocalName:                                          boolean;
-  readConnectionAcceptTimeout:                            boolean;
-  writeConnectionAcceptTimeout:                           boolean;
-  readPageTimeout:                                        boolean;
-  writePageTimeout:                                       boolean;
-  readScanEnable:                                         boolean;
-  writeScanEnable:                                        boolean;
-  readPageScanActivity:                                   boolean;
-  writePageScanActivity:                                  boolean;
-  readInquiryScanActivity:                                boolean;
-  writeInquiryScanActivity:                               boolean;
-  readAuthenticationEnable:                               boolean;
-  writeAuthenticationEnable:                              boolean;
-  readEncryptionMode:                                     boolean;
-  writeEncryptionMode:                                    boolean;
-  readClassOfDevice:                                      boolean;
-  writeClassOfDevice:                                     boolean;
-  readVoiceSetting:                                       boolean;
-  writeVoiceSetting:                                      boolean;
-  readAutomaticFlushTimeout:                              boolean;
-  writeAutomaticFlushTimeout:                             boolean;
-  readNumBroadcastRetransmissions:                        boolean;
-  writeNumBroadcastRetransmissions:                       boolean;
-  readHoldModeActivity:                                   boolean;
-  writeHoldModeActivity:                                  boolean;
-  readTransmitPowerLevel:                                 boolean;
-  readSynchronousFlowControlEnable:                       boolean;
-  writeSynchronousFlowControlEnable:                      boolean;
-  setControllerToHostFlowControl:                         boolean;
-  hostBufferSize:                                         boolean;
-  hostNumberOfCompletedPackets:                           boolean;
-  readLinkSupervisionTimeout:                             boolean;
-  writeLinkSupervisionTimeout:                            boolean;
-  readNumberOfSupportedIac:                               boolean;
-  readCurrentIacLap:                                      boolean;
-  writeCurrentIacLap:                                     boolean;
-  readPageScanModePeriod:                                 boolean;
-  writePageScanModePeriod:                                boolean;
-  readPageScanMode:                                       boolean;
-  writePageScanMode:                                      boolean;
-  setAfhHostChannelClassification:                        boolean;
-  readInquiryScanType:                                    boolean;
-  writeInquiryScanType:                                   boolean;
-  readInquiryMode:                                        boolean;
-  writeInquiryMode:                                       boolean;
-  readPageScanType:                                       boolean;
-  writePageScanType:                                      boolean;
-  readAfhChannelAssessmentMode:                           boolean;
-  writeAfhChannelAssessmentMode:                          boolean;
-  readLocalVersionInformation:                            boolean;
-  readLocalSupportedFeatures:                             boolean;
-  readLocalExtendedFeatures:                              boolean;
-  readBufferSize:                                         boolean;
-  readCountryCode:                                        boolean;
-  readBdAddr:                                             boolean;
-  readFailedContactCounter:                               boolean;
-  resetFailedContactCounter:                              boolean;
-  readLinkQuality:                                        boolean;
-  readRssi:                                               boolean;
-  readAfhChannelMap:                                      boolean;
-  readClock:                                              boolean;
-  readLoopbackMode:                                       boolean;
-  writeLoopbackMode:                                      boolean;
-  enableDeviceUnderTestMode:                              boolean;
-  setupSynchronousConnectionRequest:                      boolean;
-  acceptSynchronousConnectionRequest:                     boolean;
-  rejectSynchronousConnectionRequest:                     boolean;
-  readExtendedInquiryResponse:                            boolean;
-  writeExtendedInquiryResponse:                           boolean;
-  refreshEncryptionKey:                                   boolean;
-  sniffSubrating:                                         boolean;
-  readSimplePairingMode:                                  boolean;
-  writeSimplePairingMode:                                 boolean;
-  readLocalOobData:                                       boolean;
-  readInquiryResponseTransmitPowerLevel:                  boolean;
-  writeInquiryTransmitPowerLevel:                         boolean;
-  readDefaultErroneousDataReporting:                      boolean;
-  writeDefaultErroneousDataReporting:                     boolean;
-  ioCapabilityRequestReply:                               boolean;
-  userConfirmationRequestReply:                           boolean;
-  userConfirmationRequestNegativeReply:                   boolean;
-  userPasskeyRequestReply:                                boolean;
-  userPasskeyRequestNegativeReply:                        boolean;
-  remoteOobDataRequestReply:                              boolean;
-  writeSimplePairingDebugMode:                            boolean;
-  enhancedFlush:                                          boolean;
-  remoteOobDataRequestNegativeReply:                      boolean;
-  sendKeypressNotification:                               boolean;
-  ioCapabilityRequestNegativeReply:                       boolean;
-  readEncryptionKeySize:                                  boolean;
-  createPhysicalLink:                                     boolean;
-  acceptPhysicalLink:                                     boolean;
-  disconnectPhysicalLink:                                 boolean;
-  createLogicalLink:                                      boolean;
-  acceptLogicalLink:                                      boolean;
-  disconnectLogicalLink:                                  boolean;
-  logicalLinkCancel:                                      boolean;
-  flowSpecModify:                                         boolean;
-  readLogicalLinkAcceptTimeout:                           boolean;
-  writeLogicalLinkAcceptTimeout:                          boolean;
-  setEventMaskPage2:                                      boolean;
-  readLocationData:                                       boolean;
-  writeLocationData:                                      boolean;
-  readLocalAmpInfo:                                       boolean;
-  readLocalAmpAassoc:                                     boolean;
-  writeRemoteAmpAssoc:                                    boolean;
-  readFlowControlMode:                                    boolean;
-  writeFlowControlMode:                                   boolean;
-  readDataBlockSize:                                      boolean;
-  enableAmpReceiverReports:                               boolean;
-  ampTestEnd:                                             boolean;
-  ampTest:                                                boolean;
-  readEnhancedTransmitPowerLevel:                         boolean;
-  readBestEffortFlushTimeout:                             boolean;
-  writeBestEffortFlushTimeout:                            boolean;
-  shortRangeMode:                                         boolean;
-  readLeHostSupport:                                      boolean;
-  writeLeHostSupport:                                     boolean;
-  leSetEventMask:                                         boolean;
-  leReadBufferSizeV1:                                     boolean;
-  leReadLocalSupportedFeatures:                           boolean;
-  leSetRandomAddress:                                     boolean;
-  leSetAdvertisingParameters:                             boolean;
-  leReadAdvertisingPhysicalChannelTxPower:                boolean;
-  leSetAdvertisingData:                                   boolean;
-  leSetScanResponseData:                                  boolean;
-  leSetAdvertisingEnable:                                 boolean;
-  leSetScanParameters:                                    boolean;
-  leSetScanEnable:                                        boolean;
-  leCreateConnection:                                     boolean;
-  leCreateConnectionCancel:                               boolean;
-  leReadWhiteListSize:                                    boolean;
-  leClearWhiteList:                                       boolean;
-  leAddDeviceToWhiteList:                                 boolean;
-  leRemoveDeviceFromWhiteList:                            boolean;
-  leConnectionUpdate:                                     boolean;
-  leSetHostChannelClassification:                         boolean;
-  leReadChannelMap:                                       boolean;
-  leReadRemoteFeatures:                                   boolean;
-  leEncrypt:                                              boolean;
-  leRand:                                                 boolean;
-  leEnableEncryption:                                     boolean;
-  leLongTermKeyRequestReply:                              boolean;
-  leLongTermKeyRequestNegativeReply:                      boolean;
-  leReadSupportedStates:                                  boolean;
-  leReceiverTestV1:                                       boolean;
-  leTransmitterTestV1:                                    boolean;
-  leTestEnd:                                              boolean;
-  enhancedSetupSynchronousConnection:                     boolean;
-  enhancedAcceptSynchronousConnection:                    boolean;
-  readLocalSupportedCodecs:                               boolean;
-  setMWSChannelParameters:                                boolean;
-  setExternalFrameConfiguration:                          boolean;
-  setMwsSignaling:                                        boolean;
-  setMwsTransportLayer:                                   boolean;
-  setMwsScanFrequencyTable:                               boolean;
-  getMwsTransportLayerConfiguration:                      boolean;
-  setMwsPatternConfiguration:                             boolean;
-  setTriggeredClockCapture:                               boolean;
-  truncatedPage:                                          boolean;
-  truncatedPageCancel:                                    boolean;
-  setConnectionlessSlaveBroadcast:                        boolean;
-  setConnectionlessSlaveBroadcastReceive:                 boolean;
-  startSynchronizationTrain:                              boolean;
-  receiveSynchronizationTrain:                            boolean;
-  setReservedLtAddr:                                      boolean;
-  deleteReservedLtAddr:                                   boolean;
-  setConnectionlessSlaveBroadcastData:                    boolean;
-  readSynchronizationTrainParameters:                     boolean;
-  writeSynchronizationTrainParameters:                    boolean;
-  remoteOobExtendedDataRequestReply:                      boolean;
-  readSecureConnectionsHostSupport:                       boolean;
-  writeSecureConnectionsHostSupport:                      boolean;
-  readAuthenticatedPayloadTimeout:                        boolean;
-  writeAuthenticatedPayloadTimeout:                       boolean;
-  readLocalOobExtendedData:                               boolean;
-  writeSecureConnectionsTestMode:                         boolean;
-  readExtendedPageTimeout:                                boolean;
-  writeExtendedPageTimeout:                               boolean;
-  readExtendedInquiryLength:                              boolean;
-  writeExtendedInquiryLength:                             boolean;
-  leRemoteConnectionParameterRequestReply:                boolean;
-  leRemoteConnectionParameterRequestNegativeReply:        boolean;
-  leSetDataLength:                                        boolean;
-  leReadSuggestedDefaultDataLength:                       boolean;
-  leWriteSuggestedDefaultDataLength:                      boolean;
-  leReadLocalP256PublicKey:                               boolean;
-  leGenerateDhKeyV1:                                      boolean;
-  leAddDeviceToResolvingList:                             boolean;
-  leRemoveDeviceFromResolvingList:                        boolean;
-  leClearResolvingList:                                   boolean;
-  leReadResolvingListSize:                                boolean;
-  leReadPeerResolvableAddress:                            boolean;
-  leReadLocalResolvableAddress:                           boolean;
-  leSetAddressResolutionEnable:                           boolean;
-  leSetResolvablePrivateAddressTimeout:                   boolean;
-  leReadMaximumDataLength:                                boolean;
-  leReadPhy:                                              boolean;
-  leSetDefaultPhy:                                        boolean;
-  leSetPhy:                                               boolean;
-  leReceiverTestV2:                                       boolean;
-  leTransmitterTestV2:                                    boolean;
-  leSetAdvertisingSetRandomAddress:                       boolean;
-  leSetExtendedAdvertisingParametersV1:                   boolean;
-  leSetExtendedAdvertisingData:                           boolean;
-  leSetExtendedScanResponseData:                          boolean;
-  leSetExtendedAdvertisingEnable:                         boolean;
-  leReadMaximumAdvertisingDataLength:                     boolean;
-  leReadNumberOfSupportedAdvertisingSets:                 boolean;
-  leRemoveAdvertisingSet:                                 boolean;
-  leClearAdvertisingSets:                                 boolean;
-  leSetPeriodicAdvertisingParameters:                     boolean;
-  leSetPeriodicAdvertisingData:                           boolean;
-  leSetPeriodicAdvertisingEnable:                         boolean;
-  leSetExtendedScanParameters:                            boolean;
-  leSetExtendedScanEnable:                                boolean;
-  leExtendedCreateConnectionV1:                           boolean;
-  lePeriodicAdvertisingCreateSync:                        boolean;
-  lePeriodicAdvertisingCreateSyncCancel:                  boolean;
-  lePeriodicAdvertisingTerminateSync:                     boolean;
-  leAddDeviceToPeriodicAdvertiserList:                    boolean;
-  leRemoveDeviceFromPeriodicAdvertiserList:               boolean;
-  leClearPeriodicAdvertiserList:                          boolean;
-  leReadPeriodicAdvertiserListSize:                       boolean;
-  leReadTransmitPower:                                    boolean;
-  leReadRfPathCompensation:                               boolean;
-  leWriteRfPathCompensation:                              boolean;
-  leSetPrivacyMode:                                       boolean;
-  leReceiverTestV3:                                       boolean;
-  leTransmitterTestV3:                                    boolean;
-  leSetConnectionlessCteTransmitParameters:               boolean;
-  leSetConnectionlessCteTransmitEnable:                   boolean;
-  leSetConnectionlessIqSamplingEnable:                    boolean;
-  leSetConnectionCteReceiveParameters:                    boolean;
-  leSetConnectionCteTransmitParameters:                   boolean;
-  leConnectionCteRequestEnable:                           boolean;
-  leConnectionCteResponseEnable:                          boolean;
-  leReadAntennaInformation:                               boolean;
-  leSetPeriodicAdvertisingReceiveEnable:                  boolean;
-  lePeriodicAdvertisingSyncTransfer:                      boolean;
-  lePeriodicAdvertisingSetInfoTransfer:                   boolean;
-  leSetPeriodicAdvertisingSyncTransferParameters:         boolean;
-  leSetDefaultPeriodicAdvertisingSyncTransferParameters:  boolean;
-  leGenerateDhKeyV2:                                      boolean;
-  readLocalSimplePairingOptions:                          boolean;
-  leModifySleepClockAccuracy:                             boolean;
-  leReadBufferSizeV2:                                     boolean;
-  leReadIsoTxSync:                                        boolean;
-  leSetCigParameters:                                     boolean;
-  leSetCigParametersTest:                                 boolean;
-  leCreateCis:                                            boolean;
-  leRemoveCig:                                            boolean;
-  leAcceptCisRequest:                                     boolean;
-  leRejectCisRequest:                                     boolean;
-  leCreateBig:                                            boolean;
-  leCreateBigTest:                                        boolean;
-  leTerminateBig:                                         boolean;
-  leBigCreateSync:                                        boolean;
-  leBigTerminateSync:                                     boolean;
-  leRequestPeerSca:                                       boolean;
-  leSetupIsoDataPath:                                     boolean;
-  leRemoveIsoDataPath:                                    boolean;
-  leIsoTransmitTest:                                      boolean;
-  leIsoReceiveTest:                                       boolean;
-  leIsoReadTestCounters:                                  boolean;
-  leIsoTestEnd:                                           boolean;
-  leSetHostFeature:                                       boolean;
-  leReadIsoLinkQuality:                                   boolean;
-  leEnhancedReadTransmitPowerLevel:                       boolean;
-  leReadRemoteTransmitPowerLevel:                         boolean;
-  leSetPathLossReportingParameters:                       boolean;
-  leSetPathLossReportingEnable:                           boolean;
-  leSetTransmitPowerReportingEnable:                      boolean;
-  leTransmitterTestV4:                                    boolean;
-  setEcosystemBaseInterval:                               boolean;
-  readLocalSupportedCodecsV2:                             boolean;
-  readLocalSupportedCodecCapabilities:                    boolean;
-  readLocalSupportedControllerDelay:                      boolean;
-  configureDataPath:                                      boolean;
-  leSetDataRelatedAddressChanges:                         boolean;
-  setMinEncryptionKeySize:                                boolean;
-  leSetDefaultSubrate:                                    boolean;
-  leSubrateRequest:                                       boolean;
-  leSetExtendedAdvertisingParametersV2:                   boolean;
-  leSetDecisionData:                                      boolean;
-  leSetDecisionInstructions:                              boolean;
-  leSetPeriodicAdvertisingSubeventData:                   boolean;
-  leSetPeriodicAdvertisingResponseData:                   boolean;
-  leSetPeriodicSyncSubevent:                              boolean;
-  leExtendedCreateConnectionV2:                           boolean;
-  leSetPeriodicAdvertisingParametersV2:                   boolean;
-  leReadAllLocalSupportedFeatures:                        boolean;
-  leReadAllRemoteFeatures:                                boolean;
-  leSetHostFeatureV2:                                     boolean;
-  leAddDeviceToMonitoredAdvertisersList:                  boolean;
-  leRemoveDeviceFromMonitoredAdvertisersList:             boolean;
-  leClearMonitoredAdvertisersList:                        boolean;
-  leReadMonitoredAdvertisersListSize:                     boolean;
-  leFrameSpaceUpdate:                                     boolean;
+  inquiry: boolean;
+  inquiryCancel: boolean;
+  periodicInquiryMode: boolean;
+  exitPeriodicInquiryMode: boolean;
+  createConnection: boolean;
+  disconnect: boolean;
+  addScoConnection: boolean;
+  createConnectionCancel: boolean;
+  acceptConnectionRequest: boolean;
+  rejectConnectionRequest: boolean;
+  linkKeyRequestReply: boolean;
+  linkKeyRequestNegativeReply: boolean;
+  pinCodeRequestReply: boolean;
+  pinCodeRequestNegativeReply: boolean;
+  changeConnectionPacketType: boolean;
+  authenticationRequested: boolean;
+  setConnectionEncryption: boolean;
+  changeConnectionLinkKey: boolean;
+  masterLinkKey: boolean;
+  remoteNameRequest: boolean;
+  remoteNameRequestCancel: boolean;
+  readRemoteSupportedFeatures: boolean;
+  readRemoteExtendedFeatures: boolean;
+  readRemoteVersionInformation: boolean;
+  readClockOffset: boolean;
+  readLmpHandle: boolean;
+  holdMode: boolean;
+  sniffMode: boolean;
+  exitSniffMode: boolean;
+  qosSetup: boolean;
+  roleDiscovery: boolean;
+  switchRole: boolean;
+  readLinkPolicySettings: boolean;
+  writeLinkPolicySettings: boolean;
+  readDefaultLinkPolicySettings: boolean;
+  writeDefaultLinkPolicySettings: boolean;
+  flowSpecification: boolean;
+  setEventMask: boolean;
+  reset: boolean;
+  setEventFilter: boolean;
+  flush: boolean;
+  readPinType: boolean;
+  writePinType: boolean;
+  readStoredLinkKey: boolean;
+  writeStoredLinkKey: boolean;
+  deleteStoredLinkKey: boolean;
+  writeLocalName: boolean;
+  readLocalName: boolean;
+  readConnectionAcceptTimeout: boolean;
+  writeConnectionAcceptTimeout: boolean;
+  readPageTimeout: boolean;
+  writePageTimeout: boolean;
+  readScanEnable: boolean;
+  writeScanEnable: boolean;
+  readPageScanActivity: boolean;
+  writePageScanActivity: boolean;
+  readInquiryScanActivity: boolean;
+  writeInquiryScanActivity: boolean;
+  readAuthenticationEnable: boolean;
+  writeAuthenticationEnable: boolean;
+  readEncryptionMode: boolean;
+  writeEncryptionMode: boolean;
+  readClassOfDevice: boolean;
+  writeClassOfDevice: boolean;
+  readVoiceSetting: boolean;
+  writeVoiceSetting: boolean;
+  readAutomaticFlushTimeout: boolean;
+  writeAutomaticFlushTimeout: boolean;
+  readNumBroadcastRetransmissions: boolean;
+  writeNumBroadcastRetransmissions: boolean;
+  readHoldModeActivity: boolean;
+  writeHoldModeActivity: boolean;
+  readTransmitPowerLevel: boolean;
+  readSynchronousFlowControlEnable: boolean;
+  writeSynchronousFlowControlEnable: boolean;
+  setControllerToHostFlowControl: boolean;
+  hostBufferSize: boolean;
+  hostNumberOfCompletedPackets: boolean;
+  readLinkSupervisionTimeout: boolean;
+  writeLinkSupervisionTimeout: boolean;
+  readNumberOfSupportedIac: boolean;
+  readCurrentIacLap: boolean;
+  writeCurrentIacLap: boolean;
+  readPageScanModePeriod: boolean;
+  writePageScanModePeriod: boolean;
+  readPageScanMode: boolean;
+  writePageScanMode: boolean;
+  setAfhHostChannelClassification: boolean;
+  readInquiryScanType: boolean;
+  writeInquiryScanType: boolean;
+  readInquiryMode: boolean;
+  writeInquiryMode: boolean;
+  readPageScanType: boolean;
+  writePageScanType: boolean;
+  readAfhChannelAssessmentMode: boolean;
+  writeAfhChannelAssessmentMode: boolean;
+  readLocalVersionInformation: boolean;
+  readLocalSupportedFeatures: boolean;
+  readLocalExtendedFeatures: boolean;
+  readBufferSize: boolean;
+  readCountryCode: boolean;
+  readBdAddr: boolean;
+  readFailedContactCounter: boolean;
+  resetFailedContactCounter: boolean;
+  readLinkQuality: boolean;
+  readRssi: boolean;
+  readAfhChannelMap: boolean;
+  readClock: boolean;
+  readLoopbackMode: boolean;
+  writeLoopbackMode: boolean;
+  enableDeviceUnderTestMode: boolean;
+  setupSynchronousConnectionRequest: boolean;
+  acceptSynchronousConnectionRequest: boolean;
+  rejectSynchronousConnectionRequest: boolean;
+  readExtendedInquiryResponse: boolean;
+  writeExtendedInquiryResponse: boolean;
+  refreshEncryptionKey: boolean;
+  sniffSubrating: boolean;
+  readSimplePairingMode: boolean;
+  writeSimplePairingMode: boolean;
+  readLocalOobData: boolean;
+  readInquiryResponseTransmitPowerLevel: boolean;
+  writeInquiryTransmitPowerLevel: boolean;
+  readDefaultErroneousDataReporting: boolean;
+  writeDefaultErroneousDataReporting: boolean;
+  ioCapabilityRequestReply: boolean;
+  userConfirmationRequestReply: boolean;
+  userConfirmationRequestNegativeReply: boolean;
+  userPasskeyRequestReply: boolean;
+  userPasskeyRequestNegativeReply: boolean;
+  remoteOobDataRequestReply: boolean;
+  writeSimplePairingDebugMode: boolean;
+  enhancedFlush: boolean;
+  remoteOobDataRequestNegativeReply: boolean;
+  sendKeypressNotification: boolean;
+  ioCapabilityRequestNegativeReply: boolean;
+  readEncryptionKeySize: boolean;
+  createPhysicalLink: boolean;
+  acceptPhysicalLink: boolean;
+  disconnectPhysicalLink: boolean;
+  createLogicalLink: boolean;
+  acceptLogicalLink: boolean;
+  disconnectLogicalLink: boolean;
+  logicalLinkCancel: boolean;
+  flowSpecModify: boolean;
+  readLogicalLinkAcceptTimeout: boolean;
+  writeLogicalLinkAcceptTimeout: boolean;
+  setEventMaskPage2: boolean;
+  readLocationData: boolean;
+  writeLocationData: boolean;
+  readLocalAmpInfo: boolean;
+  readLocalAmpAassoc: boolean;
+  writeRemoteAmpAssoc: boolean;
+  readFlowControlMode: boolean;
+  writeFlowControlMode: boolean;
+  readDataBlockSize: boolean;
+  enableAmpReceiverReports: boolean;
+  ampTestEnd: boolean;
+  ampTest: boolean;
+  readEnhancedTransmitPowerLevel: boolean;
+  readBestEffortFlushTimeout: boolean;
+  writeBestEffortFlushTimeout: boolean;
+  shortRangeMode: boolean;
+  readLeHostSupport: boolean;
+  writeLeHostSupport: boolean;
+  leSetEventMask: boolean;
+  leReadBufferSizeV1: boolean;
+  leReadLocalSupportedFeatures: boolean;
+  leSetRandomAddress: boolean;
+  leSetAdvertisingParameters: boolean;
+  leReadAdvertisingPhysicalChannelTxPower: boolean;
+  leSetAdvertisingData: boolean;
+  leSetScanResponseData: boolean;
+  leSetAdvertisingEnable: boolean;
+  leSetScanParameters: boolean;
+  leSetScanEnable: boolean;
+  leCreateConnection: boolean;
+  leCreateConnectionCancel: boolean;
+  leReadWhiteListSize: boolean;
+  leClearWhiteList: boolean;
+  leAddDeviceToWhiteList: boolean;
+  leRemoveDeviceFromWhiteList: boolean;
+  leConnectionUpdate: boolean;
+  leSetHostChannelClassification: boolean;
+  leReadChannelMap: boolean;
+  leReadRemoteFeatures: boolean;
+  leEncrypt: boolean;
+  leRand: boolean;
+  leEnableEncryption: boolean;
+  leLongTermKeyRequestReply: boolean;
+  leLongTermKeyRequestNegativeReply: boolean;
+  leReadSupportedStates: boolean;
+  leReceiverTestV1: boolean;
+  leTransmitterTestV1: boolean;
+  leTestEnd: boolean;
+  enhancedSetupSynchronousConnection: boolean;
+  enhancedAcceptSynchronousConnection: boolean;
+  readLocalSupportedCodecs: boolean;
+  setMWSChannelParameters: boolean;
+  setExternalFrameConfiguration: boolean;
+  setMwsSignaling: boolean;
+  setMwsTransportLayer: boolean;
+  setMwsScanFrequencyTable: boolean;
+  getMwsTransportLayerConfiguration: boolean;
+  setMwsPatternConfiguration: boolean;
+  setTriggeredClockCapture: boolean;
+  truncatedPage: boolean;
+  truncatedPageCancel: boolean;
+  setConnectionlessSlaveBroadcast: boolean;
+  setConnectionlessSlaveBroadcastReceive: boolean;
+  startSynchronizationTrain: boolean;
+  receiveSynchronizationTrain: boolean;
+  setReservedLtAddr: boolean;
+  deleteReservedLtAddr: boolean;
+  setConnectionlessSlaveBroadcastData: boolean;
+  readSynchronizationTrainParameters: boolean;
+  writeSynchronizationTrainParameters: boolean;
+  remoteOobExtendedDataRequestReply: boolean;
+  readSecureConnectionsHostSupport: boolean;
+  writeSecureConnectionsHostSupport: boolean;
+  readAuthenticatedPayloadTimeout: boolean;
+  writeAuthenticatedPayloadTimeout: boolean;
+  readLocalOobExtendedData: boolean;
+  writeSecureConnectionsTestMode: boolean;
+  readExtendedPageTimeout: boolean;
+  writeExtendedPageTimeout: boolean;
+  readExtendedInquiryLength: boolean;
+  writeExtendedInquiryLength: boolean;
+  leRemoteConnectionParameterRequestReply: boolean;
+  leRemoteConnectionParameterRequestNegativeReply: boolean;
+  leSetDataLength: boolean;
+  leReadSuggestedDefaultDataLength: boolean;
+  leWriteSuggestedDefaultDataLength: boolean;
+  leReadLocalP256PublicKey: boolean;
+  leGenerateDhKeyV1: boolean;
+  leAddDeviceToResolvingList: boolean;
+  leRemoveDeviceFromResolvingList: boolean;
+  leClearResolvingList: boolean;
+  leReadResolvingListSize: boolean;
+  leReadPeerResolvableAddress: boolean;
+  leReadLocalResolvableAddress: boolean;
+  leSetAddressResolutionEnable: boolean;
+  leSetResolvablePrivateAddressTimeout: boolean;
+  leReadMaximumDataLength: boolean;
+  leReadPhy: boolean;
+  leSetDefaultPhy: boolean;
+  leSetPhy: boolean;
+  leReceiverTestV2: boolean;
+  leTransmitterTestV2: boolean;
+  leSetAdvertisingSetRandomAddress: boolean;
+  leSetExtendedAdvertisingParametersV1: boolean;
+  leSetExtendedAdvertisingData: boolean;
+  leSetExtendedScanResponseData: boolean;
+  leSetExtendedAdvertisingEnable: boolean;
+  leReadMaximumAdvertisingDataLength: boolean;
+  leReadNumberOfSupportedAdvertisingSets: boolean;
+  leRemoveAdvertisingSet: boolean;
+  leClearAdvertisingSets: boolean;
+  leSetPeriodicAdvertisingParameters: boolean;
+  leSetPeriodicAdvertisingData: boolean;
+  leSetPeriodicAdvertisingEnable: boolean;
+  leSetExtendedScanParameters: boolean;
+  leSetExtendedScanEnable: boolean;
+  leExtendedCreateConnectionV1: boolean;
+  lePeriodicAdvertisingCreateSync: boolean;
+  lePeriodicAdvertisingCreateSyncCancel: boolean;
+  lePeriodicAdvertisingTerminateSync: boolean;
+  leAddDeviceToPeriodicAdvertiserList: boolean;
+  leRemoveDeviceFromPeriodicAdvertiserList: boolean;
+  leClearPeriodicAdvertiserList: boolean;
+  leReadPeriodicAdvertiserListSize: boolean;
+  leReadTransmitPower: boolean;
+  leReadRfPathCompensation: boolean;
+  leWriteRfPathCompensation: boolean;
+  leSetPrivacyMode: boolean;
+  leReceiverTestV3: boolean;
+  leTransmitterTestV3: boolean;
+  leSetConnectionlessCteTransmitParameters: boolean;
+  leSetConnectionlessCteTransmitEnable: boolean;
+  leSetConnectionlessIqSamplingEnable: boolean;
+  leSetConnectionCteReceiveParameters: boolean;
+  leSetConnectionCteTransmitParameters: boolean;
+  leConnectionCteRequestEnable: boolean;
+  leConnectionCteResponseEnable: boolean;
+  leReadAntennaInformation: boolean;
+  leSetPeriodicAdvertisingReceiveEnable: boolean;
+  lePeriodicAdvertisingSyncTransfer: boolean;
+  lePeriodicAdvertisingSetInfoTransfer: boolean;
+  leSetPeriodicAdvertisingSyncTransferParameters: boolean;
+  leSetDefaultPeriodicAdvertisingSyncTransferParameters: boolean;
+  leGenerateDhKeyV2: boolean;
+  readLocalSimplePairingOptions: boolean;
+  leModifySleepClockAccuracy: boolean;
+  leReadBufferSizeV2: boolean;
+  leReadIsoTxSync: boolean;
+  leSetCigParameters: boolean;
+  leSetCigParametersTest: boolean;
+  leCreateCis: boolean;
+  leRemoveCig: boolean;
+  leAcceptCisRequest: boolean;
+  leRejectCisRequest: boolean;
+  leCreateBig: boolean;
+  leCreateBigTest: boolean;
+  leTerminateBig: boolean;
+  leBigCreateSync: boolean;
+  leBigTerminateSync: boolean;
+  leRequestPeerSca: boolean;
+  leSetupIsoDataPath: boolean;
+  leRemoveIsoDataPath: boolean;
+  leIsoTransmitTest: boolean;
+  leIsoReceiveTest: boolean;
+  leIsoReadTestCounters: boolean;
+  leIsoTestEnd: boolean;
+  leSetHostFeature: boolean;
+  leReadIsoLinkQuality: boolean;
+  leEnhancedReadTransmitPowerLevel: boolean;
+  leReadRemoteTransmitPowerLevel: boolean;
+  leSetPathLossReportingParameters: boolean;
+  leSetPathLossReportingEnable: boolean;
+  leSetTransmitPowerReportingEnable: boolean;
+  leTransmitterTestV4: boolean;
+  setEcosystemBaseInterval: boolean;
+  readLocalSupportedCodecsV2: boolean;
+  readLocalSupportedCodecCapabilities: boolean;
+  readLocalSupportedControllerDelay: boolean;
+  configureDataPath: boolean;
+  leSetDataRelatedAddressChanges: boolean;
+  setMinEncryptionKeySize: boolean;
+  leSetDefaultSubrate: boolean;
+  leSubrateRequest: boolean;
+  leSetExtendedAdvertisingParametersV2: boolean;
+  leSetDecisionData: boolean;
+  leSetDecisionInstructions: boolean;
+  leSetPeriodicAdvertisingSubeventData: boolean;
+  leSetPeriodicAdvertisingResponseData: boolean;
+  leSetPeriodicSyncSubevent: boolean;
+  leExtendedCreateConnectionV2: boolean;
+  leSetPeriodicAdvertisingParametersV2: boolean;
+  leReadAllLocalSupportedFeatures: boolean;
+  leReadAllRemoteFeatures: boolean;
+  leSetHostFeatureV2: boolean;
+  leAddDeviceToMonitoredAdvertisersList: boolean;
+  leRemoveDeviceFromMonitoredAdvertisersList: boolean;
+  leClearMonitoredAdvertisersList: boolean;
+  leReadMonitoredAdvertisersListSize: boolean;
+  leFrameSpaceUpdate: boolean;
 }
 
 export class LocalSupportedCommands {
@@ -567,76 +601,76 @@ export class LocalSupportedCommands {
   static from(params: Buffer): LocalSupportedCommands {
     // prettier-ignore
     return new LocalSupportedCommands({
-      inquiry:                                                bitGet(params[0], 0),
-      inquiryCancel:                                          bitGet(params[0], 1),
-      periodicInquiryMode:                                    bitGet(params[0], 2),
-      exitPeriodicInquiryMode:                                bitGet(params[0], 3),
-      createConnection:                                       bitGet(params[0], 4),
-      disconnect:                                             bitGet(params[0], 5),
-      addScoConnection:                                       bitGet(params[0], 6),
-      createConnectionCancel:                                 bitGet(params[0], 7),
-      acceptConnectionRequest:                                bitGet(params[1], 0),
-      rejectConnectionRequest:                                bitGet(params[1], 1),
-      linkKeyRequestReply:                                    bitGet(params[1], 2),
-      linkKeyRequestNegativeReply:                            bitGet(params[1], 3),
-      pinCodeRequestReply:                                    bitGet(params[1], 4),
-      pinCodeRequestNegativeReply:                            bitGet(params[1], 5),
-      changeConnectionPacketType:                             bitGet(params[1], 6),
-      authenticationRequested:                                bitGet(params[1], 7),
-      setConnectionEncryption:                                bitGet(params[2], 0),
-      changeConnectionLinkKey:                                bitGet(params[2], 1),
-      masterLinkKey:                                          bitGet(params[2], 2),
-      remoteNameRequest:                                      bitGet(params[2], 3),
-      remoteNameRequestCancel:                                bitGet(params[2], 4),
-      readRemoteSupportedFeatures:                            bitGet(params[2], 5),
-      readRemoteExtendedFeatures:                             bitGet(params[2], 6),
-      readRemoteVersionInformation:                           bitGet(params[2], 7),
-      readClockOffset:                                        bitGet(params[3], 0),
-      readLmpHandle:                                          bitGet(params[3], 1),
-      holdMode:                                               bitGet(params[4], 1),
-      sniffMode:                                              bitGet(params[4], 2),
-      exitSniffMode:                                          bitGet(params[4], 3),
-      qosSetup:                                               bitGet(params[4], 6),
-      roleDiscovery:                                          bitGet(params[4], 7),
-      switchRole:                                             bitGet(params[5], 0),
-      readLinkPolicySettings:                                 bitGet(params[5], 1),
-      writeLinkPolicySettings:                                bitGet(params[5], 2),
-      readDefaultLinkPolicySettings:                          bitGet(params[5], 3),
-      writeDefaultLinkPolicySettings:                         bitGet(params[5], 4),
-      flowSpecification:                                      bitGet(params[5], 5),
-      setEventMask:                                           bitGet(params[5], 6),
-      reset:                                                  bitGet(params[5], 7),
-      setEventFilter:                                         bitGet(params[6], 0),
-      flush:                                                  bitGet(params[6], 1),
-      readPinType:                                            bitGet(params[6], 2),
-      writePinType:                                           bitGet(params[6], 3),
-      readStoredLinkKey:                                      bitGet(params[6], 5),
-      writeStoredLinkKey:                                     bitGet(params[6], 6),
-      deleteStoredLinkKey:                                    bitGet(params[6], 7),
-      writeLocalName:                                         bitGet(params[7], 0),
-      readLocalName:                                          bitGet(params[7], 1),
-      readConnectionAcceptTimeout:                            bitGet(params[7], 2),
-      writeConnectionAcceptTimeout:                           bitGet(params[7], 3),
-      readPageTimeout:                                        bitGet(params[7], 4),
-      writePageTimeout:                                       bitGet(params[7], 5),
-      readScanEnable:                                         bitGet(params[7], 6),
-      writeScanEnable:                                        bitGet(params[7], 7),
-      readPageScanActivity:                                   bitGet(params[8], 0),
-      writePageScanActivity:                                  bitGet(params[8], 1),
-      readInquiryScanActivity:                                bitGet(params[8], 2),
-      writeInquiryScanActivity:                               bitGet(params[8], 3),
-      readAuthenticationEnable:                               bitGet(params[8], 4),
-      writeAuthenticationEnable:                              bitGet(params[8], 5),
-      readEncryptionMode:                                     bitGet(params[8], 6),
-      writeEncryptionMode:                                    bitGet(params[8], 7),
-      readClassOfDevice:                                      bitGet(params[9], 0),
-      writeClassOfDevice:                                     bitGet(params[9], 1),
-      readVoiceSetting:                                       bitGet(params[9], 2),
-      writeVoiceSetting:                                      bitGet(params[9], 3),
-      readAutomaticFlushTimeout:                              bitGet(params[9], 4),
-      writeAutomaticFlushTimeout:                             bitGet(params[9], 5),
-      readNumBroadcastRetransmissions:                        bitGet(params[9], 6),
-      writeNumBroadcastRetransmissions:                       bitGet(params[9], 7),
+      inquiry:                                                bitGet(params[ 0], 0),
+      inquiryCancel:                                          bitGet(params[ 0], 1),
+      periodicInquiryMode:                                    bitGet(params[ 0], 2),
+      exitPeriodicInquiryMode:                                bitGet(params[ 0], 3),
+      createConnection:                                       bitGet(params[ 0], 4),
+      disconnect:                                             bitGet(params[ 0], 5),
+      addScoConnection:                                       bitGet(params[ 0], 6),
+      createConnectionCancel:                                 bitGet(params[ 0], 7),
+      acceptConnectionRequest:                                bitGet(params[ 1], 0),
+      rejectConnectionRequest:                                bitGet(params[ 1], 1),
+      linkKeyRequestReply:                                    bitGet(params[ 1], 2),
+      linkKeyRequestNegativeReply:                            bitGet(params[ 1], 3),
+      pinCodeRequestReply:                                    bitGet(params[ 1], 4),
+      pinCodeRequestNegativeReply:                            bitGet(params[ 1], 5),
+      changeConnectionPacketType:                             bitGet(params[ 1], 6),
+      authenticationRequested:                                bitGet(params[ 1], 7),
+      setConnectionEncryption:                                bitGet(params[ 2], 0),
+      changeConnectionLinkKey:                                bitGet(params[ 2], 1),
+      masterLinkKey:                                          bitGet(params[ 2], 2),
+      remoteNameRequest:                                      bitGet(params[ 2], 3),
+      remoteNameRequestCancel:                                bitGet(params[ 2], 4),
+      readRemoteSupportedFeatures:                            bitGet(params[ 2], 5),
+      readRemoteExtendedFeatures:                             bitGet(params[ 2], 6),
+      readRemoteVersionInformation:                           bitGet(params[ 2], 7),
+      readClockOffset:                                        bitGet(params[ 3], 0),
+      readLmpHandle:                                          bitGet(params[ 3], 1),
+      holdMode:                                               bitGet(params[ 4], 1),
+      sniffMode:                                              bitGet(params[ 4], 2),
+      exitSniffMode:                                          bitGet(params[ 4], 3),
+      qosSetup:                                               bitGet(params[ 4], 6),
+      roleDiscovery:                                          bitGet(params[ 4], 7),
+      switchRole:                                             bitGet(params[ 5], 0),
+      readLinkPolicySettings:                                 bitGet(params[ 5], 1),
+      writeLinkPolicySettings:                                bitGet(params[ 5], 2),
+      readDefaultLinkPolicySettings:                          bitGet(params[ 5], 3),
+      writeDefaultLinkPolicySettings:                         bitGet(params[ 5], 4),
+      flowSpecification:                                      bitGet(params[ 5], 5),
+      setEventMask:                                           bitGet(params[ 5], 6),
+      reset:                                                  bitGet(params[ 5], 7),
+      setEventFilter:                                         bitGet(params[ 6], 0),
+      flush:                                                  bitGet(params[ 6], 1),
+      readPinType:                                            bitGet(params[ 6], 2),
+      writePinType:                                           bitGet(params[ 6], 3),
+      readStoredLinkKey:                                      bitGet(params[ 6], 5),
+      writeStoredLinkKey:                                     bitGet(params[ 6], 6),
+      deleteStoredLinkKey:                                    bitGet(params[ 6], 7),
+      writeLocalName:                                         bitGet(params[ 7], 0),
+      readLocalName:                                          bitGet(params[ 7], 1),
+      readConnectionAcceptTimeout:                            bitGet(params[ 7], 2),
+      writeConnectionAcceptTimeout:                           bitGet(params[ 7], 3),
+      readPageTimeout:                                        bitGet(params[ 7], 4),
+      writePageTimeout:                                       bitGet(params[ 7], 5),
+      readScanEnable:                                         bitGet(params[ 7], 6),
+      writeScanEnable:                                        bitGet(params[ 7], 7),
+      readPageScanActivity:                                   bitGet(params[ 8], 0),
+      writePageScanActivity:                                  bitGet(params[ 8], 1),
+      readInquiryScanActivity:                                bitGet(params[ 8], 2),
+      writeInquiryScanActivity:                               bitGet(params[ 8], 3),
+      readAuthenticationEnable:                               bitGet(params[ 8], 4),
+      writeAuthenticationEnable:                              bitGet(params[ 8], 5),
+      readEncryptionMode:                                     bitGet(params[ 8], 6),
+      writeEncryptionMode:                                    bitGet(params[ 8], 7),
+      readClassOfDevice:                                      bitGet(params[ 9], 0),
+      writeClassOfDevice:                                     bitGet(params[ 9], 1),
+      readVoiceSetting:                                       bitGet(params[ 9], 2),
+      writeVoiceSetting:                                      bitGet(params[ 9], 3),
+      readAutomaticFlushTimeout:                              bitGet(params[ 9], 4),
+      writeAutomaticFlushTimeout:                             bitGet(params[ 9], 5),
+      readNumBroadcastRetransmissions:                        bitGet(params[ 9], 6),
+      writeNumBroadcastRetransmissions:                       bitGet(params[ 9], 7),
       readHoldModeActivity:                                   bitGet(params[10], 0),
       writeHoldModeActivity:                                  bitGet(params[10], 1),
       readTransmitPowerLevel:                                 bitGet(params[10], 2),

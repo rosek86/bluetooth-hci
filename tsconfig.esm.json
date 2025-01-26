@@ -4,6 +4,6 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "verbatimModuleSyntax": true,
-    "noEmit": true,
+    "noEmit": true
   }
 }
