@@ -9,7 +9,7 @@ const msToValue = (ms: number, factor: number): number => {
   return Math.round(ms / factor);
 };
 
-export interface LeSupportedFeaturesInfo {
+export interface LeSupportedFeaturesInfoPage0 {
   leEncryption: boolean;
   connectionParametersRequestProcedure: boolean;
   extendedRejectIndication: boolean;
@@ -54,16 +54,26 @@ export interface LeSupportedFeaturesInfo {
   advertisingCodingSelectionHostSupport: boolean;
   periodicAdvertisingWithResponsesAdvertiser: boolean;
   periodicAdvertisingWithResponsesScanner: boolean;
+  unsegmentedFramedMode: boolean;
+  channelSounding: boolean;
+  channelSoundingHostSupport: boolean;
+  channelSoundingToneQualityIndication: boolean;
+  llExtendedFeatureSet: boolean;
+}
+
+export interface LeSupportedFeaturesInfoPage1 {
+  monitoringAdvertisers: boolean;
+  frameSpaceUpdate: boolean;
 }
 
 export class LeSupportedFeatures {
-  private features: LeSupportedFeaturesInfo;
+  private features: LeSupportedFeaturesInfoPage0;
 
-  private constructor(features: LeSupportedFeaturesInfo) {
+  private constructor(features: LeSupportedFeaturesInfoPage0) {
     this.features = features;
   }
 
-  public get Features(): LeSupportedFeaturesInfo {
+  public get Features(): LeSupportedFeaturesInfoPage0 {
     return Object.assign({}, this.features);
   }
 
@@ -114,6 +124,12 @@ export class LeSupportedFeatures {
       advertisingCodingSelectionHostSupport:      bitGet(mask, 41n),
       periodicAdvertisingWithResponsesAdvertiser: bitGet(mask, 43n),
       periodicAdvertisingWithResponsesScanner:    bitGet(mask, 44n),
+      unsegmentedFramedMode:                      bitGet(mask, 45n),
+      channelSounding:                            bitGet(mask, 46n),
+      channelSoundingHostSupport:                 bitGet(mask, 47n),
+      channelSoundingToneQualityIndication:       bitGet(mask, 48n),
+      // 56 to 62 Reserved for specification development purposes
+      llExtendedFeatureSet:                       bitGet(mask, 63n),
     });
   }
 
@@ -170,6 +186,18 @@ export interface LeEvents {
   periodicAdvertisingSubeventDataRequest: boolean;
   periodicAdvertisingResponseReport: boolean;
   enhancedConnectionCompleteV2: boolean;
+  cisEstablishedV2: boolean;
+  readAllRemoteFeaturesComplete: boolean;
+  csReadRemoteSupportedCapabilitiesComplete: boolean;
+  csReadRemoteFaeTableComplete: boolean;
+  csSecurityEnableComplete: boolean;
+  csConfigComplete: boolean;
+  csProcedureEnableComplete: boolean;
+  csSubeventResult: boolean;
+  csSubeventResultContinue: boolean;
+  csTestEndComplete: boolean;
+  monitoredAdvertisersReport: boolean;
+  frameSpaceUpdateComplete: boolean;
 }
 
 export class LeSetEventsMask {
@@ -217,6 +245,18 @@ export class LeSetEventsMask {
     mask = bitSet(mask, 38n, events.periodicAdvertisingSubeventDataRequest);
     mask = bitSet(mask, 39n, events.periodicAdvertisingResponseReport);
     mask = bitSet(mask, 40n, events.enhancedConnectionCompleteV2);
+    mask = bitSet(mask, 41n, events.cisEstablishedV2);
+    mask = bitSet(mask, 42n, events.readAllRemoteFeaturesComplete);
+    mask = bitSet(mask, 43n, events.csReadRemoteSupportedCapabilitiesComplete);
+    mask = bitSet(mask, 44n, events.csReadRemoteFaeTableComplete);
+    mask = bitSet(mask, 45n, events.csSecurityEnableComplete);
+    mask = bitSet(mask, 46n, events.csConfigComplete);
+    mask = bitSet(mask, 47n, events.csProcedureEnableComplete);
+    mask = bitSet(mask, 48n, events.csSubeventResult);
+    mask = bitSet(mask, 49n, events.csSubeventResultContinue);
+    mask = bitSet(mask, 50n, events.csTestEndComplete);
+    mask = bitSet(mask, 51n, events.monitoredAdvertisersReport);
+    mask = bitSet(mask, 52n, events.frameSpaceUpdateComplete);
 
     const payload = Buffer.alloc(8);
     payload.writeBigUInt64LE(mask, 0);
