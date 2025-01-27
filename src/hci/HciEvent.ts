@@ -9,57 +9,57 @@ const debug = Debug("bt-hci-hci-event");
 
 // prettier-ignore
 export const HciEvent = Object.freeze({
-  InquiryComplete:                                      0x01, // Inquiry Complete
-  InquiryResult:                                        0x02, // Inquiry Result
-  ConnectionComplete:                                   0x03, // Connection Complete
-  ConnectionRequest:                                    0x04, // Connection Request
+  InquiryComplete:                                      0x01, //   Inquiry Complete
+  InquiryResult:                                        0x02, //   Inquiry Result
+  ConnectionComplete:                                   0x03, //   Connection Complete
+  ConnectionRequest:                                    0x04, //   Connection Request
   DisconnectionComplete:                                0x05, // * Disconnection Complete
-  AuthenticationComplete:                               0x06, // Authentication Complete
-  RemoteNameRequestComplete:                            0x07, // Remote Name Request Complete
+  AuthenticationComplete:                               0x06, //   Authentication Complete
+  RemoteNameRequestComplete:                            0x07, //   Remote Name Request Complete
   EncryptionChange:                                     0x08, // * Encryption Change
-  ChangeConnectionLinkKeyComplete:                      0x09, // Change Connection Link Key Complete
-  MasterLinkKeyComplete:                                0x0A, // Master Link Key Complete
+  ChangeConnectionLinkKeyComplete:                      0x09, //   Change Connection Link Key Complete
+  MasterLinkKeyComplete:                                0x0A, //   Master Link Key Complete
   ReadRemoteSupportedFeaturesComplete:                  0x0B, // * Read Remote Supported Features Complete
   ReadRemoteVersionInformationComplete:                 0x0C, // * Read Remote Version Information Complete
-  QosSetupComplete:                                     0x0D, // QoS Setup Complete
+  QosSetupComplete:                                     0x0D, //   QoS Setup Complete
   CommandComplete:                                      0x0E, // * Command Complete
   CommandStatus:                                        0x0F, // * Command Status
-  HardwareError:                                        0x10, // Hardware Error
-  FlushOccurred:                                        0x11, // Flush Occurred
-  RoleChange:                                           0x12, // Role Change
+  HardwareError:                                        0x10, //   Hardware Error
+  FlushOccurred:                                        0x11, //   Flush Occurred
+  RoleChange:                                           0x12, //   Role Change
   NumberOfCompletedPackets:                             0x13, // * Number Of Completed Packets
-  ModeChange:                                           0x14, // Mode Change
-  ReturnLinkKeys:                                       0x15, // Return Link Keys
-  PinCodeRequest:                                       0x16, // Pin Code Request
-  LinkKeyRequest:                                       0x17, // Link Key Request
-  LinkKeyNotification:                                  0x18, // Link Key Notification
-  LoopbackCommand:                                      0x19, // Loopback Command
-  DataBufferOverflow:                                   0x1A, // Data Buffer Overflow
-  MaxSlotsChange:                                       0x1B, // Max Slots Change
-  ReadClockOffsetComplete:                              0x1C, // Read Clock Offset Complete
-  ConnectionPacketTypeChanged:                          0x1D, // Connection Packet Type Changed
-  QosViolation:                                         0x1E, // QoS Violation
+  ModeChange:                                           0x14, //   Mode Change
+  ReturnLinkKeys:                                       0x15, //   Return Link Keys
+  PinCodeRequest:                                       0x16, //   Pin Code Request
+  LinkKeyRequest:                                       0x17, //   Link Key Request
+  LinkKeyNotification:                                  0x18, //   Link Key Notification
+  LoopbackCommand:                                      0x19, //   Loopback Command
+  DataBufferOverflow:                                   0x1A, //   Data Buffer Overflow
+  MaxSlotsChange:                                       0x1B, //   Max Slots Change
+  ReadClockOffsetComplete:                              0x1C, //   Read Clock Offset Complete
+  ConnectionPacketTypeChanged:                          0x1D, //   Connection Packet Type Changed
+  QosViolation:                                         0x1E, //   QoS Violation
   PageScanModeChange:                                   0x1F, // x Page Scan Mode Change (removed)
-  PageScanRepetitionModeChange:                         0x20, // Page Scan Repetition Mode Change
-  FlowSpecificationComplete:                            0x21, // Flow Specification Complete
-  InquiryResultWithRssi:                                0x22, // Inquiry Result With RSSI
-  ReadRemoteExtendedFeaturesComplete:                   0x23, // Read Remote Extended Features Complete
-  SynchronousConnectionComplete:                        0x2C, // Synchronous Connection Complete
-  SynchronousConnectionChanged:                         0x2D, // Synchronous Connection Changed
-  SniffSubrating:                                       0x2E, // Sniff Subrating
-  ExtendedInquiryResult:                                0x2F, // Extended Inquiry Result
+  PageScanRepetitionModeChange:                         0x20, //   Page Scan Repetition Mode Change
+  FlowSpecificationComplete:                            0x21, //   Flow Specification Complete
+  InquiryResultWithRssi:                                0x22, //   Inquiry Result With RSSI
+  ReadRemoteExtendedFeaturesComplete:                   0x23, //   Read Remote Extended Features Complete
+  SynchronousConnectionComplete:                        0x2C, //   Synchronous Connection Complete
+  SynchronousConnectionChanged:                         0x2D, //   Synchronous Connection Changed
+  SniffSubrating:                                       0x2E, //   Sniff Subrating
+  ExtendedInquiryResult:                                0x2F, //   Extended Inquiry Result
   EncryptionKeyRefreshComplete:                         0x30, // * Encryption Key Refresh Complete
-  IoCapabilityRequest:                                  0x31, // IO Capability Request
-  IoCapabilityResponse:                                 0x32, // IO Capability Response
-  UserConfirmationRequest:                              0x33, // User Confirmation Request
-  UserPasskeyRequest:                                   0x34, // User Passkey Request
-  RemoteOobDataRequest:                                 0x35, // Remote OOB Data Request
-  SimplePairingComplete:                                0x36, // Simple Pairing Complete
-  LinkSupervisionTimeoutChanged:                        0x38, // Link Supervision Timeout Changed
-  EnhancedFlushComplete:                                0x39, // Enhanced Flush Complete
-  UserPasskeyNotification:                              0x3B, // User Passkey Notification
-  KeypressNotification:                                 0x3C, // Keypress Notification
-  RemoteHostSupportedFeaturesNotification:              0x3D, // Remote Host Supported Features Notification
+  IoCapabilityRequest:                                  0x31, //   IO Capability Request
+  IoCapabilityResponse:                                 0x32, //   IO Capability Response
+  UserConfirmationRequest:                              0x33, //   User Confirmation Request
+  UserPasskeyRequest:                                   0x34, //   User Passkey Request
+  RemoteOobDataRequest:                                 0x35, //   Remote OOB Data Request
+  SimplePairingComplete:                                0x36, //   Simple Pairing Complete
+  LinkSupervisionTimeoutChanged:                        0x38, //   Link Supervision Timeout Changed
+  EnhancedFlushComplete:                                0x39, //   Enhanced Flush Complete
+  UserPasskeyNotification:                              0x3B, //   User Passkey Notification
+  KeypressNotification:                                 0x3C, //   Keypress Notification
+  RemoteHostSupportedFeaturesNotification:              0x3D, //   Remote Host Supported Features Notification
   LeMeta:                                               0x3E, // * LE Meta
   PhysicalLinkComplete:                                 0x40, // x Physical Link Complete (removed)
   ChannelSelected:                                      0x41, // x Channel Selected (removed)
@@ -69,23 +69,23 @@ export const HciEvent = Object.freeze({
   LogicalLinkComplete:                                  0x45, // x Logical Link Complete (removed)
   DisconnectionLogicalLinkComplete:                     0x46, // x Disconnection Logical Link Complete (removed)
   FlowSpecModifyComplete:                               0x47, // x Flow Spec Modify Complete (removed)
-  NumberOfCompletedDataBlocks:                          0x48, // Number Of Completed Data Blocks
+  NumberOfCompletedDataBlocks:                          0x48, //   Number Of Completed Data Blocks
   AmpStartTest:                                         0x49, // x AMP Start Test (removed)
   AmpTestEnd:                                           0x4A, // x AMP Test End (removed)
   AmpReceiverReport:                                    0x4B, // x AMP Receiver Report (removed)
   ShortRangeModeChangeComplete:                         0x4C, // x Short Range Mode Change Complete (removed)
-  AmpStatusChange:                                      0x4D, // AMP Status Change
-  TriggeredClockCapture:                                0x4E, // Triggered Clock Capture
-  SynchronizationTrainComplete:                         0x4F, // Synchronization Train Complete
-  SynchronizationTrainReceived:                         0x50, // Synchronization Train Received
-  ConnectionlessSlaveBroadcastReceive:                  0x51, // Connectionless Slave Broadcast Receive
-  ConnectionlessSlaveBroadcastTimeout:                  0x52, // Connectionless Slave Broadcast Timeout
-  TruncatedPageComplete:                                0x53, // Truncated Page Complete
-  SlavePageResponseTimeout:                             0x54, // Slave Page Response Timeout
-  ConnectionlessSlaveBroadcastChannelMapChange:         0x55, // Connectionless Slave Broadcast Channel Map Change
-  InquiryResponseNotification:                          0x56, // Inquiry Response Notification
-  AuthenticatedPayloadTimeoutExpired:                   0x57, // Authenticated Payload Timeout Expired
-  SamStatusChange:                                      0x58, // SAM Status Change
+  AmpStatusChange:                                      0x4D, //   AMP Status Change
+  TriggeredClockCapture:                                0x4E, //   Triggered Clock Capture
+  SynchronizationTrainComplete:                         0x4F, //   Synchronization Train Complete
+  SynchronizationTrainReceived:                         0x50, //   Synchronization Train Received
+  ConnectionlessSlaveBroadcastReceive:                  0x51, //   Connectionless Slave Broadcast Receive
+  ConnectionlessSlaveBroadcastTimeout:                  0x52, //   Connectionless Slave Broadcast Timeout
+  TruncatedPageComplete:                                0x53, //   Truncated Page Complete
+  SlavePageResponseTimeout:                             0x54, //   Slave Page Response Timeout
+  ConnectionlessSlaveBroadcastChannelMapChange:         0x55, //   Connectionless Slave Broadcast Channel Map Change
+  InquiryResponseNotification:                          0x56, //   Inquiry Response Notification
+  AuthenticatedPayloadTimeoutExpired:                   0x57, //   Authenticated Payload Timeout Expired
+  SamStatusChange:                                      0x58, //   SAM Status Change
 } as const);
 
 export type HciEvent = (typeof HciEvent)[keyof typeof HciEvent];
@@ -216,38 +216,50 @@ export const HciLeEvent = Object.freeze({
   DataLengthChange:                                     0x07, // * LE Data Length Change
   ReadLocalP256PublicKeyComplete:                       0x08, // * LE Read Local P-256 Public Key Complete
   GenerateDhKeyComplete:                                0x09, // * LE Generate DHKey Complete
-  EnhancedConnectionComplete:                           0x0A, // * LE Enhanced Connection Complete
+  EnhancedConnectionCompleteV1:                         0x0A, // * LE Enhanced Connection Complete V1
   DirectedAdvertisingReport:                            0x0B, // * LE Directed Advertising Report
   PhyUpdateComplete:                                    0x0C, // * LE PHY Update Complete
   ExtendedAdvertisingReport:                            0x0D, // * LE Extended Advertising Report
-  PeriodicAdvertisingSyncEstablished:                   0x0E, // LE Periodic Advertising Sync Established
-  PeriodicAdvertisingReport:                            0x0F, // LE Periodic Advertising Report
-  PeriodicAdvertisingSyncLost:                          0x10, // LE Periodic Advertising Sync Lost
+  PeriodicAdvertisingSyncEstablishedV1:                 0x0E, //   LE Periodic Advertising Sync Established V1
+  PeriodicAdvertisingReportV1:                          0x0F, //   LE Periodic Advertising Report V1
+  PeriodicAdvertisingSyncLost:                          0x10, //   LE Periodic Advertising Sync Lost
   ScanTimeout:                                          0x11, // * LE Scan Timeout
   AdvertisingSetTerminated:                             0x12, // * LE Advertising Set Terminated
-  ScanRequestReceived:                                  0x13, // LE Scan Request Received
+  ScanRequestReceived:                                  0x13, //   LE Scan Request Received
   ChannelSelectionAlgorithm:                            0x14, // * LE Channel Selection Algorithm
-  ConnectionlessIqReport:                               0x15, // LE Connectionless IQ Report
-  ConnectionIqReport:                                   0x16, // LE Connection IQ Report
-  CteRequestFailed:                                     0x17, // LE CTE Request Failed
-  PeriodicAdvertisingSyncTransferReceived:              0x18, // LE Periodic Advertising Sync Transfer Received
-  CisEstablished:                                       0x19, // LE CIS Established
-  CisRequest:                                           0x1A, // LE CIS Request
-  CreateBigComplete:                                    0x1B, // LE Create BIG Complete
-  TerminateBigComplete:                                 0x1C, // LE Terminate BIG Complete
-  BigSyncEstablished:                                   0x1D, // LE BIG Sync Established
-  BigSyncLost:                                          0x1E, // LE BIG Sync Lost
-  RequestPeerScaComplete:                               0x1F, // LE Request Peer SCA Complete
-  PathLossThreshold:                                    0x20, // LE Path Loss Threshold
-  TransmitPowerReporting:                               0x21, // LE Transmit Power Reporting
-  BigInfoAdvertisingReport:                             0x22, // LE BIGInfo Advertising Report
-  SubrateChange:                                        0x23, // LE Subrate Change
-  PeriodicAdvertisingSyncEstablishedV2:                 0x24, // LE Periodic Advertising Sync Established
-  PeriodicAdvertisingReportV2:                          0x25, // LE Periodic Advertising Report
-  PeriodicAdvertisingSyncTransferReceivedV2:            0x26, // LE Periodic Advertising Sync Transfer Received
-  PeriodicAdvertisingSubeventDataRequest:               0x27, // LE Periodic Advertising Subevent Data Request
-  PeriodicAdvertisingResponseReport:                    0x28, // LE Periodic Advertising Response Report
-  EnhancedConnectionCompleteV2:                         0x29, // LE Enhanced Connection Complete
+  ConnectionlessIqReport:                               0x15, //   LE Connectionless IQ Report
+  ConnectionIqReport:                                   0x16, //   LE Connection IQ Report
+  CteRequestFailed:                                     0x17, //   LE CTE Request Failed
+  PeriodicAdvertisingSyncTransferReceivedV1:            0x18, //   LE Periodic Advertising Sync Transfer Received V1
+  CisEstablishedV1:                                     0x19, //   LE CIS Established V1
+  CisRequest:                                           0x1A, //   LE CIS Request
+  CreateBigComplete:                                    0x1B, //   LE Create BIG Complete
+  TerminateBigComplete:                                 0x1C, //   LE Terminate BIG Complete
+  BigSyncEstablished:                                   0x1D, //   LE BIG Sync Established
+  BigSyncLost:                                          0x1E, //   LE BIG Sync Lost
+  RequestPeerScaComplete:                               0x1F, //   LE Request Peer SCA Complete
+  PathLossThreshold:                                    0x20, //   LE Path Loss Threshold
+  TransmitPowerReporting:                               0x21, //   LE Transmit Power Reporting
+  BigInfoAdvertisingReport:                             0x22, //   LE BIGInfo Advertising Report
+  SubrateChange:                                        0x23, //   LE Subrate Change
+  PeriodicAdvertisingSyncEstablishedV2:                 0x24, //   LE Periodic Advertising Sync Established V2
+  PeriodicAdvertisingReportV2:                          0x25, //   LE Periodic Advertising Report V2
+  PeriodicAdvertisingSyncTransferReceivedV2:            0x26, //   LE Periodic Advertising Sync Transfer Received V2
+  PeriodicAdvertisingSubeventDataRequest:               0x27, //   LE Periodic Advertising Subevent Data Request
+  PeriodicAdvertisingResponseReport:                    0x28, //   LE Periodic Advertising Response Report
+  EnhancedConnectionCompleteV2:                         0x29, //   LE Enhanced Connection Complete V2
+  CisEstablishedV2:                                     0x2A, //   LE CIS Established V2
+  RreadAllRemoteFeaturesComplete:                       0x2B, //   LE Read All Remote Features Complete
+  CSReadRemoteSupportedCapabilitiesComplete:            0x2C, //   LE CS Read Remote Supported Capabilities Complete
+  CSReadRemoteFAETableComplete:                         0x2D, //   LE CS Read Remote FAE Table Complete
+  CSSecurityEnableComplete:                             0x2E, //   LE CS Security Enable Complete
+  CSConfigComplete:                                     0x2F, //   LE CS Config Complete
+  CSProcedureEnableComplete:                            0x30, //   LE CS Procedure Enable Complete
+  CSSubeventResult:                                     0x31, //   LE CS Subevent Result
+  CSSubeventResultContinue:                             0x32, //   LE CS Subevent Result Continue
+  CSTestEndComplete:                                    0x33, //   LE CS Test End Complete
+  MonitoredAdvertisersReport:                           0x34, //   LE Monitored Advertisers Report
+  FrameSpaceUpdateComplete:                             0x35, //   LE Frame Space Update Complete
 } as const);
 
 export const LeExtAdvEventTypeDataStatus = Object.freeze({

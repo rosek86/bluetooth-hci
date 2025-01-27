@@ -635,8 +635,8 @@ export const LeState = Object.freeze({
   ActiveScanning: 5,
   PassiveScanning: 6,
   Initiating: 7,
-  ConnectionMasterRole: 8,
-  ConnectionSlaveRole: 9,
+  ConnectionCentralRole: 8,
+  ConnectionPeripheralRole: 9,
 } as const);
 
 export type LeState = (typeof LeState)[keyof typeof LeState];
@@ -650,54 +650,54 @@ export const LeStateNames = [
   "Active Scanning State",
   "Passive Scanning State",
   "Initiating State",
-  "Connection State (Master Role)",
-  "Connection State (Slave Role)",
+  "Connection State (Central Role)",
+  "Connection State (Peripheral Role)",
 ];
 
 // prettier-ignore
 export const LeAllowedStates: LeState[][] = [
-  [LeState.NonConnNonScanUndirectAdv                              ], // bit0
-  [LeState.ScanUndirectAdv                                        ], // bit1
-  [LeState.ConnScanUndirectAdv                                    ], // bit2
-  [LeState.HighDutyConnDirectAdv                                  ], // bit3
-  [LeState.PassiveScanning                                        ], // bit4
-  [LeState.ActiveScanning                                         ], // bit5
-  [LeState.Initiating                                             ], // bit6
-  [LeState.ConnectionSlaveRole                                    ], // bit7
-  [LeState.NonConnNonScanUndirectAdv, LeState.PassiveScanning     ], // bit8
-  [LeState.ScanUndirectAdv,           LeState.PassiveScanning     ], // bit9
-  [LeState.ConnScanUndirectAdv,       LeState.PassiveScanning     ], // bit10
-  [LeState.HighDutyConnDirectAdv,     LeState.PassiveScanning     ], // bit11
-  [LeState.NonConnNonScanUndirectAdv, LeState.ActiveScanning      ], // bit12
-  [LeState.ScanUndirectAdv,           LeState.ActiveScanning      ], // bit13
-  [LeState.ConnScanUndirectAdv,       LeState.ActiveScanning      ], // bit14
-  [LeState.HighDutyConnDirectAdv,     LeState.ActiveScanning      ], // bit15
-  [LeState.NonConnNonScanUndirectAdv, LeState.Initiating          ], // bit16
-  [LeState.ScanUndirectAdv,           LeState.Initiating          ], // bit17
-  [LeState.NonConnNonScanUndirectAdv, LeState.ConnectionMasterRole], // bit18
-  [LeState.ScanUndirectAdv,           LeState.ConnectionMasterRole], // bit19
-  [LeState.NonConnNonScanUndirectAdv, LeState.ConnectionSlaveRole ], // bit20
-  [LeState.ScanUndirectAdv,           LeState.ConnectionSlaveRole ], // bit21
-  [LeState.PassiveScanning,           LeState.Initiating          ], // bit22
-  [LeState.ActiveScanning,            LeState.Initiating          ], // bit23
-  [LeState.PassiveScanning,           LeState.ConnectionMasterRole], // bit24
-  [LeState.ActiveScanning,            LeState.ConnectionMasterRole], // bit25
-  [LeState.PassiveScanning,           LeState.ConnectionSlaveRole ], // bit26
-  [LeState.ActiveScanning,            LeState.ConnectionSlaveRole ], // bit27
-  [LeState.Initiating,                LeState.ConnectionMasterRole], // bit28
-  [LeState.LowDutyConnDirectAdv                                   ], // bit29
-  [LeState.LowDutyConnDirectAdv,      LeState.PassiveScanning     ], // bit30
-  [LeState.LowDutyConnDirectAdv,      LeState.ActiveScanning      ], // bit31
-  [LeState.ConnScanUndirectAdv,       LeState.Initiating          ], // bit32
-  [LeState.HighDutyConnDirectAdv,     LeState.Initiating          ], // bit33
-  [LeState.LowDutyConnDirectAdv,      LeState.Initiating          ], // bit34
-  [LeState.ConnScanUndirectAdv,       LeState.ConnectionMasterRole], // bit35
-  [LeState.HighDutyConnDirectAdv,     LeState.ConnectionMasterRole], // bit36
-  [LeState.LowDutyConnDirectAdv,      LeState.ConnectionMasterRole], // bit37
-  [LeState.ConnScanUndirectAdv,       LeState.ConnectionSlaveRole ], // bit38
-  [LeState.HighDutyConnDirectAdv,     LeState.ConnectionSlaveRole ], // bit39
-  [LeState.LowDutyConnDirectAdv,      LeState.ConnectionSlaveRole ], // bit40
-  [LeState.Initiating,                LeState.ConnectionSlaveRole ], // bit41
+  [LeState.NonConnNonScanUndirectAdv                                  ], // bit0
+  [LeState.ScanUndirectAdv                                            ], // bit1
+  [LeState.ConnScanUndirectAdv                                        ], // bit2
+  [LeState.HighDutyConnDirectAdv                                      ], // bit3
+  [LeState.PassiveScanning                                            ], // bit4
+  [LeState.ActiveScanning                                             ], // bit5
+  [LeState.Initiating                                                 ], // bit6
+  [LeState.ConnectionPeripheralRole                                   ], // bit7
+  [LeState.NonConnNonScanUndirectAdv, LeState.PassiveScanning         ], // bit8
+  [LeState.ScanUndirectAdv,           LeState.PassiveScanning         ], // bit9
+  [LeState.ConnScanUndirectAdv,       LeState.PassiveScanning         ], // bit10
+  [LeState.HighDutyConnDirectAdv,     LeState.PassiveScanning         ], // bit11
+  [LeState.NonConnNonScanUndirectAdv, LeState.ActiveScanning          ], // bit12
+  [LeState.ScanUndirectAdv,           LeState.ActiveScanning          ], // bit13
+  [LeState.ConnScanUndirectAdv,       LeState.ActiveScanning          ], // bit14
+  [LeState.HighDutyConnDirectAdv,     LeState.ActiveScanning          ], // bit15
+  [LeState.NonConnNonScanUndirectAdv, LeState.Initiating              ], // bit16
+  [LeState.ScanUndirectAdv,           LeState.Initiating              ], // bit17
+  [LeState.NonConnNonScanUndirectAdv, LeState.ConnectionCentralRole   ], // bit18
+  [LeState.ScanUndirectAdv,           LeState.ConnectionCentralRole   ], // bit19
+  [LeState.NonConnNonScanUndirectAdv, LeState.ConnectionPeripheralRole], // bit20
+  [LeState.ScanUndirectAdv,           LeState.ConnectionPeripheralRole], // bit21
+  [LeState.PassiveScanning,           LeState.Initiating              ], // bit22
+  [LeState.ActiveScanning,            LeState.Initiating              ], // bit23
+  [LeState.PassiveScanning,           LeState.ConnectionCentralRole   ], // bit24
+  [LeState.ActiveScanning,            LeState.ConnectionCentralRole   ], // bit25
+  [LeState.PassiveScanning,           LeState.ConnectionPeripheralRole], // bit26
+  [LeState.ActiveScanning,            LeState.ConnectionPeripheralRole], // bit27
+  [LeState.Initiating,                LeState.ConnectionCentralRole   ], // bit28
+  [LeState.LowDutyConnDirectAdv                                       ], // bit29
+  [LeState.LowDutyConnDirectAdv,      LeState.PassiveScanning         ], // bit30
+  [LeState.LowDutyConnDirectAdv,      LeState.ActiveScanning          ], // bit31
+  [LeState.ConnScanUndirectAdv,       LeState.Initiating              ], // bit32
+  [LeState.HighDutyConnDirectAdv,     LeState.Initiating              ], // bit33
+  [LeState.LowDutyConnDirectAdv,      LeState.Initiating              ], // bit34
+  [LeState.ConnScanUndirectAdv,       LeState.ConnectionCentralRole   ], // bit35
+  [LeState.HighDutyConnDirectAdv,     LeState.ConnectionCentralRole   ], // bit36
+  [LeState.LowDutyConnDirectAdv,      LeState.ConnectionCentralRole   ], // bit37
+  [LeState.ConnScanUndirectAdv,       LeState.ConnectionPeripheralRole], // bit38
+  [LeState.HighDutyConnDirectAdv,     LeState.ConnectionPeripheralRole], // bit39
+  [LeState.LowDutyConnDirectAdv,      LeState.ConnectionPeripheralRole], // bit40
+  [LeState.Initiating,                LeState.ConnectionPeripheralRole], // bit41
 ];
 
 export class LeSupportedStates {

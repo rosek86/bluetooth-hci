@@ -1226,7 +1226,7 @@ export class Hci extends EventEmitter {
       case HciLeEvent.GenerateDhKeyComplete:
         this.onLeGenerateDhKeyComplete(payload);
         break;
-      case HciLeEvent.EnhancedConnectionComplete:
+      case HciLeEvent.EnhancedConnectionCompleteV1:
         this.onLeEnhancedConnectionComplete(payload);
         break;
       case HciLeEvent.DirectedAdvertisingReport:
