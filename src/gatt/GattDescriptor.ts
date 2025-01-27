@@ -1,6 +1,6 @@
-import { UUID } from "../utils/UUID.js";
+import { UUID } from "../utils/UUID.ts";
 
-import { type AttDataEntry } from "./AttGlue.js";
+import { type AttDataEntry } from "./AttGlue.ts";
 
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace GattDescriptor {

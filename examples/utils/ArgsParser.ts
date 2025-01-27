@@ -1,7 +1,7 @@
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
 
-import { type AdapterParams } from "./HciAdapterFactory.js";
+import { type AdapterParams } from "./HciAdapterFactory.ts";
 
 export interface DefaultInputArgs {
   deviceType?: "usb" | "serial" | "hci";

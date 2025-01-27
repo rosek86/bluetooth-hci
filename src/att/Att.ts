@@ -3,11 +3,11 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
-import { L2capChannelId } from "../l2cap/L2capChannelId.js";
+import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.ts";
+import { L2capChannelId } from "../l2cap/L2capChannelId.ts";
 
-import { AttErrorCodeGetName } from "./AttError.js";
-import { AttOpcode, AttOpcodeGetName, numberToAttOpcode } from "./AttOpcode.js";
+import { AttErrorCodeGetName } from "./AttError.ts";
+import { AttOpcode, AttOpcodeGetName, numberToAttOpcode } from "./AttOpcode.ts";
 import {
   AttErrorRsp,
   type AttErrorRspMsg,
@@ -72,7 +72,7 @@ import {
   type AttWriteReqMsg,
   AttWriteRsp,
   type AttWriteRspMsg,
-} from "./AttSerDes.js";
+} from "./AttSerDes.ts";
 
 const debug = Debug("bt-hci-att");
 

@@ -2,8 +2,8 @@ import assert from "node:assert";
 
 import Debug from "debug";
 
-import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType } from "./HciError.js";
-import { makeHciError, makeParserError } from "./HciError.js";
+import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType } from "./HciError.ts";
+import { makeHciError, makeParserError } from "./HciError.ts";
 import {
   HciOcfControlAndBasebandCommands,
   HciOcfInformationParameters,
@@ -14,8 +14,8 @@ import {
   HciOcfTestingCommands,
   HciOgf,
   ocfOgfToString,
-} from "./HciOgfOcf.js";
-import { HciPacketType } from "./HciPacketType.js";
+} from "./HciOgfOcf.ts";
+import { HciPacketType } from "./HciPacketType.ts";
 
 const debug = Debug("bt-hci-hci-cmd");
 

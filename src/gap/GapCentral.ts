@@ -4,10 +4,10 @@ import { EventEmitter } from "node:events";
 import chalk from "chalk";
 import Debug from "debug";
 
-import { Att } from "../att/Att.js";
-import { Hci } from "../hci/Hci.js";
-import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.js";
-import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.js";
+import { Att } from "../att/Att.ts";
+import { Hci } from "../hci/Hci.ts";
+import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.ts";
+import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.ts";
 import {
   type DisconnectionCompleteEvent,
   LeAdvEventType,
@@ -21,7 +21,7 @@ import {
   LeMasterClockAccuracy,
   type LeReadRemoteFeaturesCompleteEvent,
   type ReadRemoteVersionInformationCompleteEvent,
-} from "../hci/HciEvent.js";
+} from "../hci/HciEvent.ts";
 import {
   LeConnectionUpdate,
   type LeExtendedCreateConnectionPhy,
@@ -34,11 +34,11 @@ import {
   LeScanType,
   LeScanningFilterPolicy,
   LeSupportedFeatures,
-} from "../hci/HciLeController.js";
-import { L2CAP } from "../l2cap/L2CAP.js";
-import { Address } from "../utils/Address.js";
+} from "../hci/HciLeController.ts";
+import { L2CAP } from "../l2cap/L2CAP.ts";
+import { Address } from "../utils/Address.ts";
 
-import { AdvData } from "./AdvData.js";
+import { AdvData } from "./AdvData.ts";
 
 export interface GapCentralOptions {
   autoScan?: boolean;

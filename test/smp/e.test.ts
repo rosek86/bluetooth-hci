@@ -4,9 +4,9 @@ import { describe, it } from "node:test";
 
 import { AesCmac } from "aes-cmac";
 
-import { L2capChannelId } from "../../src/index.js";
-import { Smp } from "../../src/smp/Smp.js";
-import { Uint8ArrayUtils } from "../../src/utils/Uint8Array.js";
+import { L2capChannelId } from "../../src/index.ts";
+import { Smp } from "../../src/smp/Smp.ts";
+import { Uint8ArrayUtils } from "../../src/utils/Uint8Array.ts";
 
 class L2Cap extends EventEmitter {
   writeAclData(connectionHandle: number, channelId: L2capChannelId, data: Buffer) {

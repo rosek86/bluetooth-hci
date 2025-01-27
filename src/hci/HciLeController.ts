@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { Address, AddressType } from "../utils/Address.js";
-import { bitGet, bitSet, buildBitfield } from "../utils/Utils.js";
+import { Address, AddressType } from "../utils/Address.ts";
+import { bitGet, bitSet, buildBitfield } from "../utils/Utils.ts";
 
-import { HciErrorErrno, HciParserErrorType, makeHciError, makeParserError } from "./HciError.js";
+import { HciErrorErrno, HciParserErrorType, makeHciError, makeParserError } from "./HciError.ts";
 
 const msToValue = (ms: number, factor: number): number => {
   return Math.round(ms / factor);

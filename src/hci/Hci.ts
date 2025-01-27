@@ -3,10 +3,10 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { type AclDataPacket, numberToAclDataBoundary, numberToAclDataBroadcast } from "../acl/Acl.js";
-import { Address } from "../utils/Address.js";
+import { type AclDataPacket, numberToAclDataBoundary, numberToAclDataBroadcast } from "../acl/Acl.ts";
+import { Address } from "../utils/Address.ts";
 
-import { HciCmd } from "./HciCmd.js";
+import { HciCmd } from "./HciCmd.ts";
 import {
   type CompletedPackets,
   type EventMask,
@@ -23,7 +23,7 @@ import {
   SetEventMask2,
   WriteAuthenticatedPayloadTimeout,
   WriteLeHostSupported,
-} from "./HciControlAndBaseband.js";
+} from "./HciControlAndBaseband.ts";
 import {
   HciErrorErrno,
   HciErrorErrnoGetName,
@@ -31,9 +31,9 @@ import {
   getHciErrorMessage,
   makeHciError,
   numberToHciErrorErrno,
-} from "./HciError.js";
-import { HciDisconnectReason } from "./HciError.js";
-import { makeParserError } from "./HciError.js";
+} from "./HciError.ts";
+import { HciDisconnectReason } from "./HciError.ts";
+import { makeParserError } from "./HciError.ts";
 import {
   type DisconnectionCompleteEvent,
   type EncryptionChangeEvent,
@@ -75,7 +75,7 @@ import {
   type ReadRemoteVersionInformationCompleteEvent,
   numberToEncryptionEnabled,
   numberToHciEvent,
-} from "./HciEvent.js";
+} from "./HciEvent.ts";
 import {
   type BufferSize,
   LocalSupportedCommands,
@@ -87,7 +87,7 @@ import {
   ReadLocalSupportedFeatures,
   ReadLocalVersionInformation,
   ReadRssi,
-} from "./HciInformationParameters.js";
+} from "./HciInformationParameters.ts";
 import {
   ConnectionHandle,
   DefaultTxRxPhy,
@@ -159,15 +159,15 @@ import {
   LeTransmitterTestV4,
   LeTxRxPhy,
   LeWhiteList,
-} from "./HciLeController.js";
+} from "./HciLeController.ts";
 import {
   HciOcfControlAndBasebandCommands,
   HciOcfInformationParameters,
   HciOcfLeControllerCommands,
   HciOcfLinkControlCommands,
   HciOcfStatusParameters,
-} from "./HciOgfOcf.js";
-import { HciPacketType } from "./HciPacketType.js";
+} from "./HciOgfOcf.ts";
+import { HciPacketType } from "./HciPacketType.ts";
 
 const debug = Debug("bt-hci-hci");
 

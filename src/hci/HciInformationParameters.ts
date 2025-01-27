@@ -1,7 +1,7 @@
-import { Address, AddressType } from "../utils/Address.js";
-import { bitGet } from "../utils/Utils.js";
+import { Address, AddressType } from "../utils/Address.ts";
+import { bitGet } from "../utils/Utils.ts";
 
-import { HciParserErrorType, makeParserError } from "./HciError.js";
+import { HciParserErrorType, makeParserError } from "./HciError.ts";
 
 export interface LocalSupportedFeatures {
   threeSlotPackets: boolean;

@@ -1,4 +1,4 @@
-import { HciPacketType, numberToHciPacketType } from "../hci/HciPacketType.js";
+import { HciPacketType, numberToHciPacketType } from "../hci/HciPacketType.ts";
 
 const ParserState = Object.freeze({
   Type: 0,

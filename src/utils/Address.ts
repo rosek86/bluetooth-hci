@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { LePeerAddressType } from "../hci/HciLeController.js";
+import { LePeerAddressType } from "../hci/HciLeController.ts";
 
 // prettier-ignore
 export const AddressType = Object.freeze({

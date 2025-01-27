@@ -3,8 +3,8 @@ import EventEmitter from "node:events";
 
 import { AesCmac } from "aes-cmac";
 
-import { L2capChannelId } from "../l2cap/L2capChannelId.js";
-import { Uint8ArrayUtils } from "../utils/Uint8Array.js";
+import { L2capChannelId } from "../l2cap/L2capChannelId.ts";
+import { Uint8ArrayUtils } from "../utils/Uint8Array.ts";
 
 export const SmpCommand = Object.freeze({
   PairingRequest: 0x01,

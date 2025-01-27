@@ -2,9 +2,9 @@ import { BluetoothHciSocket, bluetoothHciSocketFactory } from "@rosek86/bluetoot
 import { type AutoDetectTypes } from "@serialport/bindings-cpp";
 import { type SerialPortOpenOptions } from "serialport";
 
-import { HciAdapter, type HciDevice } from "../../src/utils/HciAdapter.js";
-import { createHciSerial } from "../../src/utils/SerialHciDevice.js";
-import { delay } from "../../src/utils/Utils.js";
+import { HciAdapter, type HciDevice } from "../../src/utils/HciAdapter.ts";
+import { createHciSerial } from "../../src/utils/SerialHciDevice.ts";
+import { delay } from "../../src/utils/Utils.ts";
 
 process.env["BLUETOOTH_HCI_SOCKET_FACTORY"] = "1";
 

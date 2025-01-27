@@ -1,7 +1,7 @@
 import Debug from "debug";
 
-import { AttErrorCode } from "./AttError.js";
-import { AttOpcode } from "./AttOpcode.js";
+import { AttErrorCode } from "./AttError.ts";
+import { AttOpcode } from "./AttOpcode.ts";
 
 const debug = Debug("bt-hci-att-serdes");
 

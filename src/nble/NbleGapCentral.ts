@@ -10,16 +10,16 @@ import {
   type GapConnectParams,
   type GapScanParamsOptions,
   type GapScanStartOptions,
-} from "../gap/GapCentral.js";
-import { GapProfileStorage } from "../gap/GapProfileStorage.js";
-import { GattClient } from "../gatt/GattClient.js";
-import { Hci } from "../hci/Hci.js";
-import { HciError, HciErrorErrno } from "../hci/HciError.js";
-import { type DisconnectionCompleteEvent } from "../hci/HciEvent.js";
-import { LePhy } from "../hci/HciLeController.js";
-import { Address } from "../utils/Address.js";
-import { HciAdapter } from "../utils/HciAdapter.js";
-import { printProfile } from "../utils/Profile.js";
+} from "../gap/GapCentral.ts";
+import { GapProfileStorage } from "../gap/GapProfileStorage.ts";
+import { GattClient } from "../gatt/GattClient.ts";
+import { Hci } from "../hci/Hci.ts";
+import { HciError, HciErrorErrno } from "../hci/HciError.ts";
+import { type DisconnectionCompleteEvent } from "../hci/HciEvent.ts";
+import { LePhy } from "../hci/HciLeController.ts";
+import { Address } from "../utils/Address.ts";
+import { HciAdapter } from "../utils/HciAdapter.ts";
+import { printProfile } from "../utils/Profile.ts";
 
 const debug = Debug("NbleGapCentral");
 

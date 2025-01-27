@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "target": "ES2023",
     "lib": ["ES2023"],
     "sourceMap": true,
@@ -30,7 +30,9 @@
     // "verbatimModuleSyntax": true, // only with "module": "ESNext"
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
-    "declaration": true
+    "declaration": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
   },
   "include": ["src/**/*", "test/**/*", "examples/**/*"],
   "exclude": ["node_modules"]

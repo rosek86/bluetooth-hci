@@ -32,8 +32,8 @@ import {
   type AttWriteCmdMsg,
   type AttWriteReqMsg,
   type AttWriteRspMsg,
-} from "../att/AttSerDes.js";
-import { HciError } from "../hci/HciError.js";
+} from "../att/AttSerDes.ts";
+import { HciError } from "../hci/HciError.ts";
 
 export interface AttDataEntry {
   handle: number;
