@@ -1,6 +1,6 @@
-import { GattCharacteristic } from "./GattCharacteristic.ts";
-import { GattDescriptor } from "./GattDescriptor.ts";
-import { GattService } from "./GattService.ts";
+import { type GattCharacteristicAsObject } from "./GattCharacteristic.ts";
+import { type GattDescriptorAsObject } from "./GattDescriptor.ts";
+import { type GattServiceAsObject } from "./GattService.ts";
 
 // General concept:
 // - GattDirectory is a tree of services, characteristics and descriptors
@@ -13,27 +13,27 @@ export interface Profile {
 }
 
 export interface Service {
-  service: GattService.AsObject;
+  service: GattServiceAsObject;
   includedServices?: Record<number, IncludedService>;
   characteristics?: Record<number, Characteristic>;
 }
 
 export interface IncludedService {
   parent?: WeakRef<Service>;
-  service: GattService.AsObject;
+  service: GattServiceAsObject;
   includedServices?: Record<number, IncludedService>;
   characteristics?: Record<number, Characteristic>;
 }
 
 export interface Characteristic {
   parent?: WeakRef<Service | IncludedService>;
-  characteristic: GattCharacteristic.AsObject;
+  characteristic: GattCharacteristicAsObject;
   descriptors?: Record<number, Descriptor>;
 }
 
 export interface Descriptor {
   parent?: WeakRef<Characteristic>;
-  descriptor: GattDescriptor.AsObject;
+  descriptor: GattDescriptorAsObject;
 }
 
 export interface FlatProfile {
@@ -169,14 +169,14 @@ export class GattDirectory {
     return cloneProfile(profile);
   }
 
-  public getServices(): GattService.AsObject[] | undefined {
+  public getServices(): GattServiceAsObject[] | undefined {
     if (!this.profile.services) {
       return undefined;
     }
     return Object.values(this.flatProfile.services ?? {}).map((e) => e.service);
   }
 
-  public saveServices(services: GattService.AsObject[]): void {
+  public saveServices(services: GattServiceAsObject[]): void {
     if (!this.profile.services) {
       this.profile.services = {};
     }
@@ -189,7 +189,7 @@ export class GattDirectory {
     }
   }
 
-  public getIncludedServices(handle: number): GattService.AsObject[] | undefined {
+  public getIncludedServices(handle: number): GattServiceAsObject[] | undefined {
     const profileService = this.flatProfile.services?.[handle];
     if (!profileService) {
       return undefined;
@@ -200,7 +200,7 @@ export class GattDirectory {
     return Object.values(profileService.includedServices ?? {}).map((e) => e.service);
   }
 
-  public saveIncludedServices(handle: number, includedServices: GattService.AsObject[]): boolean {
+  public saveIncludedServices(handle: number, includedServices: GattServiceAsObject[]): boolean {
     const profileService = this.flatProfile.services?.[handle];
     if (!profileService) {
       return false;
@@ -222,7 +222,7 @@ export class GattDirectory {
     return true;
   }
 
-  public getCharacteristics(handle: number): GattCharacteristic.AsObject[] | undefined {
+  public getCharacteristics(handle: number): GattCharacteristicAsObject[] | undefined {
     const profileService = this.flatProfile.services?.[handle] ?? this.flatProfile.includedServices?.[handle];
     if (!profileService) {
       return undefined;
@@ -233,7 +233,7 @@ export class GattDirectory {
     return Object.values(profileService.characteristics ?? {}).map((e) => e.characteristic);
   }
 
-  public saveCharacteristics(handle: number, characteristics: GattCharacteristic.AsObject[]): boolean {
+  public saveCharacteristics(handle: number, characteristics: GattCharacteristicAsObject[]): boolean {
     const profileService = this.flatProfile.services?.[handle] ?? this.flatProfile.includedServices?.[handle];
     if (!profileService) {
       return false;
@@ -251,7 +251,7 @@ export class GattDirectory {
     return true;
   }
 
-  public getDescriptors(handle: number): GattDescriptor.AsObject[] | undefined {
+  public getDescriptors(handle: number): GattDescriptorAsObject[] | undefined {
     const profileCharacteristic = this.flatProfile.characteristics?.[handle];
     if (!profileCharacteristic) {
       return undefined;
@@ -262,7 +262,7 @@ export class GattDirectory {
     return Object.values(profileCharacteristic.descriptors).map((e) => e.descriptor);
   }
 
-  public saveDescriptors(handle: number, descriptors: GattDescriptor.AsObject[]): boolean {
+  public saveDescriptors(handle: number, descriptors: GattDescriptorAsObject[]): boolean {
     const profileCharacteristic = this.flatProfile.characteristics?.[handle];
     if (!profileCharacteristic) {
       return false;
@@ -280,7 +280,7 @@ export class GattDirectory {
     return true;
   }
 
-  public findCharacteristic(handle: number): GattCharacteristic.AsObject | null {
+  public findCharacteristic(handle: number): GattCharacteristicAsObject | null {
     const eChar = this.flatProfile.characteristics?.[handle];
     if (!eChar) {
       return null;
@@ -288,7 +288,7 @@ export class GattDirectory {
     return eChar.characteristic;
   }
 
-  public findDescriptor(charHandle: number, type: number): GattDescriptor.AsObject | null {
+  public findDescriptor(charHandle: number, type: number): GattDescriptorAsObject | null {
     const char = this.flatProfile.characteristics?.[charHandle];
     if (!char || !char.descriptors) {
       return null;
@@ -323,7 +323,7 @@ export class GattDirectory {
     return { service: sEntry.service, characteristic: cEntry.characteristic, descriptor: dEntry.descriptor };
   }
 
-  public findServiceByUuid(uuid: string): GattService.AsObject | null {
+  public findServiceByUuid(uuid: string): GattServiceAsObject | null {
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
       if (!sEntry) {
         continue;
@@ -338,7 +338,7 @@ export class GattDirectory {
   public findCharacteristicByUuids(uuids: {
     serviceUuid: string;
     characteristicUuid: string;
-  }): GattCharacteristic.AsObject | null {
+  }): GattCharacteristicAsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
       if (!sEntry) {
@@ -371,7 +371,7 @@ export class GattDirectory {
     return null;
   }
 
-  public findDescriptorByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptor.AsObject | null {
+  public findDescriptorByUuids(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptorAsObject | null {
     let service: Service | null = null;
     for (const sEntry of Object.values(this.flatProfile.services ?? {})) {
       if (!sEntry) {

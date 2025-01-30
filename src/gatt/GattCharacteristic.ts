@@ -41,37 +41,34 @@ const CharacteristicPropertiesBits = Object.freeze({
   ExtendedProperties: 7,
 } as const);
 
-/* eslint-disable @typescript-eslint/no-namespace */
-export namespace GattCharacteristic {
-  export interface AsObject {
-    handle: number;
-    endingHandle: number;
-    valueHandle: number;
-    uuid: string;
-    uuidInfo?: {
-      for: string;
-      type: string;
-    };
-    properties: Properties;
-  }
+export interface GattCharacteristicAsObject {
+  handle: number;
+  endingHandle: number;
+  valueHandle: number;
+  uuid: string;
+  uuidInfo?: {
+    for: string;
+    type: string;
+  };
+  properties: GattCharacteristicProperties;
+}
 
-  export interface Properties {
-    broadcast: boolean;
-    read: boolean;
-    writeWithoutResponse: boolean;
-    write: boolean;
-    notify: boolean;
-    indicate: boolean;
-    authenticatedSignedWrites: boolean;
-    extendedProperties: boolean;
-  }
+export interface GattCharacteristicProperties {
+  broadcast: boolean;
+  read: boolean;
+  writeWithoutResponse: boolean;
+  write: boolean;
+  notify: boolean;
+  indicate: boolean;
+  authenticatedSignedWrites: boolean;
+  extendedProperties: boolean;
 }
 
 export class GattCharacteristic {
   private handle: number;
   private endingHandle: number;
   private valueHandle: number;
-  private properties: GattCharacteristic.Properties;
+  private properties: GattCharacteristicProperties;
   private uuid: string;
 
   public get Handle(): number {
@@ -86,7 +83,7 @@ export class GattCharacteristic {
   public get UUID(): string {
     return this.uuid;
   }
-  public get Properties(): GattCharacteristic.Properties {
+  public get Properties(): GattCharacteristicProperties {
     return this.properties;
   }
 
@@ -106,7 +103,7 @@ export class GattCharacteristic {
     this.uuid = UUID.toString(uuid);
   }
 
-  public toObject(): GattCharacteristic.AsObject {
+  public toObject(): GattCharacteristicAsObject {
     return {
       handle: this.Handle,
       endingHandle: this.EndingHandle,
@@ -116,7 +113,7 @@ export class GattCharacteristic {
     };
   }
 
-  private parseProperties(bitsfield: number): GattCharacteristic.Properties {
+  private parseProperties(bitsfield: number): GattCharacteristicProperties {
     // prettier-ignore
     return {
       broadcast:                  bitGet(bitsfield, CharacteristicPropertiesBits.Broadcast),

@@ -32,7 +32,7 @@
     "removeComments": true,
     "declaration": true,
     "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": ["src/**/*", "test/**/*", "examples/**/*"],
   "exclude": ["node_modules"]

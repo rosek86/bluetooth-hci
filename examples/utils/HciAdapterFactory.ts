@@ -1,4 +1,4 @@
-import { BluetoothHciSocket, bluetoothHciSocketFactory } from "@rosek86/bluetooth-hci-socket";
+import BluetoothHciSocket from "@rosek86/bluetooth-hci-socket";
 import { type AutoDetectTypes } from "@serialport/bindings-cpp";
 import { type SerialPortOpenOptions } from "serialport";
 
@@ -40,7 +40,7 @@ export class UsbHciSocket implements HciDevice {
   constructor(devId: number, usbParams: AdapterUsbParams["usb"]) {
     this.devId = devId;
     this.usbParams = usbParams;
-    this.port = bluetoothHciSocketFactory("usb");
+    this.port = BluetoothHciSocket.bluetoothHciSocketFactory("usb");
   }
 
   public async open() {
@@ -72,7 +72,7 @@ export class NativeHciSocket implements HciDevice {
 
   constructor(devId: number) {
     this.devId = devId;
-    this.port = bluetoothHciSocketFactory("native");
+    this.port = BluetoothHciSocket.bluetoothHciSocketFactory("native");
   }
 
   public async open() {

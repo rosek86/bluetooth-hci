@@ -1,8 +1,8 @@
 import {
   GapCentral,
-  GattCharacteristic,
+  type GattCharacteristicAsObject,
   GattClient,
-  GattService,
+  type GattServiceAsObject,
   HciAdapter,
   LeScanFilterDuplicates,
   amendProfileWithUuidNames,
@@ -66,7 +66,7 @@ import {
 
       console.log(JSON.stringify(profileAmended, null, 2));
 
-      let hr: { service: GattService.AsObject; characteristic: GattCharacteristic.AsObject } | null = null;
+      let hr: { service: GattServiceAsObject; characteristic: GattCharacteristicAsObject } | null = null;
       for (const service of Object.values(profileAmended.services ?? {})) {
         if (service.service.uuidInfo?.for !== "Heart Rate") {
           continue;

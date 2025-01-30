@@ -2,17 +2,14 @@ import { UUID } from "../utils/UUID.ts";
 
 import { type AttDataEntry } from "./AttGlue.ts";
 
-/* eslint-disable @typescript-eslint/no-namespace */
-export namespace GattService {
-  export interface AsObject {
-    handle: number;
-    endingHandle: number;
-    uuid: string;
-    uuidInfo?: {
-      for: string;
-      type: string;
-    };
-  }
+export interface GattServiceAsObject {
+  handle: number;
+  endingHandle: number;
+  uuid: string;
+  uuidInfo?: {
+    for: string;
+    type: string;
+  };
 }
 
 export class GattService {
@@ -40,7 +37,7 @@ export class GattService {
     this.uuid = UUID.toString(data.value);
   }
 
-  public toObject(): GattService.AsObject {
+  public toObject(): GattServiceAsObject {
     return {
       handle: this.Handle,
       endingHandle: this.EndingHandle,

@@ -6,10 +6,10 @@ import { type AttHandleValueIndMsg, type AttHandleValueNtfMsg } from "../att/Att
 import { UUID } from "../utils/UUID.ts";
 
 import { type Att, type AttDataEntry } from "./AttGlue.ts";
-import { GattCharacteristic } from "./GattCharacteristic.ts";
-import { GattDescriptor } from "./GattDescriptor.ts";
+import { GattCharacteristic, type GattCharacteristicAsObject } from "./GattCharacteristic.ts";
+import { GattDescriptor, type GattDescriptorAsObject } from "./GattDescriptor.ts";
 import { GattDirectory, type Profile } from "./GattDirectory.ts";
-import { GattService } from "./GattService.ts";
+import { GattService, type GattServiceAsObject } from "./GattService.ts";
 
 const debug = Debug("bt-hci-gatt");
 
@@ -28,9 +28,9 @@ export const  GattProfileAttributeType = Object.freeze({
 } as const);
 
 interface GattHvxParams {
-  service: GattService.AsObject;
-  characteristic: GattCharacteristic.AsObject;
-  descriptor: GattDescriptor.AsObject;
+  service: GattServiceAsObject;
+  characteristic: GattCharacteristicAsObject;
+  descriptor: GattDescriptorAsObject;
   attributeValue: Buffer;
 }
 
@@ -128,7 +128,7 @@ export class GattClient extends EventEmitter {
     return profile;
   }
 
-  public async discoverServices(): Promise<GattService.AsObject[]> {
+  public async discoverServices(): Promise<GattServiceAsObject[]> {
     const cacheServices = this.directory.getServices();
     if (cacheServices !== undefined) {
       return cacheServices;
@@ -140,7 +140,7 @@ export class GattClient extends EventEmitter {
     return services;
   }
 
-  public async discoverIncludedServices(service: GattService.AsObject): Promise<GattService.AsObject[]> {
+  public async discoverIncludedServices(service: GattServiceAsObject): Promise<GattServiceAsObject[]> {
     const cacheIncludedServices = this.directory.getIncludedServices(service.handle);
     if (cacheIncludedServices !== undefined) {
       return cacheIncludedServices;
@@ -152,7 +152,7 @@ export class GattClient extends EventEmitter {
     return includedServices;
   }
 
-  public async discoverCharacteristics(service: GattService.AsObject): Promise<GattCharacteristic.AsObject[]> {
+  public async discoverCharacteristics(service: GattServiceAsObject): Promise<GattCharacteristicAsObject[]> {
     const cacheCharacteristics = this.directory.getCharacteristics(service.handle);
     if (cacheCharacteristics !== undefined) {
       return cacheCharacteristics;
@@ -164,7 +164,7 @@ export class GattClient extends EventEmitter {
     return characteristics;
   }
 
-  public async discoverDescriptors(characteristic: GattCharacteristic.AsObject): Promise<GattDescriptor.AsObject[]> {
+  public async discoverDescriptors(characteristic: GattCharacteristicAsObject): Promise<GattDescriptorAsObject[]> {
     const cacheDescriptors = this.directory.getDescriptors(characteristic.handle);
     if (cacheDescriptors !== undefined) {
       return cacheDescriptors;
@@ -184,15 +184,15 @@ export class GattClient extends EventEmitter {
   public findCharacteristicByUuids(uuids: {
     serviceUuid: string;
     characteristicUuid: string;
-  }): GattCharacteristic.AsObject | null {
+  }): GattCharacteristicAsObject | null {
     return this.directory.findCharacteristicByUuids(uuids);
   }
 
-  public findDescriptorByUuid(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptor.AsObject | null {
+  public findDescriptorByUuid(uuids: { serviceUuid: string; descriptorUuid: string }): GattDescriptorAsObject | null {
     return this.directory.findDescriptorByUuids(uuids);
   }
 
-  public async read(char: GattCharacteristic.AsObject): Promise<Buffer> {
+  public async read(char: GattCharacteristicAsObject): Promise<Buffer> {
     const handle = char.handle + 1;
     const blob = await this.att.readReq({ attributeHandle: handle });
 
@@ -212,17 +212,17 @@ export class GattClient extends EventEmitter {
     return value;
   }
 
-  public async write(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
+  public async write(char: GattCharacteristicAsObject, value: Buffer): Promise<void> {
     const handle = char.handle + 1;
     await this.att.writeReq({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async writeWithoutResponse(char: GattCharacteristic.AsObject, value: Buffer): Promise<void> {
+  public async writeWithoutResponse(char: GattCharacteristicAsObject, value: Buffer): Promise<void> {
     const handle = char.handle + 1;
     await this.att.writeCmd({ attributeHandle: handle, attributeValue: value });
   }
 
-  public async startCharacteristicsNotifications(char: GattCharacteristic.AsObject, requireAck: boolean) {
+  public async startCharacteristicsNotifications(char: GattCharacteristicAsObject, requireAck: boolean) {
     if ((!requireAck && !char.properties.notify) || (requireAck && !char.properties.indicate)) {
       throw new Error("Cannot start notification on characteristic");
     }
@@ -239,7 +239,7 @@ export class GattClient extends EventEmitter {
     await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  public async stopCharacteristicsNotifications(char: GattCharacteristic.AsObject) {
+  public async stopCharacteristicsNotifications(char: GattCharacteristicAsObject) {
     const attributeHandle = await this.getCCCDescriptorHandle(char);
     if (!attributeHandle) {
       throw new Error("CCCD not found");
@@ -249,7 +249,7 @@ export class GattClient extends EventEmitter {
     await this.att.writeReq({ attributeHandle, attributeValue });
   }
 
-  private getCCCDescriptorHandle(char: GattCharacteristic.AsObject): number | null {
+  private getCCCDescriptorHandle(char: GattCharacteristicAsObject): number | null {
     return (
       this.directory.findDescriptor(char.handle, GattProfileAttributeType.ClientCharacteristicConfiguration)?.handle ??
       null

@@ -12,6 +12,7 @@
       "url": "https://github.com/rosek86"
     }
   ],
+  "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

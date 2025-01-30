@@ -2,18 +2,15 @@ import { UUID } from "../utils/UUID.ts";
 
 import { type AttDataEntry } from "./AttGlue.ts";
 
-/* eslint-disable @typescript-eslint/no-namespace */
-export namespace GattDescriptor {
-  export interface AsObject {
-    handle: number;
-    endingHandle: number;
-    uuid: string;
-    uuid16?: number;
-    uuidInfo?: {
-      for: string;
-      type: string;
-    };
-  }
+export interface GattDescriptorAsObject {
+  handle: number;
+  endingHandle: number;
+  uuid: string;
+  uuid16?: number;
+  uuidInfo?: {
+    for: string;
+    type: string;
+  };
 }
 
 export class GattDescriptor {
@@ -51,7 +48,7 @@ export class GattDescriptor {
     this.uuid16 = data.value.length === 2 ? data.value.readUInt16LE(0) : undefined;
   }
 
-  public toObject(): GattDescriptor.AsObject {
+  public toObject(): GattDescriptorAsObject {
     return {
       handle: this.Handle,
       endingHandle: this.EndingHandle,
