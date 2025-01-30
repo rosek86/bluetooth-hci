@@ -1,3 +1,5 @@
+import { ObjectReverse } from "../utils/Utils.ts";
+
 // HCI Command Errors  [Ver5.2 | Vol1, Part F, 1.3]
 // prettier-ignore
 export const HciErrorErrno = Object.freeze({
@@ -78,8 +80,10 @@ export const HciErrorErrno = Object.freeze({
 
 export type HciErrorErrno = (typeof HciErrorErrno)[keyof typeof HciErrorErrno];
 
+export const HciErrorErrnoToName = ObjectReverse(HciErrorErrno);
+
 export function isHciErrorErrno(code: number): code is HciErrorErrno {
-  return code in HciErrorErrno;
+  return code in HciErrorErrnoToName;
 }
 
 export function numberToHciErrorErrno(code: number): HciErrorErrno {
@@ -90,8 +94,7 @@ export function numberToHciErrorErrno(code: number): HciErrorErrno {
 }
 
 export function HciErrorErrnoGetName(code: HciErrorErrno): string {
-  const entry = Object.entries(HciErrorErrno).find(([, value]) => value === code)?.[0];
-  return entry ?? `Unknown(${code})`;
+  return HciErrorErrnoToName[code] ?? `Unknown(${code})`;
 }
 
 export const HciDisconnectReason = Object.freeze({

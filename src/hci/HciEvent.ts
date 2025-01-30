@@ -1,9 +1,10 @@
 import Debug from "debug";
 
 import { Address } from "../utils/Address.ts";
+import { ObjectReverse } from "../utils/Utils.ts";
 
 import { HciErrorErrno, numberToHciErrorErrno } from "./HciError.ts";
-import { LeSupportedFeatures } from "./HciLeController.ts";
+import { LePhy, LeSupportedFeatures, numberToLePhy } from "./HciLeController.ts";
 
 const debug = Debug("bt-hci-hci-event");
 
@@ -220,7 +221,7 @@ export const HciLeEvent = Object.freeze({
   DirectedAdvertisingReport:                            0x0B, // * LE Directed Advertising Report
   PhyUpdateComplete:                                    0x0C, // * LE PHY Update Complete
   ExtendedAdvertisingReport:                            0x0D, // * LE Extended Advertising Report
-  PeriodicAdvertisingSyncEstablishedV1:                 0x0E, //   LE Periodic Advertising Sync Established V1
+  PeriodicAdvertisingSyncEstablishedV1:                 0x0E, // * LE Periodic Advertising Sync Established V1
   PeriodicAdvertisingReportV1:                          0x0F, //   LE Periodic Advertising Report V1
   PeriodicAdvertisingSyncLost:                          0x10, //   LE Periodic Advertising Sync Lost
   ScanTimeout:                                          0x11, // * LE Scan Timeout
@@ -250,17 +251,30 @@ export const HciLeEvent = Object.freeze({
   EnhancedConnectionCompleteV2:                         0x29, //   LE Enhanced Connection Complete V2
   CisEstablishedV2:                                     0x2A, //   LE CIS Established V2
   RreadAllRemoteFeaturesComplete:                       0x2B, //   LE Read All Remote Features Complete
-  CSReadRemoteSupportedCapabilitiesComplete:            0x2C, //   LE CS Read Remote Supported Capabilities Complete
-  CSReadRemoteFAETableComplete:                         0x2D, //   LE CS Read Remote FAE Table Complete
-  CSSecurityEnableComplete:                             0x2E, //   LE CS Security Enable Complete
-  CSConfigComplete:                                     0x2F, //   LE CS Config Complete
-  CSProcedureEnableComplete:                            0x30, //   LE CS Procedure Enable Complete
-  CSSubeventResult:                                     0x31, //   LE CS Subevent Result
-  CSSubeventResultContinue:                             0x32, //   LE CS Subevent Result Continue
-  CSTestEndComplete:                                    0x33, //   LE CS Test End Complete
+  CsReadRemoteSupportedCapabilitiesComplete:            0x2C, //   LE CS Read Remote Supported Capabilities Complete
+  CsReadRemoteFAETableComplete:                         0x2D, //   LE CS Read Remote FAE Table Complete
+  CsSecurityEnableComplete:                             0x2E, //   LE CS Security Enable Complete
+  CsConfigComplete:                                     0x2F, //   LE CS Config Complete
+  CsProcedureEnableComplete:                            0x30, //   LE CS Procedure Enable Complete
+  CsSubeventResult:                                     0x31, //   LE CS Subevent Result
+  CsSubeventResultContinue:                             0x32, //   LE CS Subevent Result Continue
+  CsTestEndComplete:                                    0x33, //   LE CS Test End Complete
   MonitoredAdvertisersReport:                           0x34, //   LE Monitored Advertisers Report
   FrameSpaceUpdateComplete:                             0x35, //   LE Frame Space Update Complete
 } as const);
+
+export type HciLeEvent = (typeof HciLeEvent)[keyof typeof HciLeEvent];
+
+export function isHciLeEvent(value: number): value is HciLeEvent {
+  return value in HciLeEvent;
+}
+
+export function numberToHciLeEvent(value: number): HciLeEvent {
+  if (!isHciLeEvent(value)) {
+    throw new Error(`Invalid HciLeEvent value: ${value}`);
+  }
+  return value;
+}
 
 export const LeExtAdvEventTypeDataStatus = Object.freeze({
   Complete: 0,
@@ -408,8 +422,10 @@ export const LeAdvReportAddrType = Object.freeze({
 
 export type LeAdvReportAddrType = (typeof LeAdvReportAddrType)[keyof typeof LeAdvReportAddrType];
 
+export const LeAdvReportAddrTypeToName = ObjectReverse(LeAdvReportAddrType);
+
 export function isLeAdvReportAddrType(value: number): value is LeAdvReportAddrType {
-  return value in LeAdvReportAddrType;
+  return value in LeAdvReportAddrTypeToName;
 }
 
 export function numberToLeAdvReportAddrType(value: number): LeAdvReportAddrType {
@@ -535,6 +551,80 @@ export class LeExtAdvReport {
     }
 
     return reports;
+  }
+}
+
+export const LeAdvertiserClockAccuracy = Object.freeze({
+  ppm500: 0x00,
+  ppm250: 0x01,
+  ppm150: 0x02,
+  ppm100: 0x03,
+  ppm75: 0x04,
+  ppm50: 0x05,
+  ppm30: 0x06,
+  ppm20: 0x07,
+} as const);
+
+export type LeAdvertiserClockAccuracy = (typeof LeAdvertiserClockAccuracy)[keyof typeof LeAdvertiserClockAccuracy];
+
+export const LeAdvertiserClockAccuracyToName = ObjectReverse(LeAdvertiserClockAccuracy);
+
+export function isLeAdvertiserClockAccuracy(value: number): value is LeAdvertiserClockAccuracy {
+  return value in LeAdvertiserClockAccuracyToName;
+}
+
+export function numberToLeAdvertiserClockAccuracy(value: number): LeAdvertiserClockAccuracy {
+  if (!isLeAdvertiserClockAccuracy(value)) {
+    throw new Error(`Invalid LeAdvertiserClockAccuracy value: ${value}`);
+  }
+  return value;
+}
+
+export interface LePeriodicAdvertisingSyncEstablishedV1 {
+  syncHandle: number;
+  advertisingSid: number;
+  advertiserAddress: Address;
+  advertiserPhy: LePhy;
+  periodicAdvertisingIntervalMs: number;
+  advertiserClockAccuracy: LeAdvertiserClockAccuracy;
+}
+
+export class LePeriodicAdvertisingSyncEstablishedV1 {
+  static parse(data: Buffer): { error: HciErrorErrno } | LePeriodicAdvertisingSyncEstablishedV1 {
+    // Status 1
+    // Sync_Handle 2
+    // Advertising_SID 1
+    // Advertiser_Address_Type 1
+    // Advertiser_Address 6
+    // Advertiser_PHY 1
+    // Periodic_Advertising_Interval 2
+    // Advertiser_Clock_Accuracy 1
+
+    const status = numberToHciErrorErrno(data.readUInt8(0));
+    if (status !== HciErrorErrno.Success) {
+      return { error: status };
+    }
+
+    if (data.length !== 15) {
+      throw new Error(`LePeriodicAdvertisingSyncEstablishedV1: invalid size ${data.length}`);
+    }
+
+    const syncHandle = data.readUInt16LE(1);
+    const advertisingSid = data.readUInt8(3);
+    const advertiserAddressType = numberToLeAdvReportAddrType(data.readUInt8(4));
+    const advertiserAddress = data.readUIntLE(5, 6);
+    const advertiserPhy = numberToLePhy(data.readUInt8(11));
+    const periodicAdvertisingIntervalMs = data.readUInt16LE(12) * 1.25;
+    const advertiserClockAccuracy = numberToLeAdvertiserClockAccuracy(data.readUInt8(14));
+
+    return {
+      syncHandle,
+      advertisingSid,
+      advertiserAddress: Address.from(advertiserAddress, advertiserAddressType),
+      advertiserPhy,
+      periodicAdvertisingIntervalMs,
+      advertiserClockAccuracy,
+    };
   }
 }
 

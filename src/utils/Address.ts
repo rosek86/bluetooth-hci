@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { LePeerAddressType } from "../hci/HciLeController.ts";
+import { ObjectReverse } from "./Utils.ts";
 
 // prettier-ignore
 export const AddressType = Object.freeze({
@@ -12,6 +13,8 @@ export const AddressType = Object.freeze({
 } as const);
 
 export type AddressType = (typeof AddressType)[keyof typeof AddressType];
+
+export const AddressTypeToName = ObjectReverse(AddressType);
 
 export class Address {
   private address: number;
@@ -26,7 +29,7 @@ export class Address {
   }
 
   static numberIsAddressType(num: number): num is AddressType {
-    return num in AddressType;
+    return num in AddressTypeToName;
   }
 
   static random(): Address {

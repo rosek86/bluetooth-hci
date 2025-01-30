@@ -24,7 +24,7 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "lint": "eslint .",
     "pretest": "npm run build",
-    "test": "node --test",
+    "test": "node --test test/*/*.test.ts test/*/*/*.test.ts",
     "prerelease": "rm -fr lib && npm run lint",
     "release": "tsc -p tsconfig.release.json",
     "format": "prettier --write .",

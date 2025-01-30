@@ -1,3 +1,9 @@
+export type Reverse<T extends Record<string, number>> = Readonly<{ readonly [K in keyof T as `${T[K]}`]: K }>;
+
+export function ObjectReverse<T extends Record<string, number>>(obj: T): Reverse<T> {
+  return Object.freeze(Object.fromEntries(Object.entries(obj).map(([key, value]) => [value, key]))) as Reverse<T>;
+}
+
 export function bitGet(field: bigint, bit: bigint): boolean;
 export function bitGet(field: number, bit: number): boolean;
 export function bitGet(field: unknown, bit: unknown): boolean {

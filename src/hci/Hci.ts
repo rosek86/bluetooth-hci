@@ -61,6 +61,7 @@ import {
   type LeGenerateDhKeyCompleteEvent,
   LeLongTermKeyRequest,
   type LeLongTermKeyRequestEvent,
+  LePeriodicAdvertisingSyncEstablishedV1,
   LePhyUpdateComplete,
   type LePhyUpdateCompleteEvent,
   LeReadLocalP256PublicKeyComplete,
@@ -75,6 +76,7 @@ import {
   type ReadRemoteVersionInformationCompleteEvent,
   numberToEncryptionEnabled,
   numberToHciEvent,
+  numberToHciLeEvent,
 } from "./HciEvent.ts";
 import {
   type BufferSize,
@@ -1191,14 +1193,10 @@ export class Hci extends EventEmitter {
   }
 
   private onLeEvent(data: Buffer): void {
-    const eventCode = numberToHciEvent(data[0]);
+    const subEventCode = numberToHciLeEvent(data[0]);
     const payload = data.subarray(1);
 
-    if (eventCode !== HciEvent.LeMeta) {
-      debug("on-hci-le-event", HciEventGetName(eventCode));
-    }
-
-    switch (eventCode) {
+    switch (subEventCode) {
       case HciLeEvent.ConnectionComplete:
         this.onLeConnectionComplete(payload);
         break;
@@ -1238,14 +1236,174 @@ export class Hci extends EventEmitter {
       case HciLeEvent.ExtendedAdvertisingReport:
         this.onLeExtendedAdvertisingReport(payload);
         break;
+      case HciLeEvent.PeriodicAdvertisingSyncEstablishedV1:
+        this.onLePeriodicAdvertisingSyncEstablishedV1(payload);
+        break;
+      case HciLeEvent.PeriodicAdvertisingReportV1:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingReportV1");
+        break;
+      case HciLeEvent.PeriodicAdvertisingSyncLost:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingSyncLost");
+        break;
       case HciLeEvent.ScanTimeout:
         this.onLeScanTimeout();
         break;
       case HciLeEvent.AdvertisingSetTerminated:
         this.onLeAdvertisingSetTerminated(payload);
         break;
+      case HciLeEvent.ScanRequestReceived:
+        // TODO: implement
+        debug("on-le-event: ScanRequestReceived");
+        break;
       case HciLeEvent.ChannelSelectionAlgorithm:
         this.onLeChannelSelectionAlgorithm(payload);
+        break;
+      case HciLeEvent.ConnectionlessIqReport:
+        // TODO: implement
+        debug("on-le-event: ConnectionlessIqReport");
+        break;
+      case HciLeEvent.ConnectionIqReport:
+        // TODO: implement
+        debug("on-le-event: ConnectionIqReport");
+        break;
+      case HciLeEvent.CteRequestFailed:
+        // TODO: implement
+        debug("on-le-event: CteRequestFailed");
+        break;
+      case HciLeEvent.PeriodicAdvertisingSyncTransferReceivedV1:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingSyncTransferReceivedV1");
+        break;
+      case HciLeEvent.CisEstablishedV1:
+        // TODO: implement
+        debug("on-le-event: CisEstablishedV1");
+        break;
+      case HciLeEvent.CisRequest:
+        // TODO: implement
+        debug("on-le-event: CisRequest");
+        break;
+      case HciLeEvent.CreateBigComplete:
+        // TODO: implement
+        debug("on-le-event: CreateBigComplete");
+        break;
+      case HciLeEvent.TerminateBigComplete:
+        // TODO: implement
+        debug("on-le-event: TerminateBigComplete");
+        break;
+      case HciLeEvent.BigSyncEstablished:
+        // TODO: implement
+        debug("on-le-event: BigSyncEstablished");
+        break;
+      case HciLeEvent.BigSyncLost:
+        // TODO: implement
+        debug("on-le-event: BigSyncLost");
+        break;
+      case HciLeEvent.RequestPeerScaComplete:
+        // TODO: implement
+        debug("on-le-event: RequestPeerScaComplete");
+        break;
+      case HciLeEvent.PathLossThreshold:
+        // TODO: implement
+        debug("on-le-event: PathLossThreshold");
+        break;
+      case HciLeEvent.TransmitPowerReporting:
+        // TODO: implement
+        debug("on-le-event: TransmitPowerReporting");
+        break;
+      case HciLeEvent.BigInfoAdvertisingReport:
+        // TODO: implement
+        debug("on-le-event: BigInfoAdvertisingReport");
+        break;
+      case HciLeEvent.SubrateChange:
+        // TODO: implement
+        debug("on-le-event: SubrateChange");
+        break;
+      case HciLeEvent.PeriodicAdvertisingSyncEstablishedV2:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingSyncEstablishedV2");
+        // Subevent_Code,
+        // Status,
+        // Sync_Handle,
+        // Advertising_SID,
+        // Advertiser_Address_Type,
+        // Advertiser_Address,
+        // Advertiser_PHY,
+        // Periodic_Advertising_Interval,
+        // Advertiser_Clock_Accuracy,
+        // Num_Subevents,
+        // Subevent_Interval,
+        // Response_Slot_Delay,
+        // Response_Slot_Spacing
+        break;
+      case HciLeEvent.PeriodicAdvertisingReportV2:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingReportV2");
+        break;
+      case HciLeEvent.PeriodicAdvertisingSyncTransferReceivedV2:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingSyncTransferReceivedV2");
+        break;
+      case HciLeEvent.PeriodicAdvertisingSubeventDataRequest:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingSubeventDataRequest");
+        break;
+      case HciLeEvent.PeriodicAdvertisingResponseReport:
+        // TODO: implement
+        debug("on-le-event: PeriodicAdvertisingResponseReport");
+        break;
+      case HciLeEvent.EnhancedConnectionCompleteV2:
+        // TODO: implement
+        debug("on-le-event: EnhancedConnectionCompleteV2");
+        break;
+      case HciLeEvent.CisEstablishedV2:
+        // TODO: implement
+        debug("on-le-event: CisEstablishedV2");
+        break;
+      case HciLeEvent.RreadAllRemoteFeaturesComplete:
+        // TODO: implement
+        debug("on-le-event: RreadAllRemoteFeaturesComplete");
+        break;
+      case HciLeEvent.CsReadRemoteSupportedCapabilitiesComplete:
+        // TODO: implement
+        debug("on-le-event: CsReadRemoteSupportedCapabilitiesComplete");
+        break;
+      case HciLeEvent.CsReadRemoteFAETableComplete:
+        // TODO: implement
+        debug("on-le-event: CsReadRemoteFAETableComplete");
+        break;
+      case HciLeEvent.CsSecurityEnableComplete:
+        // TODO: implement
+        debug("on-le-event: CsSecurityEnableComplete");
+        break;
+      case HciLeEvent.CsConfigComplete:
+        // TODO: implement
+        debug("on-le-event: CsConfigComplete");
+        break;
+      case HciLeEvent.CsProcedureEnableComplete:
+        // TODO: implement
+        debug("on-le-event: CsProcedureEnableComplete");
+        break;
+      case HciLeEvent.CsSubeventResult:
+        // TODO: implement
+        debug("on-le-event: CsSubeventResult");
+        break;
+      case HciLeEvent.CsSubeventResultContinue:
+        // TODO: implement
+        debug("on-le-event: CsSubeventResultContinue");
+        break;
+      case HciLeEvent.CsTestEndComplete:
+        // TODO: implement
+        debug("on-le-event: CsTestEndComplete");
+        break;
+      case HciLeEvent.MonitoredAdvertisersReport:
+        // TODO: implement
+        debug("on-le-event: MonitoredAdvertisersReport");
+        break;
+      case HciLeEvent.FrameSpaceUpdateComplete:
+        // TODO: implement
+        debug("on-le-event: FrameSpaceUpdateComplete");
         break;
       default:
         debug("on-le-event: unknown event");
@@ -1325,6 +1483,20 @@ export class Hci extends EventEmitter {
     for (const report of reports) {
       this.emit("LeExtendedAdvertisingReport", report);
     }
+  }
+
+  private onLePeriodicAdvertisingSyncEstablishedV1(data: Buffer): void {
+    const event = LePeriodicAdvertisingSyncEstablishedV1.parse(data);
+
+    if ("error" in event && event.error !== HciErrorErrno.Success) {
+      this.emit(
+        "PeriodicAdvertisingSyncEstablishedV1",
+        makeHciError("Failed to establish periodic advertising sync", event.error),
+      );
+      return;
+    }
+
+    this.emit("PeriodicAdvertisingSyncEstablishedV1", null, event);
   }
 
   private onLeScanTimeout(): void {

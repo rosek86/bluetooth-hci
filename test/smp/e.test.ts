@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { EventEmitter } from "node:stream";
+import { EventEmitter } from "node:events";
 import { describe, it } from "node:test";
 
 import { AesCmac } from "aes-cmac";
