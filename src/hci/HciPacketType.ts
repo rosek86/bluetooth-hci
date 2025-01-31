@@ -1,4 +1,5 @@
 // [Core: 4.5 Packet Type]
+import { ObjectReverse } from "../utils/Utils.ts";
 
 // prettier-ignore
 export const HciPacketType = Object.freeze({
@@ -14,8 +15,10 @@ export const HciPacketType = Object.freeze({
 
 export type HciPacketType = (typeof HciPacketType)[keyof typeof HciPacketType];
 
+export const HciPacketTypeToName = ObjectReverse(HciPacketType);
+
 export function isHciPacketType(type: number): type is HciPacketType {
-  return type in HciPacketType;
+  return type in HciPacketTypeToName;
 }
 
 export function numberToHciPacketType(type: number): HciPacketType {

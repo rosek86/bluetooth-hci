@@ -91,8 +91,10 @@ export const HciEvent = Object.freeze({
 
 export type HciEvent = (typeof HciEvent)[keyof typeof HciEvent];
 
+export const HciEventToName = ObjectReverse(HciEvent);
+
 export function isHciEvent(value: number): value is HciEvent {
-  return value in HciEvent;
+  return value in HciEventToName;
 }
 
 export function numberToHciEvent(value: number): HciEvent {
@@ -103,8 +105,7 @@ export function numberToHciEvent(value: number): HciEvent {
 }
 
 export function HciEventGetName(event: HciEvent): string {
-  const entry = Object.entries(HciEvent).find(([, value]) => value === event)?.[0];
-  return entry ?? `Unknown(${event})`;
+  return HciEventToName[event] ?? `Unknown(${event})`;
 }
 
 export interface ConnEvent {
@@ -124,8 +125,12 @@ export const EncryptionEnabled = Object.freeze({
   OnBrEdrAesCcm: 2,
 } as const);
 
+export type EncryptionEnabled = (typeof EncryptionEnabled)[keyof typeof EncryptionEnabled];
+
+export const EncryptionEnabledToName = ObjectReverse(EncryptionEnabled);
+
 export function isEncryptionEnabled(value: number): value is EncryptionEnabled {
-  return value in EncryptionEnabled;
+  return value in EncryptionEnabledToName;
 }
 
 export function numberToEncryptionEnabled(value: number): EncryptionEnabled {
@@ -134,8 +139,6 @@ export function numberToEncryptionEnabled(value: number): EncryptionEnabled {
   }
   return value;
 }
-
-export type EncryptionEnabled = (typeof EncryptionEnabled)[keyof typeof EncryptionEnabled];
 
 export interface EncryptionChangeEvent extends ConnEvent {
   encEnabled: EncryptionEnabled;
@@ -265,8 +268,10 @@ export const HciLeEvent = Object.freeze({
 
 export type HciLeEvent = (typeof HciLeEvent)[keyof typeof HciLeEvent];
 
+export const HciLeEventToName = ObjectReverse(HciLeEvent);
+
 export function isHciLeEvent(value: number): value is HciLeEvent {
-  return value in HciLeEvent;
+  return value in HciLeEventToName;
 }
 
 export function numberToHciLeEvent(value: number): HciLeEvent {
@@ -286,8 +291,10 @@ export const LeExtAdvEventTypeDataStatus = Object.freeze({
 export type LeExtAdvEventTypeDataStatus =
   (typeof LeExtAdvEventTypeDataStatus)[keyof typeof LeExtAdvEventTypeDataStatus];
 
+export const LeExtAdvEventTypeDataStatusToName = ObjectReverse(LeExtAdvEventTypeDataStatus);
+
 export function isLeExtAdvEventTypeDataStatus(value: number): value is LeExtAdvEventTypeDataStatus {
-  return value in LeExtAdvEventTypeDataStatus;
+  return value in LeExtAdvEventTypeDataStatusToName;
 }
 
 export function numberToLeExtAdvEventTypeDataStatus(value: number): LeExtAdvEventTypeDataStatus {
@@ -339,8 +346,10 @@ export const LeExtAdvReportAddrType = Object.freeze({
 
 export type LeExtAdvReportAddrType = (typeof LeExtAdvReportAddrType)[keyof typeof LeExtAdvReportAddrType];
 
+export const LeExtAdvReportAddrTypeToName = ObjectReverse(LeExtAdvReportAddrType);
+
 export function isLeExtAdvReportAddrType(value: number): value is LeExtAdvReportAddrType {
-  return value in LeExtAdvReportAddrType;
+  return value in LeExtAdvReportAddrTypeToName;
 }
 
 export function numberToLeExtAdvReportAddrType(value: number): LeExtAdvReportAddrType {
@@ -358,8 +367,10 @@ export const LePrimaryAdvertiserPhy = Object.freeze({
 
 export type LePrimaryAdvertiserPhy = (typeof LePrimaryAdvertiserPhy)[keyof typeof LePrimaryAdvertiserPhy];
 
+export const LePrimaryAdvertiserPhyToName = ObjectReverse(LePrimaryAdvertiserPhy);
+
 export function isLePrimaryAdvertiserPhy(value: number): value is LePrimaryAdvertiserPhy {
-  return value in LePrimaryAdvertiserPhy;
+  return value in LePrimaryAdvertiserPhyToName;
 }
 
 export function numberToLePrimaryAdvertiserPhy(value: number): LePrimaryAdvertiserPhy {
@@ -379,8 +390,10 @@ export const LeSecondaryAdvertiserPhy = Object.freeze({
 
 export type LeSecondaryAdvertiserPhy = (typeof LeSecondaryAdvertiserPhy)[keyof typeof LeSecondaryAdvertiserPhy];
 
+export const LeSecondaryAdvertiserPhyToName = ObjectReverse(LeSecondaryAdvertiserPhy);
+
 export function isLeSecondaryAdvertiserPhy(value: number): value is LeSecondaryAdvertiserPhy {
-  return value in LeSecondaryAdvertiserPhy;
+  return value in LeSecondaryAdvertiserPhyToName;
 }
 
 export function numberToLeSecondaryAdvertiserPhy(value: number): LeSecondaryAdvertiserPhy {
@@ -401,8 +414,10 @@ export const LeAdvEventType = Object.freeze({
 
 export type LeAdvEventType = (typeof LeAdvEventType)[keyof typeof LeAdvEventType];
 
+export const LeAdvEventTypeToName = ObjectReverse(LeAdvEventType);
+
 export function isLeAdvEventType(value: number): value is LeAdvEventType {
-  return value in LeAdvEventType;
+  return value in LeAdvEventTypeToName;
 }
 
 export function numberToLeAdvEventType(value: number): LeAdvEventType {
@@ -637,8 +652,10 @@ export const LeConnPeerAddressType = Object.freeze({
 
 export type LeConnPeerAddressType = (typeof LeConnPeerAddressType)[keyof typeof LeConnPeerAddressType];
 
+export const LeConnPeerAddressTypeToName = ObjectReverse(LeConnPeerAddressType);
+
 export function isLeConnPeerAddressType(value: number): value is LeConnPeerAddressType {
-  return value in LeConnPeerAddressType;
+  return value in LeConnPeerAddressTypeToName;
 }
 
 export function numberToLeConnPeerAddressType(value: number): LeConnPeerAddressType {
@@ -661,8 +678,10 @@ export const LeMasterClockAccuracy = Object.freeze({
 
 export type LeMasterClockAccuracy = (typeof LeMasterClockAccuracy)[keyof typeof LeMasterClockAccuracy];
 
+export const LeMasterClockAccuracyToName = ObjectReverse(LeMasterClockAccuracy);
+
 export function isLeMasterClockAccuracy(value: number): value is LeMasterClockAccuracy {
-  return value in LeMasterClockAccuracy;
+  return value in LeMasterClockAccuracyToName;
 }
 
 export function numberToLeMasterClockAccuracy(value: number): LeMasterClockAccuracy {
@@ -679,8 +698,10 @@ export const LeConnectionRole = Object.freeze({
 
 export type LeConnectionRole = (typeof LeConnectionRole)[keyof typeof LeConnectionRole];
 
+export const LeConnectionRoleToName = ObjectReverse(LeConnectionRole);
+
 export function isLeConnectionRole(value: number): value is LeConnectionRole {
-  return value in LeConnectionRole;
+  return value in LeConnectionRoleToName;
 }
 
 export function numberToLeConnectionRole(value: number): LeConnectionRole {
@@ -1020,8 +1041,10 @@ export const LeDirectedAdvEventType = Object.freeze({
 
 export type LeDirectedAdvEventType = (typeof LeDirectedAdvEventType)[keyof typeof LeDirectedAdvEventType];
 
+export const LeDirectedAdvEventTypeToName = ObjectReverse(LeDirectedAdvEventType);
+
 export function isLeDirectedAdvEventType(value: number): value is LeDirectedAdvEventType {
-  return value in LeDirectedAdvEventType;
+  return value in LeDirectedAdvEventTypeToName;
 }
 
 export function numberToLeDirectedAdvEventType(value: number): LeDirectedAdvEventType {
@@ -1038,8 +1061,10 @@ export const LeDirectedAdvReportAddrType = Object.freeze({
 export type LeDirectedAdvReportAddrType =
   (typeof LeDirectedAdvReportAddrType)[keyof typeof LeDirectedAdvReportAddrType];
 
+export const LeDirectedAdvReportAddrTypeToName = ObjectReverse(LeDirectedAdvReportAddrType);
+
 export function isLeDirectedAdvReportAddrType(value: number): value is LeDirectedAdvReportAddrType {
-  return value in LeDirectedAdvReportAddrType;
+  return value in LeDirectedAdvReportAddrTypeToName;
 }
 
 export function numberToLeDirectedAdvReportAddrType(value: number): LeDirectedAdvReportAddrType {

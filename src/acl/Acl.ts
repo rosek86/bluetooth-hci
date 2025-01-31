@@ -1,3 +1,5 @@
+import { ObjectReverse } from "../utils/Utils.ts";
+
 export const AclDataBoundary = Object.freeze({
   FirstNoFlushFrag: 0,
   NextFrag: 1,
@@ -7,8 +9,10 @@ export const AclDataBoundary = Object.freeze({
 
 export type AclDataBoundary = (typeof AclDataBoundary)[keyof typeof AclDataBoundary];
 
+export const AclDataBoundaryToName = ObjectReverse(AclDataBoundary);
+
 export function isAclDataBoundary(value: number): value is AclDataBoundary {
-  return value in AclDataBoundary;
+  return value in AclDataBoundaryToName;
 }
 
 export function numberToAclDataBoundary(value: number): AclDataBoundary {
@@ -25,8 +29,10 @@ export const AclDataBroadcast = Object.freeze({
 
 export type AclDataBroadcast = (typeof AclDataBroadcast)[keyof typeof AclDataBroadcast];
 
+export const AclDataBroadcastToName = ObjectReverse(AclDataBroadcast);
+
 export function isAclDataBroadcast(value: number): value is AclDataBroadcast {
-  return value in AclDataBroadcast;
+  return value in AclDataBroadcastToName;
 }
 
 export function numberToAclDataBroadcast(value: number): AclDataBroadcast {

@@ -1,3 +1,5 @@
+import { ObjectReverse } from "../utils/Utils.ts";
+
 // prettier-ignore
 export const AttOpcode = Object.freeze({
   ErrorRsp:                 0x01, // * Request Opcode in Error, Attribute Handle In Error, Error Code
@@ -35,8 +37,10 @@ export const AttOpcode = Object.freeze({
 
 export type AttOpcode = (typeof AttOpcode)[keyof typeof AttOpcode];
 
+export const AttOpcodeToName = ObjectReverse(AttOpcode);
+
 export function isAttOpcode(value: number): value is AttOpcode {
-  return value in AttOpcode;
+  return value in AttOpcodeToName;
 }
 
 export function numberToAttOpcode(value: number): AttOpcode {
@@ -47,6 +51,5 @@ export function numberToAttOpcode(value: number): AttOpcode {
 }
 
 export function AttOpcodeGetName(opcode: AttOpcode): string {
-  const entry = Object.entries(AttOpcode).find(([, value]) => value === opcode)?.[0];
-  return entry ?? `Unknown(${opcode})`;
+  return AttOpcodeToName[opcode] ?? `Unknown(${opcode})`;
 }

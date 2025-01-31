@@ -5,6 +5,7 @@ import { AesCmac } from "aes-cmac";
 
 import { L2capChannelId } from "../l2cap/L2capChannelId.ts";
 import { Uint8ArrayUtils } from "../utils/Uint8Array.ts";
+import { ObjectReverse } from "../utils/Utils.ts";
 
 export const SmpCommand = Object.freeze({
   PairingRequest: 0x01,
@@ -35,8 +36,10 @@ export const SmpIoCapability = Object.freeze({
 
 export type SmpIoCapability = (typeof SmpIoCapability)[keyof typeof SmpIoCapability];
 
+export const SmpIoCapabilityToName = ObjectReverse(SmpIoCapability);
+
 export function isSmpIoCapability(value: number): value is SmpIoCapability {
-  return value in SmpIoCapability;
+  return value in SmpIoCapabilityToName;
 }
 
 export function numberToSmpIoCapability(value: number): SmpIoCapability {
@@ -53,8 +56,10 @@ export const SmpAuthReqBondingFlags = Object.freeze({
 
 export type SmpAuthReqBondingFlags = (typeof SmpAuthReqBondingFlags)[keyof typeof SmpAuthReqBondingFlags];
 
+export const SmpAuthReqBondingFlagsToName = ObjectReverse(SmpAuthReqBondingFlags);
+
 export function isSmpAuthReqBondingFlags(value: number): value is SmpAuthReqBondingFlags {
-  return value in SmpAuthReqBondingFlags;
+  return value in SmpAuthReqBondingFlagsToName;
 }
 
 export function numberToSmpAuthReqBondingFlags(value: number): SmpAuthReqBondingFlags {
@@ -84,8 +89,10 @@ export const SmpPairingFailedReason = Object.freeze({
 
 export type SmpPairingFailedReason = (typeof SmpPairingFailedReason)[keyof typeof SmpPairingFailedReason];
 
+export const SmpPairingFailedReasonToName = ObjectReverse(SmpPairingFailedReason);
+
 export function isSmpPairingFailedReason(value: number): value is SmpPairingFailedReason {
-  return value in SmpPairingFailedReason;
+  return value in SmpPairingFailedReasonToName;
 }
 
 export function numberToSmpPairingFailedReason(value: number): SmpPairingFailedReason {
@@ -105,8 +112,10 @@ export const SmpPasskeyNotificationType = Object.freeze({
 
 export type SmpPasskeyNotificationType = (typeof SmpPasskeyNotificationType)[keyof typeof SmpPasskeyNotificationType];
 
+export const SmpPasskeyNotificationTypeToName = ObjectReverse(SmpPasskeyNotificationType);
+
 export function isSmpPasskeyNotificationType(value: number): value is SmpPasskeyNotificationType {
-  return value in SmpPasskeyNotificationType;
+  return value in SmpPasskeyNotificationTypeToName;
 }
 
 export function numberToSmpPasskeyNotificationType(value: number): SmpPasskeyNotificationType {

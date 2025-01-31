@@ -1,5 +1,7 @@
 import Debug from "debug";
 
+import { ObjectReverse } from "../utils/Utils.ts";
+
 import { AttErrorCode } from "./AttError.ts";
 import { AttOpcode } from "./AttOpcode.ts";
 
@@ -794,8 +796,10 @@ export const AttExecuteWriteReqFlags = Object.freeze({
 
 export type AttExecuteWriteReqFlags = (typeof AttExecuteWriteReqFlags)[keyof typeof AttExecuteWriteReqFlags];
 
+export const AttExecuteWriteReqFlagsToName = ObjectReverse(AttExecuteWriteReqFlags);
+
 export function isAttExecuteWriteReqFlags(v: number): v is AttExecuteWriteReqFlags {
-  return Object.values(AttExecuteWriteReqFlags).includes(v as AttExecuteWriteReqFlags);
+  return v in AttExecuteWriteReqFlagsToName;
 }
 
 export function numberToAttExecuteWriteReqFlags(v: number): AttExecuteWriteReqFlags {

@@ -1,6 +1,7 @@
 // [Core Appendix B Removed commands and events]
 // [Core 5.4 Exchange of HCI-specific information]
 // [Core 7 HCI COMMANDS AND EVENTS]
+import { ObjectReverse } from "../utils/Utils.ts";
 
 // prettier-ignore
 export const HciOgf = Object.freeze({
@@ -19,9 +20,10 @@ export const HciOgf = Object.freeze({
 
 export type HciOgf = (typeof HciOgf)[keyof typeof HciOgf];
 
+export const HciOgfToName = ObjectReverse(HciOgf);
+
 export function HciOgfGetName(ogf: number): string {
-  const entry = Object.entries(HciOgf).find(([, value]) => value === ogf)?.[0];
-  return entry ?? `Unknown(${ogf})`;
+  return HciOgfToName[ogf as HciOgf] ?? `Unknown(${ogf})`;
 }
 
 // prettier-ignore
@@ -84,9 +86,10 @@ export const HciOcfLinkControlCommands = Object.freeze({
 
 export type HciOcfLinkControlCommands = (typeof HciOcfLinkControlCommands)[keyof typeof HciOcfLinkControlCommands];
 
+export const HciOcfLinkControlCommandsToName = ObjectReverse(HciOcfLinkControlCommands);
+
 export function HciOcfLinkControlCommandsGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfLinkControlCommands).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfLinkControlCommandsToName[ocf as HciOcfLinkControlCommands] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -109,9 +112,10 @@ export const HciOcfLinkPolicyCommands = Object.freeze({
 
 export type HciOcfLinkPolicyCommands = (typeof HciOcfLinkPolicyCommands)[keyof typeof HciOcfLinkPolicyCommands];
 
+export const HciOcfLinkPolicyCommandsToName = ObjectReverse(HciOcfLinkPolicyCommands);
+
 export function HciOcfLinkPolicyCommandsGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfLinkPolicyCommands).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfLinkPolicyCommandsToName[ocf as HciOcfLinkPolicyCommands] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -229,9 +233,10 @@ export const HciOcfControlAndBasebandCommands = Object.freeze({
 export type HciOcfControlAndBasebandCommands =
   (typeof HciOcfControlAndBasebandCommands)[keyof typeof HciOcfControlAndBasebandCommands];
 
+export const HciOcfControlAndBasebandCommandsToName = ObjectReverse(HciOcfControlAndBasebandCommands);
+
 export function HciOcfControlAndBasebandCommandsGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfControlAndBasebandCommands).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfControlAndBasebandCommandsToName[ocf as HciOcfControlAndBasebandCommands] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -254,9 +259,10 @@ export const HciOcfInformationParameters = Object.freeze({
 export type HciOcfInformationParameters =
   (typeof HciOcfInformationParameters)[keyof typeof HciOcfInformationParameters];
 
+export const HciOcfInformationParametersToName = ObjectReverse(HciOcfInformationParameters);
+
 export function HciOcfInformationParametersGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfInformationParameters).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfInformationParametersToName[ocf as HciOcfInformationParameters] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -277,9 +283,10 @@ export const HciOcfStatusParameters = Object.freeze({
 
 export type HciOcfStatusParameters = (typeof HciOcfStatusParameters)[keyof typeof HciOcfStatusParameters];
 
+export const HciOcfStatusParametersToName = ObjectReverse(HciOcfStatusParameters);
+
 export function HciOcfStatusParametersGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfStatusParameters).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfStatusParametersToName[ocf as HciOcfStatusParameters] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -296,9 +303,10 @@ export const HciOcfTestingCommands = Object.freeze({
 
 export type HciOcfTestingCommands = (typeof HciOcfTestingCommands)[keyof typeof HciOcfTestingCommands];
 
+export const HciOcfTestingCommandsToName = ObjectReverse(HciOcfTestingCommands);
+
 export function HciOcfTestingCommandsGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfTestingCommands).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfTestingCommandsToName[ocf as HciOcfTestingCommands] ?? `Unknown(${ocf})`;
 }
 
 // prettier-ignore
@@ -464,9 +472,10 @@ export const HciOcfLeControllerCommands = Object.freeze({
 
 export type HciOcfLeControllerCommands = (typeof HciOcfLeControllerCommands)[keyof typeof HciOcfLeControllerCommands];
 
+export const HciOcfLeControllerCommandsToName = ObjectReverse(HciOcfLeControllerCommands);
+
 export function HciOcfLeControllerCommandsGetName(ocf: number): string {
-  const entry = Object.entries(HciOcfLeControllerCommands).find(([, value]) => value === ocf)?.[0];
-  return entry ?? `Unknown(${ocf})`;
+  return HciOcfLeControllerCommandsToName[ocf as HciOcfLeControllerCommands] ?? `Unknown(${ocf})`;
 }
 
 export function ocfOgfToString(ocf: number, ogf: number) {

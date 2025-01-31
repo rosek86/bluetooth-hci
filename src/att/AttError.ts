@@ -32,7 +32,10 @@ export const AttErrorCode = Object.freeze({
 
 export type AttErrorCode = (typeof AttErrorCode)[keyof typeof AttErrorCode] | number;
 
-export function AttErrorCodeGetName(code: AttErrorCode): string {
-  const entry = Object.entries(AttErrorCode).find(([, value]) => value === code)?.[0];
-  return entry ?? `Unknown(${code})`;
+export const AttErrorCodeToName = Object.freeze(
+  Object.fromEntries(Object.entries(AttErrorCode).map(([key, value]) => [value, key])),
+);
+
+export function AttErrorCodeGetName(code: number): string {
+  return AttErrorCodeToName[code] ?? `Unknown(${code})`;
 }

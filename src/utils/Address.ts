@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { LePeerAddressType } from "../hci/HciLeController.ts";
+
 import { ObjectReverse } from "./Utils.ts";
 
 // prettier-ignore
