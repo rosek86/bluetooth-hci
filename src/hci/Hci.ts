@@ -247,6 +247,10 @@ export declare interface Hci {
   on(event: "LeDirectedAdvertisingReport", listener: (report: LeDirectedAdvertisingReportEvent) => void): this;
   on(event: "LeExtendedAdvertisingReport", listener: (report: LeExtAdvReport) => void): this;
   on(
+    event: "LePeriodicAdvertisingSyncEstablishedV1",
+    listener: (report: LePeriodicAdvertisingSyncEstablishedV1) => void,
+  ): this;
+  on(
     event: "LeAdvertisingSetTerminated",
     listener: (err: Error | null, event: LeAdvertisingSetTerminatedEvent) => void,
   ): this;
@@ -1487,16 +1491,7 @@ export class Hci extends EventEmitter {
 
   private onLePeriodicAdvertisingSyncEstablishedV1(data: Buffer): void {
     const event = LePeriodicAdvertisingSyncEstablishedV1.parse(data);
-
-    if ("error" in event && event.error !== HciErrorErrno.Success) {
-      this.emit(
-        "PeriodicAdvertisingSyncEstablishedV1",
-        makeHciError("Failed to establish periodic advertising sync", event.error),
-      );
-      return;
-    }
-
-    this.emit("PeriodicAdvertisingSyncEstablishedV1", null, event);
+    this.emit("LePeriodicAdvertisingSyncEstablishedV1", event);
   }
 
   private onLeScanTimeout(): void {

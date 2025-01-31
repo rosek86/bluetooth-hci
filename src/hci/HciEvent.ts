@@ -596,6 +596,7 @@ export function numberToLeAdvertiserClockAccuracy(value: number): LeAdvertiserCl
 }
 
 export interface LePeriodicAdvertisingSyncEstablishedV1 {
+  status: HciErrorErrno;
   syncHandle: number;
   advertisingSid: number;
   advertiserAddress: Address;
@@ -605,25 +606,12 @@ export interface LePeriodicAdvertisingSyncEstablishedV1 {
 }
 
 export class LePeriodicAdvertisingSyncEstablishedV1 {
-  static parse(data: Buffer): { error: HciErrorErrno } | LePeriodicAdvertisingSyncEstablishedV1 {
-    // Status 1
-    // Sync_Handle 2
-    // Advertising_SID 1
-    // Advertiser_Address_Type 1
-    // Advertiser_Address 6
-    // Advertiser_PHY 1
-    // Periodic_Advertising_Interval 2
-    // Advertiser_Clock_Accuracy 1
-
-    const status = numberToHciErrorErrno(data.readUInt8(0));
-    if (status !== HciErrorErrno.Success) {
-      return { error: status };
-    }
-
+  static parse(data: Buffer): LePeriodicAdvertisingSyncEstablishedV1 {
     if (data.length !== 15) {
       throw new Error(`LePeriodicAdvertisingSyncEstablishedV1: invalid size ${data.length}`);
     }
 
+    const status = numberToHciErrorErrno(data.readUInt8(0));
     const syncHandle = data.readUInt16LE(1);
     const advertisingSid = data.readUInt8(3);
     const advertiserAddressType = numberToLeAdvReportAddrType(data.readUInt8(4));
@@ -633,6 +621,7 @@ export class LePeriodicAdvertisingSyncEstablishedV1 {
     const advertiserClockAccuracy = numberToLeAdvertiserClockAccuracy(data.readUInt8(14));
 
     return {
+      status,
       syncHandle,
       advertisingSid,
       advertiserAddress: Address.from(advertiserAddress, advertiserAddressType),

@@ -27,10 +27,7 @@ describe("LePeriodicAdvertisingSyncEstablishedV1", () => {
 
     const result = LePeriodicAdvertisingSyncEstablishedV1.parse(buffer);
 
-    if ("error" in result) {
-      assert.fail(`unexpected error: ${result.error}`);
-    }
-
+    assert.strictEqual(result.status, 0x00);
     assert.strictEqual(result.syncHandle, 0x0001);
     assert.strictEqual(result.advertisingSid, 0x02);
     assert.strictEqual(result.advertiserAddress.toString(), Address.from(0x060504030201, 0x00).toString());
@@ -40,14 +37,26 @@ describe("LePeriodicAdvertisingSyncEstablishedV1", () => {
   });
 
   it("should parse a valid buffer with error status", () => {
-    const buffer = Buffer.from([0x01]); // Status: Unknown HCI Command
+    const buffer = Buffer.from([
+      0x01, // Status: Unknown HCI Command
+      0x01,
+      0x00, // Sync_Handle
+      0x02, // Advertising_SID
+      0x00, // Advertiser_Address_Type
+      0x01,
+      0x02,
+      0x03,
+      0x04,
+      0x05,
+      0x06, // Advertiser_Address
+      0x01, // Advertiser_PHY
+      0x20,
+      0x03, // Periodic_Advertising_Interval
+      0x01, // Advertiser_Clock_Accuracy
+    ]);
 
     const result = LePeriodicAdvertisingSyncEstablishedV1.parse(buffer);
-    if (!("error" in result)) {
-      assert.fail("expected error");
-    }
-
-    assert.strictEqual(result.error, HciErrorErrno.UnknownCommand);
+    assert.strictEqual(result.status, HciErrorErrno.UnknownCommand);
   });
 
   it("should throw an error for invalid buffer length", () => {

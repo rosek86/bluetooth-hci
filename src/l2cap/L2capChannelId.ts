@@ -1,4 +1,4 @@
-import { ObjectReverse } from "src/utils/Utils";
+import { ObjectReverse } from "../utils/Utils.ts";
 
 export const L2capChannelId = Object.freeze({
   NullId: 0x00,
