@@ -1,5 +1,5 @@
-import { type Profile } from "../gatt/GattDirectory.ts";
-import { Address } from "../utils/Address.ts";
+import type { Profile } from "../gatt/GattDirectory.ts";
+import type { Address } from "../utils/Address.ts";
 
 export interface GapProfileStorageEntry {
   address: string;

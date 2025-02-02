@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "target": "ES2023",
     "lib": ["ES2023"],
     "sourceMap": true,
@@ -27,7 +27,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    // "verbatimModuleSyntax": true, // only with "module": "ESNext"
+    "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "declaration": true,

@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "verbatimModuleSyntax": true,
-    "noEmit": true
-  }
-}

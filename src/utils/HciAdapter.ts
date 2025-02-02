@@ -33,7 +33,9 @@ export class HciAdapter extends EventEmitter {
     this.h4 = new H4();
 
     device.on("data", (data) => {
+      // console.log("data", data.toString("hex"));
       let result = this.h4.parse(data);
+      // console.log("result", result);
       do {
         if (result) {
           this.hci.onData(result.type, Buffer.from(result.packet));

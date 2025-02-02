@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 
 import { AesCmac } from "aes-cmac";
 
-import { L2capChannelId } from "../../src/index.ts";
+import type { L2capChannelId } from "../../src/index.ts";
 import { Smp } from "../../src/smp/Smp.ts";
 import { Uint8ArrayUtils } from "../../src/utils/Uint8Array.ts";
 

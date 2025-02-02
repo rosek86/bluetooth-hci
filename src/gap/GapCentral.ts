@@ -5,38 +5,38 @@ import chalk from "chalk";
 import Debug from "debug";
 
 import { Att } from "../att/Att.ts";
-import { Hci } from "../hci/Hci.ts";
+import type { Hci } from "../hci/Hci.ts";
 import { ReadTransmitPowerLevelType } from "../hci/HciControlAndBaseband.ts";
 import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.ts";
 import {
   type DisconnectionCompleteEvent,
   LeAdvEventType,
-  LeAdvReport,
+  type LeAdvReport,
   type LeChannelSelAlgoEvent,
   type LeConnectionCompleteEvent,
-  LeConnectionRole,
+  type LeConnectionRole,
   type LeConnectionUpdateCompleteEvent,
   type LeEnhConnectionCompleteEvent,
-  LeExtAdvReport,
-  LeMasterClockAccuracy,
+  type LeExtAdvReport,
+  type LeMasterClockAccuracy,
   type LeReadRemoteFeaturesCompleteEvent,
   type ReadRemoteVersionInformationCompleteEvent,
 } from "../hci/HciEvent.ts";
 import {
-  LeConnectionUpdate,
+  type LeConnectionUpdate,
   type LeExtendedCreateConnectionPhy,
-  LeExtendedCreateConnectionV1,
-  LeExtendedScanEnabled,
-  LeExtendedScanParameters,
+  type LeExtendedCreateConnectionV1,
+  type LeExtendedScanEnabled,
+  type LeExtendedScanParameters,
   LeInitiatorFilterPolicy,
   LeOwnAddressType,
   LeScanFilterDuplicates,
   LeScanType,
   LeScanningFilterPolicy,
-  LeSupportedFeatures,
+  type LeSupportedFeatures,
 } from "../hci/HciLeController.ts";
 import { L2CAP } from "../l2cap/L2CAP.ts";
-import { Address } from "../utils/Address.ts";
+import type { Address } from "../utils/Address.ts";
 
 import { AdvData } from "./AdvData.ts";
 

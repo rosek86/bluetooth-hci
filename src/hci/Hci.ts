@@ -4,20 +4,20 @@ import { EventEmitter } from "node:events";
 import Debug from "debug";
 
 import { type AclDataPacket, numberToAclDataBoundary, numberToAclDataBroadcast } from "../acl/Acl.ts";
-import { Address } from "../utils/Address.ts";
+import type { Address } from "../utils/Address.ts";
 
 import { HciCmd } from "./HciCmd.ts";
 import {
   type CompletedPackets,
   type EventMask,
   type EventMask2,
-  FlowControlEnable,
+  type FlowControlEnable,
   HostBufferSize,
   HostNumberOfCompletedPackets,
   ReadAuthenticatedPayloadTimeout,
   ReadLeHostSupport,
   ReadTransmitPowerLevel,
-  ReadTransmitPowerLevelType,
+  type ReadTransmitPowerLevelType,
   SetControllerToHostFlowControl,
   SetEventMask,
   SetEventMask2,
@@ -80,7 +80,7 @@ import {
 } from "./HciEvent.ts";
 import {
   type BufferSize,
-  LocalSupportedCommands,
+  type LocalSupportedCommands,
   type LocalSupportedFeatures,
   type LocalVersionInformation,
   ReadBdAddr,
@@ -151,7 +151,7 @@ import {
   LeSetScanParameters,
   LeSetTxRxPhy,
   LeSuggestedDefaultDataLength,
-  LeSupportedFeatures,
+  type LeSupportedFeatures,
   LeSupportedStates,
   LeTestEnd,
   LeTransmitPower,

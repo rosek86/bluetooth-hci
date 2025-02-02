@@ -1,7 +1,7 @@
 import { UUID } from "../utils/UUID.ts";
 import { bitGet } from "../utils/Utils.ts";
 
-import { type AttDataEntry } from "./AttGlue.ts";
+import type { AttDataEntry } from "./AttGlue.ts";
 
 const CharacteristicPropertiesBits = Object.freeze({
   // If set, permits broadcasts of the Characteristic Value using

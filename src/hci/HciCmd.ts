@@ -5,13 +5,13 @@ import Debug from "debug";
 import { HciErrorErrno, HciErrorErrnoGetName, HciParserErrorType } from "./HciError.ts";
 import { makeHciError, makeParserError } from "./HciError.ts";
 import {
-  HciOcfControlAndBasebandCommands,
-  HciOcfInformationParameters,
-  HciOcfLeControllerCommands,
-  HciOcfLinkControlCommands,
-  HciOcfLinkPolicyCommands,
-  HciOcfStatusParameters,
-  HciOcfTestingCommands,
+  type HciOcfControlAndBasebandCommands,
+  type HciOcfInformationParameters,
+  type HciOcfLeControllerCommands,
+  type HciOcfLinkControlCommands,
+  type HciOcfLinkPolicyCommands,
+  type HciOcfStatusParameters,
+  type HciOcfTestingCommands,
   HciOgf,
   ocfOgfToString,
 } from "./HciOgfOcf.ts";

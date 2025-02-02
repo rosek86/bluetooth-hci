@@ -1,4 +1,4 @@
-import { HciAdapter, LeDhKeyV2KeyType, createHciSerial } from "../src";
+import { HciAdapter, LeDhKeyV2KeyType, createHciSerial } from "../src/index.ts";
 
 (async () => {
   const adapter = new HciAdapter(await createHciSerial());

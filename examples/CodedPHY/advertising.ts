@@ -12,8 +12,8 @@ import {
   LePrimaryAdvertisingPhy,
   LeSecondaryAdvertisingPhy,
   createHciSerial,
-} from "../../src";
-import { ArgsParser } from "../utils/ArgsParser";
+} from "../../src/index.ts";
+import { ArgsParser } from "../utils/ArgsParser.ts";
 
 (async () => {
   try {

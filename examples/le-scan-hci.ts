@@ -1,4 +1,11 @@
-import { AdvData, HciAdapter, LeOwnAddressType, LeScanType, LeScanningFilterPolicy, createHciSerial } from "../src";
+import {
+  AdvData,
+  HciAdapter,
+  LeOwnAddressType,
+  LeScanType,
+  LeScanningFilterPolicy,
+  createHciSerial,
+} from "../src/index.ts";
 
 (async () => {
   try {

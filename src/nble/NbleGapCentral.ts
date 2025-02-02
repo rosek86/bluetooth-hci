@@ -13,12 +13,12 @@ import {
 } from "../gap/GapCentral.ts";
 import { GapProfileStorage } from "../gap/GapProfileStorage.ts";
 import { GattClient } from "../gatt/GattClient.ts";
-import { Hci } from "../hci/Hci.ts";
+import type { Hci } from "../hci/Hci.ts";
 import { HciError, HciErrorErrno } from "../hci/HciError.ts";
-import { type DisconnectionCompleteEvent } from "../hci/HciEvent.ts";
+import type { DisconnectionCompleteEvent } from "../hci/HciEvent.ts";
 import { LePhy } from "../hci/HciLeController.ts";
-import { Address } from "../utils/Address.ts";
-import { HciAdapter } from "../utils/HciAdapter.ts";
+import type { Address } from "../utils/Address.ts";
+import type { HciAdapter } from "../utils/HciAdapter.ts";
 import { printProfile } from "../utils/Profile.ts";
 
 const debug = Debug("NbleGapCentral");

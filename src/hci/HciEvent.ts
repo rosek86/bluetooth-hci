@@ -3,8 +3,8 @@ import Debug from "debug";
 import { Address } from "../utils/Address.ts";
 import { ObjectReverse } from "../utils/Utils.ts";
 
-import { HciErrorErrno, numberToHciErrorErrno } from "./HciError.ts";
-import { LePhy, LeSupportedFeatures, numberToLePhy } from "./HciLeController.ts";
+import { type HciErrorErrno, numberToHciErrorErrno } from "./HciError.ts";
+import { type LePhy, LeSupportedFeatures, numberToLePhy } from "./HciLeController.ts";
 
 const debug = Debug("bt-hci-hci-event");
 
@@ -224,7 +224,7 @@ export const HciLeEvent = Object.freeze({
   DirectedAdvertisingReport:                            0x0B, // * LE Directed Advertising Report
   PhyUpdateComplete:                                    0x0C, // * LE PHY Update Complete
   ExtendedAdvertisingReport:                            0x0D, // * LE Extended Advertising Report
-  PeriodicAdvertisingSyncEstablishedV1:                 0x0E, // * LE Periodic Advertising Sync Established V1
+  PeriodicAdvertisingSyncEstablishedV1:                 0x0E, // ^ LE Periodic Advertising Sync Established V1
   PeriodicAdvertisingReportV1:                          0x0F, //   LE Periodic Advertising Report V1
   PeriodicAdvertisingSyncLost:                          0x10, //   LE Periodic Advertising Sync Lost
   ScanTimeout:                                          0x11, // * LE Scan Timeout

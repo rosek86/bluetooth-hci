@@ -1,6 +1,6 @@
-import { type GattCharacteristicAsObject } from "./GattCharacteristic.ts";
-import { type GattDescriptorAsObject } from "./GattDescriptor.ts";
-import { type GattServiceAsObject } from "./GattService.ts";
+import type { GattCharacteristicAsObject } from "./GattCharacteristic.ts";
+import type { GattDescriptorAsObject } from "./GattDescriptor.ts";
+import type { GattServiceAsObject } from "./GattService.ts";
 
 // General concept:
 // - GattDirectory is a tree of services, characteristics and descriptors

@@ -1,8 +1,8 @@
-import { type AutoDetectTypes } from "@serialport/bindings-cpp";
+import type { AutoDetectTypes } from "@serialport/bindings-cpp";
 import Debug from "debug";
 import { SerialPort, type SerialPortOpenOptions } from "serialport";
 
-import { type HciDevice } from "./HciAdapter.ts";
+import type { HciDevice } from "./HciAdapter.ts";
 
 // https://github.com/serialport/bindings-interface/pull/32
 // import { PortInfo } from '@serialport/bindings-interface';
@@ -24,7 +24,7 @@ export class SerialHciDevice implements HciDevice {
     options.stopBits = options.stopBits ?? 1;
     this.port = new SerialPort(options);
     this.port.on("error", (err) => debug(err));
-    // this.port.on('data', (data) => debug(data.toString('hex')));
+    // this.port.on("data", (data) => debug(data.toString("hex")));
     this.port.on("close", () => debug("close"));
   }
 

@@ -6,7 +6,7 @@ import {
   LeScanType,
   LeScanningFilterPolicy,
   createHciSerial,
-} from "../src";
+} from "../src/index.ts";
 
 (async () => {
   try {

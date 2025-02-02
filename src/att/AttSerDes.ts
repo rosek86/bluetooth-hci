@@ -2,7 +2,7 @@ import Debug from "debug";
 
 import { ObjectReverse } from "../utils/Utils.ts";
 
-import { AttErrorCode } from "./AttError.ts";
+import { type AttErrorCode } from "./AttError.ts";
 import { AttOpcode } from "./AttOpcode.ts";
 
 const debug = Debug("bt-hci-att-serdes");

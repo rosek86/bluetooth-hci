@@ -1,5 +1,4 @@
-import { createHciSerial } from "../src";
-import { H4, Hci } from "../src";
+import { H4, Hci, createHciSerial } from "../src/index.ts";
 
 (async () => {
   const port = await createHciSerial();

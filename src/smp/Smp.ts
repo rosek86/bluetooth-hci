@@ -1,9 +1,9 @@
 import { webcrypto } from "node:crypto";
-import EventEmitter from "node:events";
+import type { EventEmitter } from "node:events";
 
 import { AesCmac } from "aes-cmac";
 
-import { L2capChannelId } from "../l2cap/L2capChannelId.ts";
+import type { L2capChannelId } from "../l2cap/L2capChannelId.ts";
 import { Uint8ArrayUtils } from "../utils/Uint8Array.ts";
 import { ObjectReverse } from "../utils/Utils.ts";
 

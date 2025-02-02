@@ -1,5 +1,8 @@
-import { AddressType, AdvData } from "../src";
 import {
+  Address,
+  AddressType,
+  AdvData,
+  HciAdapter,
   LeAdvertisingChannelMap,
   LeAdvertisingDataOperation,
   LeAdvertisingEventProperties,
@@ -9,10 +12,8 @@ import {
   LePrimaryAdvertisingPhy,
   LeScanResponseDataOperation,
   LeSecondaryAdvertisingPhy,
-} from "../src";
-import { Address } from "../src";
-import { HciAdapter } from "../src";
-import { createHciSerial } from "../src";
+  createHciSerial,
+} from "../src/index.ts";
 
 (async () => {
   try {

@@ -2,10 +2,10 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { type AttHandleValueIndMsg, type AttHandleValueNtfMsg } from "../att/AttSerDes.ts";
+import type { AttHandleValueIndMsg, AttHandleValueNtfMsg } from "../att/AttSerDes.ts";
 import { UUID } from "../utils/UUID.ts";
 
-import { type Att, type AttDataEntry } from "./AttGlue.ts";
+import type { Att, AttDataEntry } from "./AttGlue.ts";
 import { GattCharacteristic, type GattCharacteristicAsObject } from "./GattCharacteristic.ts";
 import { GattDescriptor, type GattDescriptorAsObject } from "./GattDescriptor.ts";
 import { GattDirectory, type Profile } from "./GattDirectory.ts";

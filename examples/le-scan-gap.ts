@@ -8,7 +8,7 @@ import {
   amendProfileWithUuidNames,
   createHciSerial,
   uuidInfo,
-} from "../src";
+} from "../src/index.ts";
 
 (async () => {
   try {
@@ -16,7 +16,9 @@ import {
     await adapter.open();
     await adapter.defaultAdapterSetup();
 
-    const gap = new GapCentral(adapter.Hci);
+    const gap = new GapCentral(adapter.Hci, {
+      autoScan: false,
+    });
     await gap.init();
 
     await gap.setScanParameters();

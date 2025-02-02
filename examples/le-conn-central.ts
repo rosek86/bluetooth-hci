@@ -7,7 +7,7 @@ import {
   LeScanType,
   LeScanningFilterPolicy,
   createHciSerial,
-} from "../src";
+} from "../src/index.ts";
 
 (async () => {
   try {
@@ -18,7 +18,9 @@ import {
     const hci = adapter.Hci;
     await hci.leSetDefaultPhy({ txPhys: LePhy.Phy1M, rxPhys: LePhy.Phy1M });
 
-    const gap = new GapCentral(hci);
+    const gap = new GapCentral(hci, {
+      autoScan: false,
+    });
 
     await gap.init();
     await gap.setScanParameters({

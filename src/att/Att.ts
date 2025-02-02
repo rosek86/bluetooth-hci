@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 
 import Debug from "debug";
 
-import { HciError, HciErrorErrno, makeHciError } from "../hci/HciError.ts";
+import { type HciError, type HciErrorErrno, makeHciError } from "../hci/HciError.ts";
 import { L2capChannelId } from "../l2cap/L2capChannelId.ts";
 
 import { AttErrorCodeGetName } from "./AttError.ts";

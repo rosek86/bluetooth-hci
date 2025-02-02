@@ -32,7 +32,9 @@ const adverts = new Map<string, { adv?: GapAdvertReportExt; sr?: GapAdvertReport
     await adapter.open();
     await adapter.defaultAdapterSetup();
 
-    const gap = new GapCentral(adapter.Hci);
+    const gap = new GapCentral(adapter.Hci, {
+      autoScan: false,
+    });
     await gap.init();
 
     await gap.setScanParameters({

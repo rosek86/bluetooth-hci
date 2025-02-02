@@ -11,7 +11,7 @@ import {
   createHciSerial,
   delay,
   printProfile,
-} from "../src";
+} from "../src/index.ts";
 
 class App extends NbleGapCentral {
   constructor(adapter: HciAdapter) {

@@ -16,26 +16,22 @@ export interface H4Packet {
 }
 
 export class H4 {
-  private readonly headerSize: PacketHdrSize = {};
+  private readonly headerSize: PacketHdrSize = {
+    [HciPacketType.HciCommand]: 3,
+    [HciPacketType.HciAclData]: 4,
+    [HciPacketType.HciSyncData]: 3,
+    [HciPacketType.HciEvent]: 2,
+    [HciPacketType.HciIsoData]: 4,
+  };
 
   private parserState: ParserState = ParserState.Type;
-  private parserPacketType = 0;
+  private parserPacketType: HciPacketType = HciPacketType.Ack;
   private parserPacketData = new Uint8Array(0);
 
   private parserHeaderSize = 0;
   private parserPacketSize = 0;
 
-  constructor() {
-    this.headerSize[HciPacketType.HciCommand] = 3;
-    this.headerSize[HciPacketType.HciAclData] = 4;
-    this.headerSize[HciPacketType.HciSyncData] = 3;
-    this.headerSize[HciPacketType.HciEvent] = 2;
-    this.headerSize[HciPacketType.HciIsoData] = 4;
-  }
-
   public parse(data: Buffer): H4Packet | null {
-    // this.parserPacketData = Buffer.concat([this.parserPacketData, data]);
-
     const tmp = new Uint8Array(this.parserPacketData.length + data.length);
     tmp.set(this.parserPacketData);
     tmp.set(data, this.parserPacketData.length);
@@ -43,7 +39,7 @@ export class H4 {
 
     if (this.parserState === ParserState.Type) {
       if (this.parserPacketData.length > 0) {
-        this.parserPacketType = this.parserPacketData[0];
+        this.parserPacketType = numberToHciPacketType(this.parserPacketData[0]);
         this.parserPacketData = this.parserPacketData.subarray(1);
         this.parserHeaderSize = this.headerSize[this.parserPacketType] ?? 0;
 
@@ -66,7 +62,7 @@ export class H4 {
 
         this.parserState = ParserState.Type;
 
-        return { type: numberToHciPacketType(this.parserPacketType), packet };
+        return { type: this.parserPacketType, packet };
       }
     }
 
@@ -74,7 +70,11 @@ export class H4 {
   }
 
   private getPayloadSize(): number {
-    const dv = new DataView(this.parserPacketData.buffer);
+    const dv = new DataView(
+      this.parserPacketData.buffer,
+      this.parserPacketData.byteOffset,
+      this.parserPacketData.byteLength,
+    );
     switch (this.parserPacketType) {
       case HciPacketType.HciCommand:
         return dv.getUint8(2);

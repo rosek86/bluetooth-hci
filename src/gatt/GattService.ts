@@ -1,6 +1,6 @@
 import { UUID } from "../utils/UUID.ts";
 
-import { type AttDataEntry } from "./AttGlue.ts";
+import type { AttDataEntry } from "./AttGlue.ts";
 
 export interface GattServiceAsObject {
   handle: number;

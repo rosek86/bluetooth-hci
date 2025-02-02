@@ -8,7 +8,7 @@ import {
   LeScanningFilterPolicy,
 } from "../../hci/HciLeController.ts";
 import { Address } from "../../utils/Address.ts";
-import { HciAdapter } from "../../utils/HciAdapter.ts";
+import type { HciAdapter } from "../../utils/HciAdapter.ts";
 
 interface ScanParams {
   active: boolean;

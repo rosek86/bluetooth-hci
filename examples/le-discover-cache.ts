@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+
 import chalk from "chalk";
 
 import {
@@ -18,8 +20,7 @@ import {
   NbleGapCentral,
   createHciSerial,
   printProfile,
-} from "../src";
-import fs from "fs/promises";
+} from "../src/index.ts";
 
 class App extends NbleGapCentral {
   private advReportStorage = new Map<number, { advertisement?: GapAdvertReport; scanResponse?: GapAdvertReport }>();

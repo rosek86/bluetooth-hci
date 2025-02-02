@@ -9,8 +9,8 @@ import {
   LeScanningFilterPolicy,
   LeWhiteListAddressType,
   createHciSerial,
-} from "../../src";
-import { ArgsParser } from "../utils/ArgsParser";
+} from "../../src/index.ts";
+import { ArgsParser } from "../utils/ArgsParser.ts";
 
 (async () => {
   try {
@@ -29,7 +29,9 @@ import { ArgsParser } from "../utils/ArgsParser";
       address: Address.from(0x1429c386d3a9, AddressType.RandomDeviceAddress),
     });
 
-    const gap = new GapCentral(hci);
+    const gap = new GapCentral(hci, {
+      autoScan: false,
+    });
     await gap.init();
 
     await gap.setScanParameters({
